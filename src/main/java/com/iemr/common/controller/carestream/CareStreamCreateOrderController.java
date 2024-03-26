@@ -44,7 +44,6 @@ import com.iemr.common.utils.response.OutputResponse;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
-@PropertySource("classpath:myapp.properties")
 @RestController
 @RequestMapping(value = "/carestream")
 public class CareStreamCreateOrderController {

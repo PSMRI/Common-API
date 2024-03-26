@@ -1070,8 +1070,12 @@ public class BeneficiaryCallServiceImpl implements BeneficiaryCallService {
 			predicates.add(criteriaBuilder.equal(entityRoot.get("callTypeID"), callRequest.getCallTypeID()));
 		}
 
-		predicates.add(criteriaBuilder.like(entityRoot.get("phoneNo"),
-				(callRequest.getPhoneNo() == null) ? "%%" : callRequest.getPhoneNo()));
+//		predicates.add(criteriaBuilder.like(entityRoot.get("phoneNo"),
+//				(callRequest.getPhoneNo() == null) ? "%%" : callRequest.getPhoneNo()));
+		
+		if (callRequest.getPhoneNo() != null) {
+			predicates.add(criteriaBuilder.equal(entityRoot.get("phoneNo"), callRequest.getPhoneNo()));
+		}
 
 		if (callRequest.getInboundOutbound() != null) {
 			callRequest.setIsOutbound(callRequest.getInboundOutbound().equalsIgnoreCase("outbound") ? true : false);
@@ -1211,8 +1215,12 @@ public class BeneficiaryCallServiceImpl implements BeneficiaryCallService {
 			predicates.add(criteriaBuilder.equal(root.get("callTypeID"), callRequest.getCallTypeID()));
 		}
 
-		predicates.add(criteriaBuilder.like(root.get("phoneNo"),
-				(callRequest.getPhoneNo() == null) ? "%%" : callRequest.getPhoneNo()));
+//		predicates.add(criteriaBuilder.like(root.get("phoneNo"),
+//				(callRequest.getPhoneNo() == null) ? "%%" : callRequest.getPhoneNo()));
+		
+		if (callRequest.getPhoneNo() != null) {
+			predicates.add(criteriaBuilder.equal(root.get("phoneNo"), callRequest.getPhoneNo()));
+		}
 
 		if (callRequest.getInboundOutbound() != null) {
 			callRequest.setIsOutbound(callRequest.getInboundOutbound().equalsIgnoreCase("outbound") ? true : false);
