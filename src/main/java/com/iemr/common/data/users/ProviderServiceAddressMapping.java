@@ -81,6 +81,14 @@ public class ProviderServiceAddressMapping
 	@Expose
 	@Column(name = "LocationName")
 	private String locationName;
+	
+	@Expose
+	@Column(name = "AbdmFacilityID")
+	private String abdmFacilityID;
+	
+	@Expose
+	@Column(name = "AbdmFacilityName")
+	private String abdmFacilityName;
 
 	// public ProviderServiceAddressMapping()
 	// {
@@ -149,4 +157,5 @@ public class ProviderServiceAddressMapping
 	{
 		return locationName;
 	}
+	
 }
