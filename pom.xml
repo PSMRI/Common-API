@@ -60,14 +60,16 @@
 			<artifactId>spring-boot-starter</artifactId>
 			<exclusions>
 				<exclusion>
-					<groupId>org.springframework.boot</groupId>
-					<artifactId>spring-boot-starter-logging</artifactId>
-				</exclusion>
-				<exclusion>
 					<groupId>org.springframework</groupId>
 					<artifactId>spring-core</artifactId>
 				</exclusion>
 			</exclusions>
+		</dependency>
+
+		<dependency> 
+			<groupId>co.elastic.logging</groupId> 
+			<artifactId>logback-ecs-encoder</artifactId> 
+			<version>0.4.0</version> 
 		</dependency>
 
 		<dependency>
