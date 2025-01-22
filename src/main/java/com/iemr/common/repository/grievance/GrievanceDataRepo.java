@@ -3,11 +3,17 @@ package com.iemr.common.repository.grievance;
 
 
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import com.iemr.common.data.grievance.GrievanceDetails;
+
+import jakarta.transaction.Transactional;
 
 @Repository
 public interface GrievanceDataRepo  extends CrudRepository<GrievanceDetails, Long>{
@@ -18,5 +24,19 @@ public interface GrievanceDataRepo  extends CrudRepository<GrievanceDetails, Lon
 	@Query("select count(request) "
 			+ "from GrievanceDetails request where request.isAllocated = false")
 	public Long fetchUnallocatedGrievanceCount();
+
+    
+    @Query("SELECT g FROM GrievanceDetails g WHERE g.createdDate BETWEEN :startDate AND :endDate AND g.isAllocated = false AND g.language = :language")
+    List<GrievanceDetails> findGrievancesInDateRangeAndLanguage(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("language") String language);
+
+
+    @Modifying
+    @Query("UPDATE Grievance g SET g.isAllocated = true, g.userId = :userId WHERE g.id = :grievanceId")
+    @Transactional
+    public int allocateGrievance(@Param("grievanceId") Long grievanceId, @Param("userId") Integer userId);
+
 
 }
