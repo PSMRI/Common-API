@@ -47,7 +47,7 @@ import jakarta.persistence.EntityManagerFactory;
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(entityManagerFactoryRef = "entityManagerFactory", basePackages = { "com.iemr.common.repository",
-		"com.iemr.common.repo", "com.iemr.common.notification.agent", "com.iemr.common.covidVaccination", "com.iemr.common.repository.everwell.*", " com.iemr.common.repository.users" })
+		"com.iemr.common.repo", "com.iemr.common.notification.agent", "com.iemr.common.covidVaccination", "com.iemr.common.repository.everwell.*", "com.iemr.common.data.grievance", "com.iemr.common.repository.users" })
 public class PrimaryDBConfig {
 
 	Logger logger = LoggerFactory.getLogger(this.getClass().getName());
@@ -83,7 +83,7 @@ public class PrimaryDBConfig {
 	public LocalContainerEntityManagerFactoryBean entityManagerFactory(EntityManagerFactoryBuilder builder,
 			@Qualifier("dataSource") DataSource dataSource) {
 		return builder.dataSource(dataSource).packages("com.iemr.common.data", "com.iemr.common.notification",
-				"com.iemr.common.model", "com.iemr.common.covidVaccination", "com.iemr.common.data.everwell", "com.iemr.common.data.users").persistenceUnit("db_iemr").build();
+				"com.iemr.common.model", "com.iemr.common.covidVaccination", "com.iemr.common.data.everwell", "com.iemr.common.data.grievance", "com.iemr.common.data.users").persistenceUnit("db_iemr").build();
 	}
 
 	@Primary
