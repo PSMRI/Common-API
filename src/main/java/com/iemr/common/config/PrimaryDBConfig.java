@@ -83,7 +83,7 @@ public class PrimaryDBConfig {
 	public LocalContainerEntityManagerFactoryBean entityManagerFactory(EntityManagerFactoryBuilder builder,
 			@Qualifier("dataSource") DataSource dataSource) {
 		return builder.dataSource(dataSource).packages("com.iemr.common.data", "com.iemr.common.notification",
-				"com.iemr.common.model", "com.iemr.common.covidVaccination", "com.iemr.common.data.everwell", "com.iemr.common.data.users").persistenceUnit("db_iemr").build();
+				"com.iemr.common.model", "com.iemr.common.covidVaccination", "com.iemr.common.data.everwell", "com.iemr.common.data.grievance", "com.iemr.common.data.users").persistenceUnit("db_iemr").build();
 	}
 
 	@Primary
