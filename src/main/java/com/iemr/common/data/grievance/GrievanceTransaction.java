@@ -1,7 +1,7 @@
 package com.iemr.common.data.grievance;
 
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 import com.google.gson.annotations.Expose;
 

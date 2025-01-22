@@ -12,7 +12,7 @@ import com.iemr.common.data.grievance.GrievanceDetails;
 @Repository
 public interface GrievanceDataRepo  extends CrudRepository<GrievanceDetails, Long>{
 
-	@Query("SELECT COUNT(g) > 0 FROM GrievanceDetails g WHERE g.complaintId = :complaintId")
+	@Query("SELECT COUNT(g) > 0 FROM GrievanceDetails g WHERE g.complaintID = :complaintId")
     boolean existsByComplaintId(@Param("complaintId") String complaintId);
 	
 	@Query("select count(request) "
