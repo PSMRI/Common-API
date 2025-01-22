@@ -5,7 +5,6 @@ import com.iemr.common.service.grievance.GrievanceDataSync;
 import com.iemr.common.service.grievance.GrievanceHandlingService;
 import com.iemr.common.utils.exception.IEMRException;
 import com.iemr.common.utils.response.OutputResponse;
-
 import io.lettuce.core.dynamic.annotation.Param;
 import io.swagger.v3.oas.annotations.Operation;
 import javax.ws.rs.core.MediaType;
