@@ -11,7 +11,8 @@ package com.iemr.common.service.grievance;
 	import java.util.List;
 	import java.util.Map;
 
-	import org.json.JSONObject;
+import org.json.JSONException;
+import org.json.JSONObject;
 	import org.slf4j.Logger;
 	import org.slf4j.LoggerFactory;
 	import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +38,8 @@ package com.iemr.common.service.grievance;
 	import com.iemr.common.repository.grievance.GrievanceFetchBenDetailsRepo;
 	import com.iemr.common.repository.grievance.GrievanceTransactionRepo;
 	import com.iemr.common.repository.location.LocationStateRepository;
-	import com.iemr.common.utils.mapper.InputMapper;
+import com.iemr.common.utils.exception.IEMRException;
+import com.iemr.common.utils.mapper.InputMapper;
 
 @Service
 @PropertySource("classpath:application.properties")
@@ -371,5 +373,19 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 	        }
 	    }
 	}
+	    
+	    public String fetchUnallocatedGrievanceCount() throws IEMRException, JSONException {
+	        logger.debug("Request received for fetchUnallocatedGrievanceCount");
+
+	        Long unallocatedCount = grievanceDataRepo.fetchUnallocatedGrievanceCount();
+	        
+	        if (unallocatedCount == null) {
+	        	throw new IEMRException("Failed to fetch unallocated grievance count");
+	        }
+	        
+	        JSONObject result = new JSONObject();
+	        result.put("count", unallocatedCount);	        
+	        return result.toString();
+	    }
 
 }
