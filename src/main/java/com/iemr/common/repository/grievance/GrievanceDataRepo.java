@@ -1,9 +1,6 @@
 package com.iemr.common.repository.grievance;
 
 
-
-
-import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +25,7 @@ public interface GrievanceDataRepo  extends CrudRepository<GrievanceDetails, Lon
 	public Long fetchUnallocatedGrievanceCount();
 
     
-    @Query("SELECT g FROM GrievanceDetails g WHERE g.createdDate BETWEEN :startDate AND :endDate AND g.isAllocated = false AND g.preferredLanguage = :language")
+    @Query("SELECT g FROM GrievanceDetails g WHERE g.createdDate BETWEEN :startDate AND :endDate AND g.isAllocated = false AND g.preglanguage = :language")
     List<GrievanceDetails> findGrievancesInDateRangeAndLanguage(
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
