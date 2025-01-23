@@ -51,7 +51,7 @@ public interface LocationStateRepository extends CrudRepository<States, Integer>
 	
 	States findByStateID(Integer stateID);
 	
-	@Query("select state.state from States state where state.stateID = :id")
+	@Query("select stateName from States where stateID = :id")
 	public String findByStateIDForGrievance(@Param("id") int id);
 	
 	

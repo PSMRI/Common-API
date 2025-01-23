@@ -14,7 +14,7 @@ import com.iemr.common.data.feedback.FeedbackDetails;
 @Repository
 public interface GrievanceFetchBenDetailsRepo extends CrudRepository<FeedbackDetails, Long> {
 	
-	@Query("select f.requestID, f.benCallID, f.beneficiaryRegID, f.providerServiceMapID, f.stateID "
+	@Query("select f.requestID, f.benCallID, f.beneficiaryRegID, f.serviceID, f.stateID "
 			+ " from FeedbackDetails f where f.requestID = :requestID order by f.requestID desc")
 	public ArrayList<Object[]> findByComplaintId(@Param("requestID") String requestID);
 
