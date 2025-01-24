@@ -25,7 +25,7 @@ public interface GrievanceDataRepo  extends CrudRepository<GrievanceDetails, Lon
 	public Long fetchUnallocatedGrievanceCount();
 
     
-    @Query("SELECT g FROM GrievanceDetails g WHERE g.createdDate BETWEEN :startDate AND :endDate AND g.isAllocated = false AND g.preglanguage = :language")
+    @Query("SELECT g FROM GrievanceDetails g WHERE g.createdDate BETWEEN :startDate AND :endDate AND g.isAllocated = false AND g.preferredLanguage = :language")
     List<GrievanceDetails> findGrievancesInDateRangeAndLanguage(
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
@@ -33,7 +33,7 @@ public interface GrievanceDataRepo  extends CrudRepository<GrievanceDetails, Lon
 
 
     @Modifying
-    @Query("UPDATE GrievanceDetails g SET g.isAllocated = true, g.userId = :userId WHERE g.grievanceId = :grievanceId")
+    @Query("UPDATE GrievanceDetails g SET g.isAllocated = true, g.userid = :userId WHERE g.grievanceid = :grievanceId")
     @Transactional
     public int allocateGrievance(@Param("grievanceId") Long grievanceId, @Param("userId") Integer userId);
 
