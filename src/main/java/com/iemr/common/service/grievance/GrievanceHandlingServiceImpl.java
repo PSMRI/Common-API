@@ -16,24 +16,24 @@ import com.iemr.common.repository.grievance.GrievanceDataRepo;
 import com.iemr.common.utils.mapper.InputMapper;
 
 @Service
-@PropertySource("classpath:application.properties")
 public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 
 
-    private Logger logger = LoggerFactory.getLogger(GrievanceHandlingService.class);
+    private Logger logger = LoggerFactory.getLogger(GrievanceHandlingServiceImpl.class);
 
+    
+	private final GrievanceDataRepo grievanceDataRepo;
+    
     @Autowired
-    private GrievanceDataRepo grievanceDataRepo;  // Repository for grievance-related database operations
+    public GrievanceHandlingServiceImpl(GrievanceDataRepo grievanceDataRepo) {
+    	this.grievanceDataRepo = grievanceDataRepo;
+    }
 
-    @Value("${grievanceAllocationRetryConfiguration}")
-    private int grievanceAllocationRetryConfiguration;  // Value from application.properties, can be used to configure retry logic
-
-    private InputMapper inputMapper = new InputMapper();  // InputMapper used to map the JSON request
 
     @Override
     public String allocateGrievances(String request) throws Exception {
         // Step 1: Parse the request string into the appropriate GrievanceAllocationRequest object
-        GrievanceAllocationRequest allocationRequest = inputMapper.gson().fromJson(request, GrievanceAllocationRequest.class);
+        GrievanceAllocationRequest allocationRequest = InputMapper.gson().fromJson(request, GrievanceAllocationRequest.class);
 
         // Step 2: Fetch grievances based on the start date, end date range, and language
         List<GrievanceDetails> grievances = grievanceDataRepo.findGrievancesInDateRangeAndLanguage(
@@ -60,9 +60,9 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
         	    int rowsAffected = grievanceDataRepo.allocateGrievance(grievance.getGrievanceId(), userId);
         	    if (rowsAffected > 0) {
         	        totalAllocated++;
-        	        logger.debug("Allocated grievance ID " + grievance.getGrievanceId() + " to user ID " + userId);
+        	        logger.debug("Allocated grievance ID {} to user ID {}", grievance.getGrievanceId(), userId);
         	   } else {
-        	        logger.error("Failed to allocate grievance ID " + grievance.getGrievanceId() + " to user ID " + userId);
+        		   logger.error("Failed to allocate grievance ID {} to user ID {}", grievance.getGrievanceId(), userId);
         	    }
         	
         	    // Move to the next user after allocateNo grievances

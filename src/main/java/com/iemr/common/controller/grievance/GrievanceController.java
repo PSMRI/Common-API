@@ -63,7 +63,7 @@ public class GrievanceController {
 
     
     @Operation(summary = "Allocate grievances to users")
-    @RequestMapping(value = "/allocateGrievances", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+    @PostMapping(value = "/allocateGrievances", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
     public String  allocateGrievances(@Param(value = "{\"startDate\":\"ISO-8601 format start date (e.g., 2022-12-01T07:49:00.000Z)\", "
             + "\"endDate\":\"ISO-8601 format end date (e.g., 2025-01-16T07:49:30.561)\", "
             + "\"userID\":\"Array list of User IDs (agents to be allocated grievances)\", "
