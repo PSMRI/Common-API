@@ -222,7 +222,7 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 								//setting language related properties and other
 								ArrayList<Object[]> list1 = grievanceDataRepo.getBeneficiaryGrievanceDetails(grievance.getBeneficiaryRegId());
 								for (Object[] objects : list1) {
-									if (objects != null && objects.length <= 5) {
+									if (objects != null && objects.length >= 6) {
 										grievance.setPreferredLanguageId((Integer) objects[0]);
 										grievance.setPreferredLanguage((String) objects[1]);
 										grievance.setVanSerialNo((Integer) objects[2]);

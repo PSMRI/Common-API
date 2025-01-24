@@ -52,26 +52,24 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
         List<Integer> userIds = allocationRequest.getUserID();
         int allocateNo = allocationRequest.getAllocateNo();  // Number of grievances to allocate per user
 
-        // Step 5: Allocate grievances to users in a round-robin fashion
+       
         for (int i = 0; i < grievances.size(); i++) {
-            if (i % allocateNo == 0 && userIndex < userIds.size()) {
-                // Allocate to the next user when reaching the allocateNo threshold
-                Integer userId = userIds.get(userIndex);
-                GrievanceDetails grievance = grievances.get(i);
-
-                // Call the repository method to allocate the grievance to the user
-                int rowsAffected = grievanceDataRepo.allocateGrievance(grievance.getGrievanceId(), userId);
-
-                if (rowsAffected > 0) {
-                    totalAllocated++;
-                    logger.debug("Allocated grievance ID " + grievance.getGrievanceId() + " to user ID " + userId);
-                } else {
-                    logger.error("Failed to allocate grievance ID " + grievance.getGrievanceId() + " to user ID " + userId);
-                }
-
-                userIndex = (userIndex + 1) % userIds.size();
-            }
-        }
+        	    Integer userId = userIds.get(userIndex);
+        	    GrievanceDetails grievance = grievances.get(i);
+        	
+        	    int rowsAffected = grievanceDataRepo.allocateGrievance(grievance.getGrievanceId(), userId);
+        	    if (rowsAffected > 0) {
+        	        totalAllocated++;
+        	        logger.debug("Allocated grievance ID " + grievance.getGrievanceId() + " to user ID " + userId);
+        	   } else {
+        	        logger.error("Failed to allocate grievance ID " + grievance.getGrievanceId() + " to user ID " + userId);
+        	    }
+        	
+        	    // Move to the next user after allocateNo grievances
+        	    if ((i + 1) % allocateNo == 0) {
+        	        userIndex = (userIndex + 1) % userIds.size();
+        	    }
+        	 }
 
         // Step 6: Return a message with the total number of grievances allocated
         return "Successfully allocated " + totalAllocated + " grievances to users.";
