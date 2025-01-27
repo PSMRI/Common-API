@@ -96,6 +96,15 @@ public class GrievanceDetails {
     @Expose
     @Column(name = "callCounter")
     private Integer callCounter;
+    
+    @Expose
+    @Column(name = "PreferredLanguageId")
+    private Integer preferredLanguageId;
+    
+    @Expose
+    @Column(name = "PreferredLanguage")
+    private String preferredLanguage;
+    
 
 	@Column(name = "Deleted", insertable = false, updatable = true)
 	private Boolean deleted = false;
@@ -151,7 +160,7 @@ public class GrievanceDetails {
 	public GrievanceDetails(Long gwid, Long grievanceId, Long beneficiaryRegID, Long benCallID,
 			Integer providerServiceMapID, String complaintID, String subjectOfComplaint, String complaint,
 			String primaryNumber, String severety, String state, String agentID, String userid, Boolean isAllocated,
-			Boolean retryNeeded, Boolean isRegistered, Integer callCounter, Boolean deleted, Character processed,
+			Boolean retryNeeded, Boolean isRegistered, Integer callCounter, Integer preferredLanguageId, String preferredLanguage, Boolean deleted, Character processed,
 			String createdBy, Timestamp createdDate, String modifiedBy, Timestamp lastModDate, Integer vanSerialNo,
 			Integer vanID, String vehicalNo, Integer parkingPlaceID, String syncedBy, Timestamp syncedDate,
 			Boolean isCompleted) {
@@ -173,6 +182,8 @@ public class GrievanceDetails {
 		this.retryNeeded = retryNeeded;
 		this.isRegistered = isRegistered;
 		this.callCounter = callCounter;
+		this.preferredLanguageId = preferredLanguageId;
+		this.preferredLanguage = preferredLanguage;
 		this.deleted = deleted;
 		this.processed = processed;
 		this.createdBy = createdBy;
@@ -323,6 +334,22 @@ public class GrievanceDetails {
 
     public void setCallCounter(Integer callCounter) {
         this.callCounter = callCounter;
+    }
+    
+    public Integer getPreferredLanguageId() {
+    	return preferredLanguageId;
+    }
+    
+    public void setPreferredLanguageId(Integer preferredLanguageId) {
+    	this.preferredLanguageId = preferredLanguageId;
+    }
+    
+    public String getPreferredLanguage() {
+    	return preferredLanguage;
+    }
+    
+    public void setPreferredLanguage(String preferredLanguage) {
+    	this.preferredLanguage = preferredLanguage;
     }
 
     public Boolean getDeleted() {

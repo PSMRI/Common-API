@@ -219,7 +219,22 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 										grievance.setState(state);
 									}
 								}
-
+								//setting language related properties and other
+								ArrayList<Object[]> list1 = grievanceDataRepo.getBeneficiaryGrievanceDetails(grievance.getBeneficiaryRegId());
+								for (Object[] objects : list1) {
+									if (objects != null && objects.length >= 6) {
+										grievance.setPreferredLanguageId((Integer) objects[0]);
+										grievance.setPreferredLanguage((String) objects[1]);
+										grievance.setVanSerialNo((Integer) objects[2]);
+										grievance.setVanId((Integer) objects[3]);
+										grievance.setParkingPlaceId((Integer) objects[4]);
+										grievance.setVehicalNo((String) objects[5]);
+										
+									}
+								}
+								
+								
+								
 								// Setting remaining grievance properties (similar to the existing code)
 								grievance.setAgentId(grievance.getAgentId());
 								grievance.setDeleted(grievance.getDeleted());
