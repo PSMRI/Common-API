@@ -87,6 +87,9 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
 				case "doAgentLogout":
 				case "userLogout":
 				case "swagger-ui.html":
+				case "index.html":
+				case "swagger-initializer.js":
+				case "swagger-config":
 				case "ui":
 				case "swagger-resources":
 				case "api-docs":

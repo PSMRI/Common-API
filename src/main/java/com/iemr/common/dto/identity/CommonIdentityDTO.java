@@ -151,6 +151,7 @@ public class CommonIdentityDTO {
 	@Expose
 	private Boolean beneficiaryConsent;
 	private String otherFields;
+	private String religionName;
 
 	// private Object otherFields;
 

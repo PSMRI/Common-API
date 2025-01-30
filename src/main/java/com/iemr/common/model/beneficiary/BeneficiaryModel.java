@@ -213,11 +213,15 @@ public class BeneficiaryModel implements Comparable<BeneficiaryModel> {
 	@Expose
 	private String occupationName;
 	@Expose
+	private String occupation;
+	@Expose
 	private String incomeStatus;
 	@Expose
 	private BigInteger religionId;
 	@Expose
 	private String religion;
+	@Expose
+	private String education;
 	@Expose
 	private Integer providerServiceMapID;
 
@@ -285,6 +289,8 @@ public class BeneficiaryModel implements Comparable<BeneficiaryModel> {
 	@Expose
 	private Boolean passToNurse = false;
 	private String otherFields;
+	@Expose
+	private String religionName;
 	
 //	private Object otherFields;
 

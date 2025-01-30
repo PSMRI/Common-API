@@ -372,8 +372,15 @@ public class IEMRSearchUserServiceImpl implements IEMRSearchUserService {
 		benDetailForOutboundDTOList.forEach(beneficiaryModel -> {
 
 			BeneficiaryModel beneficiary = benCompleteMapper.benDetailForOutboundDTOToIBeneficiary(beneficiaryModel);
-			if(null != beneficiaryModel.getBeneficiaryDetails() && null != beneficiaryModel.getBeneficiaryDetails().getCommunity())
+			if(null != beneficiaryModel && null != beneficiaryModel.getBeneficiaryDetails()) {
 				beneficiary.setCommunityName(beneficiaryModel.getBeneficiaryDetails().getCommunity());
+				beneficiary.setReligion(beneficiaryModel.getBeneficiaryDetails().getReligion());
+				beneficiary.setReligionName(beneficiaryModel.getBeneficiaryDetails().getReligion());
+				beneficiary.setOccupationName(beneficiaryModel.getBeneficiaryDetails().getOccupation());
+				beneficiary.setOccupation(beneficiaryModel.getBeneficiaryDetails().getOccupation());
+				beneficiary.setEducation(beneficiaryModel.getBeneficiaryDetails().getEducation());
+				beneficiary.setIncomeStatus(beneficiaryModel.getBeneficiaryDetails().getIncomeStatus());
+			}
 			if (beneficiary.getAge() == null) {
 				beneficiary.setAge(beneficiary.getActualAge());
 			}

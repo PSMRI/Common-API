@@ -62,6 +62,9 @@ public class NHMDetailCallReportScheduler {
 				for (DetailedCallReport detailedCallReport : findByCallStartTimeBetween) {
 					String phoneNo = detailedCallReport.getPHONE();
 					String sessionID = detailedCallReport.getSession_ID();
+					if(null != phoneNo && phoneNo.length()>10) {
+						phoneNo = phoneNo.replaceFirst("^0+", "");
+					}
 					BeneficiaryCall existRecord = callReportRepo.getBenCallDetailsBySessionIDAndPhone(sessionID,phoneNo);
 					if (existRecord != null) {
 						logger.info("Record already present in t_bencall table with sessionID : " + sessionID
@@ -150,7 +153,10 @@ public class NHMDetailCallReportScheduler {
 	private BeneficiaryCall getCallDetail(DetailedCallReport detailedCallReport) {
 		BeneficiaryCall beneficiaryCall = new BeneficiaryCall();
 		beneficiaryCall.setCallID(detailedCallReport.getSession_ID());
-		beneficiaryCall.setPhoneNo(detailedCallReport.getPHONE());
+		String phoneNo = detailedCallReport.getPHONE();
+		if(null != phoneNo && phoneNo.length()>10)
+			phoneNo = phoneNo.replaceFirst("^0+", "");
+		beneficiaryCall.setPhoneNo(phoneNo);
 		beneficiaryCall.setCalledServiceID(null);
 		beneficiaryCall.setRemarks("missed records - Failure");
 		beneficiaryCall.setIs1097(true);
