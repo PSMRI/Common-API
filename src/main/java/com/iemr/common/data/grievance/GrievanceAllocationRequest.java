@@ -17,7 +17,7 @@ public class GrievanceAllocationRequest {
 	@Override
 	public String toString() {
 		return "GrievanceAllocationRequest{" + "startDate=" + startDate + ", endDate=" + endDate + ", userID=" + userID
-				+ ", allocateNo=" + allocateNo + ", preferredLanguage=" + preferredLanguage + '}';
+				+ ", allocateNo=" + allocateNo + ", language=" + preferredLanguage + '}';
 	}
 
 }
