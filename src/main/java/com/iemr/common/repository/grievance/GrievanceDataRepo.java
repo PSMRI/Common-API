@@ -24,9 +24,11 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 //	@Query("select count(request) " + "from GrievanceDetails request where request.isAllocated = false")
 //	public Long fetchUnallocatedGrievanceCount();
 
+
 	@Query("SELECT g FROM GrievanceDetails g WHERE g.createdDate BETWEEN :startDate AND :endDate AND g.isAllocated = false AND g.preferredLanguage = :language")
 	List<GrievanceDetails> findGrievancesInDateRangeAndLanguage(@Param("startDate") Timestamp startDate,
 			@Param("endDate") Timestamp endDate, @Param("language") String language);
+
 
 	@Modifying
 	@Query("UPDATE GrievanceDetails g SET g.isAllocated = true, g.assignedUserID = :assignedUserId WHERE g.grievanceId = :grievanceId")
