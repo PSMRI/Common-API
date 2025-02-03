@@ -1,23 +1,25 @@
 package com.iemr.common.controller.grievance;
 
-import com.iemr.common.service.grievance.GrievanceDataSync;
-import com.iemr.common.service.grievance.GrievanceHandlingService;
-import com.iemr.common.utils.exception.IEMRException;
-import com.iemr.common.utils.response.OutputResponse;
-import io.lettuce.core.dynamic.annotation.Param;
-import io.swagger.v3.oas.annotations.Operation;
 import javax.ws.rs.core.MediaType;
 
 import org.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.iemr.common.data.grievance.UnallocationRequest;
+import com.iemr.common.service.grievance.GrievanceDataSync;
+import com.iemr.common.service.grievance.GrievanceHandlingService;
+import com.iemr.common.utils.exception.IEMRException;
+import com.iemr.common.utils.response.OutputResponse;
+
+import io.lettuce.core.dynamic.annotation.Param;
+import io.swagger.v3.oas.annotations.Operation;
 
 @RestController
 public class GrievanceController {
@@ -35,10 +37,10 @@ public class GrievanceController {
 
 	@Operation(summary = "/unallocatedGrievanceCount")
 	@PostMapping(value = "/unallocatedGrievanceCount", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
-	public String fetchUnallocatedGrievanceCount() {
+	public String fetchUnallocatedGrievanceCount(@RequestBody UnallocationRequest request) {
 		OutputResponse responseData = new OutputResponse();
 		try {
-			responseData.setResponse(grievanceDataSync.fetchUnallocatedGrievanceCount());
+			responseData.setResponse(grievanceDataSync.fetchUnallocatedGrievanceCount(request.getPreferredLanguageName()));
 		} catch (IEMRException e) {
 			logger.error("Business logic error in UnallocatedGrievanceCount" + e.getMessage(), e);
 			responseData.setError(e);
@@ -80,7 +82,6 @@ public class GrievanceController {
 			+ "\"assignedUserID\":\"Optional - Integer user ID to whom grievances are assigned\"}") @RequestBody String request) {
 		OutputResponse response = new OutputResponse();
 		try {
-			logger.info("allocatedGrievanceRecordsCount request " + request);
 			response.setResponse(grievanceHandlingService.allocatedGrievanceRecordsCount(request));
 		} catch (Exception e) {
 			logger.error("allocatedGrievanceRecordsCount failed with error " + e.getMessage(), e);

@@ -92,7 +92,6 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 
 	@Override
 	public String allocatedGrievanceRecordsCount(String request) throws IEMRException, JSONException {
-		logger.debug("Request received for allocatedGrievanceRecordsCount: " + request);
 		GrievanceDetails grievanceRequest = InputMapper.gson().fromJson(request, GrievanceDetails.class);
 
 		Integer providerServiceMapID = grievanceRequest.getProviderServiceMapID();

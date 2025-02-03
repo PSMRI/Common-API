@@ -400,40 +400,70 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 		}
 	}
 
-	public String fetchUnallocatedGrievanceCount() throws IEMRException, JSONException {
+	public String fetchUnallocatedGrievanceCount(String preferredLanguage) throws IEMRException, JSONException {
 		logger.debug("Request received for fetchUnallocatedGrievanceCount");
 
-		// Assuming that grievanceDataRepo.fetchUnallocatedGrievanceCount returns counts
-		// for all languages
+		// Fetch all unallocated grievances count from the database
 		Set<Object[]> resultSet = grievanceDataRepo.fetchUnallocatedGrievanceCount();
 
+		// Initialize the result JSON object to hold counts
 		JSONObject result = new JSONObject();
-		result.put("All", 0); // Initialize "All" count to 0
+		boolean preferredLanguageFound = false;
+		result.put("All", 0); // Initialize the "All" language count to 0
 
+		// Loop through the resultSet and populate the counts for each language
 		if (resultSet != null && !resultSet.isEmpty()) {
 			for (Object[] record : resultSet) {
 				String language = ((String) record[0]).trim();
 				Long count = (Long) record[1];
+
+				// Add the count to the result for the current language
 				result.put(language, count);
-				result.put("All", result.getLong("All") + count); // Add to total count for "All"
+				result.put("All", result.getLong("All") + count); // Add to the total "All" count
+
+				// If the preferred language matches, mark it as found
+				if (preferredLanguage != null && preferredLanguage.equalsIgnoreCase(language)) {
+					preferredLanguageFound = true;
+				}
 			}
 		}
 
-		// Create the final response structure
+		// If the preferred language is provided but not found in the results, add it
+		// with count 0
+		if (preferredLanguage != null && !preferredLanguageFound) {
+			result.put(preferredLanguage, 0);
+		}
+
+		// Create the final JSON response array
 		JSONArray resultArray = new JSONArray();
-		Iterator<String> keys = result.keys();
-		while (keys.hasNext()) {
-			String key = keys.next();
-			if (!key.equals("All") || result.getLong(key) > 0) { // Skip "All" if it's empty
-				JSONObject temp = new JSONObject();
-				temp.put("language", key);
-				temp.put("count", result.getLong(key));
-				resultArray.put(temp);
+
+		// Case 1: If preferredLanguage is provided, return only that language's count
+		if (preferredLanguage != null) {
+			JSONObject preferredLanguageEntry = new JSONObject();
+			preferredLanguageEntry.put("language", preferredLanguage);
+			preferredLanguageEntry.put("count", result.getLong(preferredLanguage));
+			resultArray.put(preferredLanguageEntry);
+		} else {
+			// Case 2: If no preferredLanguage is provided, return counts for all languages
+			// Add the "All" entry first
+			JSONObject allEntry = new JSONObject();
+			allEntry.put("language", "All");
+			allEntry.put("count", result.getLong("All"));
+			resultArray.put(allEntry);
+
+			// Add counts for other languages
+			Iterator<String> keys = result.keys();
+			while (keys.hasNext()) {
+				String key = keys.next();
+				if (!key.equals("All")) {
+					JSONObject temp = new JSONObject();
+					temp.put("language", key);
+					temp.put("count", result.getLong(key));
+					resultArray.put(temp);
+				}
 			}
 		}
 
-		// Return the response as a JSON array
 		return resultArray.toString();
 	}
-
 }
