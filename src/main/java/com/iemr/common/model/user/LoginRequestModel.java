@@ -25,23 +25,21 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(exclude = { "authKey" })
-public @Data class LoginRequestModel
-{
+public @Data class LoginRequestModel {
 	private String userName;
 	private String password;
 	private String authKey;
 	private Boolean doLogout;
-	
-	
-	
+	private Boolean withCredentials;
+
 	public LoginRequestModel() {
-		
+
 	}
-	//everwell-1097 registration
+
+	// everwell-1097 registration
 	public LoginRequestModel(String userName, String password) {
 		this.userName = userName;
 		this.password = password;
 	}
-	
-	
+
 }
