@@ -77,7 +77,7 @@ public class GrievanceController {
 	}
 
 	@Operation(summary = "Allocated Grievance Records Count")
-	@RequestMapping(value = "/allocatedGrievanceRecordsCount", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+	@PostMapping(value = "/allocatedGrievanceRecordsCount", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String allocatedGrievanceRecordsCount(@Param(value = "{\"providerServiceMapID\":\"Service ID integer\", "
 			+ "\"assignedUserID\":\"Optional - Integer user ID to whom grievances are assigned\"}") @RequestBody String request) {
 		OutputResponse response = new OutputResponse();
@@ -91,7 +91,7 @@ public class GrievanceController {
 	}
 
 	@Operation(summary = "Reallocate grievances to other users")
-	@RequestMapping(value = "/reallocateGrievances", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+	@PostMapping(value = "/reallocateGrievances", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String reallocateGrievances(@RequestBody String request) {
 		OutputResponse response = new OutputResponse();
 		try {
@@ -105,7 +105,7 @@ public class GrievanceController {
 	}
 
 	@Operation(summary = "Move grievances to bin (unassign from agent)")
-	@RequestMapping(value = "/moveToBin", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+	@PostMapping(value = "/moveToBin", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String moveToBin(@RequestBody String request) {
 
 		OutputResponse response = new OutputResponse();

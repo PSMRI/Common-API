@@ -55,6 +55,8 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 
 	private static final String FILE_NAME = "fileName";
 	private static final String FILE_TYPE = "fileType";
+	private static final String PREFERRED_LANGUAGE = "preferredLanguage";
+	private static final String COUNT_OF_PREFERRED_LANGUAGE = "countOfPrefLanguage";
 
 	private final GrievanceDataRepo grievanceDataRepo;
 	private final GrievanceTransactionRepo grievanceTransactionRepo;
@@ -440,15 +442,15 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 		// Case 1: If preferredLanguage is provided, return only that language's count
 		if (preferredLanguage != null) {
 			JSONObject preferredLanguageEntry = new JSONObject();
-			preferredLanguageEntry.put("language", preferredLanguage);
-			preferredLanguageEntry.put("count", result.getLong(preferredLanguage));
+			preferredLanguageEntry.put(PREFERRED_LANGUAGE, preferredLanguage);
+			preferredLanguageEntry.put(COUNT_OF_PREFERRED_LANGUAGE, result.getLong(preferredLanguage));
 			resultArray.put(preferredLanguageEntry);
 		} else {
 			// Case 2: If no preferredLanguage is provided, return counts for all languages
 			// Add the "All" entry first
 			JSONObject allEntry = new JSONObject();
-			allEntry.put("language", "All");
-			allEntry.put("count", result.getLong("All"));
+			allEntry.put(PREFERRED_LANGUAGE, "All");
+			allEntry.put(COUNT_OF_PREFERRED_LANGUAGE, result.getLong("All"));
 			resultArray.put(allEntry);
 
 			// Add counts for other languages
@@ -457,8 +459,8 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 				String key = keys.next();
 				if (!key.equals("All")) {
 					JSONObject temp = new JSONObject();
-					temp.put("language", key);
-					temp.put("count", result.getLong(key));
+					temp.put(PREFERRED_LANGUAGE, key);
+					temp.put(COUNT_OF_PREFERRED_LANGUAGE, result.getLong(key));
 					resultArray.put(temp);
 				}
 			}

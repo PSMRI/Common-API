@@ -1,7 +1,6 @@
 package com.iemr.common.repository.grievance;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -20,9 +19,6 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 
 	@Query("SELECT COUNT(g) > 0 FROM GrievanceDetails g WHERE g.complaintID = :complaintId")
 	boolean existsByComplaintId(@Param("complaintId") String complaintId);
-
-//	@Query("select count(request) " + "from GrievanceDetails request where request.isAllocated = false")
-//	public Long fetchUnallocatedGrievanceCount();
 
 
 	@Query("SELECT g FROM GrievanceDetails g WHERE g.createdDate BETWEEN :startDate AND :endDate AND g.isAllocated = false AND g.preferredLanguage = :language")

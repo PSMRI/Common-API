@@ -103,9 +103,9 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 		result.put("All", 0);
 
 		if (resultSet != null && !resultSet.isEmpty()) {
-			for (Object[] record : resultSet) {
-				String language = ((String) record[0]).trim();
-				Long count = (Long) record[1];
+			for (Object[] recordSet : resultSet) {
+				String language = ((String) recordSet[0]).trim();
+				Long count = (Long) recordSet[1];
 				result.put(language, count);
 				result.put("All", result.getLong("All") + count);
 			}
@@ -130,7 +130,7 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	public String reallocateGrievances(String request) throws Exception {
 		// Step 1: Parse the request string into the appropriate
 		// GrievanceReallocationRequest object
-		GrievanceReallocationRequest reallocationRequest = inputMapper.gson().fromJson(request,
+		GrievanceReallocationRequest reallocationRequest = InputMapper.gson().fromJson(request,
 				GrievanceReallocationRequest.class);
 
 		// Step 2: Fetch grievances that are allocated to the 'fromUserId' and match the
