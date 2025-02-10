@@ -66,10 +66,10 @@
 			</exclusions>
 		</dependency>
 
-		<dependency> 
-			<groupId>co.elastic.logging</groupId> 
-			<artifactId>logback-ecs-encoder</artifactId> 
-			<version>1.3.2</version> 
+		<dependency>
+			<groupId>co.elastic.logging</groupId>
+			<artifactId>logback-ecs-encoder</artifactId>
+			<version>1.3.2</version>
 		</dependency>
 
 		<dependency>
@@ -172,28 +172,11 @@
 		</dependency>
 
 
-		<!--<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-			<version>2.16.1</version>
-			<exclusions>
-				<exclusion>
-					<artifactId>org.json</artifactId>
-					<groupId>json</groupId>
-				</exclusion>
-			</exclusions>
-		</dependency>-->
-
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
 			<version>20231013</version><!--$NO-MVN-MAN-VER$ -->
 		</dependency>
-		<!--<dependency>
-			<groupId>com.fasterxml.jackson.datatype</groupId>
-			<artifactId>jackson-datatype-joda</artifactId>
-			<version>2.4.0</version>$NO-MVN-MAN-VER$ 
-		</dependency>-->
 
 		<!-- https://mvnrepository.com/artifact/org.quartz-scheduler/quartz -->
 		<dependency>
@@ -201,16 +184,16 @@
 			<artifactId>quartz</artifactId>
 			<version>2.5.0-rc1</version>
 		</dependency>
-<dependency>
-    <groupId>com.fasterxml.jackson.core</groupId>
-    <artifactId>jackson-annotations</artifactId>
-    <version>2.17.0</version>
-</dependency>
-<dependency>
-    <groupId>com.fasterxml.jackson.core</groupId>
-    <artifactId>jackson-core</artifactId>
-    <version>2.17.0</version>
-</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>2.17.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+			<version>2.17.0</version>
+		</dependency>
 		<dependency>
 			<groupId>com.openkm</groupId>
 			<artifactId>sdk4j</artifactId>
@@ -423,7 +406,7 @@
 					<artifactId>org.apache.xmlgraphics</artifactId>
 					<groupId>batik-all</groupId>
 				</exclusion>
-			
+
 				<exclusion>
 					<artifactId>org.bouncycastle</artifactId>
 					<groupId>bcpkix-jdk15on</groupId>
@@ -440,7 +423,7 @@
 					<artifactId>org.apache.santuario</artifactId>
 					<groupId>xmlsec</groupId>
 				</exclusion>
-				
+
 				<exclusion>
 					<artifactId>commons-io</artifactId>
 					<groupId>commons-io</groupId>
@@ -457,45 +440,64 @@
 			<artifactId>spring-web</artifactId>
 			<version>6.1.6</version>
 		</dependency>
-		
-    <dependency>
-        <groupId>javax.ws.rs</groupId>
-        <artifactId>javax.ws.rs-api</artifactId>
-        <version>2.1.1</version>
-    </dependency>
 
-    <!-- Jersey Core -->
-    <dependency>
-        <groupId>org.glassfish.jersey.core</groupId>
-        <artifactId>jersey-common</artifactId>
-        <version>2.30.1</version>
-    </dependency>
-    <dependency>
-        <groupId>org.glassfish.jersey.core</groupId>
-        <artifactId>jersey-server</artifactId>
-        <version>2.30.1</version>
-    </dependency>
+		<dependency>
+			<groupId>javax.ws.rs</groupId>
+			<artifactId>javax.ws.rs-api</artifactId>
+			<version>2.1.1</version>
+		</dependency>
 
-   
-    <!-- Jersey JSON Processing -->
-    <dependency>
-        <groupId>org.glassfish.jersey.media</groupId>
-        <artifactId>jersey-media-json-processing</artifactId>
-        <version>2.30.1</version>
-    </dependency>
+		<!-- Jersey Core -->
+		<dependency>
+			<groupId>org.glassfish.jersey.core</groupId>
+			<artifactId>jersey-common</artifactId>
+			<version>2.30.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.jersey.core</groupId>
+			<artifactId>jersey-server</artifactId>
+			<version>2.30.1</version>
+		</dependency>
 
-    <!-- JAXB Runtime Implementation -->
-    <dependency>
-        <groupId>org.glassfish.jaxb</groupId>
-        <artifactId>jaxb-runtime</artifactId>
-        <version>2.3.1</version>
-    </dependency>
 
+		<!-- Jersey JSON Processing -->
+		<dependency>
+			<groupId>org.glassfish.jersey.media</groupId>
+			<artifactId>jersey-media-json-processing</artifactId>
+			<version>2.30.1</version>
+		</dependency>
+
+		<!-- JAXB Runtime Implementation -->
+		<dependency>
+			<groupId>org.glassfish.jaxb</groupId>
+			<artifactId>jaxb-runtime</artifactId>
+			<version>2.3.1</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-api -->
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>0.12.6</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-impl -->
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>0.12.6</version>
+			<scope>runtime</scope>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-jackson -->
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-jackson</artifactId>
+			<version>0.12.6</version>
+			<scope>runtime</scope>
+		</dependency>
 
 	</dependencies>
 
 	<build>
-		<finalName>commonapi-v1.0</finalName>
+		<finalName>commonapi-v3.0.0</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -560,8 +562,7 @@
 									${target-properties} and
 									${source-properties}
 								</echo>
-								<concat destfile="${target-properties}"
-									append="yes"
+								<concat destfile="${target-properties}" append="yes"
 									force="yes">
 									<fileset file="${source-properties}">
 									</fileset>

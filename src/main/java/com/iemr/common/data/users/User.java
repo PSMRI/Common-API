@@ -21,11 +21,13 @@
 */
 package com.iemr.common.data.users;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.gson.annotations.Expose;
 import com.iemr.common.data.callhandling.OutboundCallRequest;
 import com.iemr.common.data.feedback.FeedbackDetails;
@@ -52,7 +54,7 @@ import lombok.Data;
 @Entity
 @Table(name = "m_user")
 @Data
-public class User {
+public class User implements Serializable  {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Expose
@@ -194,6 +196,7 @@ public class User {
 	private String newPassword = null;
 
 	@Transient
+	@JsonIgnore
 	private OutputMapper outPutMapper = new OutputMapper();
 
 	// new field for rate-limit, failed authentication
