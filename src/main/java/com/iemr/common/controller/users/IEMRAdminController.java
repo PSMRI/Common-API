@@ -152,8 +152,9 @@ public class IEMRAdminController {
 			JSONObject serviceRoleMap = new JSONObject();
 			JSONArray serviceRoleList = new JSONArray();
 			JSONObject previlegeObj = new JSONObject();
-			if (m_User.getUserName() != null && (m_User.getDoLogout() == null || m_User.getDoLogout() == false)
-					&& (m_User.getWithCredentials() != null || m_User.getWithCredentials() == true)) {
+			if (m_User.getUserName() != null 
+					    && (m_User.getDoLogout() == null || !m_User.getDoLogout()) 
+					    && (m_User.getWithCredentials() != null && m_User.getWithCredentials())) {
 				String tokenFromRedis = getConcurrentCheckSessionObjectAgainstUser(
 						m_User.getUserName().trim().toLowerCase());
 				if (tokenFromRedis != null) {
