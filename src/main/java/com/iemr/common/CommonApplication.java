@@ -22,14 +22,18 @@
 package com.iemr.common;
 
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.client.RestTemplate;
 
+import com.iemr.common.data.users.User;
 import com.iemr.common.utils.IEMRApplBeans;
 
 @SpringBootApplication
@@ -41,17 +45,32 @@ public class CommonApplication extends SpringBootServletInitializer {
 		return new IEMRApplBeans();
 	}
 
-    @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
-    
+	@Bean
+	public RestTemplate restTemplate() {
+		return new RestTemplate();
+	}
+
 	public static void main(String[] args) {
 		SpringApplication.run(CommonApplication.class, args);
 	}
 
 	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
 		return application.sources(new Class[] { CommonApplication.class });
+	}
+
+	@Bean
+	public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
+		RedisTemplate<String, Object> template = new RedisTemplate<>();
+		template.setConnectionFactory(factory);
+
+		// Use StringRedisSerializer for keys (userId)
+		template.setKeySerializer(new StringRedisSerializer());
+
+		// Use Jackson2JsonRedisSerializer for values (Users objects)
+		Jackson2JsonRedisSerializer<User> serializer = new Jackson2JsonRedisSerializer<>(User.class);
+		template.setValueSerializer(serializer);
+
+		return template;
 	}
 
 }

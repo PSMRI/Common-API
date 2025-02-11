@@ -33,7 +33,7 @@ public interface GrievanceDataRepo  extends CrudRepository<GrievanceDetails, Lon
 
 
     @Modifying
-    @Query("UPDATE GrievanceDetails g SET g.isAllocated = true, g.userid = :userId WHERE g.grievanceid = :grievanceId")
+    @Query("UPDATE GrievanceDetails g SET g.isAllocated = true, g.userid = :userId WHERE g.grievanceId = :grievanceId")
     @Transactional
     public int allocateGrievance(@Param("grievanceId") Long grievanceId, @Param("userId") Integer userId);
 

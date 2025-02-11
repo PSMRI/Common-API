@@ -1171,4 +1171,22 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 		}
 		return hex;
 	}
+	
+	public User getUserById(Long userId) throws IEMRException {
+	    try {
+	        // Fetch user from custom repository by userId
+	        User user = iEMRUserRepositoryCustom.findByUserID(userId);
+	        
+	        // Check if user is found
+	        if (user == null) {
+	            throw new IEMRException("User not found with ID: " + userId);
+	        }
+	        
+	        return user;
+	    } catch (Exception e) {
+	        // Log and throw custom exception in case of errors
+	        logger.error("Error fetching user with ID: " + userId, e);
+	        throw new IEMRException("Error fetching user with ID: " + userId, e);
+	    }
+	}
 }
