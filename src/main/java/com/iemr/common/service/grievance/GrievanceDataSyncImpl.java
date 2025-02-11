@@ -415,9 +415,9 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 
 		// Loop through the resultSet and populate the counts for each language
 		if (resultSet != null && !resultSet.isEmpty()) {
-			for (Object[] record : resultSet) {
-				String language = ((String) record[0]).trim();
-				Long count = (Long) record[1];
+			for (Object[] recordSet : resultSet) {
+				String language = ((String) recordSet[0]).trim();
+				Long count = (Long) recordSet[1];
 
 				// Add the count to the result for the current language
 				result.put(language, count);

@@ -29,9 +29,9 @@ public class ScheduleForGrievanceDataSync {
 	@Scheduled(cron = "${cron-scheduler-grievancedatasync}")
 	public void execute() {
 		if (grievanceFlag) {
-			logger.info("Started job for grievance data sync {}");
+			logger.info("Started job for grievance data sync ");
 			grievanceDataSync.dataSyncToGrievance();
-			logger.info("Completed job for grievance data sync {}");
+			logger.info("Completed job for grievance data sync ");
 		}
 
 	}
