@@ -10,6 +10,6 @@ import com.iemr.common.utils.exception.IEMRException;
 public interface GrievanceDataSync {
 	public List<Map<String, Object>> dataSyncToGrievance();
 	
-	public String fetchUnallocatedGrievanceCount() throws IEMRException, JSONException;
+	public String fetchUnallocatedGrievanceCount(String preferredLanguage) throws IEMRException, JSONException;
 
 }

@@ -6,9 +6,12 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -52,6 +55,8 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 
 	private static final String FILE_NAME = "fileName";
 	private static final String FILE_TYPE = "fileType";
+	private static final String PREFERRED_LANGUAGE = "preferredLanguage";
+	private static final String COUNT_OF_PREFERRED_LANGUAGE = "countOfPrefLanguage";
 
 	private final GrievanceDataRepo grievanceDataRepo;
 	private final GrievanceTransactionRepo grievanceTransactionRepo;
@@ -159,7 +164,7 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 											+ " already exists in the grievance worklist table.");
 								}
 
-								grievance.setComplaintId(formattedComplaintId);
+								grievance.setComplaintID(formattedComplaintId);
 
 								// Fetch related grievance transaction details
 								List<GrievanceTransaction> transactionDetailsList = fetchGrievanceTransactions(
@@ -210,33 +215,32 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 
 								for (Object[] objects : lists) {
 									if (objects != null && objects.length <= 4) {
-										grievance.setComplaintId((String) objects[0]);
-										grievance.setBeneficiaryRegId((Long) objects[1]);
-										grievance.setBencallId((Long) objects[2]);
-										grievance.setProviderServiceMapId((Integer) objects[3]);
+										grievance.setComplaintID((String) objects[0]);
+										grievance.setBeneficiaryRegID((Long) objects[1]);
+										grievance.setBenCallID((Long) objects[2]);
+										grievance.setProviderServiceMapID((Integer) objects[3]);
 										String state = locationStateRepository
 												.findByStateIDForGrievance((Integer) objects[4]);
 										grievance.setState(state);
 									}
 								}
-								//setting language related properties and other
-								ArrayList<Object[]> list1 = grievanceDataRepo.getBeneficiaryGrievanceDetails(grievance.getBeneficiaryRegId());
+								// setting language related properties and other
+								ArrayList<Object[]> list1 = grievanceDataRepo
+										.getBeneficiaryGrievanceDetails(grievance.getBeneficiaryRegID());
 								for (Object[] objects : list1) {
 									if (objects != null && objects.length >= 6) {
 										grievance.setPreferredLanguageId((Integer) objects[0]);
 										grievance.setPreferredLanguage((String) objects[1]);
 										grievance.setVanSerialNo((Integer) objects[2]);
-										grievance.setVanId((Integer) objects[3]);
-										grievance.setParkingPlaceId((Integer) objects[4]);
+										grievance.setVanID((Integer) objects[3]);
+										grievance.setParkingPlaceID((Integer) objects[4]);
 										grievance.setVehicalNo((String) objects[5]);
-										
+
 									}
 								}
-								
-								
-								
+
 								// Setting remaining grievance properties (similar to the existing code)
-								grievance.setAgentId(grievance.getAgentId());
+								grievance.setAgentid(grievance.getAgentid());
 								grievance.setDeleted(grievance.getDeleted());
 								grievance.setCreatedBy(registeringUser);
 								grievance.setProcessed('N');
@@ -256,8 +260,8 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 								combinedData.put("complaintID", grievance.getGrievanceId());
 								combinedData.put("subjectOfComplaint", grievance.getSubjectOfComplaint());
 								combinedData.put("complaint", grievance.getComplaint());
-								combinedData.put("beneficiaryRegID", grievance.getBeneficiaryRegId());
-								combinedData.put("providerServiceMapId", grievance.getProviderServiceMapId());
+								combinedData.put("beneficiaryRegID", grievance.getBeneficiaryRegID());
+								combinedData.put("providerServiceMapId", grievance.getProviderServiceMapID());
 
 								combinedData.put("primaryNumber", grievance.getPrimaryNumber());
 
@@ -279,7 +283,7 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 								combinedData.put("transaction", transactions);
 								combinedData.put("severity", grievance.getSeverety());
 								combinedData.put("state", grievance.getState());
-								combinedData.put("agentId", grievance.getAgentId());
+								combinedData.put("agentId", grievance.getAgentid());
 								combinedData.put("deleted", grievance.getDeleted());
 								combinedData.put("createdBy", grievance.getCreatedBy());
 								combinedData.put("createdDate", grievance.getCreatedDate());
@@ -398,18 +402,70 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 		}
 	}
 
-	public String fetchUnallocatedGrievanceCount() throws IEMRException, JSONException {
+	public String fetchUnallocatedGrievanceCount(String preferredLanguage) throws IEMRException, JSONException {
 		logger.debug("Request received for fetchUnallocatedGrievanceCount");
 
-		Long unallocatedCount = grievanceDataRepo.fetchUnallocatedGrievanceCount();
+		// Fetch all unallocated grievances count from the database
+		Set<Object[]> resultSet = grievanceDataRepo.fetchUnallocatedGrievanceCount();
 
-		if (unallocatedCount == null) {
-			throw new IEMRException("Failed to fetch unallocated grievance count");
+		// Initialize the result JSON object to hold counts
+		JSONObject result = new JSONObject();
+		boolean preferredLanguageFound = false;
+		result.put("All", 0); // Initialize the "All" language count to 0
+
+		// Loop through the resultSet and populate the counts for each language
+		if (resultSet != null && !resultSet.isEmpty()) {
+			for (Object[] recordSet : resultSet) {
+				String language = ((String) recordSet[0]).trim();
+				Long count = (Long) recordSet[1];
+
+				// Add the count to the result for the current language
+				result.put(language, count);
+				result.put("All", result.getLong("All") + count); // Add to the total "All" count
+
+				// If the preferred language matches, mark it as found
+				if (preferredLanguage != null && preferredLanguage.equalsIgnoreCase(language)) {
+					preferredLanguageFound = true;
+				}
+			}
 		}
 
-		JSONObject result = new JSONObject();
-		result.put("count", unallocatedCount);
-		return result.toString();
-	}
+		// If the preferred language is provided but not found in the results, add it
+		// with count 0
+		if (preferredLanguage != null && !preferredLanguageFound) {
+			result.put(preferredLanguage, 0);
+		}
 
+		// Create the final JSON response array
+		JSONArray resultArray = new JSONArray();
+
+		// Case 1: If preferredLanguage is provided, return only that language's count
+		if (preferredLanguage != null) {
+			JSONObject preferredLanguageEntry = new JSONObject();
+			preferredLanguageEntry.put(PREFERRED_LANGUAGE, preferredLanguage);
+			preferredLanguageEntry.put(COUNT_OF_PREFERRED_LANGUAGE, result.getLong(preferredLanguage));
+			resultArray.put(preferredLanguageEntry);
+		} else {
+			// Case 2: If no preferredLanguage is provided, return counts for all languages
+			// Add the "All" entry first
+			JSONObject allEntry = new JSONObject();
+			allEntry.put(PREFERRED_LANGUAGE, "All");
+			allEntry.put(COUNT_OF_PREFERRED_LANGUAGE, result.getLong("All"));
+			resultArray.put(allEntry);
+
+			// Add counts for other languages
+			Iterator<String> keys = result.keys();
+			while (keys.hasNext()) {
+				String key = keys.next();
+				if (!key.equals("All")) {
+					JSONObject temp = new JSONObject();
+					temp.put(PREFERRED_LANGUAGE, key);
+					temp.put(COUNT_OF_PREFERRED_LANGUAGE, result.getLong(key));
+					resultArray.put(temp);
+				}
+			}
+		}
+
+		return resultArray.toString();
+	}
 }
