@@ -25,15 +25,45 @@ public class CookieUtil {
 	}
 
 	public void addJwtTokenToCookie(String Jwttoken, HttpServletResponse response, HttpServletRequest request) {
-		// Create a new cookie with the JWT token
-		Cookie cookie = new Cookie("Jwttoken", Jwttoken);
-		cookie.setHttpOnly(true); // Prevent JavaScript access for security
-		cookie.setMaxAge(60 * 60 * 24); // 1 day expiration time
-		cookie.setPath("/"); // Make the cookie available for the entire application
-		if ("https".equalsIgnoreCase(request.getScheme())) {
-			cookie.setSecure(true); // Secure flag only on HTTPS
-		}
-		response.addCookie(cookie); // Add the cookie to the response
+	    // Create a new cookie with the JWT token
+	    Cookie cookie = new Cookie("Jwttoken", Jwttoken);
+	 
+	    // Make the cookie HttpOnly to prevent JavaScript access for security
+	    cookie.setHttpOnly(true);
+	 
+	    // Set the Max-Age (expiry time) in seconds (1 day)
+	    cookie.setMaxAge(60 * 60 * 24); // 1 day expiration
+	 
+	    // Set the path to "/" so the cookie is available across the entire application
+	    cookie.setPath("/");
+	 
+	    // Set the SameSite attribute for cross-site request handling (if needed)
+	    String sameSite = "None"; // Allow cross-site cookies (can be 'Strict', 'Lax', or 'None')
+	    if ("https".equalsIgnoreCase(request.getScheme())) {
+	        // Set Secure flag for HTTPS connection and SameSite=None for cross-site support
+	        cookie.setSecure(true);  // Enable cookie only on HTTPS
+	    } else {
+	        cookie.setSecure(false); // No need for Secure flag on HTTP connections
+	    }
+	 
+	    // Add the cookie to the response
+	    response.addCookie(cookie);
+	 
+	    // Build the Set-Cookie header manually (to add SameSite attribute support)
+	    StringBuilder cookieHeader = new StringBuilder();
+	    cookieHeader.append(cookie.getName()).append("=").append(cookie.getValue())
+	                .append("; Path=").append(cookie.getPath())
+	                .append("; Max-Age=").append(cookie.getMaxAge())
+	                .append("; HttpOnly");
+	 
+	    // Add SameSite and Secure attributes manually if needed
+	    cookieHeader.append("; SameSite=").append(sameSite);
+	    if (cookie.getSecure()) {
+	        cookieHeader.append("; Secure");
+	    }
+	 
+	    // Set the custom Set-Cookie header
+	    response.addHeader("Set-Cookie", cookieHeader.toString());
 	}
 
 	public String getJwtTokenFromCookie(HttpServletRequest request) {
