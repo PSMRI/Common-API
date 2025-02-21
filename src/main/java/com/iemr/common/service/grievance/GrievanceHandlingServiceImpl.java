@@ -326,6 +326,7 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	        return formattedGrievances;
 	    
 	    }
+
 		
 		public String saveComplaintResolution(String request) throws Exception {
 	        // Parse the request JSON into a GrievanceDetails object
@@ -353,4 +354,5 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	            throw new Exception("Failed to update complaint resolution.");
 	        }
 	    }
+
 }
