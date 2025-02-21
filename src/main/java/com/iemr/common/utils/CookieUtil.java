@@ -43,7 +43,7 @@ public class CookieUtil {
 	        // Set Secure flag for HTTPS connection and SameSite=None for cross-site support
 	        cookie.setSecure(true);  // Enable cookie only on HTTPS
 	    } else {
-	        cookie.setSecure(false); // No need for Secure flag on HTTP connections
+	        cookie.setSecure(true); // No need for Secure flag on HTTP connections
 	    }
 	 
 	    // Add the cookie to the response
