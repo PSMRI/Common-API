@@ -1,11 +1,18 @@
 package com.iemr.common.controller.grievance;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import javax.ws.rs.core.MediaType;
 
 import org.json.JSONException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.iemr.common.data.grievance.UnallocationRequest;
+import com.iemr.common.dto.grivance.GrievanceWorklistDTO;
 import com.iemr.common.service.grievance.GrievanceDataSync;
 import com.iemr.common.service.grievance.GrievanceHandlingService;
 import com.iemr.common.utils.exception.IEMRException;
@@ -117,5 +125,35 @@ public class GrievanceController {
 		}
 		return response.toString();
 	}
+	
+
+	
+	  @Operation(summary = "get grievance outbound worklist)")
+			@PostMapping(value = "/getGrievanceOutboundWorklist", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+		    public ResponseEntity<List<GrievanceWorklistDTO>> getGrievanceOutboundWorklist(@Param(value = "{\"providerServiceMapId\":\" called service ID integer\", "
+					+ "\"userId\":\"Optional - Integer ID of user that is assigned to\"}") @RequestBody String request) {
+		        logger.info("Request received for grievance worklist");
+		        List<GrievanceWorklistDTO> response = new ArrayList<>();
+				try {
+					response = grievanceHandlingService.getFormattedGrievanceData(request);
+					
+				}
+				
+				catch (Exception e) {
+					logger.error("grievanceOutboundWorklist failed with error " + e.getMessage(), e);
+					List<GrievanceWorklistDTO> errorResponse = new ArrayList<>();
+			        GrievanceWorklistDTO errorDTO = new GrievanceWorklistDTO();
+			        errorDTO.setComplaint("Error fetching grievance data");
+			        errorDTO.setSubjectOfComplaint(e.getMessage());
+			        
+			        // Return error response with empty list and error message
+			        errorResponse.add(errorDTO);
+			        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+				}
+		       
+			    
+		        return ResponseEntity.ok(response);
+		        }
+
 
 }
