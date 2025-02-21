@@ -326,4 +326,33 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	        return formattedGrievances;
 	    
 	    }
+
+		
+		public String saveComplaintResolution(String request) throws Exception {
+	        // Parse the request JSON into a GrievanceDetails object
+	        GrievanceDetails grievanceRequest = InputMapper.gson().fromJson(request, GrievanceDetails.class);
+
+	        // Extract values from the request
+	        String complaintID = grievanceRequest.getComplaintID();
+	        String complaintResolution = grievanceRequest.getComplaintResolution();
+	        String remarks = grievanceRequest.getRemarks();
+	        Long beneficiaryRegID = grievanceRequest.getBeneficiaryRegID();
+	        Integer providerServiceMapID = grievanceRequest.getProviderServiceMapID();
+	        Integer assignedUserID = grievanceRequest.getAssignedUserID();
+	        
+	        int updateCount = 0;
+	        if (remarks == null) {
+	        	updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution,complaintID,
+                        beneficiaryRegID, providerServiceMapID, assignedUserID);
+	        }
+	        updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, remarks, complaintID, 
+	                                                                      beneficiaryRegID, providerServiceMapID, assignedUserID);
+
+	        if (updateCount > 0) {
+	            return "Complaint resolution updated successfully.";
+	        } else {
+	            throw new Exception("Failed to update complaint resolution.");
+	        }
+	    }
+
 }

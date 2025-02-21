@@ -20,4 +20,7 @@ public interface GrievanceHandlingService {
 	
 	public List<GrievanceWorklistDTO> getFormattedGrievanceData(String request) throws Exception;
 
+	public String saveComplaintResolution(String request) throws Exception;
+
+
 }

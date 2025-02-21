@@ -16,6 +16,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -106,6 +107,15 @@ public class GrievanceDetails {
 	@Expose
 	@Column(name = "PreferredLanguage")
 	private String preferredLanguage;
+	
+	@Expose
+	@Column(name = "ComplaintResolution")
+	private String complaintResolution;
+	
+	@Expose
+	@Column(name = "Remarks")
+	//@Size(max = 5000, message = "Remarks cannot exceed 5000 characters")
+	private String remarks;
 
 	@Column(name = "Deleted", insertable = false, updatable = true)
 	private Boolean deleted = false;
@@ -161,7 +171,7 @@ public class GrievanceDetails {
 			Integer providerServiceMapID, String complaintID, String subjectOfComplaint, String complaint,
 			String primaryNumber, String severety, String state, String agentID, Integer userid, Boolean isAllocated,
 			Boolean retryNeeded, Boolean isRegistered, Integer callCounter, Integer preferredLanguageId,
-			String preferredLanguage, Boolean deleted, Character processed, String createdBy, Timestamp createdDate,
+			String preferredLanguage, String complaintResolution, String remarks, Boolean deleted, Character processed, String createdBy, Timestamp createdDate,
 			String modifiedBy, Timestamp lastModDate, Integer vanSerialNo, Integer vanID, String vehicalNo,
 			Integer parkingPlaceID, String syncedBy, Timestamp syncedDate, Boolean isCompleted) {
 		super();
@@ -184,6 +194,8 @@ public class GrievanceDetails {
 		this.callCounter = callCounter;
 		this.preferredLanguageId = preferredLanguageId;
 		this.preferredLanguage = preferredLanguage;
+		this.complaintResolution = complaintResolution;
+		this.remarks = remarks;
 		this.deleted = deleted;
 		this.processed = processed;
 		this.createdBy = createdBy;
