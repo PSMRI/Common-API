@@ -1,7 +1,6 @@
 package com.iemr.common.service.grievance;
 
 import java.util.List;
-import java.util.Map;
 
 import org.json.JSONException;
 import org.springframework.stereotype.Service;
@@ -19,8 +18,6 @@ public interface GrievanceHandlingService {
 	
 	public String moveToBin(String request) throws Exception;
 	
-//	public Map<String, Object> getGrievanceOutboundWorklist(String request) throws Exception;
-
 	public List<GrievanceWorklistDTO> getFormattedGrievanceData(String request) throws Exception;
 
 }

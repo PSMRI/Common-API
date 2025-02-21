@@ -3,12 +3,9 @@ package com.iemr.common.service.grievance;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -17,14 +14,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.iemr.common.data.grievance.GetGrievanceWorklistRequest;
 import com.iemr.common.data.grievance.GrievanceAllocationRequest;
 import com.iemr.common.data.grievance.GrievanceDetails;
 import com.iemr.common.data.grievance.GrievanceReallocationRequest;
-import com.iemr.common.data.grievance.GrievanceWorklist;
 import com.iemr.common.data.grievance.MoveToBinRequest;
 import com.iemr.common.dto.grivance.GrievanceTransactionDTO;
 import com.iemr.common.dto.grivance.GrievanceWorklistDTO;
@@ -259,6 +254,11 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 
 	        // Loop through the worklist data and format the response
 	        for (Object[] row : worklistData) {
+	        	if (row == null || row.length < 27)
+	        	{
+	        		logger.warn("invalid row data received");
+	        		continue;
+	        	}
 	            GrievanceWorklistDTO grievance = new GrievanceWorklistDTO(
 	                (String) row[0], // complaintID
 	                (String) row[1], // subjectOfComplaint
@@ -285,13 +285,11 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	                (String) row[24], // age
 	                (Boolean) row[25], // retryNeeded
 	                (Integer) row[26] // callCounter
-	                //(String) row[22] // lastCall
 	            );
 
 	            // Extract transactions from the current row and add them to the grievance object
 	            GrievanceTransactionDTO transaction = new GrievanceTransactionDTO(
-	           //     (String) row[23], // actionTakenBy
-	           //     (String) row[24], // status
+	  
 	                (String) row[22], // fileName
 	                (String) row[6], // fileType
 	                (String) row[7], // redressed
