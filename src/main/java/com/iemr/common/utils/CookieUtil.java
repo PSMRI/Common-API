@@ -39,13 +39,7 @@ public class CookieUtil {
 	 
 	    // Set the SameSite attribute for cross-site request handling (if needed)
 	    String sameSite = "None"; // Allow cross-site cookies (can be 'Strict', 'Lax', or 'None')
-	    if ("https".equalsIgnoreCase(request.getScheme())) {
-	        // Set Secure flag for HTTPS connection and SameSite=None for cross-site support
-	        cookie.setSecure(true);  // Enable cookie only on HTTPS
-	    } else {
-	        cookie.setSecure(true); // No need for Secure flag on HTTP connections
-	    }
-	 
+	    cookie.setSecure(true);
 	    // Add the cookie to the response
 	    response.addCookie(cookie);
 	 
