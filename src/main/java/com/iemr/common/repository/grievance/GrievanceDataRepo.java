@@ -70,5 +70,28 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 
 	@Query("Select grievance.preferredLanguage, count(grievance) from GrievanceDetails grievance where grievance.isAllocated=false group by grievance.preferredLanguage")
 	public Set<Object[]> fetchUnallocatedGrievanceCount();
+	
+	@Modifying
+	@Query("UPDATE GrievanceDetails g SET g.complaintResolution = :complaintResolution, g.remarks = :remarks "
+	       + "WHERE g.complaintID = :complaintID AND g.beneficiaryRegID = :beneficiaryRegID AND g.providerServiceMapID = :providerServiceMapID"
+		   + " AND g.assignedUserID = :assignedUserID")
+	@Transactional
+	int updateComplaintResolution(@Param("complaintResolution") String complaintResolution,
+	                              @Param("remarks") String remark,
+	                              @Param("complaintID") String complaintID,
+	                              @Param("beneficiaryRegID") Long beneficiaryRegID,
+	                              @Param("providerServiceMapID") Integer providerServiceMapID,
+	                              @Param("assignedUserID") Integer assignedUserID);
+
+	@Modifying
+	@Query("UPDATE GrievanceDetails g SET g.complaintResolution = :complaintResolution "
+	       + "WHERE g.complaintID = :complaintID AND g.beneficiaryRegID = :beneficiaryRegID AND g.providerServiceMapID = :providerServiceMapID"
+			+ " AND g.assignedUserID = :assignedUserID")
+	@Transactional
+	int updateComplaintResolution(@Param("complaintResolution") String complaintResolution,
+	                              @Param("complaintID") String complaintID,
+	                              @Param("beneficiaryRegID") Long beneficiaryRegID,
+	                              @Param("providerServiceMapID") Integer providerServiceMapID,
+	                              @Param("assignedUserID") Integer assignedUserID);
 
 }

@@ -156,4 +156,16 @@ public class GrievanceController {
 		        }
 
 
+	  @PostMapping(value = "/saveComplaintResolution", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+	    public String saveComplaintResolution(@RequestBody String request) {
+	        OutputResponse response = new OutputResponse();
+	        try {
+	            response.setResponse(grievanceHandlingService.saveComplaintResolution(request));
+	        } catch (Exception e) {
+	            logger.error("saveComplaintResolution failed with error " + e.getMessage(), e);
+	            response.setError(e);
+	        }
+	        return response.toString();
+	    }
+	  
 }
