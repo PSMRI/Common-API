@@ -273,7 +273,7 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	        
 	        // Loop through the worklist data and format the response
 	        for (Object[] row : worklistData) {
-	        	if (row == null || row.length < 27)
+	        	if (row == null || row.length < 28)
 	        	{
 	        		logger.warn("invalid row data received");
 	        		continue;
@@ -286,35 +286,35 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	                (Integer) row[4],// providerServiceMapID
 			(String) row[5], // primaryNumber
 
-	                (String) row[19], // firstName
-	                (String) row[20], // lastName
+	                (String) row[20], // firstName
+	                (String) row[21], // lastName
 	             
 	                new ArrayList<>(),// transactions (initially empty, will be populated later)
-	                (String) row[11], // severety
-	                (String) row[12], // state
-	                (Integer) row[13],// userId
-	                (Boolean) row[14],// deleted
-	                (String) row[15],// createdBy
-	                (Timestamp) row[16], // createdDate
-	                (Timestamp) row[17], // lastModDate
-	                (Boolean) row[18], // isCompleted
-	                (String) row[21], // gender
-	                (String) row[22], // district
-	                (Long) row[23], // beneficiaryID
-	                (String) row[24], // age
-	                (Boolean) row[25], // retryNeeded
-	                (Integer) row[26] // callCounter
+	                (String) row[12], // severety
+	                (String) row[13], // state
+	                (Integer) row[14],// userId
+	                (Boolean) row[15],// deleted
+	                (String) row[16],// createdBy
+	                (Timestamp) row[17], // createdDate
+	                (Timestamp) row[18], // lastModDate
+	                (Boolean) row[19], // isCompleted
+	                (String) row[22], // gender
+	                (String) row[23], // district
+	                (Long) row[24], // beneficiaryID
+	                (String) row[25], // age
+	                (Boolean) row[26], // retryNeeded
+	                (Integer) row[27] // callCounter
 	            );
 
 	            // Extract transactions from the current row and add them to the grievance object
 	            GrievanceTransactionDTO transaction = new GrievanceTransactionDTO(
 	  
 	                (String) row[6], // fileName
-	                (String) row[6], // fileType
-	                (String) row[7], // redressed
-	                (Timestamp) row[8], // createdAt
-	                (Timestamp) row[9], // updatedAt
-	                (String) row[10] // comment
+	                (String) row[7], // fileType
+	                (String) row[8], // redressed
+	                (Timestamp) row[9], // createdAt
+	                (Timestamp) row[10], // updatedAt
+	                (String) row[11] // comment
 	            );
 	            
 	            grievance.getTransactions().add(transaction);  // Add the transaction to the grievance's list
