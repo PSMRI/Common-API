@@ -245,13 +245,32 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	 
 		@Transactional
 	    public List<GrievanceWorklistDTO> getFormattedGrievanceData(String request) throws Exception {
+			if (request == null || request.trim().isEmpty()) {
+				throw new IllegalArgumentException("Request cannot be null or empty");
+			}
+			
 			GetGrievanceWorklistRequest getGrievanceWorklistRequest = InputMapper.gson().fromJson(request, GetGrievanceWorklistRequest.class);
 
 	    	List<GrievanceWorklistDTO> formattedGrievances = new ArrayList<>();
 
 	        // Fetch grievance worklist data using @Procedure annotation
-	        List<Object[]> worklistData = grievanceOutboundRepo.getGrievanceWorklistData(getGrievanceWorklistRequest.getProviderServiceMapID(), getGrievanceWorklistRequest.getUserId());
-
+	        List<Object[]> worklistData;
+	        try {
+	        	if (getGrievanceWorklistRequest.getProviderServiceMapID() == null || 
+	        		getGrievanceWorklistRequest.getUserId() == null) {
+	        			throw new IllegalArgumentException("ProviderServiceMapID and UserId are required");
+	        		}
+	        worklistData = grievanceOutboundRepo.getGrievanceWorklistData(getGrievanceWorklistRequest.getProviderServiceMapID(), getGrievanceWorklistRequest.getUserId());
+	        if (worklistData == null || worklistData.isEmpty()) {
+	        	logger.info("No grievance data found for the given criteria");
+	        	return new ArrayList<>();
+	        }
+	       }
+	        catch (Exception e) {
+	        	logger.error("Failed to fetch grievance data: {}", e.getMessage());
+	        	throw new Exception("Failed to retrieve grievance data", e);
+	        }
+	        
 	        // Loop through the worklist data and format the response
 	        for (Object[] row : worklistData) {
 	        	if (row == null || row.length < 27)
@@ -290,7 +309,7 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	            // Extract transactions from the current row and add them to the grievance object
 	            GrievanceTransactionDTO transaction = new GrievanceTransactionDTO(
 	  
-	                (String) row[22], // fileName
+	                (String) row[6], // fileName
 	                (String) row[6], // fileType
 	                (String) row[7], // redressed
 	                (Timestamp) row[8], // createdAt
