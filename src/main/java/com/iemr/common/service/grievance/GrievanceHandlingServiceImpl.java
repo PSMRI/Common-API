@@ -327,11 +327,36 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	    
 	    }
 
-		
+		    /**
+		    * Saves the complaint resolution and remarks for a grievance.
+		    *
+		    * @param request JSON string containing complaint resolution details
+		    * @return Success message if the update is successful
+		    */
+		 
+		@Transactional
 		public String saveComplaintResolution(String request) throws Exception {
 	        // Parse the request JSON into a GrievanceDetails object
 	        GrievanceDetails grievanceRequest = InputMapper.gson().fromJson(request, GrievanceDetails.class);
 
+	                if (grievanceRequest.getComplaintID() == null || grievanceRequest.getComplaintID().trim().isEmpty()) {
+	                    throw new IllegalArgumentException("ComplaintID is required");
+	                }
+	                if (grievanceRequest.getComplaintResolution() == null || grievanceRequest.getComplaintResolution().trim().isEmpty()) {
+	                    throw new IllegalArgumentException("ComplaintResolution is required");
+	                }
+	                if (grievanceRequest.getBeneficiaryRegID() == null) {
+	                    throw new IllegalArgumentException("BeneficiaryRegID is required");
+	                }
+	                if (grievanceRequest.getProviderServiceMapID() == null) {
+	                    throw new IllegalArgumentException("ProviderServiceMapID is required");
+	                }
+	                if (grievanceRequest.getAssignedUserID() == null) {
+	                    throw new IllegalArgumentException("AssignedUserID is required");
+	                }
+	                if (grievanceRequest.getCreatedBy() == null) {
+	                    throw new IllegalArgumentException("CreatedBy is required");
+	                }
 	        // Extract values from the request
 	        String complaintID = grievanceRequest.getComplaintID();
 	        String complaintResolution = grievanceRequest.getComplaintResolution();
@@ -339,15 +364,23 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	        Long beneficiaryRegID = grievanceRequest.getBeneficiaryRegID();
 	        Integer providerServiceMapID = grievanceRequest.getProviderServiceMapID();
 	        Integer assignedUserID = grievanceRequest.getAssignedUserID();
-	        
+	        String createdBy = grievanceRequest.getCreatedBy();
+	        Timestamp lastModDate = new Timestamp(System.currentTimeMillis());  // Get current system time as Timestamp
+
+	      
+	        String modifiedBy = createdBy;
 	        int updateCount = 0;
 	        if (remarks == null) {
-	        	updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution,complaintID,
+	        	updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, modifiedBy, lastModDate, complaintID,
                         beneficiaryRegID, providerServiceMapID, assignedUserID);
+	        	logger.debug("updated complaint resolution without remarks for complaint id: {}", complaintID);
 	        }
-	        updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, remarks, complaintID, 
+	        else {
+	        updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, remarks,  modifiedBy, lastModDate, complaintID, 
 	                                                                      beneficiaryRegID, providerServiceMapID, assignedUserID);
+        	logger.debug("updated complaint resolution with remarks for complaint id: {}", complaintID);
 
+	        }
 	        if (updateCount > 0) {
 	            return "Complaint resolution updated successfully.";
 	        } else {

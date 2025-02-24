@@ -157,9 +157,17 @@ public class GrievanceController {
 
 
 
-
+	  @Operation(summary = "Save complaint resolution and remarks")
 	  @PostMapping(value = "/saveComplaintResolution", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
-	    public String saveComplaintResolution(@RequestBody String request) {
+	    public String saveComplaintResolution(       @Param(value = "{\"complaintID\":\"Complaint ID string\", " +
+                "\"complaintResolution\":\"Resolution text\", " +
+                "\"remarks\":\"Optional remarks\", " +
+                "\"beneficiaryRegID\":\"Beneficiary registration ID\", " +
+                "\"providerServiceMapID\":\"Provider service map ID\", " +
+                "\"assignedUserID\":\"Assigned user ID\", " +
+                "\"createdBy\":\"Creator of the complaint\", " +
+                "\"benCallID\":\"Beneficiary call ID\"}")
+ @RequestBody String request) {
 	        OutputResponse response = new OutputResponse();
 	        try {
 	            response.setResponse(grievanceHandlingService.saveComplaintResolution(request));

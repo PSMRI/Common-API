@@ -72,23 +72,27 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 	public Set<Object[]> fetchUnallocatedGrievanceCount();
 	
 	@Modifying
-	@Query("UPDATE GrievanceDetails g SET g.complaintResolution = :complaintResolution, g.remarks = :remarks "
+	@Query("UPDATE GrievanceDetails g SET g.complaintResolution = :complaintResolution, g.remarks = :remarks, g.modifiedBy =  :modifiedBy, g.lastModDate = :lastModDate "
 	       + "WHERE g.complaintID = :complaintID AND g.beneficiaryRegID = :beneficiaryRegID AND g.providerServiceMapID = :providerServiceMapID"
 		   + " AND g.assignedUserID = :assignedUserID")
 	@Transactional
 	int updateComplaintResolution(@Param("complaintResolution") String complaintResolution,
 	                              @Param("remarks") String remark,
+	                              @Param("modifiedBy") String modifiedBy,
+	                              @Param("lastModDate") Timestamp lastModDate,
 	                              @Param("complaintID") String complaintID,
 	                              @Param("beneficiaryRegID") Long beneficiaryRegID,
 	                              @Param("providerServiceMapID") Integer providerServiceMapID,
 	                              @Param("assignedUserID") Integer assignedUserID);
 
 	@Modifying
-	@Query("UPDATE GrievanceDetails g SET g.complaintResolution = :complaintResolution "
+	@Query("UPDATE GrievanceDetails g SET g.complaintResolution = :complaintResolution, g.modifiedBy =  :modifiedBy, g.lastModDate = :lastModDate "
 	       + "WHERE g.complaintID = :complaintID AND g.beneficiaryRegID = :beneficiaryRegID AND g.providerServiceMapID = :providerServiceMapID"
 			+ " AND g.assignedUserID = :assignedUserID")
 	@Transactional
 	int updateComplaintResolution(@Param("complaintResolution") String complaintResolution,
+			   					  @Param("modifiedBy") String modifiedBy,
+			   					  @Param("lastModDate") Timestamp lastModDate,
 	                              @Param("complaintID") String complaintID,
 	                              @Param("beneficiaryRegID") Long beneficiaryRegID,
 	                              @Param("providerServiceMapID") Integer providerServiceMapID,

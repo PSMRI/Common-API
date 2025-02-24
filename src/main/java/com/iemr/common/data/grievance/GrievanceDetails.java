@@ -114,7 +114,7 @@ public class GrievanceDetails {
 	
 	@Expose
 	@Column(name = "Remarks")
-	//@Size(max = 5000, message = "Remarks cannot exceed 5000 characters")
+	@Size(max = 5000, message = "Remarks cannot exceed 5000 characters")
 	private String remarks;
 
 	@Column(name = "Deleted", insertable = false, updatable = true)
