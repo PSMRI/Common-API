@@ -365,18 +365,17 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	        Integer providerServiceMapID = grievanceRequest.getProviderServiceMapID();
 	        Integer assignedUserID = grievanceRequest.getAssignedUserID();
 	        String createdBy = grievanceRequest.getCreatedBy();
-	        Timestamp lastModDate = new Timestamp(System.currentTimeMillis());  // Get current system time as Timestamp
 
 	      
 	        String modifiedBy = createdBy;
 	        int updateCount = 0;
 	        if (remarks == null) {
-	        	updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, modifiedBy, lastModDate, complaintID,
+	        	updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, modifiedBy, complaintID,
                         beneficiaryRegID, providerServiceMapID, assignedUserID);
 	        	logger.debug("updated complaint resolution without remarks for complaint id: {}", complaintID);
 	        }
 	        else {
-	        updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, remarks,  modifiedBy, lastModDate, complaintID, 
+	        updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, remarks,  modifiedBy, complaintID, 
 	                                                                      beneficiaryRegID, providerServiceMapID, assignedUserID);
         	logger.debug("updated complaint resolution with remarks for complaint id: {}", complaintID);
 
