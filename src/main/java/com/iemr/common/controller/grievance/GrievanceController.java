@@ -87,7 +87,7 @@ public class GrievanceController {
 	@Operation(summary = "Allocated Grievance Records Count")
 	@PostMapping(value = "/allocatedGrievanceRecordsCount", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String allocatedGrievanceRecordsCount(@Param(value = "{\"providerServiceMapID\":\"Service ID integer\", "
-			+ "\"assignedUserID\":\"Optional - Integer user ID to whom grievances are assigned\"}") @RequestBody String request) {
+			+ "\"userID\":\"Optional - Integer user ID to whom grievances are assigned\"}") @RequestBody String request) {
 		OutputResponse response = new OutputResponse();
 		try {
 			response.setResponse(grievanceHandlingService.allocatedGrievanceRecordsCount(request));
@@ -164,7 +164,7 @@ public class GrievanceController {
                 "\"remarks\":\"Optional remarks\", " +
                 "\"beneficiaryRegID\":\"Beneficiary registration ID\", " +
                 "\"providerServiceMapID\":\"Provider service map ID\", " +
-                "\"assignedUserID\":\"Assigned user ID\", " +
+                "\"userID\":\"Assigned user ID\", " +
                 "\"createdBy\":\"Creator of the complaint\", " +
                 "\"benCallID\":\"Beneficiary call ID\"}")
  @RequestBody String request) {

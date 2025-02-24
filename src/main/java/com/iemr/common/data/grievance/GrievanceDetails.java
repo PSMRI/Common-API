@@ -82,7 +82,7 @@ public class GrievanceDetails {
 
 	@Expose
 	@Column(name = "userid")
-	private Integer assignedUserID;
+	private Integer userID;
 
 	@Expose
 	@Column(name = "isAllocated")
@@ -187,7 +187,7 @@ public class GrievanceDetails {
 		this.severety = severety;
 		this.state = state;
 		this.agentid = agentID;
-		this.assignedUserID = userid;
+		this.userID = userid;
 		this.isAllocated = isAllocated;
 		this.retryNeeded = retryNeeded;
 		this.isRegistered = isRegistered;

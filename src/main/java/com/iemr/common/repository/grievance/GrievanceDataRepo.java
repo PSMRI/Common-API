@@ -27,40 +27,40 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 
 
 	@Modifying
-	@Query("UPDATE GrievanceDetails g SET g.isAllocated = true, g.assignedUserID = :assignedUserId WHERE g.grievanceId = :grievanceId")
+	@Query("UPDATE GrievanceDetails g SET g.isAllocated = true, g.userID = :userId WHERE g.grievanceId = :grievanceId")
 	@Transactional
 	public int allocateGrievance(@Param("grievanceId") Long grievanceId,
-			@Param("assignedUserId") Integer assignedUserId);
+			@Param("userId") Integer userId);
 
 	@Query(nativeQuery = true, value = "SELECT PreferredLanguageId, PreferredLanguage, VanSerialNo, VanID, ParkingPlaceId, VehicalNo FROM db_identity.i_beneficiarydetails WHERE BeneficiaryRegID = :benRegId")
 	public ArrayList<Object[]> getBeneficiaryGrievanceDetails(@Param("benRegId") Long benRegId);
 
 	@Query("select grievance.preferredLanguage, count(distinct grievance.grievanceId) "
 			+ "from GrievanceDetails grievance " + "where grievance.providerServiceMapID = :providerServiceMapID "
-			+ "and grievance.assignedUserID = :assignedUserID " + "and grievance.deleted = false "
+			+ "and grievance.userID = :userID " + "and grievance.deleted = false "
 			+ "group by grievance.preferredLanguage")
 	public Set<Object[]> fetchGrievanceRecordsCount(@Param("providerServiceMapID") Integer providerServiceMapID,
-			@Param("assignedUserID") Integer assignedUserID);
+			@Param("userID") Integer userID);
 
-	@Query("SELECT g FROM GrievanceDetails g WHERE g.assignedUserID = :assignedUserID AND g.preferredLanguage = :language AND g.isAllocated = true")
-	List<GrievanceDetails> findAllocatedGrievancesByUserAndLanguage(@Param("assignedUserID") Integer assignedUserID,
+	@Query("SELECT g FROM GrievanceDetails g WHERE g.userID = :userID AND g.preferredLanguage = :language AND g.isAllocated = true")
+	List<GrievanceDetails> findAllocatedGrievancesByUserAndLanguage(@Param("userID") Integer userID,
 			@Param("language") String language);
 
 	@Modifying
-	@Query("UPDATE GrievanceDetails g SET g.assignedUserID = :assignedUserID WHERE g.grievanceId = :grievanceId")
+	@Query("UPDATE GrievanceDetails g SET g.userID = :userID WHERE g.grievanceId = :grievanceId")
 	@Transactional
 	public int reallocateGrievance(@Param("grievanceId") Long grievanceId,
-			@Param("assignedUserID") Integer assignedUserID);
+			@Param("userID") Integer userID);
 
-	@Query("SELECT g FROM GrievanceDetails g WHERE g.assignedUserID = :assignedUserID "
+	@Query("SELECT g FROM GrievanceDetails g WHERE g.userID = :userID "
 			+ "AND g.preferredLanguage = :preferredLanguageName")
-	List<GrievanceDetails> findGrievancesByUserAndLanguage(@Param("assignedUserID") Integer assignedUserID,
+	List<GrievanceDetails> findGrievancesByUserAndLanguage(@Param("userID") Integer userID,
 			@Param("preferredLanguageName") String language);
 
 	@Modifying
 	@Transactional
-	@Query("UPDATE GrievanceDetails g SET g.assignedUserID = NULL WHERE g.grievanceId = :grievanceId AND g.assignedUserID = :assignedUserID")
-	int unassignGrievance(@Param("grievanceId") Long grievanceId, @Param("assignedUserID") Integer assignedUserID);
+	@Query("UPDATE GrievanceDetails g SET g.userID = NULL WHERE g.grievanceId = :grievanceId AND g.userID = :userID")
+	int unassignGrievance(@Param("grievanceId") Long grievanceId, @Param("userID") Integer userID);
 
 	@Modifying
 	@Transactional
@@ -74,7 +74,7 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 	@Modifying
 	@Query("UPDATE GrievanceDetails g SET g.complaintResolution = :complaintResolution, g.remarks = :remarks, g.modifiedBy =  :modifiedBy, "
 	       + "WHERE g.complaintID = :complaintID AND g.beneficiaryRegID = :beneficiaryRegID AND g.providerServiceMapID = :providerServiceMapID"
-		   + " AND g.assignedUserID = :assignedUserID")
+		   + " AND g.userID = :userID")
 	@Transactional
 	int updateComplaintResolution(@Param("complaintResolution") String complaintResolution,
 	                              @Param("remarks") String remark,
@@ -82,18 +82,18 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 	                              @Param("complaintID") String complaintID,
 	                              @Param("beneficiaryRegID") Long beneficiaryRegID,
 	                              @Param("providerServiceMapID") Integer providerServiceMapID,
-	                              @Param("assignedUserID") Integer assignedUserID);
+	                              @Param("userID") Integer userID);
 
 	@Modifying
 	@Query("UPDATE GrievanceDetails g SET g.complaintResolution = :complaintResolution, g.modifiedBy =  :modifiedBy, "
 	       + "WHERE g.complaintID = :complaintID AND g.beneficiaryRegID = :beneficiaryRegID AND g.providerServiceMapID = :providerServiceMapID"
-			+ " AND g.assignedUserID = :assignedUserID")
+			+ " AND g.userID = :userID")
 	@Transactional
 	int updateComplaintResolution(@Param("complaintResolution") String complaintResolution,
 			   					  @Param("modifiedBy") String modifiedBy,
 	                              @Param("complaintID") String complaintID,
 	                              @Param("beneficiaryRegID") Long beneficiaryRegID,
 	                              @Param("providerServiceMapID") Integer providerServiceMapID,
-	                              @Param("assignedUserID") Integer assignedUserID);
+	                              @Param("userID") Integer userID);
 
 }
