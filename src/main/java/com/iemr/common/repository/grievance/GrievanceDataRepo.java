@@ -77,7 +77,7 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 		   + " AND g.userID = :userID")
 	@Transactional
 	int updateComplaintResolution(@Param("complaintResolution") String complaintResolution,
-	                              @Param("remarks") String remark,
+	                              @Param("remarks") String remarks,
 	                              @Param("modifiedBy") String modifiedBy,
 	                              @Param("complaintID") String complaintID,
 	                              @Param("beneficiaryRegID") Long beneficiaryRegID,
