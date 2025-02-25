@@ -381,9 +381,9 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 
 	        }
 	        if (updateCount > 0) {
-	            return "Complaint resolution updated successfully.";
+	            return "Complaint resolution updated successfully";
 	        } else {
-	            throw new Exception("Failed to update complaint resolution.");
+	            throw new Exception("Failed to update complaint resolution");
 	        }
 	    }
 
