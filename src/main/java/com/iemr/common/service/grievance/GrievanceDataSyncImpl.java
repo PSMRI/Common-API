@@ -558,10 +558,10 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 					else {
 						response = "failure";
 					}
-	            } else if (callCounter == grievanceAllocationRetryConfiguration) {
+	            } else if (grievanceCallStatus.getCallCounter()== grievanceAllocationRetryConfiguration) {
 	                // Max attempts reached, no further reattempt
-	            	updateCount = grievanceDataRepo.updateCompletedStatusInCall(isCompleted, complaintID, userID, beneficiaryRegID, providerServiceMapId);
 	                grievanceCallStatus.setRetryNeeded(false);
+	            	updateCount = grievanceDataRepo.updateCompletedStatusInCall(isCompleted, grievanceCallStatus.getRetryNeeded(), complaintID, userID, beneficiaryRegID, providerServiceMapId);
 	                response = "max_attempts_reached";  // Indicate that max attempts are reached
 	                
 	                
