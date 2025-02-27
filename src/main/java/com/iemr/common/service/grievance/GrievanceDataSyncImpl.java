@@ -529,8 +529,7 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 	    		        String callType = callTypeObj.getCallType();
 
 	        	
-	            // Logic for reattempt based on state and call type
-	           // boolean isRetryNeeded = false;
+	            // Logic for reattempt based on call group type and call type
 	    		        
 	    		      boolean  isRetryNeeded = grievanceCallStatus.getRetryNeeded();
 	    		        if (callGroupType.equals("Valid")) {
