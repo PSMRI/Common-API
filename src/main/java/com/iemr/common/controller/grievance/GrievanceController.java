@@ -178,5 +178,35 @@ public class GrievanceController {
 	        return response.toString();
 	    }
 	  
+	  
+		// Controller method to handle reattempt logic
+		  @Operation(summary = "Check reattempt logic for grievance")
+		  @PostMapping(value = "/completeGrievanceCall", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+		  public String completeGrievanceCall(
+		      @Param(value = "{\"complaintID\":\"String - ComplaintID\", "
+		      		  + "\"userID\":\"Integer - Assigned UserID\", "
+		    		  + "\"isCompleted\":\"Boolean - completion status of call\", "
+		              + "\"beneficiaryRegId\":\"Long - Beneficiary Registration ID\", "
+		              + "\"callTypeID\":\"Integer - Call Type ID\", "
+		              + "\"benCallID\":\"Long - Beneficiary Call ID\", "
+		              +"\"callID\":\"String - call ID by czentrix\", "
+		              + "\"providerServiceMapID\":\"Integer - providerServiceMapID\", "
+		              + "\"createdBy\":\"String - Creator\"}") 
+		      @RequestBody String request) {
+
+				OutputResponse response = new OutputResponse();
+
+				try {
+					String s = grievanceDataSync.completeGrievanceCall(request);
+						response.setResponse(s);
+			
+				} catch (Exception e) {
+					logger.error("complete grievance outbound call failed with error " + e.getMessage(), e);
+					response.setError(e);
+				}
+				return response.toString();
+		  }
+
+	  
 
 }

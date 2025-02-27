@@ -72,7 +72,7 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 	public Set<Object[]> fetchUnallocatedGrievanceCount();
 	
 	@Modifying
-	@Query("UPDATE GrievanceDetails g SET g.complaintResolution = :complaintResolution, g.remarks = :remarks, g.modifiedBy =  :modifiedBy, "
+	@Query("UPDATE GrievanceDetails g SET g.complaintResolution = :complaintResolution, g.remarks = :remarks, g.modifiedBy =  :modifiedBy "
 	       + "WHERE g.complaintID = :complaintID AND g.beneficiaryRegID = :beneficiaryRegID AND g.providerServiceMapID = :providerServiceMapID"
 		   + " AND g.userID = :userID")
 	@Transactional
@@ -85,12 +85,38 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 	                              @Param("userID") Integer userID);
 
 	@Modifying
-	@Query("UPDATE GrievanceDetails g SET g.complaintResolution = :complaintResolution, g.modifiedBy =  :modifiedBy, "
+	@Query("UPDATE GrievanceDetails g SET g.complaintResolution = :complaintResolution, g.modifiedBy =  :modifiedBy "
 	       + "WHERE g.complaintID = :complaintID AND g.beneficiaryRegID = :beneficiaryRegID AND g.providerServiceMapID = :providerServiceMapID"
 			+ " AND g.userID = :userID")
 	@Transactional
 	int updateComplaintResolution(@Param("complaintResolution") String complaintResolution,
 			   					  @Param("modifiedBy") String modifiedBy,
+	                              @Param("complaintID") String complaintID,
+	                              @Param("beneficiaryRegID") Long beneficiaryRegID,
+	                              @Param("providerServiceMapID") Integer providerServiceMapID,
+	                              @Param("userID") Integer userID);
+	
+	@Query(" Select grievance.callCounter, grievance.retryNeeded FROM GrievanceDetails grievance where complaintID = :complaintID")
+	public ArrayList<Object[]> getCallCounter(@Param("complaintID") String complaintID);
+	
+	@Query("UPDATE GrievanceDetails g SET g.isCompleted = :isCompleted "
+			+ "WHERE g.complaintID = :complaintID AND g.userID = :userID AND g.beneficiaryRegID = :beneficiaryRegID "
+			+ "AND g.providerServiceMapID = :providerServiceMapID")
+	@Transactional
+	public int updateCompletedStatusInCall(@Param("isCompleted") Boolean isCompleted,
+										   @Param("complaintID") String complaintID,
+										   @Param("userID") Integer userID,
+										   @Param("beneficiaryRegID") Long beneficiaryRegID,
+				                           @Param("providerServiceMapID") Integer providerServiceMapID);
+										   
+
+	@Modifying
+	@Query("UPDATE GrievanceDetails g SET g.callCounter = :callCounter, g.retryNeeded =  :retryNeeded "
+	       + "WHERE g.complaintID = :complaintID AND g.beneficiaryRegID = :beneficiaryRegID AND g.providerServiceMapID = :providerServiceMapID"
+			+ " AND g.userID = :userID")
+	@Transactional
+	public int updateCallCounter(@Param("callCounter") Integer callCounter,
+			   					  @Param("retryNeeded") Boolean retryNeeded,
 	                              @Param("complaintID") String complaintID,
 	                              @Param("beneficiaryRegID") Long beneficiaryRegID,
 	                              @Param("providerServiceMapID") Integer providerServiceMapID,
