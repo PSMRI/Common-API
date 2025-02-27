@@ -12,4 +12,6 @@ public interface GrievanceDataSync {
 	
 	public String fetchUnallocatedGrievanceCount(String preferredLanguage) throws IEMRException, JSONException;
 
+	public String completeGrievanceCall(String request) throws Exception;
+
 }
