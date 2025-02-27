@@ -549,7 +549,7 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 	                grievanceCallStatus.setCallCounter(grievanceCallStatus.getCallCounter() + 1);
 	             // Update the retryNeeded flag
 	                grievanceCallStatus.setRetryNeeded(true);
-	                updateCallCounter = grievanceDataRepo.updateCallCounter(grievanceCallStatus.getCallCounter(),grievanceCallStatus.getRetryNeeded(), grievanceCallRequest.getComplaintID(), 
+	                updateCallCounter = grievanceDataRepo.updateCallCounter(callCounter, grievanceCallStatus.getRetryNeeded(), grievanceCallRequest.getComplaintID(), 
 	                		grievanceCallRequest.getBeneficiaryRegID(), grievanceCallRequest.getProviderServiceMapId(),
 	                		grievanceCallRequest.getUserID());
 	            //    response = "Successfully closing call.";  // Return success when reattempt logic is applied successfully. The grievance call needs to be retried, and a reattempt is performed.
@@ -558,7 +558,7 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 					else {
 						response = "failure";
 					}
-	            } else if (grievanceCallStatus.getCallCounter()== grievanceAllocationRetryConfiguration) {
+	            } else if (callCounter == grievanceAllocationRetryConfiguration) {
 	                // Max attempts reached, no further reattempt
 	                grievanceCallStatus.setRetryNeeded(false);
 	            	updateCount = grievanceDataRepo.updateCompletedStatusInCall(isCompleted, grievanceCallStatus.getRetryNeeded(), complaintID, userID, beneficiaryRegID, providerServiceMapId);
