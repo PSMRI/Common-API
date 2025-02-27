@@ -100,7 +100,7 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 	public List<Object[]> getCallCounter(@Param("complaintID") String complaintID);
 	
 	@Modifying
-	@Query("UPDATE GrievanceDetails g SET g.isCompleted = :isCompleted, g. g.retryNeeded =  :retryNeeded "
+	@Query("UPDATE GrievanceDetails g SET g.isCompleted = :isCompleted, g.retryNeeded =  :retryNeeded "
 			+ "WHERE g.complaintID = :complaintID AND g.userID = :userID AND g.beneficiaryRegID = :beneficiaryRegID "
 			+ "AND g.providerServiceMapID = :providerServiceMapID")
 	@Transactional
