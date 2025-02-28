@@ -533,7 +533,7 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 	    		      boolean  isRetryNeeded = grievanceCallStatus.getRetryNeeded();
 	    		        if (callGroupType.equals("Valid")) {
 	                // Conditions when no reattempt is needed
-	                if (callType.equals("Valid") || callType.equals("Wrong Number") || callType.equals("Test Call")) {
+	                if (callType.equals("Valid")  || callType.equals("Test Call")) {
 	                	isRetryNeeded = false;
 	                } else if (callType.equals("Disconnected Call") || callType.equals("Serviced Call") ||
 	                           callType.equals("Silent Call") || callType.equals("Call Back")) {
@@ -541,6 +541,11 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 	                	isRetryNeeded = true;
 	                }
 	            }
+	    		        if (callGroupType.equals("Invalid") && callType.equals("Wrong Number")) {
+	    		        	isRetryNeeded = false;
+	    		        	//isCompleted = true;
+	    		        	grievanceDataRepo.updateCompletedStatusInCall(isCompleted, isRetryNeeded, complaintID, userID, beneficiaryRegID, providerServiceMapID);
+	    		        }
 
 	            // Check if max attempts (3) are reached
 	            if (isRetryNeeded == true && grievanceCallStatus.getCallCounter() < grievanceAllocationRetryConfiguration) {
@@ -548,6 +553,7 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 	                grievanceCallStatus.setCallCounter(grievanceCallStatus.getCallCounter() + 1);
 	             // Update the retryNeeded flag
 	                isRetryNeeded = true;
+	                //isCompleted = false;
 	                updateCallCounter = grievanceDataRepo.updateCallCounter(grievanceCallStatus.getCallCounter(), isRetryNeeded, grievanceCallRequest.getComplaintID(), 
 	                		grievanceCallRequest.getBeneficiaryRegID(), grievanceCallRequest.getProviderServiceMapID(),
 	                		grievanceCallRequest.getUserID());
@@ -560,6 +566,7 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 	            } else if (grievanceCallStatus.getCallCounter()== grievanceAllocationRetryConfiguration) {
 	                // Max attempts reached, no further reattempt
 	                isRetryNeeded = false;
+	                //isCompleted = true;
 	            	updateCount = grievanceDataRepo.updateCompletedStatusInCall(isCompleted, isRetryNeeded, complaintID, userID, beneficiaryRegID, providerServiceMapID);
 	                response = "max_attempts_reached";  // Indicate that max attempts are reached
 	                
