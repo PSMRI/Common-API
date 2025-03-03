@@ -489,7 +489,7 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 		
 
 
-		private String fetchRemarksFromBenCallByComplaint(String complaintID) throws JSONException {
+		private String fetchRemarksFromBenCallByComplaint(String complaintID) throws Exception {
 		    // Query t_grievanceworklist to fetch the benRegId based on complaintID
 		    List<GrievanceDetails> grievanceWorklist = grievanceDataRepo.fetchGrievanceWorklistByComplaintID(complaintID);
 
