@@ -403,31 +403,7 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	        }
 	    }
 		
-		public List<GrievanceDetails> fetchGrievanceDetailsFromRequest(String request) {
-		    ObjectMapper objectMapper = new ObjectMapper();
-		    JsonNode jsonNode = null;
-
-		    try {
-		        // Parse the request JSON
-		        jsonNode = objectMapper.readTree(request);
-		    } catch (Exception e) {
-		        logger.error("Error parsing request: " + e.getMessage(), e);
-		        return null;
-		    }
-
-		    // Extract parameters from the request
-		    String state = jsonNode.has("State") ? jsonNode.get("State").asText() : null;
-		    String complaintResolution = jsonNode.has("ComplaintResolution") ? jsonNode.get("ComplaintResolution").asText() : null;
-		    String startDateStr = jsonNode.get("StartDate").asText();
-		    String endDateStr = jsonNode.get("EndDate").asText();
-
-		    // Convert StartDate and EndDate to Date objects
-		    Date startDate = parseDate(startDateStr);
-		    Date endDate = parseDate(endDateStr);
-
-		    // Construct the query dynamically based on available parameters
-		    return grievanceDataRepo.fetchGrievanceDetailsBasedOnParams(state, complaintResolution, startDate, endDate);
-		}
+		
 		
 
 		private Date parseDate(String dateStr) {
@@ -436,7 +412,7 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 				return dateFormat.parse(dateStr);
 				} catch (ParseException e) {
 						logger.error("Error parsing date for grievance: " + dateStr, e);
-			return null;
+			throw new IllegalArgumentException("Invalid JSON format in request");
     }
 }
 
@@ -444,22 +420,6 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 		@Override
 		public String getGrievanceDetailsWithRemarks(String request) throws Exception {
 			   ObjectMapper objectMapper = new ObjectMapper();
-//			    JsonNode jsonNode = null;
-//
-//			    try {
-//			        // Parse the request JSON
-//			        jsonNode = objectMapper.readTree(request);
-//			    } catch (Exception e) {
-//			        logger.error("Error parsing request: " + e.getMessage(), e);
-//			        return null;
-//			    }
-//			    
-//			    // Extract parameters from the request
-//			    String state = jsonNode.has("State") ? jsonNode.get("State").asText() : null;
-//			    String complaintResolution = jsonNode.has("ComplaintResolution") ? jsonNode.get("ComplaintResolution").asText() : null;
-//			    String startDate = jsonNode.get("StartDate").asText();
-//			    String endDate = jsonNode.get("EndDate").asText();
-
 			   
 		    try {
 		        // Parsing request to get the filter parameters (State, ComplaintResolution, StartDate, EndDate)
