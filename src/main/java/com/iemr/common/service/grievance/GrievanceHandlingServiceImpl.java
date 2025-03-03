@@ -1,8 +1,13 @@
 package com.iemr.common.service.grievance;
 
 import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -16,13 +21,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iemr.common.data.callhandling.CallType;
 import com.iemr.common.data.grievance.GetGrievanceWorklistRequest;
 import com.iemr.common.data.grievance.GrievanceAllocationRequest;
 import com.iemr.common.data.grievance.GrievanceDetails;
 import com.iemr.common.data.grievance.GrievanceReallocationRequest;
+import com.iemr.common.data.grievance.GrievanceResponse;
 import com.iemr.common.data.grievance.MoveToBinRequest;
 import com.iemr.common.dto.grivance.GrievanceTransactionDTO;
 import com.iemr.common.dto.grivance.GrievanceWorklistDTO;
+import com.iemr.common.repository.callhandling.BeneficiaryCallRepository;
+import com.iemr.common.repository.callhandling.IEMRCalltypeRepositoryImplCustom;
 import com.iemr.common.repository.grievance.GrievanceDataRepo;
 import com.iemr.common.repository.grievance.GrievanceOutboundRepository;
 import com.iemr.common.utils.exception.IEMRException;
@@ -37,11 +48,16 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 
 	private final GrievanceDataRepo grievanceDataRepo;
 	private final GrievanceOutboundRepository grievanceOutboundRepo;
+	private final BeneficiaryCallRepository beneficiaryCallRepo;
+	private final IEMRCalltypeRepositoryImplCustom iEMRCalltypeRepositoryImplCustom;
 
 	@Autowired
-	public GrievanceHandlingServiceImpl(GrievanceDataRepo grievanceDataRepo, GrievanceOutboundRepository grievanceOutboundRepo) {
+	public GrievanceHandlingServiceImpl(GrievanceDataRepo grievanceDataRepo, GrievanceOutboundRepository grievanceOutboundRepo, 
+			BeneficiaryCallRepository beneficiaryCallRepo, IEMRCalltypeRepositoryImplCustom iEMRCalltypeRepositoryImplCustom) {
 		this.grievanceDataRepo = grievanceDataRepo;
 		this.grievanceOutboundRepo = grievanceOutboundRepo;
+		this.beneficiaryCallRepo = beneficiaryCallRepo;
+		this.iEMRCalltypeRepositoryImplCustom = iEMRCalltypeRepositoryImplCustom;
 	}
 
 	@Value("${grievanceAllocationRetryConfiguration}")
@@ -386,5 +402,288 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	            throw new Exception("Failed to update complaint resolution");
 	        }
 	    }
+		
+		public List<GrievanceDetails> fetchGrievanceDetailsFromRequest(String request) {
+		    ObjectMapper objectMapper = new ObjectMapper();
+		    JsonNode jsonNode = null;
 
+		    try {
+		        // Parse the request JSON
+		        jsonNode = objectMapper.readTree(request);
+		    } catch (Exception e) {
+		        logger.error("Error parsing request: " + e.getMessage(), e);
+		        return null;
+		    }
+
+		    // Extract parameters from the request
+		    String state = jsonNode.has("State") ? jsonNode.get("State").asText() : null;
+		    String complaintResolution = jsonNode.has("ComplaintResolution") ? jsonNode.get("ComplaintResolution").asText() : null;
+		    String startDateStr = jsonNode.get("StartDate").asText();
+		    String endDateStr = jsonNode.get("EndDate").asText();
+
+		    // Convert StartDate and EndDate to Date objects
+		    Date startDate = parseDate(startDateStr);
+		    Date endDate = parseDate(endDateStr);
+
+		    // Construct the query dynamically based on available parameters
+		    return grievanceDataRepo.fetchGrievanceDetailsBasedOnParams(state, complaintResolution, startDate, endDate);
+		}
+		
+
+		private Date parseDate(String dateStr) {
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			try {
+				return dateFormat.parse(dateStr);
+				} catch (ParseException e) {
+						logger.error("Error parsing date for grievance: " + dateStr, e);
+			return null;
+    }
 }
+
+
+		@Override
+		public String getGrievanceDetailsWithRemarks(String request) throws Exception {
+			   ObjectMapper objectMapper = new ObjectMapper();
+//			    JsonNode jsonNode = null;
+//
+//			    try {
+//			        // Parse the request JSON
+//			        jsonNode = objectMapper.readTree(request);
+//			    } catch (Exception e) {
+//			        logger.error("Error parsing request: " + e.getMessage(), e);
+//			        return null;
+//			    }
+//			    
+//			    // Extract parameters from the request
+//			    String state = jsonNode.has("State") ? jsonNode.get("State").asText() : null;
+//			    String complaintResolution = jsonNode.has("ComplaintResolution") ? jsonNode.get("ComplaintResolution").asText() : null;
+//			    String startDate = jsonNode.get("StartDate").asText();
+//			    String endDate = jsonNode.get("EndDate").asText();
+
+			   
+		    try {
+		        // Parsing request to get the filter parameters (State, ComplaintResolution, StartDate, EndDate)
+		        JSONObject requestObj = new JSONObject(request);
+		        String complaintResolution = requestObj.optString("ComplaintResolution", null);
+		        String state = requestObj.optString("State", null);
+		        String fromDate = requestObj.optString("StartDate");
+		        String toDate = requestObj.optString("EndDate");
+
+		    	 // Convert StartDate and EndDate to Date objects
+			    Date startDateStr = parseDate(fromDate);
+			    Date endDateStr = parseDate(toDate);
+
+			List<GrievanceDetails> grievanceDetailsList = grievanceDataRepo.fetchGrievanceDetailsBasedOnParams(state, complaintResolution, startDateStr, endDateStr); // Fetch grievance details based on the request
+
+		    if (grievanceDetailsList == null || grievanceDetailsList.isEmpty()) {
+		        return "No grievance details found for the provided request.";
+		    }
+
+		    List<GrievanceResponse> grievanceResponseList = new ArrayList<>();
+		    
+		        
+		        // Determine if the complaintResolution is "resolved" or "unresolved" 
+		        for (GrievanceDetails grievance : grievanceDetailsList) {
+		            GrievanceResponse grievanceResponse = new GrievanceResponse();
+
+		            // Set basic grievance details
+		            grievanceResponse.setGrievanceId(grievance.getGrievanceId());
+		            grievanceResponse.setComplaintID(grievance.getComplaintID());
+		            grievanceResponse.setPrimaryNumber(grievance.getPrimaryNumber());
+		            grievanceResponse.setComplaintResolution(grievance.getComplaintResolution());
+		            grievanceResponse.setCreatedDate(grievance.getCreatedDate()); 
+		            grievanceResponse.setLastModDate(grievance.getLastModDate());
+
+		            // Fetch and set remarks based on complaintResolution value
+		            String remarks = "";
+		            if ("unresolved".equalsIgnoreCase(complaintResolution)) {
+		                // Fetch remarks from t_bencall by joining with t_grievanceworklist based on benRegId
+		                remarks = fetchRemarksFromBenCallByComplaint(grievance.getComplaintID());
+		            } else if ("resolved".equalsIgnoreCase(complaintResolution)) {
+		                // Fetch remarks from t_grievanceworklist
+		                remarks = fetchRemarksFromGrievanceWorklist(grievance.getComplaintID());
+		            } else {
+		                // Default: Fetch remarks based on the grievance's specific conditions (no specific resolution status)
+		                remarks = fetchRemarksBasedOnConditions(grievance.getComplaintID());
+		            }
+		            
+		            grievanceResponse.setRemarks(remarks);
+		            
+		            // Add to response list
+		            grievanceResponseList.add(grievanceResponse);
+		        }
+
+		        // Convert the list of GrievanceResponse objects to JSON and return as a string
+		      //  ObjectMapper objectMapper = new ObjectMapper();
+		        return objectMapper.writeValueAsString(grievanceResponseList);
+		        
+		    } catch (Exception e) {
+		        logger.error("Error while getting grievance details with remarks: " + e.getMessage(), e);
+		        return "Error fetching grievance details with remarks: " + e.getMessage();
+		    }
+		}
+		
+//		@Override
+//		public String getGrievanceDetailsWithRemarks(String request) throws Exception {
+//			   ObjectMapper objectMapper = new ObjectMapper();
+//			    JsonNode jsonNode = null;
+//
+//			    try {
+//			        // Parse the request JSON
+//			        jsonNode = objectMapper.readTree(request);
+//			    } catch (Exception e) {
+//			        logger.error("Error parsing request: " + e.getMessage(), e);
+//			        return null;
+//			    }
+//			    
+//			    // Extract parameters from the request
+//			    String state = jsonNode.has("State") ? jsonNode.get("State").asText() : null;
+//			    String complaintResolution = jsonNode.has("ComplaintResolution") ? jsonNode.get("ComplaintResolution").asText() : null;
+//			    String startDate = jsonNode.get("StartDate").asText();
+//			    String endDate = jsonNode.get("EndDate").asText();
+//
+//			    // Convert StartDate and EndDate to Date objects
+//			    Date startDateStr = parseDate(startDate);
+//			    Date endDateStr = parseDate(endDate);
+//
+//			List<GrievanceDetails> grievanceDetailsList = grievanceDataRepo.fetchGrievanceDetailsBasedOnParams(state, complaintResolution, startDateStr, endDateStr); // Fetch grievance details based on the request
+//
+//		    if (grievanceDetailsList == null || grievanceDetailsList.isEmpty()) {
+//		        return "No grievance details found for the provided request.";
+//		    }
+//
+//		    List<GrievanceResponse> grievanceResponseList = new ArrayList<>();
+//		    
+//		    try {
+//		        // Parsing request to get the filter parameters (State, ComplaintResolution, StartDate, EndDate)
+//		    //    JSONObject requestObj = new JSONObject(request);
+//		     //   String complaintResolution = requestObj.optString("ComplaintResolution", null);
+//		     //   String state = requestObj.optString("State", null);
+//		     //   String fromDate = requestObj.optString("StartDate");
+//		     //   String toDate = requestObj.optString("EndDate");
+//
+//		        
+//		        
+//		        // Determine if the complaintResolution is "resolved" or "unresolved" 
+//		        for (GrievanceDetails grievance : grievanceDetailsList) {
+//		            GrievanceResponse grievanceResponse = new GrievanceResponse();
+//
+//		            // Set basic grievance details
+//		            grievanceResponse.setGrievanceId(grievance.getGrievanceId());
+//		            grievanceResponse.setComplaintID(grievance.getComplaintID());
+//		            grievanceResponse.setPrimaryNumber(grievance.getPrimaryNumber());
+//		            grievanceResponse.setComplaintResolution(grievance.getComplaintResolution());
+//		            grievanceResponse.setCreatedDate(grievance.getCreatedDate()); 
+//		            grievanceResponse.setLastModDate(grievance.getLastModDate());
+//
+//		            // Fetch and set remarks based on complaintResolution value
+//		            String remarks = "";
+//		            if ("unresolved".equalsIgnoreCase(complaintResolution)) {
+//		                // Fetch remarks from t_bencall by joining with t_grievanceworklist based on benRegId
+//		                remarks = fetchRemarksFromBenCallByComplaint(grievance.getComplaintID());
+//		            } else if ("resolved".equalsIgnoreCase(complaintResolution)) {
+//		                // Fetch remarks from t_grievanceworklist
+//		                remarks = fetchRemarksFromGrievanceWorklist(grievance.getComplaintID());
+//		            } else {
+//		                // Default: Fetch remarks based on the grievance's specific conditions (no specific resolution status)
+//		                remarks = fetchRemarksBasedOnConditions(grievance.getComplaintID());
+//		            }
+//		            
+//		            grievanceResponse.setRemarks(remarks);
+//		            
+//		            // Add to response list
+//		            grievanceResponseList.add(grievanceResponse);
+//		        }
+//
+//		        // Convert the list of GrievanceResponse objects to JSON and return as a string
+//		      //  ObjectMapper objectMapper = new ObjectMapper();
+//		        return objectMapper.writeValueAsString(grievanceResponseList);
+//		        
+//		    } catch (Exception e) {
+//		        logger.error("Error while getting grievance details with remarks: " + e.getMessage(), e);
+//		        return "Error fetching grievance details with remarks: " + e.getMessage();
+//		    }
+//		}
+
+		private String fetchRemarksFromBenCallByComplaint(String complaintID) throws JSONException {
+		    // Query t_grievanceworklist to fetch the benRegId based on complaintID
+		    List<GrievanceDetails> grievanceWorklist = grievanceDataRepo.fetchGrievanceWorklistByComplaintID(complaintID);
+
+		    if (grievanceWorklist != null && !grievanceWorklist.isEmpty()) {
+		        GrievanceDetails grievance = grievanceWorklist.get(0);
+		        Long beneficiaryRegID = grievance.getBeneficiaryRegID();  // Fetch the beneficiaryRegID from the grievance
+
+		        // Query t_bencall to fetch remarks based on benRegId
+		        List<Object[]> benCallResults = beneficiaryCallRepo.fetchBenCallRemarks(beneficiaryRegID);
+
+		        if (benCallResults != null && !benCallResults.isEmpty()) {
+		            return (String) benCallResults.get(0)[0];  // Fetch the remarks
+		        }
+		    }
+		    
+		    return "No remarks found in t_bencall";
+		}
+
+		    private String fetchRemarksFromGrievanceWorklist(String complaintID) throws JSONException {
+		        // Query t_grievanceworklist to fetch remarks based on complaintID
+		        List<Object[]> grievanceWorklistResults = grievanceDataRepo.fetchGrievanceWorklistRemarks(complaintID);
+
+		        if (grievanceWorklistResults != null && !grievanceWorklistResults.isEmpty()) {
+		            // Assuming grievanceWorklistResults has a format like [remarks] for simplicity
+		            return (String) grievanceWorklistResults.get(0)[0];  // Fetch the remarks
+		        }
+		        return "No remarks found in t_grievanceworklist";
+		    }
+		    
+
+private String fetchRemarksBasedOnConditions(String complaintID) throws JSONException {
+    String remarks = "";
+    // Query t_grievanceworklist to fetch the benRegId based on complaintID
+    List<GrievanceDetails> grievanceWorklist = grievanceDataRepo.fetchGrievanceWorklistByComplaintID(complaintID);
+    CallType callTypeObj = new CallType();
+
+  
+    if (grievanceWorklist != null && !grievanceWorklist.isEmpty()) {
+        GrievanceDetails grievance = grievanceWorklist.get(0);
+        Long beneficiaryRegID = grievance.getBeneficiaryRegID();  // Fetch the beneficiaryRegID from the grievance
+        
+        Integer benCall = beneficiaryCallRepo.fetchCallTypeID(beneficiaryRegID);
+        	    
+        	    // Fetching CallDetails using BenCallID and CallTypeID
+        		Set<Object[]> callTypesArray = new HashSet<Object[]>();
+        	    callTypesArray = iEMRCalltypeRepositoryImplCustom.getCallDetails(benCall);
+        		for (Object[] object : callTypesArray)
+        		{
+        			if (object != null && object.length >= 2)
+        			{
+        				callTypeObj.setCallGroupType((String) object[0]);
+        				callTypeObj.setCallType((String) object[1]);
+        				
+        			}
+        			
+        		}
+
+        		       String callGroupType = callTypeObj.getCallGroupType();
+        		        String callType = callTypeObj.getCallType();
+        
+        		        // Scenario 1: if callGroupType is "invalid" and callType is "wrong number"
+        		        if ("invalid".equalsIgnoreCase(callGroupType) && "wrong number".equalsIgnoreCase(callType)) {
+        		        	remarks = fetchRemarksFromBenCallByComplaint(complaintID);
+        		        }
+        		        // Scenario 2: if callCounter is 3 and callType is one of the specified types
+        		        else if (grievance.getCallCounter() == 3 &&
+        		        		(Arrays.asList("Switch off", "Not Reachable", "Silent Call", "Disconnected Call").contains(callType))) {
+        		        	remarks = fetchRemarksFromBenCallByComplaint(complaintID);;
+        		        }
+        		        // Default case: fetch remarks from t_grievanceworklist based on complaintID
+        		        else {
+        		        	remarks = fetchRemarksFromGrievanceWorklist(grievance.getComplaintID());
+        		        }
+
+        		        
+    				}
+    				return remarks;
+			}
+    
+}
+
