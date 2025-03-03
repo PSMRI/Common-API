@@ -429,6 +429,9 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 		        String fromDate = requestObj.optString("StartDate");
 		        String toDate = requestObj.optString("EndDate");
 
+		        if (fromDate == null || toDate == null) {
+		        	throw new IllegalArgumentException("fromDate and toDate are required");
+		        }
 		    	 // Convert StartDate and EndDate to Date objects
 			    Date startDateStr = parseDate(fromDate);
 			    Date endDateStr = parseDate(toDate);
