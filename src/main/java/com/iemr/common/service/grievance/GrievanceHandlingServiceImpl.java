@@ -464,8 +464,14 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 		                remarks = fetchRemarksFromGrievanceWorklist(grievance.getComplaintID());
 		            } else {
 		                // Default: Fetch remarks based on the grievance's specific conditions (no specific resolution status)
-		               // remarks = fetchRemarksBasedOnConditions(grievance.getComplaintID());
-		            	remarks = fetchRemarksFromBenCallByComplaint(grievance.getComplaintID());
+		            	String callRemarks = fetchRemarksFromBenCallByComplaint(grievance.getComplaintID());
+		            	if(remarks != null && !remarks.startsWith("No remarks found")) {
+		            		remarks = callRemarks;
+		            	}
+		            	else {
+			                remarks = fetchRemarksFromGrievanceWorklist(grievance.getComplaintID());
+
+		            	}
 		            }
 		            
 		            grievanceResponse.setRemarks(remarks);
@@ -475,12 +481,11 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 		        }
 
 		        // Convert the list of GrievanceResponse objects to JSON and return as a string
-		      //  ObjectMapper objectMapper = new ObjectMapper();
 		        return objectMapper.writeValueAsString(grievanceResponseList);
 		        
 		    } catch (Exception e) {
 		        logger.error("Error while getting grievance details with remarks: " + e.getMessage(), e);
-		        return "Error fetching grievance details with remarks: " + e.getMessage();
+		        throw new Exception("Error processing grievance request");
 		    }
 		}
 		
