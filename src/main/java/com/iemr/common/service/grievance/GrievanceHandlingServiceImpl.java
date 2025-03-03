@@ -21,9 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iemr.common.data.callhandling.CallType;
 import com.iemr.common.data.grievance.GetGrievanceWorklistRequest;
 import com.iemr.common.data.grievance.GrievanceAllocationRequest;
 import com.iemr.common.data.grievance.GrievanceDetails;
@@ -33,7 +31,6 @@ import com.iemr.common.data.grievance.MoveToBinRequest;
 import com.iemr.common.dto.grivance.GrievanceTransactionDTO;
 import com.iemr.common.dto.grivance.GrievanceWorklistDTO;
 import com.iemr.common.repository.callhandling.BeneficiaryCallRepository;
-import com.iemr.common.repository.callhandling.IEMRCalltypeRepositoryImplCustom;
 import com.iemr.common.repository.grievance.GrievanceDataRepo;
 import com.iemr.common.repository.grievance.GrievanceOutboundRepository;
 import com.iemr.common.utils.exception.IEMRException;
@@ -49,15 +46,13 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	private final GrievanceDataRepo grievanceDataRepo;
 	private final GrievanceOutboundRepository grievanceOutboundRepo;
 	private final BeneficiaryCallRepository beneficiaryCallRepo;
-	private final IEMRCalltypeRepositoryImplCustom iEMRCalltypeRepositoryImplCustom;
 
 	@Autowired
 	public GrievanceHandlingServiceImpl(GrievanceDataRepo grievanceDataRepo, GrievanceOutboundRepository grievanceOutboundRepo, 
-			BeneficiaryCallRepository beneficiaryCallRepo, IEMRCalltypeRepositoryImplCustom iEMRCalltypeRepositoryImplCustom) {
+			BeneficiaryCallRepository beneficiaryCallRepo) {
 		this.grievanceDataRepo = grievanceDataRepo;
 		this.grievanceOutboundRepo = grievanceOutboundRepo;
 		this.beneficiaryCallRepo = beneficiaryCallRepo;
-		this.iEMRCalltypeRepositoryImplCustom = iEMRCalltypeRepositoryImplCustom;
 	}
 
 	@Value("${grievanceAllocationRetryConfiguration}")
@@ -412,7 +407,7 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 				return dateFormat.parse(dateStr);
 				} catch (ParseException e) {
 						logger.error("Error parsing date for grievance: " + dateStr, e);
-			throw new IllegalArgumentException("Invalid JSON format in request");
+			throw new IllegalArgumentException("Invalid date format in request:"+ dateStr);
     }
 }
 
