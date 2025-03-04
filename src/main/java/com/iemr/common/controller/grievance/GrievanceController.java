@@ -207,6 +207,18 @@ public class GrievanceController {
 				return response.toString();
 		  }
 
-	  
+
+		  @Operation(summary = "Get Grievance Details with Remarks")
+		  @PostMapping(value = "/getCompleteGrievanceDetails", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+		  public String getGrievanceDetailsWithRemarks(@RequestBody String request) {
+		      OutputResponse response = new OutputResponse();
+		      try {
+		          response.setResponse(grievanceHandlingService.getGrievanceDetailsWithRemarks(request));
+		      } catch (Exception e) {
+		          logger.error("getGrievanceDetailsWithRemarks failed with error " + e.getMessage(), e);
+		          response.setError(e);
+		      }
+		      return response.toString();
+		  }
 
 }

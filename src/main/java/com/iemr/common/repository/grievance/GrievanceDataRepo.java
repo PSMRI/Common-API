@@ -2,6 +2,7 @@ package com.iemr.common.repository.grievance;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -123,5 +124,25 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 	                              @Param("beneficiaryRegID") Long beneficiaryRegID,
 	                              @Param("providerServiceMapID") Integer providerServiceMapID,
 	                              @Param("userID") Integer userID);
+	
+	@Query("SELECT g FROM GrievanceDetails g WHERE "
+	        + "(g.state = :state OR :state IS NULL) "
+	        + "AND (g.complaintResolution = :complaintResolution OR :complaintResolution IS NULL) "
+	        + "AND g.createdDate BETWEEN :startDate AND :endDate")
+	List<GrievanceDetails> fetchGrievanceDetailsBasedOnParams(
+	    @Param("state") String state,
+	    @Param("complaintResolution") String complaintResolution,
+	    @Param("startDate") Date startDate,
+	    @Param("endDate") Date endDate);
+
+
+	@Query("SELECT g FROM GrievanceDetails g WHERE g.complaintID = :complaintID")
+	List<GrievanceDetails> fetchGrievanceWorklistByComplaintID(@Param("complaintID") String complaintID);
+
+
+@Query("SELECT g.remarks FROM GrievanceDetails g WHERE g.complaintID = :complaintID")
+List<Object[]> fetchGrievanceWorklistRemarks(@Param("complaintID") String complaintID);
+
+
 
 }

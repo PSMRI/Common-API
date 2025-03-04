@@ -1,8 +1,13 @@
 package com.iemr.common.service.grievance;
 
 import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -16,13 +21,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.common.data.grievance.GetGrievanceWorklistRequest;
 import com.iemr.common.data.grievance.GrievanceAllocationRequest;
 import com.iemr.common.data.grievance.GrievanceDetails;
 import com.iemr.common.data.grievance.GrievanceReallocationRequest;
+import com.iemr.common.data.grievance.GrievanceResponse;
 import com.iemr.common.data.grievance.MoveToBinRequest;
 import com.iemr.common.dto.grivance.GrievanceTransactionDTO;
 import com.iemr.common.dto.grivance.GrievanceWorklistDTO;
+import com.iemr.common.repository.callhandling.BeneficiaryCallRepository;
 import com.iemr.common.repository.grievance.GrievanceDataRepo;
 import com.iemr.common.repository.grievance.GrievanceOutboundRepository;
 import com.iemr.common.utils.exception.IEMRException;
@@ -37,11 +45,14 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 
 	private final GrievanceDataRepo grievanceDataRepo;
 	private final GrievanceOutboundRepository grievanceOutboundRepo;
+	private final BeneficiaryCallRepository beneficiaryCallRepo;
 
 	@Autowired
-	public GrievanceHandlingServiceImpl(GrievanceDataRepo grievanceDataRepo, GrievanceOutboundRepository grievanceOutboundRepo) {
+	public GrievanceHandlingServiceImpl(GrievanceDataRepo grievanceDataRepo, GrievanceOutboundRepository grievanceOutboundRepo, 
+			BeneficiaryCallRepository beneficiaryCallRepo) {
 		this.grievanceDataRepo = grievanceDataRepo;
 		this.grievanceOutboundRepo = grievanceOutboundRepo;
+		this.beneficiaryCallRepo = beneficiaryCallRepo;
 	}
 
 	@Value("${grievanceAllocationRetryConfiguration}")
@@ -386,5 +397,128 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	            throw new Exception("Failed to update complaint resolution");
 	        }
 	    }
+		
+		
+		
 
+		private Date parseDate(String dateStr) {
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			try {
+				return dateFormat.parse(dateStr);
+				} catch (ParseException e) {
+						logger.error("Error parsing date for grievance: " + dateStr, e);
+			throw new IllegalArgumentException("Invalid date format in request:"+ dateStr);
+    }
 }
+
+
+		@Override
+		public String getGrievanceDetailsWithRemarks(String request) throws Exception {
+			   ObjectMapper objectMapper = new ObjectMapper();
+			   
+		    try {
+		        // Parsing request to get the filter parameters (State, ComplaintResolution, StartDate, EndDate)
+		        JSONObject requestObj = new JSONObject(request);
+		        String complaintResolution = requestObj.optString("ComplaintResolution", null);
+		        String state = requestObj.optString("State", null);
+		        String fromDate = requestObj.optString("StartDate");
+		        String toDate = requestObj.optString("EndDate");
+
+		        if (fromDate == null || toDate == null) {
+		        	throw new IllegalArgumentException("fromDate and toDate are required");
+		        }
+		    	 // Convert StartDate and EndDate to Date objects
+			    Date startDateStr = parseDate(fromDate);
+			    Date endDateStr = parseDate(toDate);
+
+			List<GrievanceDetails> grievanceDetailsList = grievanceDataRepo.fetchGrievanceDetailsBasedOnParams(state, complaintResolution, startDateStr, endDateStr); // Fetch grievance details based on the request
+
+		    if (grievanceDetailsList == null || grievanceDetailsList.isEmpty()) {
+		        return "No grievance details found for the provided request.";
+		    }
+
+		    List<GrievanceResponse> grievanceResponseList = new ArrayList<>();
+		    
+		        
+		        // Determine if the complaintResolution is "resolved" or "unresolved" 
+		        for (GrievanceDetails grievance : grievanceDetailsList) {
+		            GrievanceResponse grievanceResponse = new GrievanceResponse();
+
+		            // Set basic grievance details
+		            grievanceResponse.setGrievanceId(grievance.getGrievanceId());
+		            grievanceResponse.setComplaintID(grievance.getComplaintID());
+		            grievanceResponse.setPrimaryNumber(grievance.getPrimaryNumber());
+		            grievanceResponse.setComplaintResolution(grievance.getComplaintResolution());
+		            grievanceResponse.setCreatedDate(grievance.getCreatedDate()); 
+		            grievanceResponse.setLastModDate(grievance.getLastModDate());
+
+		            // Fetch and set remarks based on complaintResolution value
+		            String remarks = "";
+		            if ("unresolved".equalsIgnoreCase(complaintResolution)) {
+		                // Fetch remarks from t_bencall by joining with t_grievanceworklist based on benRegId
+		                remarks = fetchRemarksFromBenCallByComplaint(grievance.getComplaintID());
+		            } else if ("resolved".equalsIgnoreCase(complaintResolution)) {
+		                // Fetch remarks from t_grievanceworklist
+		                remarks = fetchRemarksFromGrievanceWorklist(grievance.getComplaintID());
+		            } else {
+		                // Default: Fetch remarks based on the grievance's specific conditions (no specific resolution status)
+		            	String callRemarks = fetchRemarksFromBenCallByComplaint(grievance.getComplaintID());
+		            	if(remarks != null && !remarks.startsWith("No remarks found")) {
+		            		remarks = callRemarks;
+		            	}
+		            	else {
+			                remarks = fetchRemarksFromGrievanceWorklist(grievance.getComplaintID());
+
+		            	}
+		            }
+		            
+		            grievanceResponse.setRemarks(remarks);
+		            
+		            // Add to response list
+		            grievanceResponseList.add(grievanceResponse);
+		        }
+
+		        // Convert the list of GrievanceResponse objects to JSON and return as a string
+		        return objectMapper.writeValueAsString(grievanceResponseList);
+		        
+		    } catch (Exception e) {
+		        logger.error("Error while getting grievance details with remarks: " + e.getMessage(), e);
+		        throw new Exception("Error processing grievance request");
+		    }
+		}
+		
+
+
+		private String fetchRemarksFromBenCallByComplaint(String complaintID) throws Exception {
+		    // Query t_grievanceworklist to fetch the benRegId based on complaintID
+		    List<GrievanceDetails> grievanceWorklist = grievanceDataRepo.fetchGrievanceWorklistByComplaintID(complaintID);
+
+		    if (grievanceWorklist != null && !grievanceWorklist.isEmpty()) {
+		        GrievanceDetails grievance = grievanceWorklist.get(0);
+		        Long beneficiaryRegID = grievance.getBeneficiaryRegID();  // Fetch the beneficiaryRegID from the grievance
+
+		        // Query t_bencall to fetch remarks based on benRegId
+		        List<Object[]> benCallResults = beneficiaryCallRepo.fetchBenCallRemarks(beneficiaryRegID);
+
+		        if (benCallResults != null && !benCallResults.isEmpty()) {
+		            return (String) benCallResults.get(0)[0];  // Fetch the remarks
+		        }
+		    }
+		    
+		    return "No remarks found in t_bencall";
+		}
+
+		    private String fetchRemarksFromGrievanceWorklist(String complaintID) throws JSONException {
+		        // Query t_grievanceworklist to fetch remarks based on complaintID
+		        List<Object[]> grievanceWorklistResults = grievanceDataRepo.fetchGrievanceWorklistRemarks(complaintID);
+
+		        if (grievanceWorklistResults != null && !grievanceWorklistResults.isEmpty()) {
+		            // Assuming grievanceWorklistResults has a format like [remarks] for simplicity
+		            return (String) grievanceWorklistResults.get(0)[0];  // Fetch the remarks
+		        }
+		        return "No remarks found in t_grievanceworklist";
+		    }
+		    
+    
+}
+
