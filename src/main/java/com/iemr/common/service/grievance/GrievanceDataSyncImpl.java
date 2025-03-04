@@ -61,8 +61,8 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 
 	private static final String FILE_NAME = "fileName";
 	private static final String FILE_TYPE = "fileType";
-	private static final String PREFERRED_LANGUAGE = "preferredLanguage";
-	private static final String COUNT_OF_PREFERRED_LANGUAGE = "countOfPrefLanguage";
+	private static final String PREFERRED_LANGUAGE = "language";
+	private static final String COUNT_OF_PREFERRED_LANGUAGE = "count";
 
 	private final GrievanceDataRepo grievanceDataRepo;
 	private final GrievanceTransactionRepo grievanceTransactionRepo;
