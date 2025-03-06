@@ -251,7 +251,6 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 								}
 
 								// Setting remaining grievance properties (similar to the existing code)
-								grievance.setAgentid(grievance.getAgentid());
 								grievance.setDeleted(grievance.getDeleted());
 								grievance.setCreatedBy(registeringUser);
 								grievance.setProcessed('N');
@@ -294,7 +293,6 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 								combinedData.put("transaction", transactions);
 								combinedData.put("severity", grievance.getSeverety());
 								combinedData.put("state", grievance.getState());
-								combinedData.put("agentId", grievance.getAgentid());
 								combinedData.put("deleted", grievance.getDeleted());
 								combinedData.put("createdBy", grievance.getCreatedBy());
 								combinedData.put("createdDate", grievance.getCreatedDate());
@@ -413,11 +411,12 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 		}
 	}
 
-	public String fetchUnallocatedGrievanceCount(String preferredLanguage) throws IEMRException, JSONException {
+	public String fetchUnallocatedGrievanceCount(String preferredLanguage, Timestamp filterStartDate, 
+			Timestamp filterEndDate, Integer providerServiceMapID) throws IEMRException, JSONException {
 		logger.debug("Request received for fetchUnallocatedGrievanceCount");
 
 		// Fetch all unallocated grievances count from the database
-		Set<Object[]> resultSet = grievanceDataRepo.fetchUnallocatedGrievanceCount();
+		Set<Object[]> resultSet = grievanceDataRepo.fetchUnallocatedGrievanceCount(filterStartDate, filterEndDate);
 
 		// Initialize the result JSON object to hold counts
 		JSONObject result = new JSONObject();

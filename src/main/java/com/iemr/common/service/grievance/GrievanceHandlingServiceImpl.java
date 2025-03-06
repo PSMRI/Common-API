@@ -73,7 +73,7 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 		// language
 		List<GrievanceDetails> grievances = grievanceDataRepo.findGrievancesInDateRangeAndLanguage(
 				allocationRequest.getStartDate(), allocationRequest.getEndDate(),
-				allocationRequest.getPreferredLanguage());
+				allocationRequest.getLanguage());
 
 		if (grievances.isEmpty()) {
 			throw new Exception("No grievances found in the given date range and language.");
@@ -85,7 +85,7 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 		// Step 4: Get the allocation parameters from the request
 		int totalAllocated = 0;
 		int userIndex = 0;
-		List<Integer> userIds = allocationRequest.getUserID();
+		List<Integer> userIds = allocationRequest.getTouserID();
 		int allocateNo = allocationRequest.getAllocateNo(); // Number of grievances to allocate per user
 
 		for (int i = 0; i < grievances.size(); i++) {
@@ -230,22 +230,22 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 		// Step 4: Unassign grievances from the user and "move them to bin"
 		int totalUnassigned = 0;
 		for (GrievanceDetails grievance : grievancesToMove) {
-			int rowsAffected = grievanceDataRepo.unassignGrievance(grievance.getGrievanceId(),
-					moveToBinRequest.getUserID());
+			grievance.setUserID(null);
+			int rowsAffected = grievanceDataRepo.unassignGrievance(grievance.getUserID(), grievance.getGwid());
 			if (rowsAffected > 0) {
 				grievance.setIsAllocated(false); // Assuming there's a setter for this flag
-				int updateFlagResult = grievanceDataRepo.updateGrievanceAllocationStatus(grievance.getGrievanceId(),
-						false);
+				int updateFlagResult = grievanceDataRepo.updateGrievanceAllocationStatus(grievance.getGwid(),
+						grievance.getIsAllocated());
 				if (updateFlagResult > 0) {
 					totalUnassigned++;
-					logger.debug("Unassigned grievance ID {} from user ID {}", grievance.getGrievanceId(),
+					logger.debug("Unassigned grievance gwid {} from user ID {}", grievance.getGwid(),
 							moveToBinRequest.getUserID());
 				} else {
-					logger.error("Failed to unassign grievance ID {} from user ID {}", grievance.getGrievanceId(),
+					logger.error("Failed to unassign grievance gwid {} from user ID {}", grievance.getGwid(),
 							moveToBinRequest.getUserID());
 				}
 			} else {
-				logger.error("Failed to unassign grievance ID {} from user ID {}", grievance.getGrievanceId(),
+				logger.error("Failed to unassign grievance gwid {} from user ID {}", grievance.getGwid(),
 						moveToBinRequest.getUserID());
 			}
 		}
@@ -368,6 +368,9 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	                if (grievanceRequest.getCreatedBy() == null) {
 	                    throw new IllegalArgumentException("CreatedBy is required");
 	                }
+	                if(grievanceRequest.getBenCallID() == null) {
+	                	throw new IllegalArgumentException("BencallId is required");
+	                }
 	        // Extract values from the request
 	        String complaintID = grievanceRequest.getComplaintID();
 	        String complaintResolution = grievanceRequest.getComplaintResolution();
@@ -376,17 +379,17 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	        Integer providerServiceMapID = grievanceRequest.getProviderServiceMapID();
 	        Integer userID = grievanceRequest.getUserID();
 	        String createdBy = grievanceRequest.getCreatedBy();
-
+	        Long benCallID = grievanceRequest.getBenCallID();
 	      
 	        String modifiedBy = createdBy;
 	        int updateCount = 0;
 	        if (remarks == null) {
-	        	updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, modifiedBy, complaintID,
+	        	updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, modifiedBy, benCallID, complaintID,
                         beneficiaryRegID, providerServiceMapID, userID);
 	        	logger.debug("updated complaint resolution without remarks for complaint id: {}", complaintID);
 	        }
 	        else {
-	        updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, remarks,  modifiedBy, complaintID, 
+	        updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, remarks,  modifiedBy, benCallID, complaintID, 
 	                                                                      beneficiaryRegID, providerServiceMapID, userID);
         	logger.debug("updated complaint resolution with remarks for complaint id: {}", complaintID);
 
