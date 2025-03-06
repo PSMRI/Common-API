@@ -48,7 +48,7 @@ public class GrievanceController {
 	public String fetchUnallocatedGrievanceCount(@RequestBody UnallocationRequest request) {
 		OutputResponse responseData = new OutputResponse();
 		try {
-			responseData.setResponse(grievanceDataSync.fetchUnallocatedGrievanceCount(request.getPreferredLanguageName()));
+			responseData.setResponse(grievanceDataSync.fetchUnallocatedGrievanceCount(request.getPreferredLanguageName(), request.getFilterStartDate(), request.getFilterEndDate(), request.getProviderServiceMapID()));
 		} catch (IEMRException e) {
 			logger.error("Business logic error in UnallocatedGrievanceCount" + e.getMessage(), e);
 			responseData.setError(e);

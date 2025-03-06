@@ -77,10 +77,6 @@ public class GrievanceDetails {
 	private String state;
 
 	@Expose
-	@Column(name = "Agentid")
-	private String agentid;
-
-	@Expose
 	@Column(name = "userid")
 	private Integer userID;
 
@@ -169,7 +165,7 @@ public class GrievanceDetails {
 
 	public GrievanceDetails(Long gwid, Long grievanceId, Long beneficiaryRegID, Long benCallID,
 			Integer providerServiceMapID, String complaintID, String subjectOfComplaint, String complaint,
-			String primaryNumber, String severety, String state, String agentID, Integer userid, Boolean isAllocated,
+			String primaryNumber, String severety, String state, Integer userid, Boolean isAllocated,
 			Boolean retryNeeded, Boolean isRegistered, Integer callCounter, Integer preferredLanguageId,
 			String preferredLanguage, String complaintResolution, String remarks, Boolean deleted, Character processed, String createdBy, Timestamp createdDate,
 			String modifiedBy, Timestamp lastModDate, Integer vanSerialNo, Integer vanID, String vehicalNo,
@@ -186,7 +182,6 @@ public class GrievanceDetails {
 		this.primaryNumber = primaryNumber;
 		this.severety = severety;
 		this.state = state;
-		this.agentid = agentID;
 		this.userID = userid;
 		this.isAllocated = isAllocated;
 		this.retryNeeded = retryNeeded;
