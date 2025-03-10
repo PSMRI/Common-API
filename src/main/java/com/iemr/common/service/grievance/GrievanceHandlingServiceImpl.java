@@ -61,54 +61,59 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 															// retry logic
 
 	private InputMapper inputMapper = new InputMapper(); // InputMapper used to map the JSON request
-
+	
 	@Override
 	public String allocateGrievances(String request) throws Exception {
-		// Step 1: Parse the request string into the appropriate
-		// GrievanceAllocationRequest object
-		GrievanceAllocationRequest allocationRequest = InputMapper.gson().fromJson(request,
-				GrievanceAllocationRequest.class);
+	    // Step 1: Parse the request string into the appropriate GrievanceAllocationRequest object
+	    GrievanceAllocationRequest allocationRequest = InputMapper.gson().fromJson(request, GrievanceAllocationRequest.class);
 
-		// Step 2: Fetch grievances based on the start date, end date range, and
-		// language
-		List<GrievanceDetails> grievances = grievanceDataRepo.findGrievancesInDateRangeAndLanguage(
-				allocationRequest.getStartDate(), allocationRequest.getEndDate(),
-				allocationRequest.getLanguage());
+	    // Step 2: Fetch grievances based on the start date, end date range, and language
+	    List<GrievanceDetails> grievances = grievanceDataRepo.findGrievancesInDateRangeAndLanguage(
+	            allocationRequest.getStartDate(), allocationRequest.getEndDate(),
+	            allocationRequest.getLanguage());
 
-		if (grievances.isEmpty()) {
-			throw new Exception("No grievances found in the given date range and language.");
-		}
+	    if (grievances.isEmpty()) {
+	        throw new Exception("No grievances found in the given date range and language.");
+	    }
 
-		// Step 3: Sort grievances in ascending order based on creation date
-		grievances.sort(Comparator.comparing(GrievanceDetails::getCreatedDate));
+	    // Step 3: Get the allocation parameters from the request
+	    List<Integer> userIds = allocationRequest.getTouserID();
+	    int allocateNo = allocationRequest.getAllocateNo(); // Number of grievances to allocate per user
 
-		// Step 4: Get the allocation parameters from the request
-		int totalAllocated = 0;
-		int userIndex = 0;
-		List<Integer> userIds = allocationRequest.getTouserID();
-		int allocateNo = allocationRequest.getAllocateNo(); // Number of grievances to allocate per user
+	    // Step 4: Initialize counters
+	    int totalAllocated = 0;
+	    int grievanceIndex = 0;  // Start from the first grievance
+	    int totalUsers = userIds.size();
+	    int totalGrievances = grievances.size();
+	    
+	    // Step 5: Allocate grievances to users, ensuring each user gets exactly 'allocateNo' grievances
+	    for (Integer userId : userIds) {
+	        int allocatedToCurrentUser = 0;
 
-		for (int i = 0; i < grievances.size(); i++) {
-			Integer userId = userIds.get(userIndex);
-			GrievanceDetails grievance = grievances.get(i);
+	        // Allocate 'allocateNo' grievances to the current user
+	        while (allocatedToCurrentUser < allocateNo && grievanceIndex < totalGrievances) {
+	            GrievanceDetails grievance = grievances.get(grievanceIndex);
 
-			int rowsAffected = grievanceDataRepo.allocateGrievance(grievance.getGrievanceId(), userId);
-			if (rowsAffected > 0) {
-				totalAllocated++;
-				logger.debug("Allocated grievance ID {} to user ID {}", grievance.getGrievanceId(), userId);
-			} else {
-				logger.error("Failed to allocate grievance ID {} to user ID {}", grievance.getGrievanceId(), userId);
-			}
+	            // Allocate the grievance to the user
+	            int rowsAffected = grievanceDataRepo.allocateGrievance(grievance.getGrievanceId(), userId);
+	            if (rowsAffected > 0) {
+	                totalAllocated++;
+	                logger.debug("Allocated grievance ID {} to user ID {}", grievance.getGrievanceId(), userId);
+	            } else {
+	                logger.error("Failed to allocate grievance ID {} to user ID {}", grievance.getGrievanceId(), userId);
+	            }
 
-			// Move to the next user after allocateNo grievances
-			if ((i + 1) % allocateNo == 0) {
-				userIndex = (userIndex + 1) % userIds.size();
-			}
-		}
+	            grievanceIndex++; // Move to the next grievance
+	            allocatedToCurrentUser++; // Increment the number of grievances allocated to the current user
+	        }
 
-		// Step 6: Return a message with the total number of grievances allocated
-		return "Successfully allocated " + totalAllocated + " grievances to users.";
+	        // If we have allocated the specified number of grievances, move on to the next user
+	    }
+
+	    // Step 6: Return a message with the total number of grievances allocated
+	    return "Successfully allocated " + allocateNo + " grievance to each user.";
 	}
+
 
 	@Override
 	public String allocatedGrievanceRecordsCount(String request) throws IEMRException, JSONException {
@@ -146,56 +151,60 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 		return resultArray.toString();
 	}
 
+
+	
 	@Override
 	public String reallocateGrievances(String request) throws Exception {
-		// Step 1: Parse the request string into the appropriate
-		// GrievanceReallocationRequest object
-		GrievanceReallocationRequest reallocationRequest = InputMapper.gson().fromJson(request,
-				GrievanceReallocationRequest.class);
+	    // Step 1: Parse the request string into the appropriate GrievanceReallocationRequest object
+	    GrievanceReallocationRequest reallocationRequest = InputMapper.gson().fromJson(request, GrievanceReallocationRequest.class);
 
-		// Step 2: Fetch grievances that are allocated to the 'fromUserId' and match the
-		// criteria
-		List<GrievanceDetails> grievances = grievanceDataRepo.findAllocatedGrievancesByUserAndLanguage(
-				reallocationRequest.getFromUserId(), reallocationRequest.getLanguage());
+	    // Step 2: Fetch grievances that are allocated to the 'fromUserId' and match the criteria
+	    List<GrievanceDetails> grievances = grievanceDataRepo.findAllocatedGrievancesByUserAndLanguage(
+	            reallocationRequest.getFromUserId(), reallocationRequest.getLanguage());
 
-		if (grievances.isEmpty()) {
-			throw new Exception("No grievances found for the given user and language.");
-		}
+	    if (grievances.isEmpty()) {
+	        throw new Exception("No grievances found for the given user and language.");
+	    }
 
-		// Step 3: Sort grievances in ascending order based on creation date
-		grievances.sort(Comparator.comparing(GrievanceDetails::getCreatedDate));
+	    // Step 3: Sort grievances in ascending order based on creation date
+	    grievances.sort(Comparator.comparing(GrievanceDetails::getCreatedDate));
 
-		// Step 4: Get the allocation parameters from the request
-		int totalReallocated = 0;
-		int userIndex = 0;
-		List<Integer> toUserIds = reallocationRequest.getTouserID();
-		int allocateNo = reallocationRequest.getAllocateNo(); // Number of grievances to reallocate per user
+	    // Step 4: Get the allocation parameters from the request
+	    int totalReallocated = 0;
+	    int grievanceIndex = 0;  // Start from the first grievance
+	    List<Integer> toUserIds = reallocationRequest.getTouserID();
+	    int allocateNo = reallocationRequest.getAllocateNo(); // Number of grievances to reallocate per user
 
-		// Step 5: Reallocate grievances to users in a round-robin fashion
-		for (int i = 0; i < grievances.size(); i++) {
-			if (i % allocateNo == 0 && userIndex < toUserIds.size()) {
-				// Reallocate to the next user when reaching the allocateNo threshold
-				Integer toUserId = toUserIds.get(userIndex);
-				GrievanceDetails grievance = grievances.get(i);
+	    // Step 5: Reallocate grievances to users
+	    for (Integer toUserId : toUserIds) {
+	        int allocatedToCurrentUser = 0;
 
-				// Call the repository method to reallocate the grievance to the new user
-				int rowsAffected = grievanceDataRepo.reallocateGrievance(grievance.getGrievanceId(), toUserId);
+	        // Reallocate 'allocateNo' grievances to the current user
+	        while (allocatedToCurrentUser < allocateNo && grievanceIndex < grievances.size()) {
+	            GrievanceDetails grievance = grievances.get(grievanceIndex);
 
-				if (rowsAffected > 0) {
-					totalReallocated++;
-					logger.debug("Reallocated grievance ID " + grievance.getGrievanceId() + " to user ID " + toUserId);
-				} else {
-					logger.error("Failed to reallocate grievance ID " + grievance.getGrievanceId() + " to user ID "
-							+ toUserId);
-				}
+	            // Call the repository method to reallocate the grievance to the new user
+	            int rowsAffected = grievanceDataRepo.reallocateGrievance(grievance.getGrievanceId(), toUserId);
 
-				userIndex = (userIndex + 1) % toUserIds.size();
-			}
-		}
+	            if (rowsAffected > 0) {
+	                totalReallocated++;
+	                logger.debug("Reallocated grievance ID {} to user ID {}", grievance.getGrievanceId(), toUserId);
+	            } else {
+	                logger.error("Failed to reallocate grievance ID {} to user ID {}", grievance.getGrievanceId(), toUserId);
+	            }
 
-		// Step 6: Return a message with the total number of grievances reallocated
-		return "Successfully reallocated " + totalReallocated + " grievances to users.";
+	            grievanceIndex++; // Move to the next grievance
+	            allocatedToCurrentUser++; // Increment the number of grievances reallocated to the current user
+	        }
+
+	        // If the current user is allocated the specified number of grievances, move to the next user
+	    }
+
+	    // Step 6: Return a message with the total number of grievances reallocated
+	    return "Successfully reallocated " + totalReallocated + " grievance to user.";
 	}
+
+	
 
 	@Override
 	public String moveToBin(String request) throws Exception {
@@ -284,22 +293,30 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	        
 	        // Loop through the worklist data and format the response
 	        for (Object[] row : worklistData) {
-	        	if (row == null || row.length < 28)
+	        	if (row == null || row.length < 30)
 	        	{
 	        		logger.warn("invalid row data received");
 	        		continue;
 	        	}
+	        	
+	            // Handle age conversion from Double to "x years" format
+	            String ageFormatted = "N/A";  // Default value for age if it's not available
+	            if (row[25] != null) {
+	                Double age = (Double) row[25];
+	                ageFormatted = age.intValue() + " years";  // Convert the age to integer and append " years"
+	            }
+	            
 	            GrievanceWorklistDTO grievance = new GrievanceWorklistDTO(
 	                (String) row[0], // complaintID
 	                (String) row[1], // subjectOfComplaint
 	                (String) row[2], // complaint
 	                (Long) row[3],   // beneficiaryRegID
 	                (Integer) row[4],// providerServiceMapID
-			(String) row[5], // primaryNumber
 
 	                (String) row[20], // firstName
 	                (String) row[21], // lastName
-	             
+	    			(String) row[5], // primaryNumber
+
 	                new ArrayList<>(),// transactions (initially empty, will be populated later)
 	                (String) row[12], // severety
 	                (String) row[13], // state
@@ -312,14 +329,17 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	                (String) row[22], // gender
 	                (String) row[23], // district
 	                (Long) row[24], // beneficiaryID
-	                (String) row[25], // age
+	           //     (Double) row[25], // age
+	                ageFormatted,
 	                (Boolean) row[26], // retryNeeded
-	                (Integer) row[27] // callCounter
+	                (Integer) row[27], // callCounter
+	                (Timestamp) row[17] //lastCall yet to fill
 	            );
 
 	            // Extract transactions from the current row and add them to the grievance object
 	            GrievanceTransactionDTO transaction = new GrievanceTransactionDTO(
-	  
+	            	(String) row[28], //actionTakenBy yet to fill
+	            	(String) row[29], //status yet to fill
 	                (String) row[6], // fileName
 	                (String) row[7], // fileType
 	                (String) row[8], // redressed
