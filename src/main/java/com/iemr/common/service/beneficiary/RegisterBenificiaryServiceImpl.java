@@ -163,11 +163,12 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 	@Override
 	public String save(BeneficiaryModel beneficiaryModel, HttpServletRequest servletRequest) throws Exception {
 
-		// logger.info("benificiaryDetails: " + beneficiaryModel);
+		 logger.info("benificiaryDetails: " + beneficiaryModel);
 
 		CommonIdentityDTO identityDTO = identityMapper.beneficiaryModelCommonIdentityDTO(beneficiaryModel);
 		setSaveDemographicDetails(identityDTO,beneficiaryModel);
 		// identityDTO.setOtherFields(beneficiaryModel.getOtherFields());
+		identityDTO.setIsConsent(beneficiaryModel.getIsConsent());
 		identityDTO.setFaceEmbedding(beneficiaryModel.getFaceEmbedding());
 		identityDTO.setEmergencyRegistration(beneficiaryModel.isEmergencyRegistration());
 		identityDTO
