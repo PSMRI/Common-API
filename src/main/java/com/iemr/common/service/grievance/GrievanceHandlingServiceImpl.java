@@ -67,14 +67,15 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	    // Step 1: Parse the request string into the appropriate GrievanceAllocationRequest object
 	    GrievanceAllocationRequest allocationRequest = InputMapper.gson().fromJson(request, GrievanceAllocationRequest.class);
 
-	    // Step 2: Fetch grievances based on the start date, end date range, and language
-	    List<GrievanceDetails> grievances = grievanceDataRepo.findGrievancesInDateRangeAndLanguage(
-	            allocationRequest.getStartDate(), allocationRequest.getEndDate(),
-	            allocationRequest.getLanguage());
+		// Step 2: Fetch grievances based on the start date, end date range, and
+		// language
+		List<GrievanceDetails> grievances = grievanceDataRepo.findGrievancesInDateRangeAndLanguage(
+				allocationRequest.getStartDate(), allocationRequest.getEndDate(),
+				allocationRequest.getLanguage());
 
-	    if (grievances.isEmpty()) {
-	        throw new Exception("No grievances found in the given date range and language.");
-	    }
+		if (grievances.isEmpty()) {
+			throw new Exception("No grievances found in the given date range and language.");
+		}
 
 	    // Step 3: Get the allocation parameters from the request
 	    List<Integer> userIds = allocationRequest.getTouserID();
