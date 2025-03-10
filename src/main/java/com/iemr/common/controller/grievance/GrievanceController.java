@@ -159,7 +159,6 @@ public class GrievanceController {
 			        responseMap.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
 			        responseMap.put("errorMessage", e.getMessage());
 			        responseMap.put("status", "Error");
-			     //   return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
 				}
 		       
 			    
