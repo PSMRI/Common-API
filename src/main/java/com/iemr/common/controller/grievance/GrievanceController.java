@@ -130,13 +130,19 @@ public class GrievanceController {
 	
 	  @Operation(summary = "get grievance outbound worklist)")
 			@PostMapping(value = "/getGrievanceOutboundWorklist", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
-		    public ResponseEntity<List<GrievanceWorklistDTO>> getGrievanceOutboundWorklist(@Param(value = "{\"providerServiceMapId\":\" called service ID integer\", "
+		    public ResponseEntity<Map<String, Object>> getGrievanceOutboundWorklist(@Param(value = "{\"providerServiceMapId\":\" called service ID integer\", "
 					+ "\"userId\":\"Optional - Integer ID of user that is assigned to\"}") @RequestBody String request) {
 		        logger.info("Request received for grievance worklist");
 		        List<GrievanceWorklistDTO> response = new ArrayList<>();
+		        Map<String, Object> responseMap = new HashMap<>();
+
 				try {
 					response = grievanceHandlingService.getFormattedGrievanceData(request);
-					
+					  // Prepare the success response structure
+			        responseMap.put("data", response);
+			        responseMap.put("statusCode", HttpStatus.OK.value());
+			        responseMap.put("errorMessage", "Success");
+			        responseMap.put("status", "Success");
 				}
 				
 				catch (Exception e) {
@@ -148,11 +154,15 @@ public class GrievanceController {
 			        
 			        // Return error response with empty list and error message
 			        errorResponse.add(errorDTO);
-			        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+			        
+			        responseMap.put("data", errorResponse);
+			        responseMap.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+			        responseMap.put("errorMessage", e.getMessage());
+			        responseMap.put("status", "Error");
 				}
 		       
 			    
-		        return ResponseEntity.ok(response);
+		        return ResponseEntity.ok(responseMap);
 		        }
 
 
