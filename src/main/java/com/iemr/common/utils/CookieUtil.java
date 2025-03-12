@@ -3,6 +3,7 @@ package com.iemr.common.utils;
 import java.util.Arrays;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import jakarta.servlet.http.Cookie;
@@ -11,6 +12,9 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Service
 public class CookieUtil {
+	
+	@Value("${isProduction}")
+	private Boolean isProduction;
 
 	public Optional<String> getCookieValue(HttpServletRequest request, String cookieName) {
 		Cookie[] cookies = request.getCookies();
@@ -39,6 +43,9 @@ public class CookieUtil {
 	 
 	    // Set the SameSite attribute for cross-site request handling (if needed)
 	    String sameSite = "None"; // Allow cross-site cookies (can be 'Strict', 'Lax', or 'None')
+	    if(isProduction) {
+	    	sameSite= "Strict";
+	    }
 	    cookie.setSecure(true);
 	 
 	    // Build the Set-Cookie header manually (to add SameSite attribute support)
