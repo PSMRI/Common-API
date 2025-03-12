@@ -152,9 +152,8 @@ public class IEMRAdminController {
 			JSONObject serviceRoleMap = new JSONObject();
 			JSONArray serviceRoleList = new JSONArray();
 			JSONObject previlegeObj = new JSONObject();
-			if (m_User.getUserName() != null 
-					    && (m_User.getDoLogout() == null || !m_User.getDoLogout()) 
-					    && (m_User.getWithCredentials() != null && m_User.getWithCredentials())) {
+			if (m_User.getUserName() != null && (m_User.getDoLogout() == null || !m_User.getDoLogout())
+					&& (m_User.getWithCredentials() != null && m_User.getWithCredentials())) {
 				String tokenFromRedis = getConcurrentCheckSessionObjectAgainstUser(
 						m_User.getUserName().trim().toLowerCase());
 				if (tokenFromRedis != null) {
@@ -167,19 +166,17 @@ public class IEMRAdminController {
 			if (mUser.size() == 1) {
 				String Jwttoken = jwtUtil.generateToken(m_User.getUserName(), mUser.get(0).getUserID().toString());
 				logger.info("jwt token is:" + Jwttoken);
-				
+
 				User user = new User(); // Assuming the Users class exists
-	            user.setUserID(mUser.get(0).getUserID());
-	            user.setUserName(mUser.get(0).getUserName());
-	            
-	            String redisKey = "user_" + mUser.get(0).getUserID(); // Use user ID to create a unique key
+				user.setUserID(mUser.get(0).getUserID());
+				user.setUserName(mUser.get(0).getUserName());
 
-	            // Store the user in Redis (set a TTL of 30 minutes)
-	            redisTemplate.opsForValue().set(redisKey, user, 30, TimeUnit.MINUTES);
+				String redisKey = "user_" + mUser.get(0).getUserID(); // Use user ID to create a unique key
 
-				// Set Jwttoken in the response cookie
+				// Store the user in Redis (set a TTL of 30 minutes)
+				redisTemplate.opsForValue().set(redisKey, user, 30, TimeUnit.MINUTES);
+
 				cookieUtil.addJwtTokenToCookie(Jwttoken, httpResponse, request);
-
 				createUserMapping(mUser.get(0), resMap, serviceRoleMultiMap, serviceRoleMap, serviceRoleList,
 						previlegeObj);
 			} else {

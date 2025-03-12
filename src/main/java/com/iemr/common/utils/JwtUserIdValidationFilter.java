@@ -62,7 +62,7 @@ public class JwtUserIdValidationFilter implements Filter {
 		}
 
 		try {
-			// Retrieve JWT token from cookies
+			// Retrieve JWT token from  cookie
 			String jwtTokenFromCookie = getJwtTokenFromCookies(request);
 			logger.info("JWT token from cookie: ");
 
