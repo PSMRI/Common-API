@@ -40,8 +40,6 @@ public class CookieUtil {
 	    // Set the SameSite attribute for cross-site request handling (if needed)
 	    String sameSite = "None"; // Allow cross-site cookies (can be 'Strict', 'Lax', or 'None')
 	    cookie.setSecure(true);
-	    // Add the cookie to the response
-	//    response.addCookie(cookie);
 	 
 	    // Build the Set-Cookie header manually (to add SameSite attribute support)
 	    StringBuilder cookieHeader = new StringBuilder();
