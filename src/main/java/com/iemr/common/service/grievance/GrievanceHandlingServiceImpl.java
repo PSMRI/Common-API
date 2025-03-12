@@ -301,9 +301,9 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	        	}
 	        	
 	            // Handle age conversion from Double to "x years" format
-	            String ageFormatted = "N/A";  // Default value for age if it's not available
+	            String ageFormatted = null;  // Default value for age if it's not available
 	            if (row[25] != null) {
-	                Double age = (Double) row[25];
+	                Long age = (Long) row[25];
 	                ageFormatted = age.intValue() + " years";  // Convert the age to integer and append " years"
 	            }
 	            

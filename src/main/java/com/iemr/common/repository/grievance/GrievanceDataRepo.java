@@ -33,9 +33,15 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 	public int allocateGrievance(@Param("grievanceId") Long grievanceId,
 			@Param("userId") Integer userId);
 
-	@Query(nativeQuery = true, value = "SELECT PreferredLanguageId, PreferredLanguage, VanSerialNo, VanID, ParkingPlaceId, VehicalNo FROM db_identity.i_beneficiarydetails WHERE BeneficiaryRegID = :benRegId")
+	@Query(nativeQuery = true, value = "SELECT PreferredLanguageId, PreferredLanguage, VanSerialNo, VanID, ParkingPlaceId, VehicalNo FROM db_1097_identity.i_beneficiarydetails WHERE BeneficiaryRegID = :benRegId")
 	public ArrayList<Object[]> getBeneficiaryGrievanceDetails(@Param("benRegId") Long benRegId);
 
+	@Query(nativeQuery = true, value = "SELECT t2.preferredPhoneNum FROM db_1097_identity.i_beneficiarymapping t1 join" 
+			+ " db_1097_identity.i_beneficiarycontacts t2 on t1.benContactsId = t2.benContactsID" 
+			+ " where benRegId = :benRegId")	
+	public String getPrimaryNumber(@Param("benRegId") Long benRegId);
+	
+	
 	@Query("select grievance.preferredLanguage, count(distinct grievance.grievanceId) "
 			+ "from GrievanceDetails grievance " + "where grievance.providerServiceMapID = :providerServiceMapID "
 			+ "and grievance.userID = :userID " + "and grievance.deleted = false "
@@ -150,6 +156,9 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 
 @Query("SELECT g.remarks FROM GrievanceDetails g WHERE g.complaintID = :complaintID")
 List<Object[]> fetchGrievanceWorklistRemarks(@Param("complaintID") String complaintID);
+
+@Query("SELECT g.gwid FROM GrievanceDetails g WHERE g.grievanceId = :grievanceId")
+Long getUniqueGwid(@Param("grievanceId")Long grievanceIdObj);
 
 
 
