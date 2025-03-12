@@ -40,8 +40,6 @@ public class CookieUtil {
 	    // Set the SameSite attribute for cross-site request handling (if needed)
 	    String sameSite = "None"; // Allow cross-site cookies (can be 'Strict', 'Lax', or 'None')
 	    cookie.setSecure(true);
-	    // Add the cookie to the response
-	    response.addCookie(cookie);
 	 
 	    // Build the Set-Cookie header manually (to add SameSite attribute support)
 	    StringBuilder cookieHeader = new StringBuilder();
@@ -61,6 +59,9 @@ public class CookieUtil {
 	}
 
 	public String getJwtTokenFromCookie(HttpServletRequest request) {
+		if (request.getCookies() == null) {
+	        return null;  // If cookies are null, return null safely.
+	    }
 		return Arrays.stream(request.getCookies()).filter(cookie -> "Jwttoken".equals(cookie.getName()))
 				.map(Cookie::getValue).findFirst().orElse(null);
 	}
