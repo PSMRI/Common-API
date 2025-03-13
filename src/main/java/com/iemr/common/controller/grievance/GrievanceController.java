@@ -48,7 +48,7 @@ public class GrievanceController {
 	public String fetchUnallocatedGrievanceCount(@RequestBody UnallocationRequest request) {
 		OutputResponse responseData = new OutputResponse();
 		try {
-			responseData.setResponse(grievanceDataSync.fetchUnallocatedGrievanceCount(request.getPreferredLanguageName()));
+			responseData.setResponse(grievanceDataSync.fetchUnallocatedGrievanceCount(request.getPreferredLanguageName(), request.getFilterStartDate(), request.getFilterEndDate(), request.getProviderServiceMapID()));
 		} catch (IEMRException e) {
 			logger.error("Business logic error in UnallocatedGrievanceCount" + e.getMessage(), e);
 			responseData.setError(e);
@@ -87,7 +87,7 @@ public class GrievanceController {
 	@Operation(summary = "Allocated Grievance Records Count")
 	@PostMapping(value = "/allocatedGrievanceRecordsCount", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String allocatedGrievanceRecordsCount(@Param(value = "{\"providerServiceMapID\":\"Service ID integer\", "
-			+ "\"assignedUserID\":\"Optional - Integer user ID to whom grievances are assigned\"}") @RequestBody String request) {
+			+ "\"userID\":\"Optional - Integer user ID to whom grievances are assigned\"}") @RequestBody String request) {
 		OutputResponse response = new OutputResponse();
 		try {
 			response.setResponse(grievanceHandlingService.allocatedGrievanceRecordsCount(request));
@@ -130,13 +130,19 @@ public class GrievanceController {
 	
 	  @Operation(summary = "get grievance outbound worklist)")
 			@PostMapping(value = "/getGrievanceOutboundWorklist", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
-		    public ResponseEntity<List<GrievanceWorklistDTO>> getGrievanceOutboundWorklist(@Param(value = "{\"providerServiceMapId\":\" called service ID integer\", "
+		    public ResponseEntity<Map<String, Object>> getGrievanceOutboundWorklist(@Param(value = "{\"providerServiceMapId\":\" called service ID integer\", "
 					+ "\"userId\":\"Optional - Integer ID of user that is assigned to\"}") @RequestBody String request) {
 		        logger.info("Request received for grievance worklist");
 		        List<GrievanceWorklistDTO> response = new ArrayList<>();
+		        Map<String, Object> responseMap = new HashMap<>();
+
 				try {
 					response = grievanceHandlingService.getFormattedGrievanceData(request);
-					
+					  // Prepare the success response structure
+			        responseMap.put("data", response);
+			        responseMap.put("statusCode", HttpStatus.OK.value());
+			        responseMap.put("errorMessage", "Success");
+			        responseMap.put("status", "Success");
 				}
 				
 				catch (Exception e) {
@@ -148,12 +154,81 @@ public class GrievanceController {
 			        
 			        // Return error response with empty list and error message
 			        errorResponse.add(errorDTO);
-			        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+			        
+			        responseMap.put("data", errorResponse);
+			        responseMap.put("statusCode", HttpStatus.INTERNAL_SERVER_ERROR.value());
+			        responseMap.put("errorMessage", e.getMessage());
+			        responseMap.put("status", "Error");
 				}
 		       
 			    
-		        return ResponseEntity.ok(response);
+		        return ResponseEntity.ok(responseMap);
 		        }
 
+
+
+	  @Operation(summary = "Save complaint resolution and remarks")
+	  @PostMapping(value = "/saveComplaintResolution", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+	    public String saveComplaintResolution(       @Param(value = "{\"complaintID\":\"Complaint ID string\", " +
+                "\"complaintResolution\":\"Resolution text\", " +
+                "\"remarks\":\"Optional remarks\", " +
+                "\"beneficiaryRegID\":\"Beneficiary registration ID\", " +
+                "\"providerServiceMapID\":\"Provider service map ID\", " +
+                "\"userID\":\"Assigned user ID\", " +
+                "\"createdBy\":\"Creator of the complaint\", " +
+                "\"benCallID\":\"Beneficiary call ID\"}")
+ @RequestBody String request) {
+	        OutputResponse response = new OutputResponse();
+	        try {
+	            response.setResponse(grievanceHandlingService.saveComplaintResolution(request));
+	        } catch (Exception e) {
+	            logger.error("saveComplaintResolution failed with error " + e.getMessage(), e);
+	            response.setError(e);
+	        }
+	        return response.toString();
+	    }
+	  
+	  
+		// Controller method to handle reattempt logic
+		  @Operation(summary = "Check reattempt logic for grievance")
+		  @PostMapping(value = "/completeGrievanceCall", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+		  public String completeGrievanceCall(
+		      @Param(value = "{\"complaintID\":\"String - ComplaintID\", "
+		      		  + "\"userID\":\"Integer - Assigned UserID\", "
+		    		  + "\"isCompleted\":\"Boolean - completion status of call\", "
+		              + "\"beneficiaryRegId\":\"Long - Beneficiary Registration ID\", "
+		              + "\"callTypeID\":\"Integer - Call Type ID\", "
+		              + "\"benCallID\":\"Long - Beneficiary Call ID\", "
+		              +"\"callID\":\"String - call ID by czentrix\", "
+		              + "\"providerServiceMapID\":\"Integer - providerServiceMapID\", "
+		              + "\"createdBy\":\"String - Creator\"}") 
+		      @RequestBody String request) {
+
+				OutputResponse response = new OutputResponse();
+
+				try {
+					String s = grievanceDataSync.completeGrievanceCall(request);
+						response.setResponse(s);
+			
+				} catch (Exception e) {
+					logger.error("complete grievance outbound call failed with error " + e.getMessage(), e);
+					response.setError(e);
+				}
+				return response.toString();
+		  }
+
+
+		  @Operation(summary = "Get Grievance Details with Remarks")
+		  @PostMapping(value = "/getCompleteGrievanceDetails", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+		  public String getGrievanceDetailsWithRemarks(@RequestBody String request) {
+		      OutputResponse response = new OutputResponse();
+		      try {
+		          response.setResponse(grievanceHandlingService.getGrievanceDetailsWithRemarks(request));
+		      } catch (Exception e) {
+		          logger.error("getGrievanceDetailsWithRemarks failed with error " + e.getMessage(), e);
+		          response.setError(e);
+		      }
+		      return response.toString();
+		  }
 
 }
