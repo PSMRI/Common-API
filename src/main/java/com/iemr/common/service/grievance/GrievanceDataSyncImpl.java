@@ -1,5 +1,7 @@
 package com.iemr.common.service.grievance;
 
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +32,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -73,8 +76,8 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 	// Constructor-based injection
 	@Autowired
 	public GrievanceDataSyncImpl(GrievanceDataRepo grievanceDataRepo, GrievanceTransactionRepo grievanceTransactionRepo,
-			GrievanceFetchBenDetailsRepo grievanceFetchBenDetailsRepo,
-			LocationStateRepository locationStateRepository, IEMRCalltypeRepositoryImplCustom iEMRCalltypeRepositoryImplCustom) {
+			GrievanceFetchBenDetailsRepo grievanceFetchBenDetailsRepo, LocationStateRepository locationStateRepository,
+			IEMRCalltypeRepositoryImplCustom iEMRCalltypeRepositoryImplCustom) {
 		this.grievanceDataRepo = grievanceDataRepo;
 		this.grievanceTransactionRepo = grievanceTransactionRepo;
 		this.grievanceFetchBenDetailsRepo = grievanceFetchBenDetailsRepo;
@@ -102,155 +105,133 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 
 	@Value("${grievanceAllocationRetryConfiguration}")
 	private int grievanceAllocationRetryConfiguration;
-	
+
 	private String GRIEVANCE_AUTH_TOKEN;
 	private Long GRIEVANCE_TOKEN_EXP;
 
-	//public List<Map<String, Object>> dataSyncToGrievance() {
-		public String dataSyncToGrievance() {
+	public String dataSyncToGrievance() {
 
-		
 		int count = 0;
-		String registeringUser = "";
-		List<Map<String, Object>> responseData = new ArrayList<>();
-		List<GrievanceDetails> grievanceDetailsListAS = new ArrayList<>();
-	//	List<GrievanceDetails> grievanceDetailsListAS = new ArrayList<>();
-			List<GrievanceDetails> grievanceDetailsListAll = new ArrayList<>();
+		List<GrievanceDetails> grievanceDetailsListAll = new ArrayList<>();
 
 		List<GrievanceTransaction> grievanceTransactionList = new ArrayList<>();
-	//	GrievanceTransaction grievanceTransaction = new GrievanceTransaction();
 		GrievanceTransaction grievanceTransactionListObj = new GrievanceTransaction();
-	    List<Long> grievanceIds = new ArrayList<>();  // List to collect all grievance IDs
-
+		List<Long> grievanceIds = new ArrayList<>();
 
 		Long gwid;
 
 		try {
-			// Loop to fetch data for multiple pages
 			while (count >= 0) {
 				RestTemplate restTemplate = new RestTemplate();
 
 				if (GRIEVANCE_AUTH_TOKEN != null && GRIEVANCE_TOKEN_EXP != null
 						&& GRIEVANCE_TOKEN_EXP > System.currentTimeMillis()) {
-					// no need of calling auth API
 				} else {
-					// call method to generate Auth Token at Everwell end
 					generateGrievanceAuthToken();
 				}
 
 				HttpHeaders headers = new HttpHeaders();
-				headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+				headers.setContentType(MediaType.APPLICATION_JSON);
 				headers.add(USER_AGENT_HEADER, USER_AGENT_VALUE);
 				headers.add("AUTHORIZATION", GRIEVANCE_AUTH_TOKEN);
-				//headers.add("Authorization", "Bearer " + GRIEVANCE_AUTH_TOKEN);
 
 				Date date = new Date();
 				java.sql.Date sqlDate = new java.sql.Date(date.getTime());
 				Calendar calendar = Calendar.getInstance();
 				calendar.setTime(sqlDate);
 				calendar.add(Calendar.DATE, -Integer.parseInt(grievanceDataSyncDuration));
-
-				// Request object
-				HttpEntity<Object> request = new HttpEntity<Object>(headers);
-
-				// Call rest-template to call API to download master data for given table
-				ResponseEntity<String> response = restTemplate.exchange(updateGrievanceDetails, HttpMethod.POST,
-						request, String.class);
+				String json = prepareRequestObject();
+				int contentLength = json.getBytes(StandardCharsets.UTF_8).length;
+				headers.add("Content-Length", String.valueOf(contentLength));
+				HttpEntity<String> request = new HttpEntity<>(json, headers);
+				String url = updateGrievanceDetails.replace("PageNumber", "1");
+				ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
 
 				if (response != null && response.hasBody()) {
 					JSONObject obj = new JSONObject(response.getBody());
-					//if (obj != null && obj.has("data") && obj.has(STATUS_CODE) && obj.getInt(STATUS_CODE) == 200) {
 					if (obj != null && obj.has("data") && obj.has("status") && obj.getInt("status") == 200) {
-					logger.info("Grievance data details response received successfully ");
+						logger.info("Grievance data details response received successfully ");
 
 						String responseStr = response.getBody();
 						JsonObject jsnOBJ = new JsonObject();
 						JsonParser jsnParser = new JsonParser();
 						JsonElement jsnElmnt = jsnParser.parse(responseStr);
 						jsnOBJ = jsnElmnt.getAsJsonObject();
-						
-						// Handle "data" as a JsonArray
-				        JsonArray grievanceJsonDataArray = jsnOBJ.getAsJsonArray("data");
-				     //   registeringUser = grievanceJsonDataArray.get(0).getAsJsonObject().get("userName").getAsString();
+						int total = jsnOBJ.get("total").getAsInt();
+						String GrievanceUrl = updateGrievanceDetails.replace("PageNumber", String.valueOf(total));
+						ResponseEntity<String> grievienceResponse = restTemplate.exchange(GrievanceUrl, HttpMethod.POST,
+								request, String.class);
+						String respStr = grievienceResponse.getBody();
 
-					//	registeringUser = grievanceJsonData.get("userName").getAsString();
-
-				            
-					//	if (Integer.parseInt(jsnOBJ.get("TotalRecords").toString()) > 0) {
-							if (Integer.parseInt(jsnOBJ.get("total").toString()) > 0) {
-
-
-						        List<GrievanceDetails> grievanceDetailsList = new ArrayList<>();
-
-				            
-				         // Iterate over the data array
-				            for (JsonElement grievanceElement : grievanceJsonDataArray) {
-				                JsonObject grievanceJsonData = grievanceElement.getAsJsonObject();
-
-				
-				        		GrievanceDetails grievance = new GrievanceDetails();
-
-							// Loop through the fetched grievance list and integrate transaction details
+						JsonElement jsnElmntResp = jsnParser.parse(respStr);
+						jsnOBJ = jsnElmntResp.getAsJsonObject();
+						JsonArray grievanceJsonDataArray = jsnOBJ.getAsJsonArray("data");
+						if (Integer.parseInt(jsnOBJ.get("total").toString()) > 0) {
+							for (JsonElement grievanceElement : grievanceJsonDataArray) {
+								String formattedComplaintId = null;
+								try {
+								JsonObject grievanceJsonData = grievanceElement.getAsJsonObject();
+								GrievanceDetails grievance = new GrievanceDetails();
 								String complaintId = grievanceJsonData.get("complainId").getAsString();
-								String formattedComplaintId = complaintId.replace("\\/", "/");
-
-								// Check if the complaintId is already present in the t_grievance_worklist table
+								formattedComplaintId = complaintId.replace("\\/", "/");
 								boolean complaintExists = grievanceDataRepo.existsByComplaintId(formattedComplaintId);
 								if (complaintExists) {
-									throw new RuntimeException("Complaint ID " + formattedComplaintId
+									logger.info("Complaint ID " + formattedComplaintId
 											+ " already exists in the grievance worklist table.");
+									continue;
 								}
-								
+
 								grievance.setComplaintID(formattedComplaintId);
 
 								// Fetch related grievance transaction details
 								Long grievanceID = grievanceJsonData.get("grievanceId").getAsLong();
 								grievance.setGrievanceId(grievanceID);
-								  grievanceIds.add(grievanceJsonData.get("grievanceId").getAsLong());
-							
+								grievanceIds.add(grievanceJsonData.get("grievanceId").getAsLong());
 
-								// Adding other grievance-related fields 
-								
-	grievance.setSubjectOfComplaint(grievanceJsonData.has("subject") && !grievanceJsonData.get("subject").isJsonNull()
-					? grievanceJsonData.get("subject").getAsString() : null);
+								grievance.setSubjectOfComplaint(grievanceJsonData.has("subject")
+										&& !grievanceJsonData.get("subject").isJsonNull()
+												? grievanceJsonData.get("subject").getAsString()
+												: null);
 								ArrayList<Object[]> lists = grievanceFetchBenDetailsRepo
 										.findByComplaintId(formattedComplaintId);
-				grievance.setComplaint(grievanceJsonData.has("Complaint")
-						? grievanceJsonData.get("Complaint").getAsString() : null);
-				  String severityName = grievanceJsonData.has("severity") && grievanceJsonData.get("severity").getAsJsonObject().has("severity")
-				            ? grievanceJsonData.get("severity").getAsJsonObject().get("severity").getAsString()
-				            : null;
-				    grievance.setSeverety(severityName);
+								grievance.setComplaint(grievanceJsonData.has("Complaint")
+										? grievanceJsonData.get("Complaint").getAsString()
+										: null);
+								String severityName = grievanceJsonData.has("severity")
+										&& grievanceJsonData.get("severity").getAsJsonObject().has("severity")
+												? grievanceJsonData.get("severity").getAsJsonObject().get("severity")
+														.getAsString()
+												: null;
+								grievance.setSeverety(severityName);
 
-				    // Setting Level
-				    Integer levelId = grievanceJsonData.has("level") && grievanceJsonData.get("level").getAsJsonObject().has("levelId")
-				            ? grievanceJsonData.get("level").getAsJsonObject().get("levelId").getAsInt()
-				            : null;
-				    grievance.setLevel(levelId);
-				    
-				    // Setting state
-				    String stateName = grievanceJsonData.has("state") && grievanceJsonData.get("state").getAsJsonObject().has("stateName")
-				            ? grievanceJsonData.get("state").getAsJsonObject().get("stateName").getAsString()
-				            : null;
-				    grievance.setState(stateName);;
+								// Setting Level
+								Integer levelId = grievanceJsonData.has("level")
+										&& grievanceJsonData.get("level").getAsJsonObject().has("levelId")
+												? grievanceJsonData.get("level").getAsJsonObject().get("levelId")
+														.getAsInt()
+												: null;
+								grievance.setLevel(levelId);
+
+								// Setting state
+								String stateName = grievanceJsonData.has("state")
+										&& grievanceJsonData.get("state").getAsJsonObject().has("stateName")
+												? grievanceJsonData.get("state").getAsJsonObject().get("stateName")
+														.getAsString()
+												: null;
+								grievance.setState(stateName);
+
 								for (Object[] objects : lists) {
 									if (objects != null && objects.length <= 4) {
 										grievance.setComplaintID((String) objects[0]);
 										grievance.setBenCallID((Long) objects[1]);
 										grievance.setBeneficiaryRegID((Long) objects[2]);
 										grievance.setProviderServiceMapID((Integer) objects[3]);
-									//	String state = locationStateRepository
-									//			.findByStateIDForGrievance((Integer) objects[4]);
-									//	grievance.setState(state);
 									}
 								}
-								
-										
-								
-								
-								// setting language related properties and other
+								Long benDetailsID = grievanceDataRepo
+										.getBeneficiaryMapping(grievance.getBeneficiaryRegID());
 								ArrayList<Object[]> list1 = grievanceDataRepo
-										.getBeneficiaryGrievanceDetails(grievance.getBeneficiaryRegID());
+										.getBeneficiaryGrievanceDetails(benDetailsID);
 								for (Object[] objects : list1) {
 									if (objects != null && objects.length >= 6) {
 										grievance.setPreferredLanguageId((Integer) objects[0]);
@@ -259,127 +240,66 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 										grievance.setVanID((Integer) objects[3]);
 										grievance.setParkingPlaceID((Integer) objects[4]);
 										grievance.setVehicalNo((String) objects[5]);
-
 									}
 								}
-
 								String phoneNum = grievanceDataRepo.getPrimaryNumber(grievance.getBeneficiaryRegID());
 								grievance.setPrimaryNumber(phoneNum);
-								
-								// Setting remaining grievance properties (similar to the existing code)
-							//	grievance.setAgentid(grievance.getAgentid());
 								grievance.setDeleted(grievance.getDeleted());
-								//grievance.setCreatedBy(registeringUser);
 								grievance.setCreatedBy("Admin");
 								grievance.setProcessed('N');
 								grievance.setIsAllocated(false);
 								grievance.setCallCounter(0);
 								grievance.setRetryNeeded(true);
-								
-								grievanceDetailsList.add(grievance);
-
-							}
-				            // Add all new grievances to the main list
-	                        grievanceDetailsListAll.addAll(grievanceDetailsList);
-
-							// Save the grievance details to the t_grievance table
-							grievanceDetailsListAS = (List<GrievanceDetails>) grievanceDataRepo
-									.saveAll(grievanceDetailsListAll);
 							
-							for (Long grievanceIdObj : grievanceIds) {
+							grievanceDataRepo.save(grievance);
 							
-				  JsonArray	transactionDetailsList = fetchGrievanceTransactions(grievanceIdObj);
-
+								JsonArray transactionDetailsList = fetchGrievanceTransactions(grievanceID);
 								if (transactionDetailsList != null && !transactionDetailsList.isEmpty()) {
-									// Loop through each transaction and set individual properties
-							for (JsonElement transactionElement : transactionDetailsList) {
-				                JsonObject transactionDetailsJson = transactionElement.getAsJsonObject();
-				                GrievanceTransaction grievanceTransaction = new GrievanceTransaction();
-				                gwid = grievanceDataRepo.getUniqueGwid(grievanceIdObj);
-				                grievanceTransaction.setGwid(gwid);
-				                grievanceTransaction.setGrievanceId(grievanceIdObj);
-				                
-				              
-				                grievanceTransaction.setActionTakenBy(transactionDetailsJson.has("actionTakenBy")
-										? transactionDetailsJson.get("actionTakenBy").getAsString()
-										: null);
-				                grievanceTransaction.setStatus(transactionDetailsJson.has("status")
-										? transactionDetailsJson.get("status").getAsString()
-										: null);
-				                grievanceTransaction.setFileName(transactionDetailsJson.has(FILE_NAME)
+									for (JsonElement transactionElement : transactionDetailsList) {
+										JsonObject transactionDetailsJson = transactionElement.getAsJsonObject();
+										GrievanceTransaction grievanceTransaction = new GrievanceTransaction();
+										gwid = grievanceDataRepo.getUniqueGwid(grievanceID);
+										grievanceTransaction.setGwid(gwid);
+										grievanceTransaction.setGrievanceId(grievanceID);
+
+										grievanceTransaction
+												.setActionTakenBy(transactionDetailsJson.has("actionTakenBy")
+														? transactionDetailsJson.get("actionTakenBy").getAsString()
+														: null);
+										grievanceTransaction.setStatus(transactionDetailsJson.has("status")
+												? transactionDetailsJson.get("status").getAsString()
+												: null);
+										grievanceTransaction.setFileName(transactionDetailsJson.has(FILE_NAME)
 												? transactionDetailsJson.get(FILE_NAME).getAsString()
 												: null);
-				                grievanceTransaction.setFileType(transactionDetailsJson.has(FILE_TYPE)
+										grievanceTransaction.setFileType(transactionDetailsJson.has(FILE_TYPE)
 												? transactionDetailsJson.get(FILE_TYPE).getAsString()
 												: null);
-				                grievanceTransaction.setRedressed(transactionDetailsJson.has("redressed")
-										? transactionDetailsJson.get("redressed").getAsString()
-										: null);
-				                grievanceTransaction.setCreatedAt(Timestamp
+										grievanceTransaction.setRedressed(transactionDetailsJson.has("redressed")
+												? transactionDetailsJson.get("redressed").getAsString()
+												: null);
+										grievanceTransaction.setCreatedAt(Timestamp
 												.valueOf(transactionDetailsJson.get("createdAt").getAsString()));
-				                grievanceTransaction.setUpdatedAt(Timestamp
+										grievanceTransaction.setUpdatedAt(Timestamp
 												.valueOf(transactionDetailsJson.get("updatedAt").getAsString()));
-				                grievanceTransaction.setComments(transactionDetailsJson.has("comment")
-										? transactionDetailsJson.get("comment").getAsString()
-										: null);
-				                grievanceTransaction.setCreatedBy("Admin");
-				                Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-				                grievanceTransaction.setCreatedDate(timestamp);
-				       
-										// Save individual transaction detail in the t_grievance_transaction table
-				                grievanceTransactionListObj =  grievanceTransactionRepo.save(grievanceTransaction);
-				                grievanceTransactionList.add(grievanceTransactionListObj);							
-				                }
+										grievanceTransaction.setComments(transactionDetailsJson.has("comment")
+												? transactionDetailsJson.get("comment").getAsString()
+												: null);
+										grievanceTransaction.setCreatedBy("Admin");
+										Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+										grievanceTransaction.setCreatedDate(timestamp);
 
-									// Add the transaction list to the grievance object
-								//	grievance.setGrievanceTransactionDetails(grievanceTransactionList);
+										grievanceTransactionListObj = grievanceTransactionRepo
+												.save(grievanceTransaction);
+										grievanceTransactionList.add(grievanceTransactionListObj);
+										
+									}
+
 								}
+							}catch(Exception e) {
+								logger.error("Error while Grievance Details "+e.getMessage() +" Complaint ID " + formattedComplaintId);
 							}
-							// Combine grievance and transaction data for response
-//
-//							for (GrievanceDetails grievanceValue : grievanceDetailsListAS) {
-//								Map<String, Object> combinedData = new HashMap<>();
-//								combinedData.put("complaintID", grievanceValue.getGrievanceId());
-//								combinedData.put("subjectOfComplaint", grievanceValue.getSubjectOfComplaint());
-//								combinedData.put("complaint", grievanceValue.getComplaint());
-//								combinedData.put("beneficiaryRegID", grievanceValue.getBeneficiaryRegID());
-//								combinedData.put("providerServiceMapId", grievanceValue.getProviderServiceMapID());
-//
-//								combinedData.put("primaryNumber", grievanceValue.getPrimaryNumber());
-//
-//								// Add transaction data
-//								List<Map<String, Object>> transactions = new ArrayList<>();
-//								for (GrievanceTransaction transaction : grievanceValue.getGrievanceTransactionDetails()) {
-//									Map<String, Object> transactionData = new HashMap<>();
-//									//transactionData.put("actionTakenBy", transaction.getActionTakenBy());
-//								//	transactionData.put("status", transaction.getStatus());
-//									transactionData.put(FILE_NAME, transaction.getFileName());
-//									transactionData.put(FILE_TYPE, transaction.getFileType());
-//									transactionData.put("redressed", transaction.getRedressed());
-//									transactionData.put("createdAt", transaction.getCreatedAt().toString());
-//									transactionData.put("updatedAt", transaction.getUpdatedAt().toString());
-//									transactionData.put("comments", transaction.getComments());
-//									transactions.add(transactionData);
-//								}
-//
-//								combinedData.put("transaction", transactions);
-//								combinedData.put("severity", grievanceValue.getSeverety());
-//								combinedData.put("state", grievanceValue.getState());
-//							//	combinedData.put("agentId", grievanceValue.getAgentid());
-//								combinedData.put("deleted", grievanceValue.getDeleted());
-//								combinedData.put("createdBy", grievanceValue.getCreatedBy());
-//								combinedData.put("createdDate", grievanceValue.getCreatedDate());
-//								combinedData.put("lastModDate", grievanceValue.getLastModDate());
-//								combinedData.put("isCompleted", grievanceValue.getIsCompleted());
-//
-//								combinedData.put("retryNeeded", grievanceValue.getRetryNeeded());
-//								combinedData.put("callCounter", grievanceValue.getCallCounter());
-//
-//								responseData.add(combinedData);
-//							}
-
-							// Return the combined response as required
-
+							}
 						} else {
 							logger.info("No records found for page = {}", count);
 							count = -1;
@@ -390,8 +310,38 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 		} catch (Exception e) {
 			logger.error("Error in saving data into t_grievanceworklist: ", e);
 		}
-	//	return responseData;
+		// return responseData;
 		return "Grievance Data saved successfully";
+	}
+
+	private String prepareRequestObject() {
+		Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("draw", 1);
+        bodyMap.put("columns", new Object[]{});
+        bodyMap.put("order", new Object[]{});
+        bodyMap.put("start", 0);
+        bodyMap.put("length", 10);
+
+        Map<String, Object> search = new HashMap<>();
+        search.put("value", "");
+        search.put("regex", false);
+        bodyMap.put("search", search);
+
+        bodyMap.put("state_id", "");
+        bodyMap.put("complain_id", "");
+        bodyMap.put("color", "");
+        bodyMap.put("level", "3");
+        bodyMap.put("start_date", "");
+        bodyMap.put("end_date", "");
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jsonBody = "";
+        try {
+            jsonBody = objectMapper.writeValueAsString(bodyMap);
+        } catch (Exception e) {
+            logger.error("Error while preparing Grievance jsonRequest");
+        }
+		return jsonBody;
 	}
 
 	private JsonArray fetchGrievanceTransactions(Long grievanceId) {
@@ -417,16 +367,15 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 					JsonElement jsnElmnt = jsnParser.parse(response.getBody());
 					jsnOBJ = jsnElmnt.getAsJsonObject();
 
-					 
-	                transactionDataArray = jsnOBJ.getAsJsonArray("data");
+					transactionDataArray = jsnOBJ.getAsJsonArray("data");
 //	                if (transactionDataArray != null && transactionDataArray.size() > 0) {
 //	                    GrievanceTransaction[] transactionDetailsArray = new Gson()
 //	                            .fromJson(transactionDataArray, GrievanceTransaction[].class);
 //	                    transactionDetailsList = Arrays.asList(transactionDetailsArray);
 //				}
+				}
 			}
-		}
-			
+
 		} catch (Exception e) {
 			logger.error("Error fetching grievance transaction details for grievanceId " + grievanceId, e);
 		}
@@ -452,36 +401,34 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 //			 JSONObject requestObj = new JSONObject(request);
 //		        String complaintResolution = requestObj.optString("ComplaintResolution", null);
 //		        String state = requestObj.optString("State", null);
-			
+
 			String responseBody = responseEntity.getBody();
 			JsonObject jsnOBJ = new JsonObject();
 			JsonParser jsnParser = new JsonParser();
 			JsonElement jsnElmnt = jsnParser.parse(responseBody);
 			jsnOBJ = jsnElmnt.getAsJsonObject();
-			
-			 // Accessing the "data" object first
-	        if (jsnOBJ.has("data")) {
-	            JsonObject dataObj = jsnOBJ.getAsJsonObject("data");
 
-	            // Now check for "token_type" and "access_token" inside the "data" object
-	            if (dataObj.has("token_type") && dataObj.has("access_token")) {
-	                String tokenType = dataObj.get("token_type").getAsString();
-	                String accessToken = dataObj.get("access_token").getAsString();
-	                GRIEVANCE_AUTH_TOKEN = tokenType + " " + accessToken;
-	            } else {
-	                logger.error("Missing token_type or access_token in 'data' object: {}", responseBody);
-	                // Handle missing tokens gracefully
-	                return;
-	            }
-	        } else {
-	            logger.error("'data' object is missing in response: {}", responseBody);
-	            return;
-	        }
-			
-			
-			
-		//	GRIEVANCE_AUTH_TOKEN = jsnOBJ.get("token_type").getAsString() + " "
-		//			+ jsnOBJ.get("access_token").getAsString();
+			// Accessing the "data" object first
+			if (jsnOBJ.has("data")) {
+				JsonObject dataObj = jsnOBJ.getAsJsonObject("data");
+
+				// Now check for "token_type" and "access_token" inside the "data" object
+				if (dataObj.has("token_type") && dataObj.has("access_token")) {
+					String tokenType = dataObj.get("token_type").getAsString();
+					String accessToken = dataObj.get("access_token").getAsString();
+					GRIEVANCE_AUTH_TOKEN = tokenType + " " + accessToken;
+				} else {
+					logger.error("Missing token_type or access_token in 'data' object: {}", responseBody);
+					// Handle missing tokens gracefully
+					return;
+				}
+			} else {
+				logger.error("'data' object is missing in response: {}", responseBody);
+				return;
+			}
+
+			// GRIEVANCE_AUTH_TOKEN = jsnOBJ.get("token_type").getAsString() + " "
+			// + jsnOBJ.get("access_token").getAsString();
 
 			JsonObject grievanceLoginJsonData = jsnOBJ.getAsJsonObject("data");
 
@@ -499,7 +446,7 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 			int count = 3;
 			while (count > 0) {
 				try {
-			//		List<Map<String, Object>> savedGrievanceData = dataSyncToGrievance();
+					// List<Map<String, Object>> savedGrievanceData = dataSyncToGrievance();
 					String savedGrievanceData = dataSyncToGrievance();
 					if (savedGrievanceData != null)
 						break;
@@ -520,7 +467,7 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 	}
 
 	@Override
-	public String fetchUnallocatedGrievanceCount(String preferredLanguage, Timestamp filterStartDate, 
+	public String fetchUnallocatedGrievanceCount(String preferredLanguage, Timestamp filterStartDate,
 			Timestamp filterEndDate, Integer providerServiceMapID) throws IEMRException, JSONException {
 		logger.debug("Request received for fetchUnallocatedGrievanceCount");
 
@@ -587,112 +534,106 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 
 		return resultArray.toString();
 	}
-	
-	
+
 	@Override
 	@Transactional
 	public String completeGrievanceCall(String request) throws Exception {
-		
+
 		GrievanceCallRequest grievanceCallRequest = InputMapper.gson().fromJson(request, GrievanceCallRequest.class);
-		   String complaintID = grievanceCallRequest.getComplaintID();
-		   Integer userID = grievanceCallRequest.getUserID();
-	        Boolean isCompleted = grievanceCallRequest.getIsCompleted();
-	        Long beneficiaryRegID = grievanceCallRequest.getBeneficiaryRegID();
-	        Integer callTypeID = grievanceCallRequest.getCallTypeID();
-	        Integer providerServiceMapID = grievanceCallRequest.getProviderServiceMapID();
+		String complaintID = grievanceCallRequest.getComplaintID();
+		Integer userID = grievanceCallRequest.getUserID();
+		Boolean isCompleted = grievanceCallRequest.getIsCompleted();
+		Long beneficiaryRegID = grievanceCallRequest.getBeneficiaryRegID();
+		Integer callTypeID = grievanceCallRequest.getCallTypeID();
+		Integer providerServiceMapID = grievanceCallRequest.getProviderServiceMapID();
 
-	        CallType callTypeObj = new CallType();
-	        String response = "failure"; 
-	        int updateCount = 0;
-	        int updateCallCounter = 0;
-	        try {
-	        	
-		        	GrievanceDetails grievanceCallStatus = new GrievanceDetails();
+		CallType callTypeObj = new CallType();
+		String response = "failure";
+		int updateCount = 0;
+		int updateCallCounter = 0;
+		try {
 
-	    		List<Object[]> lists = grievanceDataRepo.getCallCounter(complaintID);
-	    		for (Object[] objects : lists) {
-					if (objects != null && objects.length >= 2) {
-						grievanceCallStatus.setCallCounter((Integer) objects[0]);
-						grievanceCallStatus.setRetryNeeded((Boolean)objects[1]);	
-					}
+			GrievanceDetails grievanceCallStatus = new GrievanceDetails();
+
+			List<Object[]> lists = grievanceDataRepo.getCallCounter(complaintID);
+			for (Object[] objects : lists) {
+				if (objects != null && objects.length >= 2) {
+					grievanceCallStatus.setCallCounter((Integer) objects[0]);
+					grievanceCallStatus.setRetryNeeded((Boolean) objects[1]);
 				}
-	        	
-	        	  // Fetching CallDetails using BenCallID and CallTypeID
-	    		Set<Object[]> callTypesArray = new HashSet<Object[]>();
-	            callTypesArray = iEMRCalltypeRepositoryImplCustom.getCallDetails(callTypeID);
-	        	for (Object[] object : callTypesArray)
-	    		{
-	    			if (object != null && object.length >= 2)
-	    			{
-	    				callTypeObj.setCallGroupType((String) object[0]);
-	    				callTypeObj.setCallType((String) object[1]);
-	    				
-	    			}
-	    			
-	    		}
-	    
-	    		       String callGroupType = callTypeObj.getCallGroupType();
-	    		        String callType = callTypeObj.getCallType();
+			}
 
-	        	
-	            // Logic for reattempt based on call group type and call type
-	    		        
-	    		      boolean  isRetryNeeded = grievanceCallStatus.getRetryNeeded();
-	    		        if (callGroupType.equals("Valid")) {
-	                // Conditions when no reattempt is needed
-	                if (callType.equals("Valid")  || callType.equals("Test Call")) {
-	                	isRetryNeeded = false;
-	                } else if (callType.equals("Disconnected Call") || callType.equals("Serviced Call") ||
-	                           callType.equals("Silent Call") || callType.equals("Call Back")) {
-	                    // Reattempt is needed for these call subtypes
-	                	isRetryNeeded = true;
-	                }
-	            }
-	    		        if (callGroupType.equals("Invalid") && callType.equals("Wrong Number")) {
-	    		        	isRetryNeeded = false;
-	    		        	//isCompleted = true;
-	    		        	grievanceDataRepo.updateCompletedStatusInCall(isCompleted, isRetryNeeded, complaintID, userID, beneficiaryRegID, providerServiceMapID);
-	    		        }
+			// Fetching CallDetails using BenCallID and CallTypeID
+			Set<Object[]> callTypesArray = new HashSet<Object[]>();
+			callTypesArray = iEMRCalltypeRepositoryImplCustom.getCallDetails(callTypeID);
+			for (Object[] object : callTypesArray) {
+				if (object != null && object.length >= 2) {
+					callTypeObj.setCallGroupType((String) object[0]);
+					callTypeObj.setCallType((String) object[1]);
 
-	            // Check if max attempts (3) are reached
-	            if (isRetryNeeded == true && grievanceCallStatus.getCallCounter() < grievanceAllocationRetryConfiguration) {
-	                // Increment the call counter for reattempt
-	                grievanceCallStatus.setCallCounter(grievanceCallStatus.getCallCounter() + 1);
-	             // Update the retryNeeded flag
-	                isRetryNeeded = true;
-	                //isCompleted = false;
-	                updateCallCounter = grievanceDataRepo.updateCallCounter(grievanceCallStatus.getCallCounter(), isRetryNeeded, grievanceCallRequest.getComplaintID(), 
-	                		grievanceCallRequest.getBeneficiaryRegID(), grievanceCallRequest.getProviderServiceMapID(),
-	                		grievanceCallRequest.getUserID());
-	            // Return success when reattempt logic is applied successfully. The grievance call needs to be retried, and a reattempt is performed.
-	                if (updateCallCounter > 0)
-	                	response = "Successfully closing call";
-					else {
-						response = "failure in closing call";
-					}
-	            } else if (grievanceCallStatus.getCallCounter()== grievanceAllocationRetryConfiguration) {
-	                // Max attempts reached, no further reattempt
-	                isRetryNeeded = false;
-	                //isCompleted = true;
-	            	updateCount = grievanceDataRepo.updateCompletedStatusInCall(isCompleted, isRetryNeeded, complaintID, userID, beneficiaryRegID, providerServiceMapID);
-	                response = "max_attempts_reached";  // Indicate that max attempts are reached
-	                
-	                
-	            } else {
+				}
 
-	                response = "no_reattempt_needed";  // No reattempt needed
-	            }
+			}
 
+			String callGroupType = callTypeObj.getCallGroupType();
+			String callType = callTypeObj.getCallType();
 
+			// Logic for reattempt based on call group type and call type
 
-	        }
-	        	catch (Exception e) {
-	            response = "error: " + e.getMessage();
-	        }
+			boolean isRetryNeeded = grievanceCallStatus.getRetryNeeded();
+			if (callGroupType.equals("Valid")) {
+				// Conditions when no reattempt is needed
+				if (callType.equals("Valid") || callType.equals("Test Call")) {
+					isRetryNeeded = false;
+				} else if (callType.equals("Disconnected Call") || callType.equals("Serviced Call")
+						|| callType.equals("Silent Call") || callType.equals("Call Back")) {
+					// Reattempt is needed for these call subtypes
+					isRetryNeeded = true;
+				}
+			}
+			if (callGroupType.equals("Invalid") && callType.equals("Wrong Number")) {
+				isRetryNeeded = false;
+				// isCompleted = true;
+				grievanceDataRepo.updateCompletedStatusInCall(isCompleted, isRetryNeeded, complaintID, userID,
+						beneficiaryRegID, providerServiceMapID);
+			}
 
-	        return response;  // Return the response (either success or error message)
-	    }
+			// Check if max attempts (3) are reached
+			if (isRetryNeeded == true && grievanceCallStatus.getCallCounter() < grievanceAllocationRetryConfiguration) {
+				// Increment the call counter for reattempt
+				grievanceCallStatus.setCallCounter(grievanceCallStatus.getCallCounter() + 1);
+				// Update the retryNeeded flag
+				isRetryNeeded = true;
+				// isCompleted = false;
+				updateCallCounter = grievanceDataRepo.updateCallCounter(grievanceCallStatus.getCallCounter(),
+						isRetryNeeded, grievanceCallRequest.getComplaintID(),
+						grievanceCallRequest.getBeneficiaryRegID(), grievanceCallRequest.getProviderServiceMapID(),
+						grievanceCallRequest.getUserID());
+				// Return success when reattempt logic is applied successfully. The grievance
+				// call needs to be retried, and a reattempt is performed.
+				if (updateCallCounter > 0)
+					response = "Successfully closing call";
+				else {
+					response = "failure in closing call";
+				}
+			} else if (grievanceCallStatus.getCallCounter() == grievanceAllocationRetryConfiguration) {
+				// Max attempts reached, no further reattempt
+				isRetryNeeded = false;
+				// isCompleted = true;
+				updateCount = grievanceDataRepo.updateCompletedStatusInCall(isCompleted, isRetryNeeded, complaintID,
+						userID, beneficiaryRegID, providerServiceMapID);
+				response = "max_attempts_reached"; // Indicate that max attempts are reached
 
+			} else {
 
+				response = "no_reattempt_needed"; // No reattempt needed
+			}
+
+		} catch (Exception e) {
+			response = "error: " + e.getMessage();
+		}
+
+		return response; // Return the response (either success or error message)
+	}
 
 }
