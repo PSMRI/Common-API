@@ -1,5 +1,6 @@
 package com.iemr.common.repository.grievance;
 
+import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -33,8 +34,8 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 	public int allocateGrievance(@Param("grievanceId") Long grievanceId,
 			@Param("userId") Integer userId);
 
-	@Query(nativeQuery = true, value = "SELECT PreferredLanguageId, PreferredLanguage, VanSerialNo, VanID, ParkingPlaceId, VehicalNo FROM db_1097_identity.i_beneficiarydetails WHERE BeneficiaryRegID = :benRegId")
-	public ArrayList<Object[]> getBeneficiaryGrievanceDetails(@Param("benRegId") Long benRegId);
+	@Query(nativeQuery = true, value = "SELECT preferredLanguageId, preferredLanguage, VanSerialNo, VanID, ParkingPlaceID, VehicalNo FROM db_1097_identity.i_beneficiarydetails WHERE beneficiarydetailsid = :beneficiarydetailsid")
+	public ArrayList<Object[]> getBeneficiaryGrievanceDetails(@Param("beneficiarydetailsid") Long beneficiarydetailsid);
 
 	@Query(nativeQuery = true, value = "SELECT t2.preferredPhoneNum FROM db_1097_identity.i_beneficiarymapping t1 join" 
 			+ " db_1097_identity.i_beneficiarycontacts t2 on t1.benContactsId = t2.benContactsID" 
@@ -43,11 +44,10 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 	
 	
 	@Query("select grievance.preferredLanguage, count(distinct grievance.grievanceId) "
-			+ "from GrievanceDetails grievance " + "where grievance.providerServiceMapID = :providerServiceMapID "
-			+ "and grievance.userID = :userID " + "and grievance.deleted = false "
+			+ "from GrievanceDetails grievance " + "where "
+			+ "grievance.userID = :userID " + "and grievance.deleted = false "
 			+ "group by grievance.preferredLanguage")
-	public Set<Object[]> fetchGrievanceRecordsCount(@Param("providerServiceMapID") Integer providerServiceMapID,
-			@Param("userID") Integer userID);
+	public Set<Object[]> fetchGrievanceRecordsCount(@Param("userID") Integer userID);
 
 	@Query("SELECT g FROM GrievanceDetails g WHERE g.userID = :userID AND g.preferredLanguage = :language AND g.isAllocated = true")
 	List<GrievanceDetails> findAllocatedGrievancesByUserAndLanguage(@Param("userID") Integer userID,
@@ -159,6 +159,9 @@ List<Object[]> fetchGrievanceWorklistRemarks(@Param("complaintID") String compla
 
 @Query("SELECT g.gwid FROM GrievanceDetails g WHERE g.grievanceId = :grievanceId")
 Long getUniqueGwid(@Param("grievanceId")Long grievanceIdObj);
+
+@Query(value = "SELECT BenDetailsId FROM db_1097_identity.i_beneficiarymapping WHERE BenRegId = :beneficiaryRegID", nativeQuery = true)
+Long getBeneficiaryMapping(@Param("beneficiaryRegID") Long beneficiaryRegID);
 
 
 

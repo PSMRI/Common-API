@@ -123,7 +123,7 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 		Integer providerServiceMapID = grievanceRequest.getProviderServiceMapID();
 		Integer userID = grievanceRequest.getUserID();
 
-		Set<Object[]> resultSet = grievanceDataRepo.fetchGrievanceRecordsCount(providerServiceMapID, userID);
+		Set<Object[]> resultSet = grievanceDataRepo.fetchGrievanceRecordsCount(userID);
 
 		JSONObject result = new JSONObject();
 		result.put("All", 0);
@@ -277,11 +277,10 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	        // Fetch grievance worklist data using @Procedure annotation
 	        List<Object[]> worklistData;
 	        try {
-	        	if (getGrievanceWorklistRequest.getProviderServiceMapID() == null || 
-	        		getGrievanceWorklistRequest.getUserId() == null) {
-	        			throw new IllegalArgumentException("ProviderServiceMapID and UserId are required");
+	        	if (getGrievanceWorklistRequest.getUserId() == null) {
+	        			throw new IllegalArgumentException("UserId are required");
 	        		}
-	        worklistData = grievanceOutboundRepo.getGrievanceWorklistData(getGrievanceWorklistRequest.getProviderServiceMapID(), getGrievanceWorklistRequest.getUserId());
+	        worklistData = grievanceOutboundRepo.getGrievanceWorklistData(getGrievanceWorklistRequest.getUserId());
 	        if (worklistData == null || worklistData.isEmpty()) {
 	        	logger.info("No grievance data found for the given criteria");
 	        	return new ArrayList<>();
