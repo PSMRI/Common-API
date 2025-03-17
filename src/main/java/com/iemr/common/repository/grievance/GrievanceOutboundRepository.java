@@ -18,4 +18,5 @@ public interface GrievanceOutboundRepository extends JpaRepository<GrievanceDeta
 	@Query(value =" call db_iemr.Pr_Grievanceworklist(:userId)", nativeQuery = true)
     List<Object[]> getGrievanceWorklistData(@Param("userId") Integer userId);
 
+
 }

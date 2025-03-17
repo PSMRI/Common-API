@@ -32,7 +32,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -110,14 +109,14 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 	private Long GRIEVANCE_TOKEN_EXP;
 
 	public String dataSyncToGrievance() {
-
+		
 		int count = 0;
 		List<GrievanceDetails> grievanceDetailsListAll = new ArrayList<>();
 
 		List<GrievanceTransaction> grievanceTransactionList = new ArrayList<>();
 		GrievanceTransaction grievanceTransactionListObj = new GrievanceTransaction();
 		List<Long> grievanceIds = new ArrayList<>();
-
+    
 		Long gwid;
 
 		try {
@@ -134,6 +133,7 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 				headers.setContentType(MediaType.APPLICATION_JSON);
 				headers.add(USER_AGENT_HEADER, USER_AGENT_VALUE);
 				headers.add("AUTHORIZATION", GRIEVANCE_AUTH_TOKEN);
+				//headers.add("Authorization", "Bearer " + GRIEVANCE_AUTH_TOKEN);
 
 				Date date = new Date();
 				java.sql.Date sqlDate = new java.sql.Date(date.getTime());
@@ -172,6 +172,7 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 								try {
 								JsonObject grievanceJsonData = grievanceElement.getAsJsonObject();
 								GrievanceDetails grievance = new GrievanceDetails();
+
 								String complaintId = grievanceJsonData.get("complainId").getAsString();
 								formattedComplaintId = complaintId.replace("\\/", "/");
 								boolean complaintExists = grievanceDataRepo.existsByComplaintId(formattedComplaintId);
@@ -180,7 +181,7 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 											+ " already exists in the grievance worklist table.");
 									continue;
 								}
-
+								
 								grievance.setComplaintID(formattedComplaintId);
 
 								// Fetch related grievance transaction details
@@ -230,6 +231,7 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 								}
 								Long benDetailsID = grievanceDataRepo
 										.getBeneficiaryMapping(grievance.getBeneficiaryRegID());
+
 								ArrayList<Object[]> list1 = grievanceDataRepo
 										.getBeneficiaryGrievanceDetails(benDetailsID);
 								for (Object[] objects : list1) {
@@ -249,8 +251,7 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 								grievance.setProcessed('N');
 								grievance.setIsAllocated(false);
 								grievance.setCallCounter(0);
-								grievance.setRetryNeeded(true);
-							
+								grievance.setRetryNeeded(true);							
 							grievanceDataRepo.save(grievance);
 							
 								JsonArray transactionDetailsList = fetchGrievanceTransactions(grievanceID);
@@ -635,5 +636,6 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 
 		return response; // Return the response (either success or error message)
 	}
+
 
 }
