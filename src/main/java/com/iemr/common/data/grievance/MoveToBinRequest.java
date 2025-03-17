@@ -6,7 +6,7 @@ import lombok.Data;
 public class MoveToBinRequest {
 
 	private Integer providerServiceMapID;
-	private Integer assignedUserID;
+	private Integer userID;
 	private String preferredLanguageName;
 	private Boolean is1097;
 	private Integer noOfCalls;

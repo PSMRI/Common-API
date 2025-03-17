@@ -24,16 +24,19 @@ public class GrievanceTransaction {
     @Column(name = "gwid", nullable = false)
     @Expose
     private Long gwid;
+    
+    @Column(name = "GrievanceId")
+    @Expose
+    private Long grievanceId;
+    
 
     @Column(name = "FileName", nullable = false, length = 500)
     @Expose
-    @NotBlank(message = "File name is required")
     @Size(max = 500, message = "File name cannot exceed 500 characters")
     private String fileName;
 
     @Column(name = "FileType", nullable = false, length = 300)
     @Expose
-    @NotBlank(message = "File name is required")
     @Size(max = 300, message = "File type cannot exceed 300 characters")
     private String fileType;
 
@@ -73,10 +76,6 @@ public class GrievanceTransaction {
     @Expose
     private String status;
     
-    @Column(name = "Comment")
-    @Expose
-    private String comment;
-    
     @Column(name = "CreatedBy", nullable = false)
     @Expose
     private String createdBy;
@@ -113,6 +112,15 @@ public class GrievanceTransaction {
     public void setGwid(Long gwid) {
         this.gwid = gwid;
     }
+    
+    public Long getGrievanceId() {
+        return grievanceId;
+    }
+
+    public void setGrievanceId(Long grievanceId) {
+        this.grievanceId = grievanceId;
+    }
+    
 
     public String getFileName() {
         return fileName;
@@ -234,12 +242,6 @@ public class GrievanceTransaction {
     	this.status = status;
     }
     
-    public String getComment( ) {
-    	return comment;
-    }
-    
-    public void setComment(String comment ) {
-    	this.comment = comment;
-    }
+
 }
 
