@@ -170,135 +170,138 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 							for (JsonElement grievanceElement : grievanceJsonDataArray) {
 								String formattedComplaintId = null;
 								try {
-								JsonObject grievanceJsonData = grievanceElement.getAsJsonObject();
-								GrievanceDetails grievance = new GrievanceDetails();
-								String complaintId = grievanceJsonData.get("complainId").getAsString();
-								formattedComplaintId = complaintId.replace("\\/", "/");
-								boolean complaintExists = grievanceDataRepo.existsByComplaintId(formattedComplaintId);
-								if (complaintExists) {
-									logger.info("Complaint ID " + formattedComplaintId
-											+ " already exists in the grievance worklist table.");
-									continue;
-								}
-
-								grievance.setComplaintID(formattedComplaintId);
-
-								// Fetch related grievance transaction details
-								Long grievanceID = grievanceJsonData.get("grievanceId").getAsLong();
-								grievance.setGrievanceId(grievanceID);
-								grievanceIds.add(grievanceJsonData.get("grievanceId").getAsLong());
-
-								grievance.setSubjectOfComplaint(grievanceJsonData.has("subject")
-										&& !grievanceJsonData.get("subject").isJsonNull()
-												? grievanceJsonData.get("subject").getAsString()
-												: null);
-								ArrayList<Object[]> lists = grievanceFetchBenDetailsRepo
-										.findByComplaintId(formattedComplaintId);
-								grievance.setComplaint(grievanceJsonData.has("Complaint")
-										? grievanceJsonData.get("Complaint").getAsString()
-										: null);
-								String severityName = grievanceJsonData.has("severity")
-										&& grievanceJsonData.get("severity").getAsJsonObject().has("severity")
-												? grievanceJsonData.get("severity").getAsJsonObject().get("severity")
-														.getAsString()
-												: null;
-								grievance.setSeverety(severityName);
-
-								// Setting Level
-								Integer levelId = grievanceJsonData.has("level")
-										&& grievanceJsonData.get("level").getAsJsonObject().has("levelId")
-												? grievanceJsonData.get("level").getAsJsonObject().get("levelId")
-														.getAsInt()
-												: null;
-								grievance.setLevel(levelId);
-
-								// Setting state
-								String stateName = grievanceJsonData.has("state")
-										&& grievanceJsonData.get("state").getAsJsonObject().has("stateName")
-												? grievanceJsonData.get("state").getAsJsonObject().get("stateName")
-														.getAsString()
-												: null;
-								grievance.setState(stateName);
-
-								for (Object[] objects : lists) {
-									if (objects != null && objects.length <= 4) {
-										grievance.setComplaintID((String) objects[0]);
-										grievance.setBenCallID((Long) objects[1]);
-										grievance.setBeneficiaryRegID((Long) objects[2]);
-										grievance.setProviderServiceMapID((Integer) objects[3]);
-									}
-								}
-								Long benDetailsID = grievanceDataRepo
-										.getBeneficiaryMapping(grievance.getBeneficiaryRegID());
-								ArrayList<Object[]> list1 = grievanceDataRepo
-										.getBeneficiaryGrievanceDetails(benDetailsID);
-								for (Object[] objects : list1) {
-									if (objects != null && objects.length >= 6) {
-										grievance.setPreferredLanguageId((Integer) objects[0]);
-										grievance.setPreferredLanguage((String) objects[1]);
-										grievance.setVanSerialNo((Long) objects[2]);
-										grievance.setVanID((Integer) objects[3]);
-										grievance.setParkingPlaceID((Integer) objects[4]);
-										grievance.setVehicalNo((String) objects[5]);
-									}
-								}
-								String phoneNum = grievanceDataRepo.getPrimaryNumber(grievance.getBeneficiaryRegID());
-								grievance.setPrimaryNumber(phoneNum);
-								grievance.setDeleted(grievance.getDeleted());
-								grievance.setCreatedBy("Admin");
-								grievance.setProcessed('N');
-								grievance.setIsAllocated(false);
-								grievance.setCallCounter(0);
-								grievance.setRetryNeeded(true);
-							
-							grievanceDataRepo.save(grievance);
-							
-								JsonArray transactionDetailsList = fetchGrievanceTransactions(grievanceID);
-								if (transactionDetailsList != null && !transactionDetailsList.isEmpty()) {
-									for (JsonElement transactionElement : transactionDetailsList) {
-										JsonObject transactionDetailsJson = transactionElement.getAsJsonObject();
-										GrievanceTransaction grievanceTransaction = new GrievanceTransaction();
-										gwid = grievanceDataRepo.getUniqueGwid(grievanceID);
-										grievanceTransaction.setGwid(gwid);
-										grievanceTransaction.setGrievanceId(grievanceID);
-
-										grievanceTransaction
-												.setActionTakenBy(transactionDetailsJson.has("actionTakenBy")
-														? transactionDetailsJson.get("actionTakenBy").getAsString()
-														: null);
-										grievanceTransaction.setStatus(transactionDetailsJson.has("status")
-												? transactionDetailsJson.get("status").getAsString()
-												: null);
-										grievanceTransaction.setFileName(transactionDetailsJson.has(FILE_NAME)
-												? transactionDetailsJson.get(FILE_NAME).getAsString()
-												: null);
-										grievanceTransaction.setFileType(transactionDetailsJson.has(FILE_TYPE)
-												? transactionDetailsJson.get(FILE_TYPE).getAsString()
-												: null);
-										grievanceTransaction.setRedressed(transactionDetailsJson.has("redressed")
-												? transactionDetailsJson.get("redressed").getAsString()
-												: null);
-										grievanceTransaction.setCreatedAt(Timestamp
-												.valueOf(transactionDetailsJson.get("createdAt").getAsString()));
-										grievanceTransaction.setUpdatedAt(Timestamp
-												.valueOf(transactionDetailsJson.get("updatedAt").getAsString()));
-										grievanceTransaction.setComments(transactionDetailsJson.has("comment")
-												? transactionDetailsJson.get("comment").getAsString()
-												: null);
-										grievanceTransaction.setCreatedBy("Admin");
-										Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-										grievanceTransaction.setCreatedDate(timestamp);
-
-										grievanceTransactionListObj = grievanceTransactionRepo
-												.save(grievanceTransaction);
-										grievanceTransactionList.add(grievanceTransactionListObj);
-										
+									JsonObject grievanceJsonData = grievanceElement.getAsJsonObject();
+									GrievanceDetails grievance = new GrievanceDetails();
+									String complaintId = grievanceJsonData.get("complainId").getAsString();
+									formattedComplaintId = complaintId.replace("\\/", "/");
+									boolean complaintExists = grievanceDataRepo
+											.existsByComplaintId(formattedComplaintId);
+									if (complaintExists) {
+										logger.info("Complaint ID " + formattedComplaintId
+												+ " already exists in the grievance worklist table.");
+										continue;
 									}
 
+									grievance.setComplaintID(formattedComplaintId);
+
+									// Fetch related grievance transaction details
+									Long grievanceID = grievanceJsonData.get("grievanceId").getAsLong();
+									grievance.setGrievanceId(grievanceID);
+									grievanceIds.add(grievanceJsonData.get("grievanceId").getAsLong());
+
+									grievance.setSubjectOfComplaint(grievanceJsonData.has("subject")
+											&& !grievanceJsonData.get("subject").isJsonNull()
+													? grievanceJsonData.get("subject").getAsString()
+													: null);
+									ArrayList<Object[]> lists = grievanceFetchBenDetailsRepo
+											.findByComplaintId(formattedComplaintId);
+									grievance.setComplaint(grievanceJsonData.has("Complaint")
+											? grievanceJsonData.get("Complaint").getAsString()
+											: null);
+									String severityName = grievanceJsonData.has("severity")
+											&& grievanceJsonData.get("severity").getAsJsonObject().has("severity")
+													? grievanceJsonData.get("severity").getAsJsonObject()
+															.get("severity").getAsString()
+													: null;
+									grievance.setSeverety(severityName);
+
+									// Setting Level
+									Integer levelId = grievanceJsonData.has("level")
+											&& grievanceJsonData.get("level").getAsJsonObject().has("levelId")
+													? grievanceJsonData.get("level").getAsJsonObject().get("levelId")
+															.getAsInt()
+													: null;
+									grievance.setLevel(levelId);
+
+									// Setting state
+									String stateName = grievanceJsonData.has("state")
+											&& grievanceJsonData.get("state").getAsJsonObject().has("stateName")
+													? grievanceJsonData.get("state").getAsJsonObject().get("stateName")
+															.getAsString()
+													: null;
+									grievance.setState(stateName);
+
+									for (Object[] objects : lists) {
+										if (objects != null && objects.length <= 4) {
+											grievance.setComplaintID((String) objects[0]);
+											grievance.setBenCallID((Long) objects[1]);
+											grievance.setBeneficiaryRegID((Long) objects[2]);
+											grievance.setProviderServiceMapID((Integer) objects[3]);
+										}
+									}
+									Long benDetailsID = grievanceDataRepo
+											.getBeneficiaryMapping(grievance.getBeneficiaryRegID());
+									ArrayList<Object[]> list1 = grievanceDataRepo
+											.getBeneficiaryGrievanceDetails(benDetailsID);
+									for (Object[] objects : list1) {
+										if (objects != null && objects.length >= 6) {
+											grievance.setPreferredLanguageId((Integer) objects[0]);
+											grievance.setPreferredLanguage((String) objects[1]);
+											grievance.setVanSerialNo((Long) objects[2]);
+											grievance.setVanID((Integer) objects[3]);
+											grievance.setParkingPlaceID((Integer) objects[4]);
+											grievance.setVehicalNo((String) objects[5]);
+										}
+									}
+									String phoneNum = grievanceDataRepo
+											.getPrimaryNumber(grievance.getBeneficiaryRegID());
+									grievance.setPrimaryNumber(phoneNum);
+									grievance.setDeleted(grievance.getDeleted());
+									grievance.setCreatedBy("Admin");
+									grievance.setProcessed('N');
+									grievance.setIsAllocated(false);
+									grievance.setCallCounter(0);
+									grievance.setRetryNeeded(true);
+
+									grievanceDataRepo.save(grievance);
+
+									JsonArray transactionDetailsList = fetchGrievanceTransactions(grievanceID);
+									if (transactionDetailsList != null && !transactionDetailsList.isEmpty()) {
+										for (JsonElement transactionElement : transactionDetailsList) {
+											JsonObject transactionDetailsJson = transactionElement.getAsJsonObject();
+											GrievanceTransaction grievanceTransaction = new GrievanceTransaction();
+											gwid = grievanceDataRepo.getUniqueGwid(grievanceID);
+											grievanceTransaction.setGwid(gwid);
+											grievanceTransaction.setGrievanceId(grievanceID);
+
+											grievanceTransaction
+													.setActionTakenBy(transactionDetailsJson.has("actionTakenBy")
+															? transactionDetailsJson.get("actionTakenBy").getAsString()
+															: null);
+											grievanceTransaction.setStatus(transactionDetailsJson.has("status")
+													? transactionDetailsJson.get("status").getAsString()
+													: null);
+											grievanceTransaction.setFileName(transactionDetailsJson.has(FILE_NAME)
+													? transactionDetailsJson.get(FILE_NAME).getAsString()
+													: null);
+											grievanceTransaction.setFileType(transactionDetailsJson.has(FILE_TYPE)
+													? transactionDetailsJson.get(FILE_TYPE).getAsString()
+													: null);
+											grievanceTransaction.setRedressed(transactionDetailsJson.has("redressed")
+													? transactionDetailsJson.get("redressed").getAsString()
+													: null);
+											grievanceTransaction.setCreatedAt(Timestamp
+													.valueOf(transactionDetailsJson.get("createdAt").getAsString()));
+											grievanceTransaction.setUpdatedAt(Timestamp
+													.valueOf(transactionDetailsJson.get("updatedAt").getAsString()));
+											grievanceTransaction.setComments(transactionDetailsJson.has("comment")
+													? transactionDetailsJson.get("comment").getAsString()
+													: null);
+											grievanceTransaction.setCreatedBy("Admin");
+											Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+											grievanceTransaction.setCreatedDate(timestamp);
+
+											grievanceTransactionListObj = grievanceTransactionRepo
+													.save(grievanceTransaction);
+											grievanceTransactionList.add(grievanceTransactionListObj);
+
+										}
+
+									}
+								} catch (Exception e) {
+									logger.error("Error while Grievance Details " + e.getMessage() + " Complaint ID "
+											+ formattedComplaintId);
 								}
-							}catch(Exception e) {
-								logger.error("Error while Grievance Details "+e.getMessage() +" Complaint ID " + formattedComplaintId);
-							}
 							}
 						} else {
 							logger.info("No records found for page = {}", count);
