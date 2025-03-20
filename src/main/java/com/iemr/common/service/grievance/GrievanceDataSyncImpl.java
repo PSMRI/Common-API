@@ -319,31 +319,31 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 
 	private String prepareRequestObject() {
 		Map<String, Object> bodyMap = new HashMap<>();
-        bodyMap.put("draw", 1);
-        bodyMap.put("columns", new Object[]{});
-        bodyMap.put("order", new Object[]{});
-        bodyMap.put("start", 0);
-        bodyMap.put("length", 10);
+		bodyMap.put("draw", 1);
+		bodyMap.put("columns", new Object[] {});
+		bodyMap.put("order", new Object[] {});
+		bodyMap.put("start", 0);
+		bodyMap.put("length", 10);
 
-        Map<String, Object> search = new HashMap<>();
-        search.put("value", "");
-        search.put("regex", false);
-        bodyMap.put("search", search);
+		Map<String, Object> search = new HashMap<>();
+		search.put("value", "");
+		search.put("regex", false);
+		bodyMap.put("search", search);
 
-        bodyMap.put("state_id", "");
-        bodyMap.put("complain_id", "");
-        bodyMap.put("color", "");
-        bodyMap.put("level", "3");
-        bodyMap.put("start_date", "");
-        bodyMap.put("end_date", "");
+		bodyMap.put("state_id", "");
+		bodyMap.put("complain_id", "");
+		bodyMap.put("color", "");
+		bodyMap.put("level", "3");
+		bodyMap.put("start_date", "");
+		bodyMap.put("end_date", "");
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        String jsonBody = "";
-        try {
-            jsonBody = objectMapper.writeValueAsString(bodyMap);
-        } catch (Exception e) {
-            logger.error("Error while preparing Grievance jsonRequest");
-        }
+		ObjectMapper objectMapper = new ObjectMapper();
+		String jsonBody = "";
+		try {
+			jsonBody = objectMapper.writeValueAsString(bodyMap);
+		} catch (Exception e) {
+			logger.error("Error while preparing Grievance jsonRequest");
+		}
 		return jsonBody;
 	}
 
