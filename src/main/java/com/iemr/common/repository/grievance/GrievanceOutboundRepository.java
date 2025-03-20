@@ -15,8 +15,7 @@ import com.iemr.common.data.grievance.GrievanceDetails;
 public interface GrievanceOutboundRepository extends JpaRepository<GrievanceDetails, Long> {
 
 
-	@Query(value =" call db_iemr.Pr_Grievanceworklist(:providerServiceMapID, :userId)", nativeQuery = true)
-    List<Object[]> getGrievanceWorklistData(@Param("providerServiceMapID") Integer providerServiceMapID,
-    		@Param("userId") Integer userId);
+	@Query(value =" call db_iemr.Pr_Grievanceworklist(:userId)", nativeQuery = true)
+    List<Object[]> getGrievanceWorklistData(@Param("userId") Integer userId);
 
 }
