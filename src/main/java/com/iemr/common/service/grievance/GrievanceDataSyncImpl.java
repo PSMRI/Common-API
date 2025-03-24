@@ -259,42 +259,44 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 									if (transactionDetailsList != null && !transactionDetailsList.isEmpty()) {
 										for (JsonElement transactionElement : transactionDetailsList) {
 											JsonObject transactionDetailsJson = transactionElement.getAsJsonObject();
-											GrievanceTransaction grievanceTransaction = new GrievanceTransaction();
-											gwid = grievanceDataRepo.getUniqueGwid(grievanceID);
-											grievanceTransaction.setGwid(gwid);
-											grievanceTransaction.setGrievanceId(grievanceID);
+											JsonArray asJsonArray = transactionDetailsJson.get("transaction")
+													.getAsJsonArray();
+											for (JsonElement arr : asJsonArray) {
+												JsonObject transaction = transactionElement.getAsJsonObject();
+												GrievanceTransaction grievanceTransaction = new GrievanceTransaction();
+												gwid = grievanceDataRepo.getUniqueGwid(grievanceID);
+												grievanceTransaction.setGwid(gwid);
+												grievanceTransaction.setGrievanceId(grievanceID);
+												grievanceTransaction.setActionTakenBy(transaction.has("actionTakenBy")
+														? transaction.get("actionTakenBy").getAsString()
+														: null);
+												grievanceTransaction.setStatus(transaction.has("status")
+														? transaction.get("status").getAsString()
+														: null);
+												grievanceTransaction.setFileName(transaction.has(FILE_NAME)
+														? transaction.get(FILE_NAME).getAsString()
+														: null);
+												grievanceTransaction.setFileType(transaction.has(FILE_TYPE)
+														? transaction.get(FILE_TYPE).getAsString()
+														: null);
+												grievanceTransaction.setRedressed(transaction.has("redressed")
+														? transaction.get("redressed").getAsString()
+														: null);
+												grievanceTransaction.setCreatedAt(
+														Timestamp.valueOf(transaction.get("createdAt").getAsString()));
+												grievanceTransaction.setUpdatedAt(
+														Timestamp.valueOf(transaction.get("updatedAt").getAsString()));
+												grievanceTransaction.setComments(transaction.has("comment")
+														? transaction.get("comment").getAsString()
+														: null);
+												grievanceTransaction.setCreatedBy("Admin");
+												Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+												grievanceTransaction.setCreatedDate(timestamp);
 
-											grievanceTransaction
-													.setActionTakenBy(transactionDetailsJson.has("actionTakenBy")
-															? transactionDetailsJson.get("actionTakenBy").getAsString()
-															: null);
-											grievanceTransaction.setStatus(transactionDetailsJson.has("status")
-													? transactionDetailsJson.get("status").getAsString()
-													: null);
-											grievanceTransaction.setFileName(transactionDetailsJson.has(FILE_NAME)
-													? transactionDetailsJson.get(FILE_NAME).getAsString()
-													: null);
-											grievanceTransaction.setFileType(transactionDetailsJson.has(FILE_TYPE)
-													? transactionDetailsJson.get(FILE_TYPE).getAsString()
-													: null);
-											grievanceTransaction.setRedressed(transactionDetailsJson.has("redressed")
-													? transactionDetailsJson.get("redressed").getAsString()
-													: null);
-											grievanceTransaction.setCreatedAt(Timestamp
-													.valueOf(transactionDetailsJson.get("createdAt").getAsString()));
-											grievanceTransaction.setUpdatedAt(Timestamp
-													.valueOf(transactionDetailsJson.get("updatedAt").getAsString()));
-											grievanceTransaction.setComments(transactionDetailsJson.has("comment")
-													? transactionDetailsJson.get("comment").getAsString()
-													: null);
-											grievanceTransaction.setCreatedBy("Admin");
-											Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-											grievanceTransaction.setCreatedDate(timestamp);
-
-											grievanceTransactionListObj = grievanceTransactionRepo
-													.save(grievanceTransaction);
-											grievanceTransactionList.add(grievanceTransactionListObj);
-
+												grievanceTransactionListObj = grievanceTransactionRepo
+														.save(grievanceTransaction);
+												grievanceTransactionList.add(grievanceTransactionListObj);
+											}
 										}
 
 									}
