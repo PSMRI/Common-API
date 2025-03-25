@@ -120,7 +120,6 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	public String allocatedGrievanceRecordsCount(String request) throws IEMRException, JSONException {
 		GrievanceDetails grievanceRequest = InputMapper.gson().fromJson(request, GrievanceDetails.class);
 
-		Integer providerServiceMapID = grievanceRequest.getProviderServiceMapID();
 		Integer userID = grievanceRequest.getUserID();
 
 		Set<Object[]> resultSet = grievanceDataRepo.fetchGrievanceRecordsCount(userID);
@@ -333,7 +332,7 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	                ageFormatted,
 	                (Boolean) row[26], // retryNeeded
 	                (Integer) row[27], // callCounter
-	                (Timestamp) row[17] //lastCall yet to fill
+	                (Timestamp) row[18] //lastCall yet to fill
 	            );
 
 	            // Extract transactions from the current row and add them to the grievance object

@@ -44,8 +44,8 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 	
 	
 	@Query("select grievance.preferredLanguage, count(distinct grievance.grievanceId) "
-			+ "from GrievanceDetails grievance " + "where "
-			+ "grievance.userID = :userID " + "and grievance.deleted = false "
+			+ "from GrievanceDetails grievance where "
+			+ "grievance.userID = :userID and grievance.isCompleted=false and grievance.deleted = false "
 			+ "group by grievance.preferredLanguage")
 	public Set<Object[]> fetchGrievanceRecordsCount(@Param("userID") Integer userID);
 
