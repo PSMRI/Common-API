@@ -5,7 +5,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -15,6 +14,7 @@ public class GrievanceWorklistDTO implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	 private String complaintID;
+	 private Long grievanceId;
 	    private String subjectOfComplaint;
 	    private String complaint;
 	    private Long beneficiaryRegID;
@@ -39,22 +39,19 @@ public class GrievanceWorklistDTO implements Serializable {
 	    private Integer callCounter;
 	    private Timestamp lastCall;	    
 	    
-		public GrievanceWorklistDTO(String complaintID, String subjectOfComplaint, String complaint,
-				Long beneficiaryRegID, Integer providerServiceMapID, String firstName, String lastName,
-				String primaryNumber, List<GrievanceTransactionDTO> transactions, String severety, String state,
+		public GrievanceWorklistDTO(String complaintID,Long grievanceId, String subjectOfComplaint, String complaint,
+				Long beneficiaryRegID, Integer providerServiceMapID,String primaryNumber,String severety,String state,
 				Integer userId, Boolean deleted, String createdBy, Timestamp createdDate, Timestamp lastModDate,
-				Boolean isCompleted, String gender, String district, Long beneficiaryID, String age,
+				Boolean isCompleted,String firstName, String lastName, String gender, String district, Long beneficiaryID, String age,
 				Boolean retryNeeded, Integer callCounter, Timestamp lastCall) {
 			super();
 			this.complaintID = complaintID;
+			this.grievanceId = grievanceId;
 			this.subjectOfComplaint = subjectOfComplaint;
 			this.complaint = complaint;
 			this.beneficiaryRegID = beneficiaryRegID;
 			this.providerServiceMapID = providerServiceMapID;
-			this.firstName = firstName;
-			this.lastName = lastName;
 			this.primaryNumber = primaryNumber;
-			this.transactions = transactions;
 			this.severety = severety;
 			this.state = state;
 			this.userId = userId;
@@ -63,6 +60,8 @@ public class GrievanceWorklistDTO implements Serializable {
 			this.createdDate = createdDate;
 			this.lastModDate = lastModDate;
 			this.isCompleted = isCompleted;
+			this.firstName = firstName;
+			this.lastName = lastName;
 			this.gender = gender;
 			this.district = district;
 			this.beneficiaryID = beneficiaryID;
