@@ -401,12 +401,12 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	        int updateCount = 0;
 	        if (remarks == null) {
 	        	updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, modifiedBy, benCallID, complaintID,
-                        beneficiaryRegID, providerServiceMapID, userID);
+                        beneficiaryRegID, userID);
 	        	logger.debug("updated complaint resolution without remarks for complaint id: {}", complaintID);
 	        }
 	        else {
 	        updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, remarks,  modifiedBy, benCallID, complaintID, 
-	                                                                      beneficiaryRegID, providerServiceMapID, userID);
+	                                                                      beneficiaryRegID, userID);
         	logger.debug("updated complaint resolution with remarks for complaint id: {}", complaintID);
 
 	        }
@@ -473,23 +473,15 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 
 		            // Fetch and set remarks based on complaintResolution value
 		            String remarks = "";
-		            if ("unresolved".equalsIgnoreCase(complaintResolution)) {
-		                // Fetch remarks from t_bencall by joining with t_grievanceworklist based on benRegId
-		                remarks = fetchRemarksFromBenCallByComplaint(grievance.getComplaintID());
-		            } else if ("resolved".equalsIgnoreCase(complaintResolution)) {
-		                // Fetch remarks from t_grievanceworklist
-		                remarks = fetchRemarksFromGrievanceWorklist(grievance.getComplaintID());
-		            } else {
-		                // Default: Fetch remarks based on the grievance's specific conditions (no specific resolution status)
-		            	String callRemarks = fetchRemarksFromBenCallByComplaint(grievance.getComplaintID());
-		            	if(remarks != null && !remarks.startsWith("No remarks found")) {
-		            		remarks = callRemarks;
+		            if(null != complaintResolution) {
+		            	remarks = fetchRemarksFromGrievanceWorklist(grievance.getComplaintID());
+		            	if(remarks== null) {
+		            		remarks = fetchRemarksFromBenCallByComplaint(grievance.getComplaintID());
 		            	}
-		            	else {
-			                remarks = fetchRemarksFromGrievanceWorklist(grievance.getComplaintID());
-
-		            	}
+		            }else {
+		            	remarks = fetchRemarksFromBenCallByComplaint(grievance.getComplaintID());
 		            }
+		            
 		            
 		            grievanceResponse.setRemarks(remarks);
 		            
@@ -520,11 +512,12 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 		        List<Object[]> benCallResults = beneficiaryCallRepo.fetchBenCallRemarks(beneficiaryRegID);
 
 		        if (benCallResults != null && !benCallResults.isEmpty()) {
-		            return (String) benCallResults.get(0)[0];  // Fetch the remarks
+		        	if(null != benCallResults.get(0) && null != benCallResults.get(0)[0])
+		        		return (String) benCallResults.get(0)[0];  // Fetch the remarks
 		        }
 		    }
 		    
-		    return "No remarks found in t_bencall";
+		    return "No remarks found";
 		}
 
 		    private String fetchRemarksFromGrievanceWorklist(String complaintID) throws JSONException {

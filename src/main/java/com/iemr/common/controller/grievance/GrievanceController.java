@@ -1,6 +1,11 @@
 package com.iemr.common.controller.grievance;
 
+import java.lang.reflect.Type;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +24,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.iemr.common.data.grievance.UnallocationRequest;
 import com.iemr.common.dto.grivance.GrievanceWorklistDTO;
 import com.iemr.common.service.grievance.GrievanceDataSync;
@@ -130,11 +144,12 @@ public class GrievanceController {
 	
 	  @Operation(summary = "get grievance outbound worklist)")
 			@PostMapping(value = "/getGrievanceOutboundWorklist", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
-		    public ResponseEntity<Map<String, Object>> getGrievanceOutboundWorklist(@Param(value = "{\"providerServiceMapId\":\" called service ID integer\", "
-					+ "\"userId\":\"Optional - Integer ID of user that is assigned to\"}") @RequestBody String request) {
+		    public String getGrievanceOutboundWorklist(@Param(value = "{\"providerServiceMapId\":\" called service ID integer\", "
+					+ "\"userId\":\"Optional - Integer ID of user that is assigned to\"}") @RequestBody String request) throws JsonProcessingException {
 		        logger.info("Request received for grievance worklist");
 		        List<GrievanceWorklistDTO> response = new ArrayList<>();
 		        Map<String, Object> responseMap = new HashMap<>();
+		        ObjectMapper objectMapper = new ObjectMapper();
 
 				try {
 					response = grievanceHandlingService.getFormattedGrievanceData(request);
@@ -160,9 +175,17 @@ public class GrievanceController {
 			        responseMap.put("errorMessage", e.getMessage());
 			        responseMap.put("status", "Error");
 				}
-		       
-			    
-		        return ResponseEntity.ok(responseMap);
+				Gson gson = new GsonBuilder()
+			            .registerTypeAdapter(Date.class, new JsonSerializer<Date>() {
+			                @Override
+			                public JsonElement serialize(Date date, Type typeOfSrc, JsonSerializationContext context) {
+			                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			                    return context.serialize(sdf.format(date));  // Format date
+			                }
+			            })
+			            .create();
+				
+		        return gson.toJson(responseMap);
 		        }
 
 
