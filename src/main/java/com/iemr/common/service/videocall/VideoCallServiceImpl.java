@@ -1,13 +1,14 @@
-import org.springframework.stereotype.Service;
-import java.util.HashMap;
-import java.util.Map;
+package com.iemr.common.service.videocall;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
 import com.iemr.common.utils.config.ConfigProperties;
 
 @Service
 public class VideoCallServiceImpl implements VideoCallService {
-   	final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+	final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
     private String meetingLink;
     private boolean isLinkSent = false;

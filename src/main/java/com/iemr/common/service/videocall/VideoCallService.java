@@ -1,9 +1,12 @@
+package com.iemr.common.service.videocall;
+
 public interface VideoCallService {
-   public String generateMeetingLink() throws Exception;
+	
+	 public String generateMeetingLink() throws Exception;
 
-   public String sendMeetingLink() throws Exception;
+	   public String sendMeetingLink() throws Exception;
 
-    public String startCall() throws Exception;
+	    public String startCall() throws Exception;
 
-    public String getConsultationStatus() throws Exception;
+	    public String getConsultationStatus() throws Exception;
 }
