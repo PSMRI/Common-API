@@ -230,15 +230,6 @@ public class IEMRAdminController {
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
 			}
 
-			try {
-				Claims claims = jwtUtil.getAllClaimsFromToken(refreshToken);
-				logger.info("refresh token api claims are:" + claims);
-			} catch (Exception e) {
-				logger.info("refresh token api claims exception:" + e.getMessage());
-				throw new RuntimeException(e);
-			}
-
-
 			Claims claims = jwtUtil.getAllClaimsFromToken(refreshToken);
 
 			// Verify token type
