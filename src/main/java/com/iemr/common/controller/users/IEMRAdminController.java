@@ -167,7 +167,7 @@ public class IEMRAdminController {
 
 				if (isMobile) {
 					refreshToken = jwtUtil.generateRefreshToken(m_User.getUserName(), user.getUserID().toString());
-					logger.info("Generated refresh token: {}", refreshToken);
+					logger.debug("Refresh token generated successfully for user: {}", user.getUserName());
 					String jti = jwtUtil.getJtiFromToken(refreshToken);
 					redisTemplate.opsForValue().set(
 							"refresh:" + jti,
@@ -243,9 +243,18 @@ public class IEMRAdminController {
 			}
 
 			// Get user details
+			// Get user details
 			String userId = claims.get("userId", String.class);
 			User user = iemrAdminUserServiceImpl.getUserById(Long.parseLong(userId));
-
+			
+			// Validate that the user still exists and is active
+			if (user == null) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+			}
+			
+			if (user.getM_status() == null || !"Active".equalsIgnoreCase(user.getM_status().getStatus())) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User account is inactive");
+			}
 			// Generate new tokens
 			String newJwt = jwtUtil.generateToken(user.getUserName(), userId);
 
