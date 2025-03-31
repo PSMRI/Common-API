@@ -167,7 +167,7 @@ public class IEMRAdminController {
 
 				if (isMobile) {
 					refreshToken = jwtUtil.generateRefreshToken(m_User.getUserName(), user.getUserID().toString());
-					logger.info("Generated refresh token: {}", refreshToken);
+					logger.debug("Refresh token generated successfully for user: {}", user.getUserName());
 					String jti = jwtUtil.getJtiFromToken(refreshToken);
 					redisTemplate.opsForValue().set(
 							"refresh:" + jti,
