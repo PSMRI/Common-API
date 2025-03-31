@@ -85,6 +85,19 @@ public class JwtUtil {
 				.getPayload();
 	}
 
+	/**
+	 * Retrieves the refresh token expiration time.
+	 *
+	 * The refresh token expiration time determines how long a refresh token remains valid.
+	 * A longer expiration time allows users to stay logged in without frequently re-authenticating.
+	 *
+	 * Security & Business Considerations:
+	 * - A longer expiration (e.g., 7 days or more) improves user experience but may pose security risks if tokens are leaked.
+	 * - A shorter expiration (e.g., 1 hour) enhances security but may require users to log in more frequently.
+	 * - This duration is configurable and can be overridden in the environment specific application properties file.
+	 *
+	 * @return The expiration time in milliseconds.
+	 */
 	public long getRefreshTokenExpiration() {
 		return REFRESH_EXPIRATION_TIME;
 	}

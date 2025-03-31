@@ -219,8 +219,7 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
-	@Operation(summary = "generates a refresh token")
+	@Operation(summary = "generating a auth token with the refreshToken.")
 	@RequestMapping(value = "/refreshToken", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> request) {
 		String refreshToken = request.get("refreshToken");
