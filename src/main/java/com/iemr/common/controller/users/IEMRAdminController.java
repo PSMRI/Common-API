@@ -261,6 +261,20 @@ public class IEMRAdminController {
 			Map<String, String> tokens = new HashMap<>();
 			tokens.put("jwtToken", newJwt);
 
+			Map<String, String> tokens = new HashMap<>();
+			tokens.put("jwtToken", newJwt);
+			
+			// Generate and store a new refresh token (token rotation)
+			String newRefreshToken = jwtUtil.generateRefreshToken(user.getUserName(), userId);
+			String newJti = jwtUtil.getJtiFromToken(newRefreshToken);
+			redisTemplate.opsForValue().set(
+				"refresh:" + newJti,
+				userId,
+				jwtUtil.getRefreshTokenExpiration(),
+				TimeUnit.MILLISECONDS
+			);
+			tokens.put("refreshToken", newRefreshToken);
+
 			return ResponseEntity.ok(tokens);
 		} catch (ExpiredJwtException ex) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token expired");
