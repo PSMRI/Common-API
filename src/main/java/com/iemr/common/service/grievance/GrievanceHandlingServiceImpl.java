@@ -335,6 +335,7 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	                (Boolean) row[21], // retryNeeded
 	                (Integer) row[22], // callCounter
 	                (Timestamp) row[13] //lastCall 
+
 	            );
 
 	            // Extract transactions from the current row and add them to the grievance object
