@@ -137,7 +137,7 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 	@Query("SELECT g FROM GrievanceDetails g WHERE "
 	        + "(g.state = :state OR :state IS NULL) "
 	        + "AND (g.complaintResolution = :complaintResolution OR :complaintResolution IS NULL) "
-	        + "AND g.createdDate BETWEEN :startDate AND :endDate")
+	        + "AND g.createdDate BETWEEN :startDate AND :endDate AND g.isCompleted = true")
 	List<GrievanceDetails> fetchGrievanceDetailsBasedOnParams(
 	    @Param("state") String state,
 	    @Param("complaintResolution") String complaintResolution,

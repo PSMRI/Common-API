@@ -1,5 +1,6 @@
 package com.iemr.common.service.grievance;
 
+import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -10,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -20,6 +22,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.iemr.common.data.grievance.GetGrievanceWorklistRequest;
 import com.iemr.common.data.grievance.GrievanceAllocationRequest;
 import com.iemr.common.data.grievance.GrievanceDetails;
@@ -473,11 +480,8 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 
 		            // Fetch and set remarks based on complaintResolution value
 		            String remarks = "";
-		            if(null != complaintResolution) {
-		            	remarks = fetchRemarksFromGrievanceWorklist(grievance.getComplaintID());
-		            	if(remarks== null) {
-		            		remarks = fetchRemarksFromBenCallByComplaint(grievance.getComplaintID());
-		            	}
+		            if(!StringUtils.isEmpty(grievance.getRemarks())) {
+		            	remarks = grievance.getRemarks();
 		            }else {
 		            	remarks = fetchRemarksFromBenCallByComplaint(grievance.getComplaintID());
 		            }
@@ -488,9 +492,17 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 		            // Add to response list
 		            grievanceResponseList.add(grievanceResponse);
 		        }
-
-		        // Convert the list of GrievanceResponse objects to JSON and return as a string
-		        return objectMapper.writeValueAsString(grievanceResponseList);
+		        Gson gson = new GsonBuilder()
+		        		.serializeNulls()
+			            .registerTypeAdapter(Date.class, new JsonSerializer<Date>() {
+			                @Override
+			                public JsonElement serialize(Date date, Type typeOfSrc, JsonSerializationContext context) {
+			                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			                    return context.serialize(sdf.format(date));  // Format date
+			                }
+			            })
+			            .create();
+		        return gson.toJson(grievanceResponseList);
 		        
 		    } catch (Exception e) {
 		        logger.error("Error while getting grievance details with remarks: " + e.getMessage(), e);
@@ -507,9 +519,9 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 		    if (grievanceWorklist != null && !grievanceWorklist.isEmpty()) {
 		        GrievanceDetails grievance = grievanceWorklist.get(0);
 		        Long beneficiaryRegID = grievance.getBeneficiaryRegID();  // Fetch the beneficiaryRegID from the grievance
-
+		        Long benCallID = grievance.getBenCallID();
 		        // Query t_bencall to fetch remarks based on benRegId
-		        List<Object[]> benCallResults = beneficiaryCallRepo.fetchBenCallRemarks(beneficiaryRegID);
+		        List<Object[]> benCallResults = beneficiaryCallRepo.fetchBenCallRemarks(benCallID);
 
 		        if (benCallResults != null && !benCallResults.isEmpty()) {
 		        	if(null != benCallResults.get(0) && null != benCallResults.get(0)[0])
