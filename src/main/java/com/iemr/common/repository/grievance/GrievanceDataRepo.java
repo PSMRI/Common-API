@@ -49,7 +49,7 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 			+ "group by grievance.preferredLanguage")
 	public Set<Object[]> fetchGrievanceRecordsCount(@Param("userID") Integer userID);
 
-	@Query("SELECT g FROM GrievanceDetails g WHERE g.userID = :userID AND g.preferredLanguage = :language AND g.isAllocated = true")
+	@Query("SELECT g FROM GrievanceDetails g WHERE g.userID = :userID AND g.preferredLanguage = :language AND g.isAllocated = true AND g.isCompleted = false")
 	List<GrievanceDetails> findAllocatedGrievancesByUserAndLanguage(@Param("userID") Integer userID,
 			@Param("language") String language);
 
