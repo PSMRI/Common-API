@@ -260,9 +260,6 @@ public class IEMRAdminController {
 
 			Map<String, String> tokens = new HashMap<>();
 			tokens.put("jwtToken", newJwt);
-
-			Map<String, String> tokens = new HashMap<>();
-			tokens.put("jwtToken", newJwt);
 			
 			// Generate and store a new refresh token (token rotation)
 			String newRefreshToken = jwtUtil.generateRefreshToken(user.getUserName(), userId);

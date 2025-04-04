@@ -11,6 +11,7 @@
 
 	<name>common-API</name>
 	<description>Piramal - Helpline: 1097 Module API </description>
+	<description>Piramal - Helpline: 1097 Module API </description>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
