@@ -80,6 +80,7 @@ public class BeneficiaryModel implements Comparable<BeneficiaryModel> {
 	@Expose
 	private Boolean isConsent=false;
 
+
 	@Expose
 	private String beneficiaryID;
 	@Expose

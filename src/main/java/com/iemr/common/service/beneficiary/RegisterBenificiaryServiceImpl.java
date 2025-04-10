@@ -37,7 +37,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.iemr.common.data.beneficiary.Beneficiary;
 import com.iemr.common.data.mctshistory.MctsOutboundCallDetail;
@@ -76,6 +75,8 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 
 	@Autowired
 	Validator validator;
+
+
 
 	@Autowired
 	OutboundHistoryRepository outboundHistoryRepository;
