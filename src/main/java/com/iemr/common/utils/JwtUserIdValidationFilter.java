@@ -52,13 +52,9 @@ public class JwtUserIdValidationFilter implements Filter {
 		String jwtTokenFromHeader = request.getHeader("Jwttoken");
 		logger.info("JWT token from header: ");
 
-		// Skip login and public endpoints
-		if (path.equals(contextPath + "/user/userAuthenticate")
-				|| path.equalsIgnoreCase(contextPath + "/user/logOutUserFromConcurrentSession")
-				|| path.startsWith(contextPath + "/swagger-ui")
-				|| path.startsWith(contextPath + "/v3/api-docs")
-				|| path.startsWith(contextPath + "/public")) {
-			logger.info("Skipping filter for path: " + path);
+		// Skip authentication for public endpoints
+		if (shouldSkipAuthentication(path, contextPath)) {
+			logger.info("Skipping filter for path: {}", path);
 			filterChain.doFilter(servletRequest, servletResponse);
 			return;
 		}
@@ -71,23 +67,34 @@ public class JwtUserIdValidationFilter implements Filter {
 			// Determine which token (cookie or header) to validate
 			String jwtToken = jwtTokenFromCookie != null ? jwtTokenFromCookie : jwtTokenFromHeader;
 			if (jwtToken == null) {
+				logger.error("JWT token not found in cookies or headers");
 				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "JWT token not found in cookies or headers");
 				return;
 			}
 
 			// Validate JWT token and userId
-			boolean isValid = jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtToken);
-
-			if (isValid) {
+			if (jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtToken)) {
 				// If token is valid, allow the request to proceed
+				logger.info("Valid JWT token");
 				filterChain.doFilter(servletRequest, servletResponse);
 			} else {
+				logger.error("Invalid JWT token");
 				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT token");
 			}
 		} catch (Exception e) {
 			logger.error("Authorization error: ", e);
 			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization error: " + e.getMessage());
 		}
+	}
+
+	private boolean shouldSkipAuthentication(String path, String contextPath) {
+		return path.equals(contextPath + "/user/userAuthenticate")
+				|| path.equalsIgnoreCase(contextPath + "/user/logOutUserFromConcurrentSession")
+				|| path.startsWith(contextPath + "/swagger-ui")
+				|| path.startsWith(contextPath + "/v3/api-docs")
+				|| path.startsWith(contextPath + "/public")
+				|| path.equals(contextPath + "/user/refreshToken")
+				;
 	}
 
 	private String getJwtTokenFromCookies(HttpServletRequest request) {
