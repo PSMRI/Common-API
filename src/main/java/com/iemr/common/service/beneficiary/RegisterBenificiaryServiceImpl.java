@@ -76,6 +76,8 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 	@Autowired
 	Validator validator;
 
+
+
 	@Autowired
 	OutboundHistoryRepository outboundHistoryRepository;
 
