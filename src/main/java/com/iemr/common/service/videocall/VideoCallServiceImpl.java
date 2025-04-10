@@ -1,5 +1,6 @@
 package com.iemr.common.service.videocall;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.iemr.common.data.videocall.VideoCallParameters;
 import com.iemr.common.mapper.videocall.VideoCallMapper;
+import com.iemr.common.model.videocall.UpdateCallRequest;
 import com.iemr.common.model.videocall.VideoCallRequest;
 import com.iemr.common.repository.videocall.VideoCallParameterRepository;
 import com.iemr.common.utils.config.ConfigProperties;
@@ -34,7 +36,7 @@ public class VideoCallServiceImpl implements VideoCallService {
 
     @Override
     public String generateMeetingLink() {
-        meetingLink = jitsiLink + System.currentTimeMillis();
+        meetingLink=jitsiLink+RandomStringUtils.randomAlphanumeric(8);
         logger.info("Meeting link: " + meetingLink);
         return meetingLink;
     }
@@ -55,16 +57,28 @@ public class VideoCallServiceImpl implements VideoCallService {
     }
 
     @Override
-    public String startCall() throws Exception {
-        if (!isLinkSent) {
-            throw new Exception("Cannot start without sending the link.");
+    public String updateCallStatus(UpdateCallRequest callRequest) throws Exception {
+        VideoCallParameters videoCall = null;
+
+        VideoCallParameters requestEntity = videoCallMapper.updateRequestToVideoCall(callRequest);
+
+        int updateCount = videoCallRepository.updateCallStatusByMeetingLink(
+            requestEntity.getMeetingLink(),
+            requestEntity.getCallStatus(),
+            requestEntity.getCallDuration(),
+            requestEntity.getModifiedBy()
+        );
+
+        if (updateCount > 0) {
+            videoCall = videoCallRepository.findByMeetingLink(requestEntity.getMeetingLink());
+        } else {
+            throw new Exception("Failed to update the call status");
         }
-        consultationStatus = "Ongoing";
-        return "Video consultation started";
+
+        return OutputMapper.gsonWithoutExposeRestriction()
+            .toJson(videoCallMapper.videoCallToResponse(videoCall));
     }
 
-    @Override
-    public String getConsultationStatus() {
-        return consultationStatus;
-    }
+
+
 }

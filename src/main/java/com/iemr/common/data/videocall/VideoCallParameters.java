@@ -16,10 +16,10 @@ import lombok.Data;
 @Table(name = "t_videocallparameter") 
 @Data
 public class VideoCallParameters {
-		 @Id
+		@Id
 	    @GeneratedValue(strategy = GenerationType.IDENTITY)
-	    @Column(name = "VideoCallParameterID")
-	    Integer VideoCallParameterID;
+	    @Column(name = "MeetingID")
+	    Integer meetingID;
 
 	    @Column(name = "DateOfCall")
 	    Timestamp dateOfCall;

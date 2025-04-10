@@ -1,5 +1,6 @@
 package com.iemr.common.service.videocall;
 
+import com.iemr.common.model.videocall.UpdateCallRequest;
 import com.iemr.common.model.videocall.VideoCallRequest;
 
 public interface VideoCallService {
@@ -8,7 +9,5 @@ public interface VideoCallService {
 
 	 public String sendMeetingLink(VideoCallRequest request) throws Exception;
 
-	    public String startCall() throws Exception;
-
-	    public String getConsultationStatus() throws Exception;
+	 public String updateCallStatus(UpdateCallRequest request) throws Exception;
 }

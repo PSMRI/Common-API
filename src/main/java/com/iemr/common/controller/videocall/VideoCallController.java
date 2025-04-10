@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.iemr.common.model.videocall.UpdateCallRequest;
 import com.iemr.common.model.videocall.VideoCallRequest;
 import com.iemr.common.service.videocall.VideoCallService;
 import com.iemr.common.utils.response.OutputResponse;
@@ -74,32 +75,34 @@ public ResponseEntity<String> sendVideoLink(@RequestBody VideoCallRequest reques
     return ResponseEntity.ok(response.toString());
 }
 
-    
-    @CrossOrigin()
-    @PostMapping(value = "/start-call", produces = MediaType.APPLICATION_JSON_VALUE, headers = "Authorization")
-    public ResponseEntity<Map<String, String>> startCall() {
-        Map<String, String> response = new HashMap<>();
-        try {
-            String status = videoCallService.startCall();
-            response.put("status", "success");
-            response.put("message", status);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+@CrossOrigin()
+@PostMapping(value = "/update-call-status", produces = MediaType.APPLICATION_JSON_VALUE, headers = "Authorization")
+public ResponseEntity<String> updateCallStatus(@RequestBody UpdateCallRequest requestModel, HttpServletRequest request) {
+    OutputResponse response = new OutputResponse();
+
+    try {
+        if (requestModel.getMeetingLink() == null || requestModel.getCallStatus() == null) {
+            throw new IllegalArgumentException("Meeting Link and Status are required");
         }
+
+        String result = videoCallService.updateCallStatus(requestModel);
+
+        JSONObject responseObj = new JSONObject();
+        responseObj.put("status", "success");
+        responseObj.put("message", result);
+        response.setResponse(responseObj.toString());
+
+    } catch (IllegalArgumentException e) {
+        logger.error("Validation error: " + e.getMessage(), e);
+        return ResponseEntity.badRequest().body("{\"status\":\"error\",\"message\":\"" + e.getMessage() + "\"}");
+    } catch (Exception e) {
+        logger.error("updateCallStatus failed with error: " + e.getMessage(), e);
+        response.setError(e);
     }
 
-    @CrossOrigin()
-    @GetMapping(value = "/status", produces = MediaType.APPLICATION_JSON_VALUE, headers = "Authorization")
-    public ResponseEntity<Map<String, String>> getConsultationStatus() {
-        Map<String, String> response = new HashMap<>();
-        try {
-            response.put("status", videoCallService.getConsultationStatus());
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {  
-            response.put("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
+    return ResponseEntity.ok(response.toString());
+}
+
+    
+    
 }
