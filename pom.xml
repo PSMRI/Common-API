@@ -503,7 +503,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>commonapi-v1.0</finalName>
+		<finalName>commonapi-v3.0.0</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
