@@ -8,14 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(value= "/firebaseNotification")
+@RequestMapping(value= "/firebaseNotification",headers = "Authorization")
 public class FirebaseNotificationController {
     final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
     @Autowired
     FirebaseNotificationService firebaseNotificationService;
 
-     @CrossOrigin
     @RequestMapping(value = "sendNotification",method = RequestMethod.POST)
     public String sendNotificationByToken(@RequestBody NotificationMessage notificationMessage){
         return firebaseNotificationService.sendNotification(notificationMessage);
