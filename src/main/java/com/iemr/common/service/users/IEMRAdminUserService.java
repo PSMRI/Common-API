@@ -116,7 +116,7 @@ public interface IEMRAdminUserService
 
 	String generateTransactionIdForPasswordChange(User user) throws Exception;
 
-	
+	User getUserById(Long userId) throws IEMRException;
 
 
 	

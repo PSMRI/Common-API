@@ -101,13 +101,12 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
 				case "api-docs":
 				case "updateBenCallIdsInPhoneBlock":
 				case "userAuthenticateByEncryption":
-
 				case "sendOTP":
 				case "validateOTP":
 				case "resendOTP":
 				case "validateSecurityQuestionAndAnswer":
 				case "logOutUserFromConcurrentSession":
-
+				case "refreshToken":
 					break;
 				case "error":
 					status = false;
