@@ -23,26 +23,19 @@ package com.iemr.common.controller.services;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.ws.rs.core.MediaType;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.iemr.common.data.category.CategoryDetails;
-import com.iemr.common.data.cti.CustomerLanguage;
 import com.iemr.common.service.category.CategoryService;
 import com.iemr.common.utils.mapper.InputMapper;
 import com.iemr.common.utils.response.OutputResponse;
-
 import io.swagger.v3.oas.annotations.Operation;
 
 

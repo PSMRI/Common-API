@@ -25,15 +25,12 @@ import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.iemr.common.service.questionconfig.QuestionnaireService;
 import com.iemr.common.utils.response.OutputResponse;
-
 import io.swagger.v3.oas.annotations.Operation;
 
 

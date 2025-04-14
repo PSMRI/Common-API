@@ -26,21 +26,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.iemr.common.data.carestream.CreateOrderData;
 import com.iemr.common.utils.mapper.InputMapper;
 import com.iemr.common.utils.response.OutputResponse;
-
 import io.lettuce.core.dynamic.annotation.Param;
 import io.swagger.v3.oas.annotations.Operation;
 
@@ -60,7 +55,6 @@ public class CareStreamCreateOrderController {
 	@Value("${carestream_socket_port}")
 	private int carestreamSocketPort;
 
-	
 	@Operation(summary = "Create order")
 	@RequestMapping(value = "/createOrder", headers = "Authorization", method = { RequestMethod.POST }, produces = {
 			"application/json" })
@@ -122,7 +116,6 @@ public class CareStreamCreateOrderController {
 		return response.toString();
 	}
 
-	
 	@Operation(summary = "Update order")
 	@RequestMapping(value = "/UpdateOrder", headers = "Authorization", method = { RequestMethod.POST }, produces = {
 			"application/json" })
@@ -184,7 +177,6 @@ public class CareStreamCreateOrderController {
 		return response.toString();
 	}
 
-	
 	@Operation(summary = "Delete order")
 	@RequestMapping(value = "/deleteOrder", headers = "Authorization", method = { RequestMethod.POST }, produces = {
 			"application/json" })

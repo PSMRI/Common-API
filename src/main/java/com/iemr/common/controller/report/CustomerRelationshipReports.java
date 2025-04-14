@@ -22,16 +22,13 @@
 package com.iemr.common.controller.report;
 
 import javax.ws.rs.core.MediaType;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.iemr.common.mapper.Report1097Mapper;
 import com.iemr.common.service.reports.CallReportsService;
 import com.iemr.common.utils.mapper.InputMapper;
@@ -40,7 +37,6 @@ import com.iemr.common.utils.response.OutputResponse;
 import io.swagger.v3.oas.annotations.Operation;
 
 
-@CrossOrigin
 @RequestMapping({ "/crmReports" })
 @RestController
 public class CustomerRelationshipReports {

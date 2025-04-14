@@ -22,26 +22,19 @@
 package com.iemr.common.controller.callhandling;
 
 import java.util.List;
-
-
 import javax.ws.rs.core.MediaType;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.gson.Gson;
 import com.iemr.common.data.callhandling.BeneficiaryCall;
 import com.iemr.common.data.callhandling.CallType;
 import com.iemr.common.data.users.ProviderServiceMapping;
@@ -50,10 +43,8 @@ import com.iemr.common.model.beneficiary.CallRequestByIDModel;
 import com.iemr.common.service.callhandling.BeneficiaryCallService;
 import com.iemr.common.service.callhandling.CalltypeServiceImpl;
 import com.iemr.common.utils.mapper.InputMapper;
-import com.iemr.common.utils.mapper.OutputMapper;
 import com.iemr.common.utils.response.OutputResponse;
 import com.iemr.common.utils.sessionobject.SessionObject;
-
 import io.lettuce.core.dynamic.annotation.Param;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;

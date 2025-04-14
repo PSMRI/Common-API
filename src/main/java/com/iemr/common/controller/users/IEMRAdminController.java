@@ -23,9 +23,7 @@ package com.iemr.common.controller.users;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-
 import javax.ws.rs.core.MediaType;
-
 import com.iemr.common.utils.UserAgentUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -38,7 +36,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -63,7 +60,6 @@ import com.iemr.common.utils.mapper.OutputMapper;
 import com.iemr.common.utils.redis.RedisSessionException;
 import com.iemr.common.utils.response.OutputResponse;
 import com.iemr.common.utils.sessionobject.SessionObject;
-
 import io.lettuce.core.dynamic.annotation.Param;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.Cookie;

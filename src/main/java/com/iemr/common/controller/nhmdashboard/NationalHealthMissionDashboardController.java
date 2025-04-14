@@ -21,24 +21,16 @@
 */
 package com.iemr.common.controller.nhmdashboard;
 
-import java.util.Arrays;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.iemr.common.data.nhm_dashboard.AbandonCallSummary;
-import com.iemr.common.data.nhm_dashboard.AgentSummaryReport;
-import com.iemr.common.data.nhm_dashboard.DetailedCallReport;
 import com.iemr.common.service.nhm_dashboard.NHM_DashboardService;
-import com.iemr.common.utils.mapper.InputMapper;
 import com.iemr.common.utils.response.OutputResponse;
-
 import io.swagger.v3.oas.annotations.Operation;
 
 
