@@ -115,9 +115,5 @@ public interface IEMRAdminUserService
 	int setForgetPassword(User user, String loginpass, String transactionId, Boolean isAdmin) throws IEMRException;
 
 	String generateTransactionIdForPasswordChange(User user) throws Exception;
-
-	User getUserById(Long userId) throws IEMRException;
-
-
 	
 }
