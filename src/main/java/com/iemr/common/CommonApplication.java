@@ -80,18 +80,6 @@ public class CommonApplication extends SpringBootServletInitializer {
 		return template;
 	}
 
-	@Bean
-	FirebaseMessaging firebaseMessaging() throws IOException {
-		GoogleCredentials googleCredentials = GoogleCredentials.fromStream(
-				new ClassPathResource("Place your admin json").getInputStream()
-
-		);
-		FirebaseOptions firebaseOptions = FirebaseOptions.builder().setCredentials(googleCredentials).build();
-		FirebaseApp firebaseApp = FirebaseApp.initializeApp(firebaseOptions);
-		return FirebaseMessaging.getInstance(firebaseApp);
-
-
-	}
 
 }
 
