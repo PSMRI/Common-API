@@ -191,7 +191,7 @@ public interface BeneficiaryCallRepository extends CrudRepository<BeneficiaryCal
 	
 	BeneficiaryCall findByBenCallID(Long benCallID);
 	
-	@Query("SELECT b.remarks FROM BeneficiaryCall b WHERE b.beneficiaryRegID = :beneficiaryRegID")
-	List<Object[]> fetchBenCallRemarks(@Param("beneficiaryRegID") Long beneficiaryRegID);
+	@Query("SELECT b.remarks FROM BeneficiaryCall b WHERE b.benCallID = :benCallID")
+	List<Object[]> fetchBenCallRemarks(@Param("benCallID") Long benCallID);
 
 }
