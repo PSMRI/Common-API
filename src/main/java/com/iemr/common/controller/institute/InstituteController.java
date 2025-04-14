@@ -75,7 +75,7 @@ public class InstituteController {
 		this.designationService = designationService;
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get institutes by location")
 	@RequestMapping(value = "/getInstitutesByLocation", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getInstitutesByLocation(@RequestBody String instituteRequest) {
@@ -96,7 +96,7 @@ public class InstituteController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get institute by branch")
 	@RequestMapping(value = {
 			"/getInstituteByBranch" }, method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
@@ -117,7 +117,7 @@ public class InstituteController {
 		return responseObj.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get institute type")
 	@RequestMapping(value = "/getInstituteTypes", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getInstituteTypes(
@@ -134,7 +134,7 @@ public class InstituteController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get institute name")
 	@RequestMapping(value = "/getInstituteName/{institutionTypeID}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getInstituteName(@PathVariable("institutionTypeID") Integer institutionTypeID) {
@@ -150,7 +150,7 @@ public class InstituteController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get designation")
 	@RequestMapping(value = {
 			"/getDesignations" }, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
@@ -167,7 +167,7 @@ public class InstituteController {
 
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get institute name by type and district")
 	@RequestMapping(value = "/getInstituteNameByTypeAndDistrict/{institutionTypeID}/{districtID}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getInstituteNameByTypeAndDistrict(@PathVariable("institutionTypeID") Integer institutionTypeID,

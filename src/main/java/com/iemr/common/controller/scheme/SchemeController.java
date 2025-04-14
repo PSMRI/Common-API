@@ -56,7 +56,7 @@ public class SchemeController {
 
 	InputMapper mapper = new InputMapper();
 
-	@CrossOrigin
+	
 	@Operation(summary = "Save scheme details")
 	@RequestMapping(value = "/save/schemeDetails", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE, headers = "Authorization")
 	public String saveSchemeDetails(@Param(value = "{\"providerServiceMapID\": \"integer-provider service map id\", "
@@ -83,7 +83,7 @@ public class SchemeController {
 		return output.toString();
 	}
 
-	@CrossOrigin
+	
 	@Operation(summary = "Get scheme list")
 	@RequestMapping(value = "/get/schemeList", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE, headers = "Authorization")
 	public String getSchemeList(
@@ -109,7 +109,7 @@ public class SchemeController {
 		return output.toString();
 	}
 
-	@CrossOrigin
+	
 	@Operation(summary = "Delete scheme")
 	@RequestMapping(value = "/scheme/deleteScheme", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE, headers = "Authorization")
 	public String deleteScheme(

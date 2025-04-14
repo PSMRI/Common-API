@@ -54,7 +54,7 @@ public class CategoryController {
 	InputMapper inputMapper = new InputMapper();
 	final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get all categries")
 	@PostMapping(value = "/categories", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getAllCategries(

@@ -63,7 +63,7 @@ public class SMSController {
 
 	InputMapper inputMapper = new InputMapper();
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get SMS templates")
 	@PostMapping(value = "/getSMSTemplates", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getSMSTemplates(
@@ -82,7 +82,7 @@ public class SMSController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get full SMS template")
 	@PostMapping(value = "/getFullSMSTemplate", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getFullSMSTemplate(
@@ -101,7 +101,7 @@ public class SMSController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Save SMS template")
 	@PostMapping(value = "/saveSMSTemplate", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String saveSMSTemplate(
@@ -120,7 +120,7 @@ public class SMSController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Update SMS template")
 	@PostMapping(value = "/updateSMSTemplate", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String updateSMSTemplate(
@@ -144,7 +144,7 @@ public class SMSController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get SMS types")
 	@PostMapping(value = "/getSMSTypes", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getSMSTypes(
@@ -164,7 +164,7 @@ public class SMSController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get SMS parameters")
 	@PostMapping(value = "/getSMSParameters", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getSMSParameters(
@@ -184,7 +184,7 @@ public class SMSController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Send SMS")
 	@PostMapping(value = "/sendSMS", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String sendSMS(

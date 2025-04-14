@@ -60,7 +60,7 @@ public class CareStreamCreateOrderController {
 	@Value("${carestream_socket_port}")
 	private int carestreamSocketPort;
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Create order")
 	@RequestMapping(value = "/createOrder", headers = "Authorization", method = { RequestMethod.POST }, produces = {
 			"application/json" })
@@ -122,7 +122,7 @@ public class CareStreamCreateOrderController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Update order")
 	@RequestMapping(value = "/UpdateOrder", headers = "Authorization", method = { RequestMethod.POST }, produces = {
 			"application/json" })
@@ -184,7 +184,7 @@ public class CareStreamCreateOrderController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Delete order")
 	@RequestMapping(value = "/deleteOrder", headers = "Authorization", method = { RequestMethod.POST }, produces = {
 			"application/json" })

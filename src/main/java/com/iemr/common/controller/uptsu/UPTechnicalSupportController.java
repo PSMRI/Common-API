@@ -48,7 +48,7 @@ public class UPTechnicalSupportController {
 	private UptsuService uptsuService;
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
-	@CrossOrigin
+	
 	@Operation(summary = "Get facility master")
 	@RequestMapping(value = "/get/facilityMaster/{providerServiceMapID}/{blockName}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getFacility(@PathVariable Integer providerServiceMapID, @PathVariable String blockName) {
@@ -65,7 +65,7 @@ public class UPTechnicalSupportController {
 		return response.toString();
 	}
 
-	@CrossOrigin
+	
 	@Operation(summary = "Save appointment details")
 	@RequestMapping(value = "/save/appointment-details", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String saveAppointmentDetails(@RequestBody String request,

@@ -50,7 +50,7 @@ public class NationalHealthMissionDashboardController {
 	@Autowired
 	private NHM_DashboardService nHM_DashboardService;
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Push abandoned calls from call centre")
 	@RequestMapping(value = "/push/abandon_calls", method = RequestMethod.POST, headers = "Authorization")
 	public String pushAbandonCallsFromC_Zentrix(@RequestBody AbandonCallSummary abandonCallSummary) {
@@ -67,7 +67,6 @@ public class NationalHealthMissionDashboardController {
 	}
 
 	@Operation(summary = "Get abandoned call information")
-	@CrossOrigin()
 	@RequestMapping(value = "/get/abandon_calls", method = RequestMethod.GET, headers = "Authorization")
 	public String getAbandonCalls() {
 		OutputResponse output = new OutputResponse();
@@ -83,7 +82,6 @@ public class NationalHealthMissionDashboardController {
 	}
 
 	@Operation(summary = "Get agent wise staff & idle time")
-	@CrossOrigin()
 	@RequestMapping(value = "/get/agentsummaryreport", method = RequestMethod.GET, headers = "Authorization")
 	public String getAgentSummaryReport() {
 		OutputResponse output = new OutputResponse();
@@ -99,7 +97,6 @@ public class NationalHealthMissionDashboardController {
 	}
 
 	@Operation(summary = "Get detailed call report")
-	@CrossOrigin()
 	@RequestMapping(value = "/get/detailedCallReport", method = RequestMethod.GET, headers = "Authorization")
 	public String getDetailedCallReport() {
 		OutputResponse output = new OutputResponse();

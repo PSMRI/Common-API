@@ -78,7 +78,7 @@ public class KMFileManagerController {
 	    }
 	
 	
-	@CrossOrigin()
+	
 	@Operation(summary = "Save beneficairy documents locally")
 	@PostMapping(value = { "/saveFiles" }, consumes = "application/json", produces = "application/json")
 	public String saveFiles(@RequestBody String request) {
@@ -101,7 +101,7 @@ public class KMFileManagerController {
 
 	
 
-	@CrossOrigin
+	
 	@Operation(summary = "Add file")
 	@RequestMapping(value = "/addFile", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String addFile(
@@ -127,7 +127,7 @@ public class KMFileManagerController {
 		return response.toString();
 	}
 
-	@CrossOrigin
+	
 	@Operation(summary = "Get KM file download URL")
 	@RequestMapping(value = "/getKMFileDownloadURL", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getKMFileDownloadURL(@Param(value = "{}") @RequestBody String request) {

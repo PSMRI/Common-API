@@ -58,7 +58,7 @@ public class CustomerRelationshipReports {
 	@Autowired
 	Report1097Mapper mapper;
 
-	@CrossOrigin()
+	
 	@Operation(summary = "QA report type master data")
 	@RequestMapping(value = "/getReportTypes/{providerServiceMapID}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
 	public String patientAppChiefComplaintsMasterData(

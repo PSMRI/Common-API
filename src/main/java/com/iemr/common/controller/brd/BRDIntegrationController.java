@@ -40,7 +40,6 @@ import io.swagger.v3.oas.annotations.Operation;
 
 @RestController
 @RequestMapping("/brd")
-@CrossOrigin()
 public class BRDIntegrationController {
 
 	private Logger logger = LoggerFactory.getLogger(BRDIntegrationController.class);
@@ -50,7 +49,6 @@ public class BRDIntegrationController {
 
 	@Operation(summary = "Get integration data")
 	@RequestMapping(value = "/getIntegrationData", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
-	@CrossOrigin()
 	public String getDetails(@RequestBody String request) {
 		OutputResponse response = new OutputResponse();
 		String brdDetails = null;

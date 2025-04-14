@@ -79,7 +79,7 @@ public class CallController {
 		this.beneficiaryCallService = beneficiaryCallService;
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get call types")
 	@PostMapping(value = "/getCallTypes", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getAllCallTypes(
@@ -97,7 +97,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get call types V1")
 	@PostMapping(value = "/getCallTypesV1", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getCallTypesV1(
@@ -114,7 +114,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Start call")
 	@PostMapping(value = "/startCall", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String startCall(
@@ -143,7 +143,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Update beneficiary in call")
 	@PostMapping(value = "/updatebeneficiaryincall", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String updateBeneficiaryIDInCall(@Param(value = "{\"benCallID\":\"Integer - callID as in CRM\", "
@@ -165,7 +165,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Close call")
 	@PostMapping(value = "/closeCall", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String closeCall(
@@ -206,7 +206,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Outbound call list")
 	@PostMapping(value = "/outboundCallList", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String outboundCallList(@Param(value = "{\"providerServiceMapID\":\" called service ID integer\", "
@@ -227,7 +227,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Outbound call count")
 	@PostMapping(value = "/outboundCallCount", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String outboundCallCount(@Param(value = "{\"providerServiceMapID\":\"called service ID integer\", "
@@ -245,7 +245,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Filter call list")
 	@RequestMapping(value = "/filterCallList", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String filterCallList(
@@ -267,7 +267,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Filter call list page")
 	@RequestMapping(value = "/filterCallListPage", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String filterCallListPaginated(@Param(value = "{\"calledServiceID\":\" called service ID integer\", "
@@ -288,7 +288,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Outbound allocation")
 	@RequestMapping(value = "/outboundAllocation", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String outboundAllocation(@Param(value = "{\"userID\":[Integer Array list of user IDs], "
@@ -305,7 +305,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Complete outbound call")
 	@RequestMapping(value = "/completeOutboundCall", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String completeOutboundCall(@Param(value = "{\"outboundCallReqID\":\"Integer - Outbound call id\", "
@@ -322,7 +322,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Update outbound call")
 	@RequestMapping(value = "/updateOutboundCall", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String updateOutboundCall(@Param(value = "{\"outboundCallReqID\":\"Integer - Outbound call id\", "
@@ -340,7 +340,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Reset outbound call")
 	@RequestMapping(value = "/resetOutboundCall", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String resetOutboundCall(
@@ -356,7 +356,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get blacklist numbers")
 	@RequestMapping(value = "/getBlacklistNumbers", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getBlacklistNumbers(
@@ -375,7 +375,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Unblock blocked numbers")
 	@RequestMapping(value = "/unblockBlockedNumbers", method = RequestMethod.GET, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String unblockBlockedNumbers() {
@@ -390,7 +390,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Block phone number")
 	@RequestMapping(value = "/blockPhoneNumber", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String blockPhoneNumber(
@@ -406,7 +406,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Unblock phone number")
 	@RequestMapping(value = "/unblockPhoneNumber", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String unblockPhoneNumber(
@@ -422,7 +422,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Update beneficiary call CDI status")
 	@RequestMapping(value = "/updateBeneficiaryCallCDIStatus", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String updateBeneficiaryCallCDIStatus(@Param(value = "{\"benCallID\":\"Integer - callID as in CRM\", "
@@ -443,7 +443,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get call history by call id")
 	@RequestMapping(value = "/getCallHistoryByCallID", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getCallHistoryByCallID(
@@ -459,7 +459,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Outbound call list by call id")
 	@RequestMapping(value = "/outboundCallListByCallID", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String outboundCallListByCallID(@Param(value = "{\"providerServiceMapID\":\"called service ID integer\", "
@@ -475,7 +475,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Nuisance call history")
 	@RequestMapping(value = "/nueisanceCallHistory", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String nueisanceCallHistory(
@@ -495,7 +495,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Beneficiary by call id")
 	@RequestMapping(value = "/beneficiaryByCallID", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String beneficiaryByCallID(@Param("{\"callID\":\"String\"}") @RequestBody CallRequestByIDModel request,
@@ -515,7 +515,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get calls by beneficiary regitration id and received role name")
 	@RequestMapping(value = "/isAvailed", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String isAvailed(@Param(value = "{\"beneficiaryRegID\":\"beneficiary reg id\", "
@@ -533,7 +533,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get beneficiary requested outbound call")
 	@RequestMapping(value = "/getBenRequestedOutboundCall", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getBenRequestedOutboundCall(@Param(value = "{\"beneficiaryRegID\":\"beneficiary reg id\", "
@@ -552,7 +552,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Auto preview dialing")
 	@RequestMapping(value = "/isAutoPreviewDialing", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String isAutoPreviewDialing(@Param(value = "{\"providerServiceMapID\":\"called service ID integer\", "
@@ -571,7 +571,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Check auto preview dialing")
 	@RequestMapping(value = "/checkAutoPreviewDialing", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String checkAutoPreviewDialing(
@@ -590,7 +590,7 @@ public class CallController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get file path CTI")
 	@RequestMapping(value = "/getFilePathCTI", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getFilePathCTI(
@@ -614,7 +614,7 @@ public class CallController {
 	@Autowired
 	private SessionObject s;
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Redis insert")
 	@RequestMapping(value = "/redisInsert", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String redisInsert(@RequestBody String request) {
@@ -630,7 +630,7 @@ public class CallController {
 
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Redis fetch")
 	@RequestMapping(value = "/redisFetch", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String redisFetch(@Param("{\"sessionID\":\"sessionID/callID String\"}") @RequestBody String request) {

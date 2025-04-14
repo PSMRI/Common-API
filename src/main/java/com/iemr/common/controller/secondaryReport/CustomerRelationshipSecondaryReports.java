@@ -47,7 +47,7 @@ import io.lettuce.core.dynamic.annotation.Param;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 
-@CrossOrigin
+
 @RequestMapping({ "/crmReports" })
 @RestController
 public class CustomerRelationshipSecondaryReports {
@@ -55,7 +55,7 @@ public class CustomerRelationshipSecondaryReports {
 	@Autowired
 	private SecondaryReportService secondaryReportService;
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get quality report")
 	@RequestMapping(value = "/getQualityReport", method = RequestMethod.POST, headers = "Authorization")
 	public ResponseEntity<Object> getQualityReport(
@@ -81,7 +81,7 @@ public class CustomerRelationshipSecondaryReports {
 		}
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get complaint detail report")
 	@RequestMapping(value = "/getComplaintDetailReport", method = RequestMethod.POST, headers = "Authorization")
 	public ResponseEntity<Object> getComplaintDetailReport(
@@ -108,7 +108,7 @@ public class CustomerRelationshipSecondaryReports {
 		}
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get call summary report")
 	@RequestMapping(value = "/getCallSummaryReport", method = RequestMethod.POST, headers = "Authorization")
 	public ResponseEntity<Object> getCallSummaryReport(
@@ -137,7 +137,7 @@ public class CustomerRelationshipSecondaryReports {
 		}
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get all by sexual orientation")
 	@RequestMapping(value = "/getAllBySexualOrientation", method = RequestMethod.POST, headers = "Authorization")
 	public ResponseEntity<Object> getAllBySexualOrientation(
@@ -164,7 +164,7 @@ public class CustomerRelationshipSecondaryReports {
 
 	}
 
-	@CrossOrigin
+	
 	@Operation(summary = "Get district wise call report")
 	@RequestMapping(value = "/getDistrictWiseCallReport", method = RequestMethod.POST, headers = "Authorization")
 	public ResponseEntity<Object> getDistrictWiseCallReport(
@@ -190,7 +190,7 @@ public class CustomerRelationshipSecondaryReports {
 		}
 	}
 
-	@CrossOrigin
+	
 	@Operation(summary = "Get unblocked user report")
 	@RequestMapping(value = "/getUnblockedUserReport", method = RequestMethod.POST, headers = "Authorization")
 	public ResponseEntity<Object> getUnblockedUserReport(
@@ -215,7 +215,7 @@ public class CustomerRelationshipSecondaryReports {
 		}
 	}
 
-	@CrossOrigin
+	
 	@Operation(summary = "Get call quality report")
 	@RequestMapping(value = "/getCallQualityReport", method = RequestMethod.POST, headers = "Authorization")
 	public ResponseEntity<Object> getCallQualityReport(
@@ -244,7 +244,7 @@ public class CustomerRelationshipSecondaryReports {
 		}
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get counts by preferred language")
 	@RequestMapping(value = "/getCountsByPreferredLanguage", method = RequestMethod.POST, headers = "Authorization")
 	public ResponseEntity<Object> getCountsByPreferredLanguage(
@@ -272,7 +272,7 @@ public class CustomerRelationshipSecondaryReports {
 		}
 	}
 
-	@CrossOrigin
+	
 	@Operation(summary = "Get caller by age group")
 	@RequestMapping(value = "/getAllByAgeGroup", method = RequestMethod.POST, headers = "Authorization")
 	public ResponseEntity<Object> getAllByAgeGroup(
@@ -298,7 +298,7 @@ public class CustomerRelationshipSecondaryReports {
 		}
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get all reports by date")
 	@RequestMapping(value = "/getAllReportsByDate", method = RequestMethod.POST, headers = "Authorization")
 	public ResponseEntity<Object> getAllReportsByDate(
@@ -326,7 +326,7 @@ public class CustomerRelationshipSecondaryReports {
 		}
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get all by gender")
 	@RequestMapping(value = "/getAllByGender", method = RequestMethod.POST, headers = "Authorization")
 	public ResponseEntity<Object> getAllByGender(

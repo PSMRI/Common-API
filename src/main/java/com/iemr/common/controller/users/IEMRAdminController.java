@@ -933,7 +933,7 @@ public class IEMRAdminController {
 	 * @param request
 	 * @return transaction Id for password change
 	 */
-	@CrossOrigin
+
 	@Operation(summary = "Validating security question and answers for password change")
 	@RequestMapping(value = { "/validateSecurityQuestionAndAnswer" }, method = { RequestMethod.POST })
 	public String validateSecurityQuestionAndAnswer(

@@ -59,7 +59,7 @@ public class Helpline104BeneficiaryHistoryController {
 	@Autowired
 	private H104BenHistoryServiceImpl smpleBenHistoryServiceImpl;
 	
-	@CrossOrigin
+
 	@Operation(summary= "Retrieve beneficiary case record")
 	@PostMapping(value = "/get104BenMedHistory", headers = "Authorization", consumes = "application/json",
 			produces = "application/json")

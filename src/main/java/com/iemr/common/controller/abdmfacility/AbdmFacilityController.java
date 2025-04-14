@@ -24,8 +24,7 @@ public class AbdmFacilityController {
 	
 	@Autowired
 	private AbdmFacilityService abdmFacilityService;
-	
-	@CrossOrigin
+
 	@Operation(summary = "Get Abdm facility mapped to worklocation")
 	@GetMapping(value = { "/getWorklocationMappedAbdmFacility/{workLocationId}" })
 	public String getAbdmFacilityDetails(@PathVariable int workLocationId, @RequestHeader(value = "Authorization") String Authorization) {

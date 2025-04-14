@@ -53,7 +53,7 @@ public class LonicController {
 		this.lonicService = lonicService;
 	}
 
-	@CrossOrigin
+
 	@Operation(summary = "Get lonic record list")
 	@RequestMapping(value = "/getlonicRecordList", method = RequestMethod.POST, headers = "Authorization", consumes = "application/json", produces = "application/json")
 	public String getLonicRecordList(

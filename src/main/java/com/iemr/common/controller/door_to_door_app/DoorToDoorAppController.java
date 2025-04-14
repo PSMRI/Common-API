@@ -39,7 +39,7 @@ import com.iemr.common.utils.response.OutputResponse;
 import io.swagger.v3.oas.annotations.Operation;
 
 
-@CrossOrigin
+
 @RestController
 @RequestMapping(value = "/doortodoorapp", headers = "Authorization")
 public class DoorToDoorAppController {
@@ -49,7 +49,7 @@ public class DoorToDoorAppController {
 	@Autowired
 	private DoorToDoorService doorToDoorService;
 
-	@CrossOrigin
+
 	@Operation(summary = "Get user details")
 	@RequestMapping(value = { "/getUserDetails" }, method = { RequestMethod.POST }, consumes = "application/json", produces = "application/json")
 	public String getUserDetails(@RequestBody String requestObj) {
@@ -70,7 +70,7 @@ public class DoorToDoorAppController {
 		return response.toString();
 	}
 
-	@CrossOrigin
+
 	@Operation(summary = "Get NCD TB HRP suspected status")
 	@PostMapping(value = { "/getSuspectedData_HRP_TB_NCD" }, consumes = "application/json", produces = "application/json")
 	public String getSuspectedData_HRP_TB_NCD(@RequestBody String requestObj) {
