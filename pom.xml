@@ -26,7 +26,7 @@
 		<m2e.apt.activation>jdt_apt</m2e.apt.activation>
 		<org.mapstruct.version>1.2.0.Final</org.mapstruct.version>
 		<org.projectlombok.version>1.16.18</org.projectlombok.version>
-		<final-name>commonapi-v1.0</final-name>
+		<final-name>commonapi-v3.0.0</final-name>
 		<environment>${ENV_VAR}</environment>
 		<target-properties>target/classes/application.properties</target-properties>
 		<source-properties>target/classes/common_${environment}.properties</source-properties>
