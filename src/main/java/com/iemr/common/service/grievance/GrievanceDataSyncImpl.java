@@ -172,7 +172,7 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 							try {
 								JsonObject grievanceJsonData = grievanceElement.getAsJsonObject();
 								GrievanceDetails grievance = new GrievanceDetails();
-								String complaintId = grievanceJsonData.get("complainId").getAsString();
+                String complaintId = grievanceJsonData.get("complainId").getAsString();
 								formattedComplaintId = complaintId.replace("\\/", "/");
 								boolean complaintExists = grievanceDataRepo.existsByComplaintId(formattedComplaintId);
 								if (complaintExists) {
