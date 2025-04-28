@@ -48,7 +48,7 @@ public interface SMSMapper
 
 	SMSMapper INSTANCE = Mappers.getMapper(SMSMapper.class);
 
-	@Mappings({ @Mapping(source = "request.smsTemplateTypeID", target = "smsTypeID"), })
+	@Mappings({ @Mapping(source = "request.smsTemplateTypeID", target = "smsTypeID") })
 	SMSTemplate requestToSMSTemplate(SMSRequest request);
 
 	@IterableMapping(elementTargetType = SMSTemplate.class)
