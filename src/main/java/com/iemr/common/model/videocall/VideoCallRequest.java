@@ -15,5 +15,6 @@ public class VideoCallRequest {
 	private String callStatus;
 	private String callDuration;
 	private Integer providerServiceMapID;
+	private Long beneficiaryRegID;
 	private String closureRemark;
 }

@@ -45,6 +45,9 @@ public class VideoCallParameters {
 	    @Column(name = "ProviderServiceMapID")
 	    Integer providerServiceMapID;
 
+	    @Column(name = "BeneficiaryRegID")
+    	private Long beneficiaryRegID;
+
 	    @Column(name = "ClosureRemark")
 	    String closureRemark;
 	    
