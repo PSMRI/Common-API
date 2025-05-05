@@ -568,6 +568,9 @@ public class SMSServiceImpl implements SMSService {
 				case "104 appointment":
 					variableValue = getUptsuData(className, methodName, request);
 					break;
+				case "Grievance":
+					variableValue = getGrievanceData(className, methodName, request, authToken, beneficiary);
+					break;
 				default:
 					break;
 				}
@@ -1378,4 +1381,5 @@ public class SMSServiceImpl implements SMSService {
 		return variableValue;
 	}
 
+	
 }
