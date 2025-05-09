@@ -20,7 +20,9 @@ import com.iemr.common.model.videocall.UpdateCallRequest;
 import com.iemr.common.model.videocall.VideoCallRequest;
 import com.iemr.common.service.videocall.VideoCallService;
 import com.iemr.common.utils.response.OutputResponse;
-
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.web.bind.annotation.RequestBody;
@@ -50,30 +52,25 @@ public class VideoCallController {
 
 @CrossOrigin()
 @PostMapping(value = "/send-link", produces = MediaType.APPLICATION_JSON_VALUE, headers = "Authorization")
-public ResponseEntity<String> sendVideoLink(@RequestBody VideoCallRequest requestModel, HttpServletRequest request) {
+public String sendVideoLink(@RequestBody String requestModel, HttpServletRequest request) {
     OutputResponse response = new OutputResponse();
 
     try {
-        if (requestModel.getCallerPhoneNumber() == null || requestModel.getMeetingLink() == null) {
-            throw new IllegalArgumentException("callerPhoneNumber and meetingLink are required");
-        }
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        VideoCallRequest requestData = objectMapper.readValue(requestModel, VideoCallRequest.class);
+        OutputResponse serviceResponse = videoCallService.sendMeetingLink(requestData);
+        
+        objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        return objectMapper.writeValueAsString(serviceResponse);  // Automatically serialized to JSON
 
-        String status = videoCallService.sendMeetingLink(requestModel);
-        JSONObject responseObj = new JSONObject();
-        responseObj.put("status", "success");
-        responseObj.put("message", status);
-        response.setResponse(responseObj.toString());
-
-    } catch (IllegalArgumentException e) {
-        logger.error("Validation error: " + e.getMessage(), e);
-        return ResponseEntity.badRequest().body("{\"status\":\"error\",\"message\":\"" + e.getMessage() + "\"}");
     } catch (Exception e) {
-        logger.error("sendVideoLink failed with error: " + e.getMessage(), e);
+        logger.error("send MeetingLink failed with error: " + e.getMessage(), e);
         response.setError(e);
+        return response.toString();
     }
-
-    return ResponseEntity.ok(response.toString());
 }
+
 
 @CrossOrigin()
 @PostMapping(value = "/update-call-status", produces = MediaType.APPLICATION_JSON_VALUE, headers = "Authorization")

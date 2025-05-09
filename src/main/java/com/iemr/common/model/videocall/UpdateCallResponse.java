@@ -12,7 +12,7 @@ public class UpdateCallResponse {
     String callStatus;
     String callDuration;
     String modifiedBy;
-
+    boolean isLinkUsed;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     Timestamp lastModified;
 

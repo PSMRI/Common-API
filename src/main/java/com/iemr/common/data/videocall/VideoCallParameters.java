@@ -51,14 +51,24 @@ public class VideoCallParameters {
 	    @Column(name = "ClosureRemark")
 	    String closureRemark;
 	    
+		@Column(name = "LinkGeneratedAt")
+		private Timestamp linkGeneratedAt;
+
+		@Column(name = "IsLinkUsed")
+		private boolean linkUsed;
+
 	    @Column(name = "Deleted", insertable = false, updatable = true)
 		Boolean deleted;
+
 		@Column(name = "CreatedBy", insertable = true, updatable = false)
 		String createdBy;
+
 		@Column(name = "CreatedDate", insertable = false, updatable = false)
 		Timestamp createdDate;
+
 		@Column(name = "ModifiedBy", insertable = false, updatable = true)
 		String modifiedBy;
+
 		@Column(name = "LastModDate", insertable = false, updatable = false)
 		Timestamp lastModDate;
 		
