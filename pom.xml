@@ -6,7 +6,7 @@
 
 	<groupId>com.iemr.common-API</groupId>
 	<artifactId>Common</artifactId>
-	<version>1.0.1</version>
+	<version>3.1.0</version>
 	<packaging>war</packaging>
 
 	<name>common-API</name>
@@ -497,7 +497,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>commonapi-v3.0.0</finalName>
+		<finalName>${artifactId}-${version}</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
