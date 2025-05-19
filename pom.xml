@@ -9,7 +9,7 @@
 	<version>3.1.0</version>
 	<packaging>war</packaging>
 
-	<name>common-API</name>
+	<name>Common-API</name>
 	<description>Piramal - Helpline: 1097 Module API </description>
 
 	<parent>
