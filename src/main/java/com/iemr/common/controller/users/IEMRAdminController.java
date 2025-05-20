@@ -131,7 +131,6 @@ public class IEMRAdminController {
 		logger.info("userAuthenticate request - " + m_User + " " + m_User.getUserName() + " " + m_User.getPassword());
 		try {
 			String decryptPassword = aesUtil.decrypt("Piramal12Piramal", m_User.getPassword());
-			logger.info("decryptPassword : " + decryptPassword);
 			List<User> mUser = iemrAdminUserServiceImpl.userAuthenticate(m_User.getUserName(), decryptPassword);
 			JSONObject resMap = new JSONObject();
 			JSONObject serviceRoleMultiMap = new JSONObject();
