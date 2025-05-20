@@ -60,33 +60,48 @@ public class JwtUserIdValidationFilter implements Filter {
 		}
 
 		try {
-			// Retrieve JWT token from cookies
-			String jwtTokenFromCookie = getJwtTokenFromCookies(request);
-			logger.info("JWT token from cookie: ");
+			String jwtFromCookie = getJwtTokenFromCookies(request);
+			String jwtFromHeader = request.getHeader("JwtToken");
+			String authHeader = request.getHeader("Authorization");
 
-			// Determine which token (cookie or header) to validate
-			String jwtToken = jwtTokenFromCookie != null ? jwtTokenFromCookie : jwtTokenFromHeader;
-			if (jwtToken == null) {
-				logger.error("JWT token not found in cookies or headers");
-				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "JWT token not found in cookies or headers");
+			if (jwtFromCookie != null) {
+				logger.info("Validating JWT token from cookie");
+				if (jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtFromCookie)) {
+					filterChain.doFilter(servletRequest, servletResponse);
+					return;
+				}
+			}
+
+			if (jwtFromHeader != null) {
+				logger.info("Validating JWT token from header");
+				if (jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtFromHeader)) {
+					filterChain.doFilter(servletRequest, servletResponse);
+					return;
+				}
+			}
+			String userAgent = request.getHeader("User-Agent");
+			logger.info("User-Agent: " + userAgent);
+
+			if (userAgent != null && isMobileClient(userAgent) && authHeader != null) {
+				filterChain.doFilter(servletRequest, servletResponse);
 				return;
 			}
 
-			// Validate JWT token and userId
-			if (jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtToken)) {
-				// If token is valid, allow the request to proceed
-				logger.info("Valid JWT token");
-				filterChain.doFilter(servletRequest, servletResponse);
-			} else {
-				logger.error("Invalid JWT token");
-				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT token");
-			}
+			logger.warn("No valid authentication token found");
+			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized: Invalid or missing token");
 		} catch (Exception e) {
 			logger.error("Authorization error: ", e);
 			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization error: " + e.getMessage());
 		}
 	}
 
+	private boolean isMobileClient(String userAgent) {
+		if (userAgent == null)
+			return false;
+		userAgent = userAgent.toLowerCase();
+		return userAgent.contains("okhttp"); // iOS (custom clients)
+	}
+	
 	private boolean shouldSkipAuthentication(String path, String contextPath) {
 		return path.equals(contextPath + "/user/userAuthenticate")
 				|| path.equalsIgnoreCase(contextPath + "/user/logOutUserFromConcurrentSession")
@@ -94,7 +109,16 @@ public class JwtUserIdValidationFilter implements Filter {
 				|| path.startsWith(contextPath + "/v3/api-docs")
 				|| path.startsWith(contextPath + "/public")
 				|| path.equals(contextPath + "/user/refreshToken")
-				;
+				|| path.startsWith(contextPath + "/user/superUserAuthenticate")
+				|| path.startsWith(contextPath + "/user/user/userAuthenticateNew")
+				|| path.startsWith(contextPath + "/user/userAuthenticateV1")
+				|| path.startsWith(contextPath + "/user/forgetPassword")
+				|| path.startsWith(contextPath + "/user/setForgetPassword")
+				|| path.startsWith(contextPath + "/user/changePassword")
+				|| path.startsWith(contextPath + "/user/saveUserSecurityQuesAns")
+				|| path.startsWith(contextPath + "/user/userLogout")
+				|| path.startsWith(contextPath + "/user/validateSecurityQuestionAndAnswer")
+				|| path.startsWith(contextPath + "/user/logOutUserFromConcurrentSession");
 	}
 
 	private String getJwtTokenFromCookies(HttpServletRequest request) {
