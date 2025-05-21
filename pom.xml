@@ -5,11 +5,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.iemr.common-API</groupId>
-	<artifactId>Common</artifactId>
-	<version>1.0.1</version>
+	<artifactId>common-api</artifactId>
+	<version>3.1.0</version>
 	<packaging>war</packaging>
 
-	<name>common-API</name>
+	<name>Common-API</name>
 	<description>Piramal - Helpline: 1097 Module API </description>
 
 	<parent>
@@ -497,7 +497,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>commonapi-v3.0.0</finalName>
+		<finalName>${artifactId}-${version}</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
