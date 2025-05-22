@@ -14,6 +14,7 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 
 @Component
 public class JwtUserIdValidationFilter implements Filter {
@@ -24,6 +25,9 @@ public class JwtUserIdValidationFilter implements Filter {
 	public JwtUserIdValidationFilter(JwtAuthenticationUtil jwtAuthenticationUtil) {
 		this.jwtAuthenticationUtil = jwtAuthenticationUtil;
 	}
+	
+    @Value("${cors.allowed-origins}")
+    private String[] allowedOrigins;
 
 	@Override
 	public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
@@ -34,6 +38,20 @@ public class JwtUserIdValidationFilter implements Filter {
 		String path = request.getRequestURI();
 		String contextPath = request.getContextPath();
 		logger.info("JwtUserIdValidationFilter invoked for path: " + path);
+		
+		String origin = request.getHeader("Origin");
+	    if (origin != null) {
+	        response.setHeader("Access-Control-Allow-Origin", origin);
+	        response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+	        response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, Jwttoken");
+	        response.setHeader("Access-Control-Allow-Credentials", "true");
+	    }
+
+	    if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+	        logger.info("OPTIONS request - skipping JWT validation");
+	        response.setStatus(HttpServletResponse.SC_OK);
+	        return;
+	    }
 
 		// Log cookies for debugging
 		Cookie[] cookies = request.getCookies();
