@@ -55,7 +55,7 @@ public class EmailController {
 		this.emailService = emailService;
 	}
 
-	@CrossOrigin
+	
 	@Operation(summary = "Send email")
 	@PostMapping(value = "/SendEmail", headers = "Authorization")
 	public String SendEmail(
@@ -74,7 +74,7 @@ public class EmailController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get authority email id")
 	@PostMapping(value = "/getAuthorityEmailID", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getAuthorityEmailID(@Param(value = "{districtID : Integer}") @RequestBody String severityRequest) {
@@ -89,7 +89,7 @@ public class EmailController {
 		return response.toString();
 	}
 
-	@CrossOrigin
+
 	@Operation(summary = "Send email general")
 	@PostMapping(value = "/sendEmailGeneral", headers = "Authorization")
 	public String sendEmailGeneral(

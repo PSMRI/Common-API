@@ -24,7 +24,7 @@ public class EAusadhaController {
 	
 	private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	
-	@CrossOrigin
+
 	@PostMapping(value = { "/create-eAusadha" })
 	public String createEAusadha(@RequestBody EAusadhaDTO eAusadhaDTO, @RequestHeader(value = "Authorization") String Authorization) {
 		OutputResponse response = new OutputResponse();

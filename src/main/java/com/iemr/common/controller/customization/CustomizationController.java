@@ -30,7 +30,7 @@ public class CustomizationController {
 	
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Add project")
 	@RequestMapping(value = "/addProject", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String addProject(@RequestBody String request,
@@ -47,7 +47,7 @@ public class CustomizationController {
 		return response.toString();
 	}
 	
-	@CrossOrigin
+	
 	@Operation(summary = "Fetch project names")
 	@RequestMapping(value = "/get/projectNames/{serviceProviderId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getProjectNames(@PathVariable Integer serviceProviderId) {
@@ -63,7 +63,7 @@ public class CustomizationController {
 		return response.toString();
 	}
 	
-	@CrossOrigin()
+	
 
 	@Operation(summary = "Update project")
 	@RequestMapping(value = "/updateProject", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
@@ -80,7 +80,7 @@ public class CustomizationController {
 		return response.toString();
 	}
 	
-	@CrossOrigin()
+	
 	@Operation(summary = "Save project to serviceline")
 	@RequestMapping(value = "/saveProjectToServiceline", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String saveProjectToServiceline(@RequestBody String request,
@@ -97,7 +97,7 @@ public class CustomizationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Fetch project serviceline")
 	@RequestMapping(value = "/fetchProjectServiceline", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String fetchProjectServiceline(@RequestBody String request,
@@ -114,7 +114,7 @@ public class CustomizationController {
 		return response.toString();
 	}
 	
-	@CrossOrigin()
+	
 	@Operation(summary = "Update project to serviceline")
 	@RequestMapping(value = "/updateProjectToServiceline", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String updateProjectToServiceline(@RequestBody String request,
@@ -131,7 +131,7 @@ public class CustomizationController {
 		return response.toString();
 	}
 	
-	@CrossOrigin
+	
 	@Operation(summary = "Fetch section masters")
 	@RequestMapping(value = "/get/sections", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getSections() {
@@ -147,7 +147,7 @@ public class CustomizationController {
 		return response.toString();
 	}
 	
-	@CrossOrigin()
+	
 	@Operation(summary = "Update section and fields")
 	@RequestMapping(value = "/updateSectionAndFields", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String updateSectionAndFields(@RequestBody String request,
@@ -163,7 +163,7 @@ public class CustomizationController {
 		return response.toString();
 	}
 	
-	@CrossOrigin()
+	
 	@Operation(summary = "Save section and fields")
 	@RequestMapping(value = "/saveSectionAndFields", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String saveSectionAndFields(@RequestBody SectionFieldsMappingDTO sectionFieldsMappingDTO,
@@ -179,7 +179,7 @@ public class CustomizationController {
 		return response.toString();
 	}
 	
-	@CrossOrigin()
+	
 	@Operation(summary = "Section and project mapping")
 	@RequestMapping(value = "/mapSectionToProject", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String mapSectionToProject(@RequestBody SectionProjectMappingDTO sectionProjectMappingDTO,
@@ -196,7 +196,7 @@ public class CustomizationController {
 		return response.toString();
 	}
 	
-	@CrossOrigin()
+	
 	@Operation(summary = "Fetch mapped sections in project")
 	@RequestMapping(value = "/fetchMappedSectionsInProject", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String fetchMappedSectionsInProject(@RequestBody String request,
@@ -213,7 +213,7 @@ public class CustomizationController {
 		return response.toString();
 	}
 	
-	@CrossOrigin()
+	
 	@Operation(summary = "Fetch mapped fields")
 	@RequestMapping(value = "/fetchMappedFields", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String fetchMappedFields(@RequestBody String request,
@@ -230,7 +230,7 @@ public class CustomizationController {
 		return response.toString();
 	}
 	
-	@CrossOrigin()
+	
 	@Operation(summary = "Fetch all data")
 	@RequestMapping(value = "/fetchAllData", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String fetchAllData(@RequestBody String request,
@@ -247,7 +247,7 @@ public class CustomizationController {
 		return response.toString();
 	}
 	
-	@CrossOrigin
+	
 	@Operation(summary = "Fetch field masters")
 	@RequestMapping(value = "/get/fileldType", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getfileldType() {

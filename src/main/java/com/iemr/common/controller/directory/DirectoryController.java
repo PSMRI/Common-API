@@ -79,7 +79,7 @@ public class DirectoryController
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get directory")
 	@RequestMapping(value = "/getDirectory", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON,
 			headers = "Authorization")
@@ -100,7 +100,7 @@ public class DirectoryController
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get directory V1")
 	@RequestMapping(value = "/getDirectoryV1", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON,
 			headers = "Authorization")
@@ -124,7 +124,7 @@ public class DirectoryController
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "This API is used for getting subdirectories for a given institute directory")
 	@RequestMapping(value = "/getSubDirectory", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON,
 			consumes = MediaType.APPLICATION_JSON, headers = "Authorization")
@@ -148,7 +148,7 @@ public class DirectoryController
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "This API is used for getting institutes for a given directory, subdirectory and location")
 	@RequestMapping(value = "/getInstitutesDirectories", method = RequestMethod.POST,
 			produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON, headers = "Authorization")

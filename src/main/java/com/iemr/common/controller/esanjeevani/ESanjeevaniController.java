@@ -18,7 +18,6 @@ import com.iemr.common.utils.response.OutputResponse;
 import io.swagger.v3.oas.annotations.Operation;
 
 
-@CrossOrigin
 @RestController
 @RequestMapping(value = "/esanjeevani", headers = "Authorization")
 public class ESanjeevaniController {
@@ -28,7 +27,6 @@ public class ESanjeevaniController {
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
-	@CrossOrigin
 	@Operation(summary = "Register patient in E-Sanjeevani and send portal url to route")
 	@GetMapping(value = { "/getESanjeevaniUrl/{beneficiaryReqId}" }, consumes = "application/json", produces = "application/json")
 	public String registerESanjeevaniPatient(@PathVariable Long beneficiaryReqId) {

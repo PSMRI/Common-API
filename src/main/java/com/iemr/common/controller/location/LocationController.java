@@ -28,12 +28,10 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.iemr.common.data.location.Country;
 import com.iemr.common.data.location.DistrictBlock;
 import com.iemr.common.data.location.DistrictBranchMapping;
@@ -41,7 +39,6 @@ import com.iemr.common.data.location.Districts;
 import com.iemr.common.data.location.States;
 import com.iemr.common.service.location.LocationService;
 import com.iemr.common.utils.response.OutputResponse;
-
 import io.swagger.v3.oas.annotations.Operation;
 
 
@@ -51,7 +48,7 @@ public class LocationController {
 	private LocationService locationService;
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
-	@CrossOrigin
+	
 	@Operation(summary = "Get states")
 	@RequestMapping(value = "/states/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getStates(@PathVariable("id") Integer id) {
@@ -67,7 +64,7 @@ public class LocationController {
 		return response.toString();
 	}
 
-	@CrossOrigin
+	
 	@Operation(summary = "Get districts")
 	@RequestMapping(value = "/districts/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getDistricts(@PathVariable("id") int id) {
@@ -83,7 +80,7 @@ public class LocationController {
 		return response.toString();
 	}
 
-	@CrossOrigin
+	
 	@Operation(summary = "Fetch state and district by id")
 	@RequestMapping(value = "/statesDistricts/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getStatetDistricts(@PathVariable("id") int id) {
@@ -100,7 +97,7 @@ public class LocationController {
 		return response.toString();
 	}
 
-	@CrossOrigin
+	
 	@Operation(summary = "Get district blocks")
 	@RequestMapping(value = "/taluks/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getDistrictBlocks(@PathVariable("id") int id) {
@@ -116,7 +113,7 @@ public class LocationController {
 		return response.toString();
 	}
 
-	@CrossOrigin
+	
 	@Operation(summary = "Get city")
 	@RequestMapping(value = "/city/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getCity(@PathVariable("id") int id) {
@@ -133,7 +130,7 @@ public class LocationController {
 		return response.toString();
 	}
 
-	@CrossOrigin
+	
 	@Operation(summary = "Get villages")
 	@RequestMapping(value = "/village/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getVillages(@PathVariable("id") int id) {
@@ -154,7 +151,7 @@ public class LocationController {
 		this.locationService = locationService;
 	}
 
-	@CrossOrigin
+	
 	@Operation(summary = "Get countries")
 	@RequestMapping(value = "/getCountries", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getCountries() {
