@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.iemr.common.utils.http.AuthorizationHeaderRequestWrapper;
+
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -67,29 +69,39 @@ public class JwtUserIdValidationFilter implements Filter {
 			if (jwtFromCookie != null) {
 				logger.info("Validating JWT token from cookie");
 				if (jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtFromCookie)) {
-					filterChain.doFilter(servletRequest, servletResponse);
+					AuthorizationHeaderRequestWrapper authorizationHeaderRequestWrapper = new AuthorizationHeaderRequestWrapper(
+							request, "");
+					filterChain.doFilter(authorizationHeaderRequestWrapper, servletResponse);
 					return;
 				}
-			}
-
-			if (jwtFromHeader != null) {
+			} else if (jwtFromHeader != null) {
 				logger.info("Validating JWT token from header");
 				if (jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtFromHeader)) {
-					filterChain.doFilter(servletRequest, servletResponse);
+					AuthorizationHeaderRequestWrapper authorizationHeaderRequestWrapper = new AuthorizationHeaderRequestWrapper(
+							request, "");
+					filterChain.doFilter(authorizationHeaderRequestWrapper, servletResponse);
 					return;
 				}
-			}
-			String userAgent = request.getHeader("User-Agent");
-			logger.info("User-Agent: " + userAgent);
-
-			if (userAgent != null && isMobileClient(userAgent) && authHeader != null) {
-				filterChain.doFilter(servletRequest, servletResponse);
-				return;
+			} else {
+				String userAgent = request.getHeader("User-Agent");
+				logger.info("User-Agent: " + userAgent);
+				if (userAgent != null && isMobileClient(userAgent) && authHeader != null) {
+					try {
+						UserAgentContext.setUserAgent(userAgent);
+						filterChain.doFilter(servletRequest, servletResponse);
+					} finally {
+						UserAgentContext.clear();
+					}
+					return;
+				}
 			}
 
 			logger.warn("No valid authentication token found");
 			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized: Invalid or missing token");
-		} catch (Exception e) {
+
+			logger.warn("No valid authentication token found");
+			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized: Invalid or missing token");
+} catch (Exception e) {
 			logger.error("Authorization error: ", e);
 			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization error: " + e.getMessage());
 		}
