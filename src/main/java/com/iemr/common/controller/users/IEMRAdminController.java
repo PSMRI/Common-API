@@ -102,7 +102,6 @@ public class IEMRAdminController {
 	@Autowired
 	SecurePassword securePassword;
 
-	
 	@Operation(summary = "New user authentication")
 	@RequestMapping(value = "/userAuthenticateNew", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String userAuthenticateNew(
@@ -117,7 +116,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	
 	@Operation(summary = "User authentication")
 	@RequestMapping(value = "/userAuthenticate", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String userAuthenticate(
@@ -276,7 +274,6 @@ public class IEMRAdminController {
 		}
 	}
 
-	
 	@Operation(summary = "Log out user from concurrent session")
 	@RequestMapping(value = "/logOutUserFromConcurrentSession", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String logOutUserFromConcurrentSession(
@@ -469,7 +466,6 @@ public class IEMRAdminController {
 //		return response.toString();
 //	}
 
-	
 	@Operation(summary = "Get login response")
 	@RequestMapping(value = "/getLoginResponse", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getLoginResponse(HttpServletRequest request) {
@@ -481,7 +477,6 @@ public class IEMRAdminController {
 		}
 		return response.toString();
 	}
-
 
 	@Operation(summary = "Forget password")
 	@RequestMapping(value = "/forgetPassword", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
@@ -522,7 +517,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	
 	@Operation(summary = "Set forget password")
 	@RequestMapping(value = "/setForgetPassword", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String setPassword(
@@ -561,7 +555,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	
 	@Operation(summary = "Change password")
 	@RequestMapping(value = "/changePassword", method = RequestMethod.POST, produces = "application/json")
 	public String changePassword(
@@ -608,7 +601,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	
 	@Operation(summary = "Save user security questions & answers")
 	@RequestMapping(value = "/saveUserSecurityQuesAns", method = RequestMethod.POST, produces = "application/json")
 	public String saveUserSecurityQuesAns(
@@ -664,7 +656,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-
 	@Operation(summary = "Get role screen mapping by provider id")
 	@RequestMapping(value = "/getRoleScreenMappingByProviderID", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getRoleScreenMappingByProviderID(
@@ -706,7 +697,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-
 	@Operation(summary = "Get user service point van details")
 	@RequestMapping(value = "/getUserServicePointVanDetails", method = RequestMethod.POST, produces = "application/json", headers = "Authorization")
 	public String getUserServicePointVanDetails(
@@ -727,7 +717,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	
 	@Operation(summary = "Get service point villages")
 	@RequestMapping(value = "/getServicepointVillages", method = RequestMethod.POST, produces = "application/json", headers = "Authorization")
 	public String getServicepointVillages(
@@ -748,7 +737,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	
 	@Operation(summary = "Get locations by provider id")
 	@RequestMapping(value = "/getLocationsByProviderID", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getLocationsByProviderID(
@@ -766,7 +754,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	
 	@Operation(summary = "User log out")
 	@RequestMapping(value = "/userLogout", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String userLogout(HttpServletRequest request) {
@@ -814,7 +801,6 @@ public class IEMRAdminController {
 		}
 	}
 
-	
 	@Operation(summary = "Force log out")
 	@RequestMapping(value = "/forceLogout", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String forceLogout(@Param(value = "{\"userName\":\"String user name to force logout\", "
@@ -844,7 +830,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	
 	@Operation(summary = "Get agent by role id")
 	@RequestMapping(value = "/getAgentByRoleID", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getAgentByRoleID(@Param(value = "{\"providerServiceMapID\":\"Integer - providerServiceMapID\", "
@@ -861,7 +846,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	
 	@Operation(summary = "User authenticate by encryption")
 	@RequestMapping(value = "/userAuthenticateByEncryption", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String userAuthenticateByEncryption(
@@ -906,7 +890,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	
 	@Operation(summary = "Get role wrap up time")
 	@RequestMapping(value = "/role/{roleID}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getrolewrapuptime(@PathVariable("roleID") Integer roleID) {
@@ -954,7 +937,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	
 	@Operation(summary = "User authentication")
 	@RequestMapping(value = "/bhavya/userAuthenticate", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String userAuthenticateBhavya(

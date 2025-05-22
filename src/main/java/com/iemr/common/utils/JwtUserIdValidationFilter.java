@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import jakarta.servlet.Filter;
@@ -14,21 +15,19 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
+import java.util.Arrays;
 
 @Component
 public class JwtUserIdValidationFilter implements Filter {
 
 	private final JwtAuthenticationUtil jwtAuthenticationUtil;
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+	private final String allowedOrigins;
 
-	public JwtUserIdValidationFilter(JwtAuthenticationUtil jwtAuthenticationUtil) {
+	public JwtUserIdValidationFilter(JwtAuthenticationUtil jwtAuthenticationUtil, @Value("${cors.allowed-origins}") String allowedOrigins) {
 		this.jwtAuthenticationUtil = jwtAuthenticationUtil;
-	}
-	
-    @Value("${cors.allowed-origins}")
-    private String[] allowedOrigins;
-
+		 this.allowedOrigins = allowedOrigins;  
+	}	
 	@Override
 	public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
 			throws IOException, ServletException {
@@ -40,7 +39,7 @@ public class JwtUserIdValidationFilter implements Filter {
 		logger.info("JwtUserIdValidationFilter invoked for path: " + path);
 		
 		String origin = request.getHeader("Origin");
-	    if (origin != null) {
+	    if (origin != null && isOriginAllowed(origin)) {
 	        response.setHeader("Access-Control-Allow-Origin", origin);
 	        response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
 	        response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, Jwttoken");
@@ -112,6 +111,16 @@ public class JwtUserIdValidationFilter implements Filter {
 			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization error: " + e.getMessage());
 		}
 	}
+	
+   private boolean isOriginAllowed(String origin) {
+        if (origin == null || allowedOrigins == null || allowedOrigins.trim().isEmpty()) {
+           logger.warn("No allowed origins configured or origin is null");
+          return false;
+         }
+    return Arrays.stream(allowedOrigins.split(","))
+            .map(String::trim)
+            .anyMatch(allowedOrigin -> allowedOrigin.equalsIgnoreCase(origin));
+    }
 
 	private boolean isMobileClient(String userAgent) {
 		if (userAgent == null)
