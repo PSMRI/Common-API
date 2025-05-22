@@ -98,10 +98,7 @@ public class JwtUserIdValidationFilter implements Filter {
 
 			logger.warn("No valid authentication token found");
 			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized: Invalid or missing token");
-
-			logger.warn("No valid authentication token found");
-			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized: Invalid or missing token");
-} catch (Exception e) {
+		} catch (Exception e) {
 			logger.error("Authorization error: ", e);
 			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization error: " + e.getMessage());
 		}
@@ -113,14 +110,12 @@ public class JwtUserIdValidationFilter implements Filter {
 		userAgent = userAgent.toLowerCase();
 		return userAgent.contains("okhttp"); // iOS (custom clients)
 	}
-	
+
 	private boolean shouldSkipAuthentication(String path, String contextPath) {
 		return path.equals(contextPath + "/user/userAuthenticate")
 				|| path.equalsIgnoreCase(contextPath + "/user/logOutUserFromConcurrentSession")
-				|| path.startsWith(contextPath + "/swagger-ui")
-				|| path.startsWith(contextPath + "/v3/api-docs")
-				|| path.startsWith(contextPath + "/public")
-				|| path.equals(contextPath + "/user/refreshToken")
+				|| path.startsWith(contextPath + "/swagger-ui") || path.startsWith(contextPath + "/v3/api-docs")
+				|| path.startsWith(contextPath + "/public") || path.equals(contextPath + "/user/refreshToken")
 				|| path.startsWith(contextPath + "/user/superUserAuthenticate")
 				|| path.startsWith(contextPath + "/user/user/userAuthenticateNew")
 				|| path.startsWith(contextPath + "/user/userAuthenticateV1")
