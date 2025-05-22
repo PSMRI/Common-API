@@ -28,18 +28,15 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.google.gson.Gson;
 import com.iemr.common.data.users.EmployeeSignature;
 import com.iemr.common.service.users.EmployeeSignatureServiceImpl;
 import com.iemr.common.utils.mapper.InputMapper;
 import com.iemr.common.utils.response.OutputResponse;
-
 import io.swagger.v3.oas.annotations.Operation;
 
 
@@ -56,7 +53,7 @@ public class EmployeeSignatureController {
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Fetch file")
 	@RequestMapping(value = "/{userID}", headers = "Authorization", method = { RequestMethod.GET })
 	public ResponseEntity<byte[]> fetchFile(@PathVariable("userID") Long userID) throws Exception {
@@ -78,7 +75,7 @@ public class EmployeeSignatureController {
 
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Fetch file from central")
 	@RequestMapping(value = "/getSignClass/{userID}", headers = "Authorization", method = { RequestMethod.GET })
 	public String fetchFileFromCentral(@PathVariable("userID") Long userID) throws Exception {
@@ -100,7 +97,7 @@ public class EmployeeSignatureController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Download file based on userID")
 	@RequestMapping(value = "/signexist/{userID}", headers = "Authorization", method = { RequestMethod.GET })
 	public String existFile(@PathVariable("userID") Long userID) throws Exception {

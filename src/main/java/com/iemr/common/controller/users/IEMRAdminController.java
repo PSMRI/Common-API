@@ -23,9 +23,7 @@ package com.iemr.common.controller.users;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-
 import javax.ws.rs.core.MediaType;
-
 import com.iemr.common.utils.UserAgentUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -38,7 +36,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -63,7 +60,6 @@ import com.iemr.common.utils.mapper.OutputMapper;
 import com.iemr.common.utils.redis.RedisSessionException;
 import com.iemr.common.utils.response.OutputResponse;
 import com.iemr.common.utils.sessionobject.SessionObject;
-
 import io.lettuce.core.dynamic.annotation.Param;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.Cookie;
@@ -106,7 +102,7 @@ public class IEMRAdminController {
 	@Autowired
 	SecurePassword securePassword;
 
-	@CrossOrigin()
+	
 	@Operation(summary = "New user authentication")
 	@RequestMapping(value = "/userAuthenticateNew", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String userAuthenticateNew(
@@ -121,7 +117,7 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "User authentication")
 	@RequestMapping(value = "/userAuthenticate", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String userAuthenticate(
@@ -280,7 +276,7 @@ public class IEMRAdminController {
 		}
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Log out user from concurrent session")
 	@RequestMapping(value = "/logOutUserFromConcurrentSession", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String logOutUserFromConcurrentSession(
@@ -389,10 +385,6 @@ public class IEMRAdminController {
 		resMap.put("Previlege", serviceRoleList);
 	}
 
-	@CrossOrigin(/*
-					 * allowedHeaders = "Authorization", exposedHeaders = "Authorization", methods =
-					 * RequestMethod.POST
-					 */)
 	@RequestMapping(value = "/superUserAuthenticate", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String superUserAuthenticate(
 			@Param(value = "\"{\\\"userName\\\":\\\"String\\\",\\\"doLogout\\\":\\\"Boolean\\\"}\"") @RequestBody LoginRequestModel m_User,
@@ -449,7 +441,7 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-//	@CrossOrigin()
+//	
 //	@Operation(summary = "User authentication V1")
 //	@RequestMapping(value = "/userAuthenticateV1", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 //	public String userAuthenticateV1(
@@ -477,7 +469,7 @@ public class IEMRAdminController {
 //		return response.toString();
 //	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get login response")
 	@RequestMapping(value = "/getLoginResponse", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getLoginResponse(HttpServletRequest request) {
@@ -490,10 +482,7 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin(/*
-					 * allowedHeaders = "Authorization", exposedHeaders = "Authorization", methods =
-					 * RequestMethod.POST
-					 */)
+
 	@Operation(summary = "Forget password")
 	@RequestMapping(value = "/forgetPassword", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String forgetPassword(
@@ -533,7 +522,7 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Set forget password")
 	@RequestMapping(value = "/setForgetPassword", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String setPassword(
@@ -572,7 +561,7 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Change password")
 	@RequestMapping(value = "/changePassword", method = RequestMethod.POST, produces = "application/json")
 	public String changePassword(
@@ -619,7 +608,7 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Save user security questions & answers")
 	@RequestMapping(value = "/saveUserSecurityQuesAns", method = RequestMethod.POST, produces = "application/json")
 	public String saveUserSecurityQuesAns(
@@ -642,10 +631,7 @@ public class IEMRAdminController {
 	 * 
 	 * @return security qtns
 	 */
-	@CrossOrigin(/*
-					 * allowedHeaders = "Authorization", exposedHeaders = "Authorization", methods =
-					 * RequestMethod.GET
-					 */)
+
 	@Operation(summary = "Get security quetions")
 	@RequestMapping(value = "/getsecurityquetions", method = RequestMethod.GET)
 	public String getSecurityts() {
@@ -662,10 +648,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin(/*
-					 * allowedHeaders = "Authorization", exposedHeaders = "Authorization", methods =
-					 * RequestMethod.POST
-					 */)
 	@Operation(summary = "Get roles by provider id")
 	@RequestMapping(value = "/getRolesByProviderID", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getRolesByProviderID(
@@ -682,10 +664,7 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin(/*
-					 * allowedHeaders = "Authorization", exposedHeaders = "Authorization", methods =
-					 * RequestMethod.POST
-					 */)
+
 	@Operation(summary = "Get role screen mapping by provider id")
 	@RequestMapping(value = "/getRoleScreenMappingByProviderID", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getRoleScreenMappingByProviderID(
@@ -710,10 +689,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin(/*
-					 * allowedHeaders = "Authorization", exposedHeaders = "Authorization", methods =
-					 * RequestMethod.POST
-					 */)
 	@Operation(summary = "Get users by provider id")
 	@RequestMapping(value = "/getUsersByProviderID", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getUsersByProviderID(@Param(value = "{\"providerServiceMapID\":\"Integer - providerServiceMapID\", "
@@ -731,10 +706,7 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin(/*
-					 * allowedHeaders = "Authorization", exposedHeaders = "Authorization", methods =
-					 * RequestMethod.POST
-					 */)
+
 	@Operation(summary = "Get user service point van details")
 	@RequestMapping(value = "/getUserServicePointVanDetails", method = RequestMethod.POST, produces = "application/json", headers = "Authorization")
 	public String getUserServicePointVanDetails(
@@ -755,7 +727,7 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get service point villages")
 	@RequestMapping(value = "/getServicepointVillages", method = RequestMethod.POST, produces = "application/json", headers = "Authorization")
 	public String getServicepointVillages(
@@ -776,7 +748,7 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get locations by provider id")
 	@RequestMapping(value = "/getLocationsByProviderID", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getLocationsByProviderID(
@@ -794,7 +766,7 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "User log out")
 	@RequestMapping(value = "/userLogout", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String userLogout(HttpServletRequest request) {
@@ -842,7 +814,7 @@ public class IEMRAdminController {
 		}
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Force log out")
 	@RequestMapping(value = "/forceLogout", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String forceLogout(@Param(value = "{\"userName\":\"String user name to force logout\", "
@@ -857,7 +829,7 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "User force log out")
 	@RequestMapping(value = "/userForceLogout", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String userForceLogout(
@@ -872,7 +844,7 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get agent by role id")
 	@RequestMapping(value = "/getAgentByRoleID", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getAgentByRoleID(@Param(value = "{\"providerServiceMapID\":\"Integer - providerServiceMapID\", "
@@ -889,7 +861,7 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "User authenticate by encryption")
 	@RequestMapping(value = "/userAuthenticateByEncryption", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String userAuthenticateByEncryption(
@@ -934,7 +906,7 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get role wrap up time")
 	@RequestMapping(value = "/role/{roleID}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getrolewrapuptime(@PathVariable("roleID") Integer roleID) {
@@ -956,7 +928,7 @@ public class IEMRAdminController {
 	 * @param request
 	 * @return transaction Id for password change
 	 */
-	@CrossOrigin
+
 	@Operation(summary = "Validating security question and answers for password change")
 	@RequestMapping(value = { "/validateSecurityQuestionAndAnswer" }, method = { RequestMethod.POST })
 	public String validateSecurityQuestionAndAnswer(
@@ -982,7 +954,7 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "User authentication")
 	@RequestMapping(value = "/bhavya/userAuthenticate", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String userAuthenticateBhavya(

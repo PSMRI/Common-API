@@ -22,24 +22,19 @@
 package com.iemr.common.controller.scheme;
 
 import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.common.data.scheme.Scheme;
-import com.iemr.common.data.users.UserServiceRoleMapping;
 import com.iemr.common.service.scheme.SchemeServiceImpl;
 import com.iemr.common.utils.mapper.InputMapper;
 import com.iemr.common.utils.response.OutputResponse;
-
 import io.lettuce.core.dynamic.annotation.Param;
 import io.swagger.v3.oas.annotations.Operation;
 
@@ -56,7 +51,7 @@ public class SchemeController {
 
 	InputMapper mapper = new InputMapper();
 
-	@CrossOrigin
+	
 	@Operation(summary = "Save scheme details")
 	@RequestMapping(value = "/save/schemeDetails", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE, headers = "Authorization")
 	public String saveSchemeDetails(@Param(value = "{\"providerServiceMapID\": \"integer-provider service map id\", "
@@ -83,7 +78,7 @@ public class SchemeController {
 		return output.toString();
 	}
 
-	@CrossOrigin
+	
 	@Operation(summary = "Get scheme list")
 	@RequestMapping(value = "/get/schemeList", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE, headers = "Authorization")
 	public String getSchemeList(
@@ -109,7 +104,7 @@ public class SchemeController {
 		return output.toString();
 	}
 
-	@CrossOrigin
+	
 	@Operation(summary = "Delete scheme")
 	@RequestMapping(value = "/scheme/deleteScheme", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE, headers = "Authorization")
 	public String deleteScheme(
