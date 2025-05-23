@@ -59,26 +59,22 @@ public class OutputResponse
 	private static final String RESPONSE = "{\"response\":\"$$STRING\"}";
 	private static final String RESPONSE_VALUE = "$$STRING";
 
-	public void setResponse(String message)
-	{
+	public void setResponse(String message) {
 		JsonArray ja = null;
-		try
-		{
-			Object obj = new JsonParser().parse(message);
-			if (obj instanceof JsonArray)
-			{
-				ja = (JsonArray) obj;
-				this.data = ja;
-			} else if (obj instanceof JsonObject)
-			{
-				this.data = obj;
-			} else
-			{
-				this.data = new JsonParser().parse(RESPONSE.replace(RESPONSE_VALUE, message));
-				// this.data = message;
+		try {
+			if (null != message) {
+				Object obj = new JsonParser().parse(message);
+				if (obj instanceof JsonArray) {
+					ja = (JsonArray) obj;
+					this.data = ja;
+				} else if (obj instanceof JsonObject) {
+					this.data = obj;
+				} else {
+					this.data = new JsonParser().parse(RESPONSE.replace(RESPONSE_VALUE, message));
+					// this.data = message;
+				}
 			}
-		} catch (Exception exe)
-		{
+		} catch (Exception exe) {
 			this.data = message;
 			this.data = new JsonParser().parse(RESPONSE.replace(RESPONSE_VALUE, message));
 		}

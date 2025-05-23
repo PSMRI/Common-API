@@ -59,20 +59,28 @@ public class SessionObject {
 	public String getSessionObject(String key) throws RedisSessionException {
 		Boolean extendExpirationTime = ConfigProperties.getExtendExpiryTime();
 		Integer sessionExpiryTime = ConfigProperties.getSessionExpiryTime();
-		return objectStore.getObject(key, extendExpirationTime, sessionExpiryTime);
+		if(null != key && !key.isEmpty()) {
+			return objectStore.getObject(key, extendExpirationTime, sessionExpiryTime);
+		}
+		return null;
 	}
 
 	public String setSessionObject(String key, String value) throws RedisSessionException {
 		Integer sessionExpiryTime = ConfigProperties.getSessionExpiryTime();
-		return objectStore.setObject(key, value, sessionExpiryTime);
+		if(null != key && !key.isEmpty()) {
+			return objectStore.setObject(key, value, sessionExpiryTime);
+		}
+		return null;
 	}
 
 	public String updateSessionObject(String key, String value) throws RedisSessionException {
 		Boolean extendExpirationTime = ConfigProperties.getExtendExpiryTime();
 		Integer sessionExpiryTime = ConfigProperties.getSessionExpiryTime();
-		updateConcurrentSessionObject(key, value, extendExpirationTime, sessionExpiryTime);
-		return objectStore.updateObject(key, value, extendExpirationTime, sessionExpiryTime);
-
+		if(null != key && !key.isEmpty()) {
+			updateConcurrentSessionObject(key, value, extendExpirationTime, sessionExpiryTime);
+			return objectStore.updateObject(key, value, extendExpirationTime, sessionExpiryTime);
+		}
+		return null;
 	}
 
 	private void updateConcurrentSessionObject(String key, String value, Boolean extendExpirationTime,
@@ -95,7 +103,9 @@ public class SessionObject {
 	public void deleteSessionObject(String key) {
 		try {
 			logger.info("Deleting key " + key);
-			objectStore.deleteObject(key);
+			if(null != key && !key.isEmpty()) {
+				objectStore.deleteObject(key);
+			}
 			logger.info("Deleted key " + key);
 		} catch (Exception e) {
 			logger.error("deleteSessionObject failed with error " + e.getMessage(), e);
@@ -104,13 +114,18 @@ public class SessionObject {
 
 	public String setSessionObjectForChangePassword(String key, String value) throws RedisSessionException {
 		Integer sessionExpiryTime = ConfigProperties.getSessionExpiryTimeForChangePassword();
-		return objectStore.setObject(key, value, sessionExpiryTime);
+		if(null != key && !key.isEmpty()) {
+			return objectStore.setObject(key, value, sessionExpiryTime);
+		}
+		return null;
 	}
 
 	public String getSessionObjectForChangePassword(String key) throws RedisSessionException {
 		Boolean extendExpirationTime = ConfigProperties.getExtendExpiryTimeForChangePassword();
 		Integer sessionExpiryTime = ConfigProperties.getSessionExpiryTimeForChangePassword();
-		// RedisStorage objectStore = new RedisStorage();
-		return objectStore.getObject(key, extendExpirationTime, sessionExpiryTime);
+		if(null != key && !key.isEmpty()) {
+			return objectStore.getObject(key, extendExpirationTime, sessionExpiryTime);
+		}
+		return null;
 	}
 }
