@@ -112,15 +112,16 @@ public class JwtUserIdValidationFilter implements Filter {
 		}
 	}
 	
-   private boolean isOriginAllowed(String origin) {
-        if (origin == null || allowedOrigins == null || allowedOrigins.trim().isEmpty()) {
-           logger.warn("No allowed origins configured or origin is null");
-          return false;
-         }
-    return Arrays.stream(allowedOrigins.split(","))
-            .map(String::trim)
-            .anyMatch(allowedOrigin -> allowedOrigin.equalsIgnoreCase(origin));
-    }
+	private boolean isOriginAllowed(String origin) {
+	    if (origin == null || allowedOrigins == null || allowedOrigins.trim().isEmpty()) {
+	        logger.warn("No allowed origins configured or origin is null");
+	        return false;
+	    }
+
+	    return Arrays.stream(allowedOrigins.split(","))
+	        .map(String::trim)
+	        .anyMatch(pattern -> origin.matches(pattern.replace(".", "\\.").replace("*", ".*")));
+	}
 
 	private boolean isMobileClient(String userAgent) {
 		if (userAgent == null)
