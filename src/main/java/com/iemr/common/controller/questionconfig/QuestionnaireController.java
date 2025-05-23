@@ -25,15 +25,12 @@ import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.iemr.common.service.questionconfig.QuestionnaireService;
 import com.iemr.common.utils.response.OutputResponse;
-
 import io.swagger.v3.oas.annotations.Operation;
 
 
@@ -56,7 +53,7 @@ public class QuestionnaireController {
 		this.questionnaireService = questionnaireService;
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Create questionnaire")
 	@RequestMapping(value = "/put/questionnaire", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String createQuestionnaire(@RequestBody String request) {
@@ -71,7 +68,7 @@ public class QuestionnaireController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get questionnaire list")
 	@RequestMapping(value = "/get/questionnaireList", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String questionTypeList() {

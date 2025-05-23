@@ -1,13 +1,10 @@
 package com.iemr.common.controller.nhmdashboard;
 
-import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,13 +12,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
-
 import com.iemr.common.data.callhandling.BeneficiaryCall;
 import com.iemr.common.data.nhm_dashboard.DetailedCallReport;
 import com.iemr.common.repository.callhandling.IEMRCalltypeRepositoryImplCustom;
 import com.iemr.common.repository.nhm_dashboard.DetailedCallReportRepo;
 import com.iemr.common.repository.report.CallReportRepo;
-import com.iemr.common.utils.config.ConfigProperties;
 
 @EnableScheduling
 @Configuration

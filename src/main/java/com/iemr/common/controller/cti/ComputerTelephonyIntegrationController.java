@@ -56,7 +56,7 @@ public class ComputerTelephonyIntegrationController {
 		this.ctiService = ctiService;
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get campaign skills")
 	@PostMapping(value = "/getCampaignSkills", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getCampaignSkills(
@@ -78,7 +78,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get agent state")
 	@PostMapping(value = "/getAgentState", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getAgentState(@Param("{\"agent_id\":\"String: agent id\"}") @RequestBody String request,
@@ -99,7 +99,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get agent call stats")
 	@PostMapping(value = "/getAgentCallStats", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getAgentCallStats(@Param("{\"agent_id\":\"String: agent id\"}") @RequestBody String request,
@@ -120,7 +120,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get campaign names")
 	@PostMapping(value = "/getCampaignNames", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getCampaignNames(
@@ -143,7 +143,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get login key")
 	@PostMapping(value = "/getLoginKey", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getLoginKey(
@@ -165,7 +165,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Do agent logout")
 	@PostMapping(value = "/doAgentLogout", produces = MediaType.APPLICATION_JSON)
 	public String doAgentLogout(@Param("{\"agent_id\":\"String: agent id\"}") @RequestBody String request,
@@ -186,7 +186,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get online agents")
 	@PostMapping(value = "/getOnlineAgents", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getOnlineAgents(@Param("{\"agent_id\":\"String: agent id\"}") @RequestBody String request,
@@ -207,7 +207,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Call beneficiary")
 	@PostMapping(value = "/callBeneficiary", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String callBeneficiary(
@@ -229,7 +229,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Add update user data")
 	@PostMapping(value = "/addUpdateUserData", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String addUpdateUserData(
@@ -254,7 +254,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get transfer campaigns")
 	@PostMapping(value = "/getTransferCampaigns", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getTransferCampaigns(@Param("{\"agent_id\":\"String: agentID\"}") @RequestBody String request,
@@ -275,7 +275,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get campaign roles")
 	@PostMapping(value = "/getCampaignRoles", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getCampaignRoles(@Param("{\"campaign\":\"String: campaign name\"}") @RequestBody String request,
@@ -296,7 +296,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Set call disposition")
 	@PostMapping(value = "/setCallDisposition", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String setCallDisposition(
@@ -319,7 +319,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Create voice file")
 	@PostMapping(value = "/createVoiceFile", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String createVoiceFile(
@@ -342,7 +342,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get voice file")
 	@PostMapping(value = "/getVoiceFile", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getVoiceFile(
@@ -365,7 +365,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Disconnect call")
 	@PostMapping(value = "/disconnectCall", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String disconnectCall(@Param("{\"agent_id\":\"String: agentID\"}") @RequestBody String request,
@@ -386,7 +386,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Switch to inbound")
 	@PostMapping(value = "/switchToInbound", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String switchToInbound(@Param("{\"agent_id\":\"String: agentID\"}") @RequestBody String request,
@@ -407,7 +407,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Switch to outbound")
 	@PostMapping(value = "/switchToOutbound", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String switchToOutbound(@Param("{\"agent_id\":\"String: agentID\"}") @RequestBody String request,
@@ -428,7 +428,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get agent IP address")
 	@PostMapping(value = "/getAgentIPAddress", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getAgentIPAddress(@Param("{\"agent_id\":\"String: agentID\"}") @RequestBody String request,
@@ -449,7 +449,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get available agent skills")
 	@PostMapping(value = "/getAvailableAgentSkills", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getAvailableAgentSkills(
@@ -472,7 +472,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Transfer call")
 	@PostMapping(value = "/transferCall", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String transferCall(@Param("{\"transfer_from\":\"String - agent id who is transferring call\", "
@@ -498,7 +498,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Customer preferred language")
 	@PostMapping(value = "/customerPreferredLanguage", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String customerPreferredLanguage(
@@ -524,7 +524,7 @@ public class ComputerTelephonyIntegrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
+	
 	@Operation(summary = "Get IVRS path details")
 	@PostMapping(value = "/getIVRSPathDetails", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getIVRSPathDetails(@Param("{\"agent_id\":\"Integer\"}") @RequestBody String request,
