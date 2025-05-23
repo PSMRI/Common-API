@@ -69,7 +69,7 @@ public class CookieUtil {
 		if (request.getCookies() == null) {
 	        return null;  // If cookies are null, return null safely.
 	    }
-		return Arrays.stream(request.getCookies()).filter(cookie -> "Jwttoken".equals(cookie.getName()))
+		return Arrays.stream(request.getCookies()).filter(cookie -> "Jwttoken".equalsIgnoreCase(cookie.getName()))
 				.map(Cookie::getValue).findFirst().orElse(null);
 	}
 }
