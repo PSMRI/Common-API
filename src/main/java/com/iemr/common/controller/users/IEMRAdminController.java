@@ -1093,7 +1093,7 @@ public class IEMRAdminController {
 
 		if (cookies != null) {
 			for (Cookie cookie : cookies) {
-				if ("jwtToken".equals(cookie.getName())) {
+				if ("Jwttoken".equalsIgnoreCase(cookie.getName())) {
 					String jwtToken = cookie.getValue();
 					// Return the JWT token in the response
 					return ResponseEntity.ok(jwtToken);
