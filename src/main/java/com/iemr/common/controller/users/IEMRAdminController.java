@@ -209,8 +209,6 @@ public class IEMRAdminController {
 				responseObj.put("refreshToken", refreshToken);
 			}
 
-			// responseObj ==> helper
-
 			response.setResponse(responseObj.toString());
 		} catch (Exception e) {
 			logger.error("userAuthenticate failed with error " + e.getMessage(), e);
