@@ -496,7 +496,7 @@ public class IEMRAdminController {
 					Cookie[] cookies = request.getCookies();
 					if (cookies != null) {
 						for (Cookie cookie : cookies) {
-							if ("jwtToken".equals(cookie.getName())) {
+							if ("Jwttoken".equalsIgnoreCase(cookie.getName())) {
 								jwtToken = cookie.getValue();
 								break;
 							}
