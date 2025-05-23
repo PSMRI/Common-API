@@ -36,6 +36,7 @@ public class RestTemplateUtil {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=utf-8");
         if(null != UserAgentContext.getUserAgent()) {
+        	logger.info("Common-API getting User-Agent as : "+UserAgentContext.getUserAgent());
         	headers.add(HttpHeaders.USER_AGENT, UserAgentContext.getUserAgent());
         }
         headers.add(HttpHeaders.AUTHORIZATION, authorization);
