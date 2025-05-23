@@ -354,32 +354,35 @@ public class IEMRAdminController {
 		if (mUser.getDesignation() != null) {
 			resMap.put("designation", new JSONObject(mUser.getDesignation().toString()));
 		}
-		for (UserServiceRoleMapping m_UserServiceRoleMapping : mUser.getM_UserServiceRoleMapping()) {
-			serviceRoleMultiMap.put(
-					m_UserServiceRoleMapping.getM_ProviderServiceMapping().getM_ServiceMaster().getServiceName(),
-					m_UserServiceRoleMapping.getM_Role().getRoleName());
-			String serv = m_UserServiceRoleMapping.getM_ProviderServiceMapping().getM_ServiceMaster().getServiceName();
-			if (!previlegeObj.has(serv)) {
-				previlegeObj.put(serv, new JSONObject(
-						m_UserServiceRoleMapping.getM_ProviderServiceMapping().getM_ServiceMaster().toString()));
-				previlegeObj.getJSONObject(serv).put("serviceName", serv);
-				previlegeObj.getJSONObject(serv).put("serviceID",
-						m_UserServiceRoleMapping.getM_ProviderServiceMapping().getProviderServiceMapID());
-				previlegeObj.getJSONObject(serv).put("providerServiceMapID",
-						m_UserServiceRoleMapping.getM_ProviderServiceMapping().getProviderServiceMapID());
-				previlegeObj.getJSONObject(serv).put("apimanClientKey",
-						m_UserServiceRoleMapping.getM_ProviderServiceMapping().getAPIMANClientKey());
-				previlegeObj.getJSONObject(serv).put("roles", new JSONArray());
-				previlegeObj.getJSONObject(serv).put("stateID",
-						m_UserServiceRoleMapping.getM_ProviderServiceMapping().getStateID());
-				previlegeObj.getJSONObject(serv).put("agentID", m_UserServiceRoleMapping.getAgentID());
-				previlegeObj.getJSONObject(serv).put("agentPassword", m_UserServiceRoleMapping.getAgentPassword());
-			}
-			JSONArray roles = previlegeObj.getJSONObject(serv).getJSONArray("roles");
+		if (null != mUser.getM_UserServiceRoleMapping()) {
+			for (UserServiceRoleMapping m_UserServiceRoleMapping : mUser.getM_UserServiceRoleMapping()) {
+				serviceRoleMultiMap.put(
+						m_UserServiceRoleMapping.getM_ProviderServiceMapping().getM_ServiceMaster().getServiceName(),
+						m_UserServiceRoleMapping.getM_Role().getRoleName());
+				String serv = m_UserServiceRoleMapping.getM_ProviderServiceMapping().getM_ServiceMaster()
+						.getServiceName();
+				if (!previlegeObj.has(serv)) {
+					previlegeObj.put(serv, new JSONObject(
+							m_UserServiceRoleMapping.getM_ProviderServiceMapping().getM_ServiceMaster().toString()));
+					previlegeObj.getJSONObject(serv).put("serviceName", serv);
+					previlegeObj.getJSONObject(serv).put("serviceID",
+							m_UserServiceRoleMapping.getM_ProviderServiceMapping().getProviderServiceMapID());
+					previlegeObj.getJSONObject(serv).put("providerServiceMapID",
+							m_UserServiceRoleMapping.getM_ProviderServiceMapping().getProviderServiceMapID());
+					previlegeObj.getJSONObject(serv).put("apimanClientKey",
+							m_UserServiceRoleMapping.getM_ProviderServiceMapping().getAPIMANClientKey());
+					previlegeObj.getJSONObject(serv).put("roles", new JSONArray());
+					previlegeObj.getJSONObject(serv).put("stateID",
+							m_UserServiceRoleMapping.getM_ProviderServiceMapping().getStateID());
+					previlegeObj.getJSONObject(serv).put("agentID", m_UserServiceRoleMapping.getAgentID());
+					previlegeObj.getJSONObject(serv).put("agentPassword", m_UserServiceRoleMapping.getAgentPassword());
+				}
+				JSONArray roles = previlegeObj.getJSONObject(serv).getJSONArray("roles");
 //            roles.put(new JSONObject(m_UserServiceRoleMapping.getM_Role().toString()));
-			JSONObject roleObject = new JSONObject(m_UserServiceRoleMapping.getM_Role().toString());
-			roleObject.put("isSanjeevani", m_UserServiceRoleMapping.getIsSanjeevani());
-			roles.put(roleObject);
+				JSONObject roleObject = new JSONObject(m_UserServiceRoleMapping.getM_Role().toString());
+				roleObject.put("isSanjeevani", m_UserServiceRoleMapping.getIsSanjeevani());
+				roles.put(roleObject);
+			}
 		}
 		Iterator<String> keySet = serviceRoleMultiMap.keys();
 		while (keySet.hasNext()) {
@@ -486,7 +489,7 @@ public class IEMRAdminController {
 		OutputResponse response = new OutputResponse();
 		try {
 			String authHeader = request.getHeader("Authorization");
-			if (authHeader == null) {
+			if (authHeader.isEmpty()) {
 				// Try JWT token from header first
 				String jwtToken = request.getHeader("Jwttoken");
 				
@@ -1109,6 +1112,7 @@ public class IEMRAdminController {
 		JSONObject previlegeObj = new JSONObject();
 
 		if (mUser != null) {
+			mUser.setM_UserServiceRoleMapping(iemrAdminUserServiceImpl.getUserServiceRoleMapping(mUser.getUserID()));
 			createUserMapping(mUser, resMap, serviceRoleMultiMap, serviceRoleMap, serviceRoleList, previlegeObj);
 		} else {
 			resMap.put("isAuthenticated", false);
