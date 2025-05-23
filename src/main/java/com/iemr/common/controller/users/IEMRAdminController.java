@@ -209,6 +209,8 @@ public class IEMRAdminController {
 				responseObj.put("refreshToken", refreshToken);
 			}
 
+			// responseObj ==> helper
+
 			response.setResponse(responseObj.toString());
 		} catch (Exception e) {
 			logger.error("userAuthenticate failed with error " + e.getMessage(), e);
@@ -483,8 +485,50 @@ public class IEMRAdminController {
 	public String getLoginResponse(HttpServletRequest request) {
 		OutputResponse response = new OutputResponse();
 		try {
-			response.setResponse(sessionObject.getSessionObject(request.getHeader("Authorization")));
-		} catch (RedisSessionException e) {
+			String authHeader = request.getHeader("Authorization");
+			if (authHeader == null) {
+				// Try JWT token from header first
+				String jwtToken = request.getHeader("Jwttoken");
+				
+				// If not in header, try cookie
+				if (jwtToken == null) {
+					Cookie[] cookies = request.getCookies();
+					if (cookies != null) {
+						for (Cookie cookie : cookies) {
+							if ("jwtToken".equals(cookie.getName())) {
+								jwtToken = cookie.getValue();
+								break;
+							}
+						}
+					}
+				}
+				
+				if (jwtToken == null) {
+					throw new IEMRException("No authentication token found in header or cookie");
+				}
+				
+				// Extract user ID from the JWT token
+				String userId = jwtUtil.getUserIdFromToken(jwtToken);
+				
+				// Get user details and prepare response
+				User user = iemrAdminUserServiceImpl.getUserById(Long.parseLong(userId));
+				if (user == null) {
+					throw new IEMRException("User not found");
+				}
+
+				String remoteAddress = request.getHeader("X-FORWARDED-FOR");
+				if (remoteAddress == null || remoteAddress.trim().length() == 0) {
+					remoteAddress = request.getRemoteAddr();
+				}
+
+				// Use the helper method to prepare response
+				JSONObject responseObj = prepareAuthenticationResponse(user, remoteAddress, request.getRemoteHost());
+				response.setResponse(responseObj.toString());
+			} else {
+				response.setResponse(sessionObject.getSessionObject(authHeader));
+			}
+		} catch (Exception e) {
+			logger.error("getLoginResponse failed with error " + e.getMessage(), e);
 			response.setError(e);
 		}
 		return response.toString();
@@ -1055,6 +1099,31 @@ public class IEMRAdminController {
 		}
 		// Return 404 if the token is not found in the cookies
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("JWT token not found");
+	}
+
+	private JSONObject prepareAuthenticationResponse(User mUser, String remoteAddress, String remoteHost) throws Exception {
+		JSONObject resMap = new JSONObject();
+		JSONObject serviceRoleMultiMap = new JSONObject();
+		JSONObject serviceRoleMap = new JSONObject();
+		JSONArray serviceRoleList = new JSONArray();
+		JSONObject previlegeObj = new JSONObject();
+
+		if (mUser != null) {
+			createUserMapping(mUser, resMap, serviceRoleMultiMap, serviceRoleMap, serviceRoleList, previlegeObj);
+		} else {
+			resMap.put("isAuthenticated", false);
+		}
+
+		JSONObject responseObj = new JSONObject(resMap.toString());
+		JSONArray previlageObjs = new JSONArray();
+		Iterator<?> services = previlegeObj.keys();
+		while (services.hasNext()) {
+			String service = (String) services.next();
+			previlageObjs.put(previlegeObj.getJSONObject(service));
+		}
+		responseObj.put("previlegeObj", previlageObjs);
+
+		return iemrAdminUserServiceImpl.generateKeyAndValidateIP(responseObj, remoteAddress, remoteHost);
 	}
 
 }
