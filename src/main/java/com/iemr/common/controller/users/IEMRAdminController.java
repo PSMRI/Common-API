@@ -209,8 +209,6 @@ public class IEMRAdminController {
 				responseObj.put("refreshToken", refreshToken);
 			}
 
-			// responseObj ==> helper
-
 			response.setResponse(responseObj.toString());
 		} catch (Exception e) {
 			logger.error("userAuthenticate failed with error " + e.getMessage(), e);
@@ -1093,6 +1091,7 @@ public class IEMRAdminController {
 
 		if (cookies != null) {
 			for (Cookie cookie : cookies) {
+
 				if ("Jwttoken".equalsIgnoreCase(cookie.getName())) {
 					String jwtToken = cookie.getValue();
 					// Return the JWT token in the response
