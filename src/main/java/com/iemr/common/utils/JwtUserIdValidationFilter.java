@@ -41,7 +41,7 @@ public class JwtUserIdValidationFilter implements Filter {
 		Cookie[] cookies = request.getCookies();
 		if (cookies != null) {
 			for (Cookie cookie : cookies) {
-				if ("userId".equals(cookie.getName())) {
+				if ("userId".equalsIgnoreCase(cookie.getName())) {
 					logger.warn("userId found in cookies! Clearing it...");
 					clearUserIdCookie(response); // Explicitly remove userId cookie
 				}
@@ -87,6 +87,7 @@ public class JwtUserIdValidationFilter implements Filter {
 				logger.info("User-Agent: " + userAgent);
 				if (userAgent != null && isMobileClient(userAgent) && authHeader != null) {
 					try {
+						logger.info("Common-API incoming userAget : "+userAgent);
 						UserAgentContext.setUserAgent(userAgent);
 						filterChain.doFilter(servletRequest, servletResponse);
 					} finally {
@@ -132,7 +133,7 @@ public class JwtUserIdValidationFilter implements Filter {
 		Cookie[] cookies = request.getCookies();
 		if (cookies != null) {
 			for (Cookie cookie : cookies) {
-				if (cookie.getName().equals("Jwttoken")) {
+				if (cookie.getName().equalsIgnoreCase("Jwttoken")) {
 					return cookie.getValue();
 				}
 			}
