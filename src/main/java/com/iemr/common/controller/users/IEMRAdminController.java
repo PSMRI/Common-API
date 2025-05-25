@@ -920,10 +920,10 @@ public class IEMRAdminController {
 	                // Invalidate the JWT token cookie by setting the value to null and max age to 0
 	                cookie.setValue(null);
 	                cookie.setMaxAge(0);    // Expire the cookie immediately
-	                cookie.setPath("/");    // Ensure the path matches the cookie's original path
+	                cookie.setPath(cookie.getPath());    // Ensure the path matches the cookie's original path
 	                cookie.setHttpOnly(true);  // Secure the cookie so it can't be accessed via JS
 	                cookie.setSecure(true);    // Only send over HTTPS if you're using secure connections
-
+	                cookie.setAttribute("SameSite", "Strict");
 	                // Add the invalidated cookie back to the response
 	                response.addCookie(cookie);
 	                break;  // If we found the JWT cookie, no need to continue looping
