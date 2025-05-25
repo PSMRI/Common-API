@@ -887,21 +887,55 @@ public class IEMRAdminController {
 		}
 	}
 
+
+
 	@CrossOrigin()
 	@Operation(summary = "Force log out")
 	@RequestMapping(value = "/forceLogout", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
-	public String forceLogout(@Param(value = "{\"userName\":\"String user name to force logout\", "
-			+ "\"providerServiceMapID\":\"Integer service provider ID\"}") @RequestBody ForceLogoutRequestModel request) {
-		OutputResponse response = new OutputResponse();
-		try {
-			iemrAdminUserServiceImpl.forceLogout(request);
-			response.setResponse("Success");
-		} catch (Exception e) {
-			response.setError(e);
-		}
-		return response.toString();
+	public String forceLogout(@RequestBody ForceLogoutRequestModel request, HttpServletRequest httpRequest, HttpServletResponse response) {
+	    OutputResponse outputResponse = new OutputResponse();
+	    try {
+	        // Perform the force logout logic
+	        iemrAdminUserServiceImpl.forceLogout(request);
+
+	        // Extract and invalidate JWT token cookie dynamically from the request
+	        invalidateJwtCookie(httpRequest, response);
+
+	        // Set the response message
+	        outputResponse.setResponse("Success");
+	    } catch (Exception e) {
+	        outputResponse.setError(e);
+	    }
+	    return outputResponse.toString();
+	}
+	
+	private void invalidateJwtCookie(HttpServletRequest request, HttpServletResponse response) {
+	    // Get the cookies from the incoming request
+	    Cookie[] cookies = request.getCookies();
+
+	    if (cookies != null) {
+	        for (Cookie cookie : cookies) {
+	            // Check if the cookie name matches "Jwttoken" (case-sensitive)
+	            if (cookie.getName().equalsIgnoreCase("Jwttoken")) {
+	                // Invalidate the JWT token cookie by setting the value to null and max age to 0
+	                cookie.setValue(null);
+	                cookie.setMaxAge(0);    // Expire the cookie immediately
+	                cookie.setPath("/");    // Ensure the path matches the cookie's original path
+	                cookie.setHttpOnly(true);  // Secure the cookie so it can't be accessed via JS
+	                cookie.setSecure(true);    // Only send over HTTPS if you're using secure connections
+
+	                // Add the invalidated cookie back to the response
+	                response.addCookie(cookie);
+	                break;  // If we found the JWT cookie, no need to continue looping
+	            }
+	        }
+	    } else {
+	        // Log or handle the case when no cookies are found in the request
+	        logger.warn("No cookies found in the request.");
+	    }
 	}
 
+	
 	@CrossOrigin()
 	@Operation(summary = "User force log out")
 	@RequestMapping(value = "/userForceLogout", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
