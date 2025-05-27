@@ -34,6 +34,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -85,6 +86,8 @@ public class IEMRAdminController {
 	private CookieUtil cookieUtil;
 	@Autowired
 	private RedisTemplate<String, Object> redisTemplate;
+	@Value("${jwt.blacklist.expiration}")
+	private static long BLACK_LIST_EXPIRATION_TIME;
 
 	private AESUtil aesUtil;
 
@@ -940,7 +943,7 @@ public class IEMRAdminController {
 	        if(null == token) {
 	        	token = httpRequest.getHeader(Constants.JWT_TOKEN);
 	        }
-	        TokenBlacklist.blacklistToken(token);
+	        TokenBlacklist.blacklistToken(token,BLACK_LIST_EXPIRATION_TIME);
 	        // Extract and invalidate JWT token cookie dynamically from the request
 	       // invalidateJwtCookie(httpRequest, response);
 

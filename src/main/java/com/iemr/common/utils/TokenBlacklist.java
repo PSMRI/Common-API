@@ -4,25 +4,31 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Value;
 
 public class TokenBlacklist {
-	@Value("${jwt.blacklist.expiration}")
-	private static long BLACK_LIST_EXPIRATION_TIME;
+	
 	
 	// Store blacklisted tokens (in-memory)
-	private static Map<String, Long> blacklistedTokens = new HashMap<>();
+	private static final Map<String, Long> blacklistedTokens = new ConcurrentHashMap<>();
 
 
     // Add a token to the blacklist
-    public static void blacklistToken(String token) {
-    	blacklistedTokens.put(token, BLACK_LIST_EXPIRATION_TIME);
+    public static void blacklistToken(String token ,Long blackListExpirationTime) {
+    	if(token == null || token.trim().isEmpty()) {
+    		return;
+    	}
+    	blacklistedTokens.put(token, System.currentTimeMillis()+ blackListExpirationTime);
     }
 
     // Check if a token is blacklisted
    
     public static boolean isTokenBlacklisted(String token) {
+    	if(token == null || token.trim().isEmpty()) {
+    		return false;
+    	}
         Long expiry = blacklistedTokens.get(token);
         if (expiry == null) return false;
         // If token is expired, remove it from blacklist and treat as not blacklisted
