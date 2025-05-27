@@ -44,6 +44,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.iemr.common.config.encryption.SecurePassword;
+import com.iemr.common.constant.Constants;
 import com.iemr.common.data.users.LoginSecurityQuestions;
 import com.iemr.common.data.users.M_Role;
 import com.iemr.common.data.users.ServiceRoleScreenMapping;
@@ -56,6 +57,7 @@ import com.iemr.common.model.user.LoginRequestModel;
 import com.iemr.common.service.users.IEMRAdminUserService;
 import com.iemr.common.utils.CookieUtil;
 import com.iemr.common.utils.JwtUtil;
+import com.iemr.common.utils.TokenBlacklist;
 import com.iemr.common.utils.encryption.AESUtil;
 import com.iemr.common.utils.exception.IEMRException;
 import com.iemr.common.utils.mapper.InputMapper;
@@ -933,9 +935,14 @@ public class IEMRAdminController {
 	    try {
 	        // Perform the force logout logic
 	        iemrAdminUserServiceImpl.forceLogout(request);
-
+	        String token = null;
+	        token = getJwtTokenFromCookies(httpRequest);
+	        if(null == token) {
+	        	token = httpRequest.getHeader(Constants.JWT_TOKEN);
+	        }
+	        TokenBlacklist.blacklistToken(token);
 	        // Extract and invalidate JWT token cookie dynamically from the request
-	        invalidateJwtCookie(httpRequest, response);
+	       // invalidateJwtCookie(httpRequest, response);
 
 	        // Set the response message
 	        outputResponse.setResponse("Success");
@@ -944,7 +951,17 @@ public class IEMRAdminController {
 	    }
 	    return outputResponse.toString();
 	}
-	
+	private String getJwtTokenFromCookies(HttpServletRequest request) {
+		Cookie[] cookies = request.getCookies();
+		if (cookies != null) {
+			for (Cookie cookie : cookies) {
+				if (cookie.getName().equalsIgnoreCase("Jwttoken")) {
+					return cookie.getValue();
+				}
+			}
+		}
+		return null;
+	}
 	private void invalidateJwtCookie(HttpServletRequest request, HttpServletResponse response) {
 	    // Get the cookies from the incoming request
 	    Cookie[] cookies = request.getCookies();
