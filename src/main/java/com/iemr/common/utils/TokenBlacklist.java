@@ -23,9 +23,10 @@ public class TokenBlacklist {
     // Check if a token is blacklisted
    
     public static boolean isTokenBlacklisted(String token) {
-        Long expiryTime = blacklistedTokens.get(token);
-        if (expiryTime == null) return false;
-        if (System.currentTimeMillis() > expiryTime) {
+        Long expiry = blacklistedTokens.get(token);
+        if (expiry == null) return false;
+        // If token is expired, remove it from blacklist and treat as not blacklisted
+        if (System.currentTimeMillis() > expiry) {
             blacklistedTokens.remove(token);
             return false;
         }
