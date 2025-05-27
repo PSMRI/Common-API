@@ -57,6 +57,7 @@ import com.iemr.common.repository.everwell.EverwellFetchAndSync;
 import com.iemr.common.repository.location.LocationDistrictRepository;
 import com.iemr.common.repository.location.LocationStateRepository;
 import com.iemr.common.utils.CryptoUtil;
+import com.iemr.common.utils.RestTemplateUtil;
 import com.iemr.common.utils.mapper.InputMapper;
 import com.iemr.common.utils.response.OutputResponse;
 
@@ -377,13 +378,10 @@ public class EverwellRegistrationServiceImpl implements EverwellRegistrationServ
 
 					RestTemplate restTemplate = new RestTemplate();
 
-					MultiValueMap<String, String> headers = new LinkedMultiValueMap<String, String>();
-					headers.add("Content-Type", "application/json");
-					headers.add("AUTHORIZATION", Authorization);
-					HttpEntity<Object> requestReg = new HttpEntity<Object>(data, headers);
+					HttpEntity<Object> request = RestTemplateUtil.createRequestEntity(data, Authorization);
 					// registering the everwell patient into AMRIT
 					ResponseEntity<String> response = restTemplate.exchange(everwellRegisterBenficiary, HttpMethod.POST,
-							requestReg, String.class);
+							request, String.class);
 
 					if (response.getStatusCodeValue() == 200 & response.hasBody()) {
 

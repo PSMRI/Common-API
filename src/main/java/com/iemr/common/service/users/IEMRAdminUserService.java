@@ -36,6 +36,7 @@ import com.iemr.common.data.users.LoginSecurityQuestions;
 import com.iemr.common.data.users.M_Role;
 import com.iemr.common.data.users.User;
 import com.iemr.common.data.users.UserSecurityQMapping;
+import com.iemr.common.data.users.UserServiceRoleMapping;
 import com.iemr.common.data.users.ServiceRoleScreenMapping;
 import com.iemr.common.model.user.ForceLogoutRequestModel;
 import com.iemr.common.model.user.LoginRequestModel;
@@ -117,6 +118,8 @@ public interface IEMRAdminUserService
 	String generateTransactionIdForPasswordChange(User user) throws Exception;
 
 	User getUserById(Long userId) throws IEMRException;
+
+	List<UserServiceRoleMapping> getUserServiceRoleMapping(Long userID) throws IEMRException;
 
 
 	

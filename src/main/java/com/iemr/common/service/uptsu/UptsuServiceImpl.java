@@ -58,6 +58,7 @@ import com.iemr.common.model.sms.SMSRequest;
 import com.iemr.common.repository.uptsu.FacilityMasterRepo;
 import com.iemr.common.repository.uptsu.T_104AppointmentDetailsRepo;
 import com.iemr.common.service.sms.SMSService;
+import com.iemr.common.utils.RestTemplateUtil;
 import com.iemr.common.utils.exception.IEMRException;
 import com.iemr.common.utils.mapper.InputMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -262,14 +263,10 @@ public class UptsuServiceImpl implements UptsuService {
 		
 	}
 	
-	public String restTemplate(String request, String url, String Authorization) {
-		HttpHeaders headers = new HttpHeaders();
-		headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
-		headers.set("AUTHORIZATION", Authorization);
-
-		HttpEntity<Object> requestOBJ = new HttpEntity<Object>(request, headers);
+	public String restTemplate(String requestOBJ, String url, String Authorization) {
+		HttpEntity<Object> request = RestTemplateUtil.createRequestEntity(requestOBJ, Authorization);
 		RestTemplate restTemplate = new RestTemplate();
-		return restTemplate.exchange(url, HttpMethod.POST, requestOBJ, String.class).getBody();
+		return restTemplate.exchange(url, HttpMethod.POST, request, String.class).getBody();
 	}
 
 
