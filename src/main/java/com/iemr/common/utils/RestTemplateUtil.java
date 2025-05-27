@@ -40,7 +40,9 @@ public class RestTemplateUtil {
         	headers.add(HttpHeaders.USER_AGENT, UserAgentContext.getUserAgent());
         }
         headers.add(HttpHeaders.AUTHORIZATION, authorization);
-        headers.add("JwtToken",requestHeader.getHeader("JwtToken"));
+        if(null != requestHeader.getHeader("JwtToken")) {
+        	headers.add("JwtToken",requestHeader.getHeader("JwtToken"));
+        }
         if(null != jwtTokenFromCookie) {
         	headers.add(HttpHeaders.COOKIE, "Jwttoken=" + jwtTokenFromCookie);
         }
