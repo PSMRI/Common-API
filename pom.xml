@@ -5,11 +5,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.iemr.common-API</groupId>
-	<artifactId>Common</artifactId>
-	<version>1.0.1</version>
+	<artifactId>common-api</artifactId>
+	<version>3.1.0</version>
 	<packaging>war</packaging>
 
-	<name>common-API</name>
+	<name>Common-API</name>
 	<description>Piramal - Helpline: 1097 Module API </description>
 
 	<parent>
@@ -26,7 +26,7 @@
 		<m2e.apt.activation>jdt_apt</m2e.apt.activation>
 		<org.mapstruct.version>1.2.0.Final</org.mapstruct.version>
 		<org.projectlombok.version>1.18.36</org.projectlombok.version>
-		<final-name>commonapi-v1.0</final-name>
+		<final-name>commonapi-v3.0.0</final-name>
 		<environment>${ENV_VAR}</environment>
 		<target-properties>target/classes/application.properties</target-properties>
 		<source-properties>target/classes/common_${environment}.properties</source-properties>
@@ -497,7 +497,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>commonapi-v3.0.0</finalName>
+		<finalName>${artifactId}-${version}</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

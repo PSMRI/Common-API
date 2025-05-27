@@ -24,6 +24,11 @@ Common API is a microservice whch acts as a gateway for AMRIT. There are many AP
 
 ## Environment and Setup
 For setting up the development environment, please refer to the [Developer Guide](https://piramal-swasthya.gitbook.io/amrit/developer-guide/development-environment-setup) .
+Prerequisites 
+* JDK 17
+* Maven 
+* Springboot V2
+* MySQL
 
 ## API Guide
 Detailed information on API endpoints can be found in the [API Guide](https://piramal-swasthya.gitbook.io/amrit/architecture/api-guide).

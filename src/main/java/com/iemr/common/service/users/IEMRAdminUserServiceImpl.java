@@ -659,7 +659,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 		return result;
 	}
 
-	private List<UserServiceRoleMapping> getUserServiceRoleMapping(Long userID) throws IEMRException {
+	public List<UserServiceRoleMapping> getUserServiceRoleMapping(Long userID) throws IEMRException {
 		List<UserServiceRoleMapping> userServiceRoleMappings = new ArrayList<UserServiceRoleMapping>();
 		Set<Object[]> resultSet = userRoleMappingRepository.getUserRoleMappingForUser(userID);
 		if (resultSet.size() == 0) {
