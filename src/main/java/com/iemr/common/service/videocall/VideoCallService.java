@@ -7,7 +7,7 @@ public interface VideoCallService {
 	
 	 public String generateMeetingLink() throws Exception;
 
-	 public OutputResponse sendMeetingLink(VideoCallRequest request) throws Exception;
+	 public String sendMeetingLink(VideoCallRequest request) throws Exception;
 
 	 public String updateCallStatus(UpdateCallRequest request) throws Exception;
 }

@@ -59,11 +59,10 @@ public String sendVideoLink(@RequestBody String requestModel, HttpServletRequest
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         VideoCallRequest requestData = objectMapper.readValue(requestModel, VideoCallRequest.class);
-        OutputResponse serviceResponse = videoCallService.sendMeetingLink(requestData);
+        String serviceResponse = videoCallService.sendMeetingLink(requestData);
         
-        objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-        return objectMapper.writeValueAsString(serviceResponse);  // Automatically serialized to JSON
-
+        return serviceResponse;
+       
     } catch (Exception e) {
         logger.error("send MeetingLink failed with error: " + e.getMessage(), e);
         response.setError(e);

@@ -46,7 +46,7 @@ public class VideoCallServiceImpl implements VideoCallService {
     }
 
     @Override
-    public OutputResponse sendMeetingLink(VideoCallRequest request) throws Exception {
+    public String sendMeetingLink(VideoCallRequest request) throws Exception {
     OutputResponse response = new OutputResponse();
 
     if (meetingLink == null || meetingLink.isEmpty()) {
@@ -65,7 +65,8 @@ public class VideoCallServiceImpl implements VideoCallService {
     VideoCallRequest responseData = videoCallMapper.videoCallToRequest(videoCallEntity);
     response.setResponse(responseData.toJson());
 
-    return response;
+    return OutputMapper.gsonWithoutExposeRestriction()
+        .toJson(response);
     }
 
 @Override

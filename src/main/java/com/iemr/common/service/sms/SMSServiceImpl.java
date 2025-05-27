@@ -360,7 +360,12 @@ public class SMSServiceImpl implements SMSService {
 	            variableValue = videoCall.getMeetingLink() != null ? videoCall.getMeetingLink() : "";
 	            break;
 	        case "consultationdate":
-	            variableValue = videoCall.getDateOfCall() != null ? videoCall.getDateOfCall().toString() : "";
+				if (videoCall.getDateOfCall() != null) {
+        			SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        			SimpleDateFormat outputFormat = new SimpleDateFormat("dd-MM-yyyy h:mm a");
+        			String formattedDate = outputFormat.format(videoCall.getDateOfCall());
+        			variableValue = formattedDate;
+    			} 
 	            break;
 			case "phoneno":
 				variableValue = videoCall.getCallerPhoneNumber() !=null ? videoCall.getCallerPhoneNumber().toString() : "";
