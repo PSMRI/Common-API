@@ -473,6 +473,10 @@ public class IEMRAdminController {
 			if (remoteAddress == null || remoteAddress.trim().length() == 0) {
 				remoteAddress = request.getRemoteAddr();
 			}
+			if (isMobile && null != mUser) {
+				responseObj.put("jwtToken", jwtToken);
+				responseObj.put("refreshToken", refreshToken);
+			}
 			responseObj = iemrAdminUserServiceImpl.generateKeyAndValidateIP(responseObj, remoteAddress,
 					request.getRemoteHost());
 			response.setResponse(responseObj.toString());
