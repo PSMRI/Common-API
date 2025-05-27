@@ -90,6 +90,10 @@ public class JwtUtil {
 		return REFRESH_EXPIRATION_TIME;
 	}
 
+	public String getUserIdFromToken(String token) {
+		return getAllClaimsFromToken(token).get("userId", String.class);
+	}
+
 	// Additional helper methods
 	public String getJtiFromToken(String token) {
 		return getAllClaimsFromToken(token).getId();
