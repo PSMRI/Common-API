@@ -399,7 +399,7 @@ public class IEMRAdminController {
 	@RequestMapping(value = "/superUserAuthenticate", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String superUserAuthenticate(
 			@Param(value = "\"{\\\"userName\\\":\\\"String\\\",\\\"doLogout\\\":\\\"Boolean\\\"}\"") @RequestBody LoginRequestModel m_User,
-			HttpServletRequest request) {
+			HttpServletRequest request,HttpServletResponse httpResponse) {
 		OutputResponse response = new OutputResponse();
 		logger.info("userAuthenticate request ");
 		try {
@@ -411,6 +411,9 @@ public class IEMRAdminController {
 			User mUser = iemrAdminUserServiceImpl.superUserAuthenticate(m_User.getUserName(), decryptPassword);
 			JSONObject resMap = new JSONObject();
 			JSONObject previlegeObj = new JSONObject();
+			String jwtToken = null;
+			String refreshToken = null;
+			boolean isMobile = false;
 			if (m_User.getUserName() != null && (m_User.getDoLogout() == null || m_User.getDoLogout() == false)) {
 				String tokenFromRedis = getConcurrentCheckSessionObjectAgainstUser(
 						m_User.getUserName().trim().toLowerCase());
@@ -425,6 +428,35 @@ public class IEMRAdminController {
 				resMap.put("userID", mUser.getUserID());
 				resMap.put("isAuthenticated", /* Boolean.valueOf(true) */true);
 				resMap.put("userName", mUser.getUserName());
+				jwtToken = jwtUtil.generateToken(m_User.getUserName(), mUser.getUserID().toString());
+				
+				User user = new User(); // Assuming the Users class exists
+	            user.setUserID(mUser.getUserID());
+	            user.setUserName(mUser.getUserName());
+
+				String userAgent = request.getHeader("User-Agent");
+				isMobile = UserAgentUtil.isMobileDevice(userAgent);
+				logger.info("UserAgentUtil isMobile : " + isMobile);
+
+				if (isMobile) {
+					refreshToken = jwtUtil.generateRefreshToken(m_User.getUserName(), user.getUserID().toString());
+					logger.debug("Refresh token generated successfully for user: {}", user.getUserName());
+					String jti = jwtUtil.getJtiFromToken(refreshToken);
+					redisTemplate.opsForValue().set(
+							"refresh:" + jti,
+							user.getUserID().toString(),
+							jwtUtil.getRefreshTokenExpiration(),
+							TimeUnit.MILLISECONDS
+					);
+				} else {
+					cookieUtil.addJwtTokenToCookie(jwtToken, httpResponse, request);
+				}
+
+				String redisKey = "user_" + mUser.getUserID(); // Use user ID to create a unique key
+
+				// Store the user in Redis (set a TTL of 30 minutes)
+				redisTemplate.opsForValue().set(redisKey, user, 30, TimeUnit.MINUTES);
+
 			} else {
 				resMap.put("isAuthenticated", /* Boolean.valueOf(false) */false);
 			}
@@ -440,6 +472,10 @@ public class IEMRAdminController {
 			String remoteAddress = request.getHeader("X-FORWARDED-FOR");
 			if (remoteAddress == null || remoteAddress.trim().length() == 0) {
 				remoteAddress = request.getRemoteAddr();
+			}
+			if (isMobile && null != mUser) {
+				responseObj.put("jwtToken", jwtToken);
+				responseObj.put("refreshToken", refreshToken);
 			}
 			responseObj = iemrAdminUserServiceImpl.generateKeyAndValidateIP(responseObj, remoteAddress,
 					request.getRemoteHost());
