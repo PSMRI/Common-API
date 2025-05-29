@@ -57,12 +57,11 @@ public class JwtUtil {
 	}
 
 	public Claims validateToken(String token) {
+		if (TokenBlacklist.isTokenBlacklisted(token)) {
+			return null;
+		}
 		try {
-			return Jwts.parser()
-                    .verifyWith(getSigningKey())
-                    .build()
-                    .parseSignedClaims(token)
-					.getPayload();
+			return Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
 
 		} catch (ExpiredJwtException ex) {
 			// Handle expired token specifically if needed
