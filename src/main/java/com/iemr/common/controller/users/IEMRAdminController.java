@@ -58,7 +58,7 @@ import com.iemr.common.model.user.LoginRequestModel;
 import com.iemr.common.service.users.IEMRAdminUserService;
 import com.iemr.common.utils.CookieUtil;
 import com.iemr.common.utils.JwtUtil;
-import com.iemr.common.utils.TokenBlacklist;
+import com.iemr.common.utils.TokenDenylist;
 import com.iemr.common.utils.encryption.AESUtil;
 import com.iemr.common.utils.exception.IEMRException;
 import com.iemr.common.utils.mapper.InputMapper;
@@ -82,6 +82,8 @@ public class IEMRAdminController {
 	private IEMRAdminUserService iemrAdminUserServiceImpl;
 	@Autowired
 	private JwtUtil jwtUtil;
+	@Autowired
+	private TokenDenylist tokenDenylist;
 	@Autowired
 	private CookieUtil cookieUtil;
 	@Autowired
@@ -928,8 +930,6 @@ public class IEMRAdminController {
 		}
 	}
 
-
-
 	@CrossOrigin()
 	@Operation(summary = "Force log out")
 	@RequestMapping(value = "/forceLogout", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
@@ -938,14 +938,28 @@ public class IEMRAdminController {
 	    try {
 	        // Perform the force logout logic
 	        iemrAdminUserServiceImpl.forceLogout(request);
-	        String token = null;
-	        token = getJwtTokenFromCookies(httpRequest);
-	        if(null == token) {
-	        	token = httpRequest.getHeader(Constants.JWT_TOKEN);
+
+	        // Extract token from cookies or headers
+	        String token = getJwtTokenFromCookies(httpRequest);
+	        if (token == null) {
+	            token = httpRequest.getHeader(Constants.JWT_TOKEN);
 	        }
-	        TokenBlacklist.blacklistToken(token,BLACK_LIST_EXPIRATION_TIME);
-	        // Extract and invalidate JWT token cookie dynamically from the request
-	       // invalidateJwtCookie(httpRequest, response);
+
+	        // Validate the token: Check if it is expired or in the deny list
+	        Claims claims = jwtUtil.validateToken(token);
+	        if (claims == null) {
+	            // If token is either expired or in the deny list, return 401 Unauthorized
+	        	response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+	        	outputResponse.setError(new RuntimeException("Token is expired or has been logged out"));
+	        	return outputResponse.toString();
+	        }
+
+	        // Extract the jti (JWT ID) and expiration time from the JWT token
+	        String jti = jwtUtil.getJtiFromToken(token);
+	        long expirationTime = jwtUtil.getAllClaimsFromToken(token).getExpiration().getTime();
+
+	        // Denylist the token's jti in Redis with its expiration time
+	        tokenDenylist.denylistToken(jti, expirationTime);
 
 	        // Set the response message
 	        outputResponse.setResponse("Success");
@@ -954,42 +968,81 @@ public class IEMRAdminController {
 	    }
 	    return outputResponse.toString();
 	}
-	private String getJwtTokenFromCookies(HttpServletRequest request) {
-		Cookie[] cookies = request.getCookies();
-		if (cookies != null) {
-			for (Cookie cookie : cookies) {
-				if (cookie.getName().equalsIgnoreCase("Jwttoken")) {
-					return cookie.getValue();
-				}
-			}
-		}
-		return null;
-	}
-	private void invalidateJwtCookie(HttpServletRequest request, HttpServletResponse response) {
-	    // Get the cookies from the incoming request
-	    Cookie[] cookies = request.getCookies();
 
+	private String getJwtTokenFromCookies(HttpServletRequest request) {
+	    Cookie[] cookies = request.getCookies();
 	    if (cookies != null) {
 	        for (Cookie cookie : cookies) {
-	            // Check if the cookie name matches "Jwttoken" (case-sensitive)
 	            if (cookie.getName().equalsIgnoreCase("Jwttoken")) {
-	                // Invalidate the JWT token cookie by setting the value to null and max age to 0
-	                cookie.setValue(null);
-	                cookie.setMaxAge(0);    // Expire the cookie immediately
-	                cookie.setPath(cookie.getPath());    // Ensure the path matches the cookie's original path
-	                cookie.setHttpOnly(true);  // Secure the cookie so it can't be accessed via JS
-	                cookie.setSecure(true);    // Only send over HTTPS if you're using secure connections
-	                cookie.setAttribute("SameSite", "Strict");
-	                // Add the invalidated cookie back to the response
-	                response.addCookie(cookie);
-	                break;  // If we found the JWT cookie, no need to continue looping
+	                return cookie.getValue();
 	            }
 	        }
-	    } else {
-	        // Log or handle the case when no cookies are found in the request
-	        logger.warn("No cookies found in the request.");
 	    }
+	    return null;
 	}
+
+
+
+//	@CrossOrigin()
+//	@Operation(summary = "Force log out")
+//	@RequestMapping(value = "/forceLogout", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+//	public String forceLogout(@RequestBody ForceLogoutRequestModel request, HttpServletRequest httpRequest, HttpServletResponse response) {
+//	    OutputResponse outputResponse = new OutputResponse();
+//	    try {
+//	        // Perform the force logout logic
+//	        iemrAdminUserServiceImpl.forceLogout(request);
+//	        String token = null;
+//	        token = getJwtTokenFromCookies(httpRequest);
+//	        if(null == token) {
+//	        	token = httpRequest.getHeader(Constants.JWT_TOKEN);
+//	        }
+//	        TokenBlacklist.blacklistToken(token,BLACK_LIST_EXPIRATION_TIME);
+//	        // Extract and invalidate JWT token cookie dynamically from the request
+//	       // invalidateJwtCookie(httpRequest, response);
+//
+//	        // Set the response message
+//	        outputResponse.setResponse("Success");
+//	    } catch (Exception e) {
+//	        outputResponse.setError(e);
+//	    }
+//	    return outputResponse.toString();
+//	}
+//	private String getJwtTokenFromCookies(HttpServletRequest request) {
+//		Cookie[] cookies = request.getCookies();
+//		if (cookies != null) {
+//			for (Cookie cookie : cookies) {
+//				if (cookie.getName().equalsIgnoreCase("Jwttoken")) {
+//					return cookie.getValue();
+//				}
+//			}
+//		}
+//		return null;
+//	}
+//	private void invalidateJwtCookie(HttpServletRequest request, HttpServletResponse response) {
+//	    // Get the cookies from the incoming request
+//	    Cookie[] cookies = request.getCookies();
+//
+//	    if (cookies != null) {
+//	        for (Cookie cookie : cookies) {
+//	            // Check if the cookie name matches "Jwttoken" (case-sensitive)
+//	            if (cookie.getName().equalsIgnoreCase("Jwttoken")) {
+//	                // Invalidate the JWT token cookie by setting the value to null and max age to 0
+//	                cookie.setValue(null);
+//	                cookie.setMaxAge(0);    // Expire the cookie immediately
+//	                cookie.setPath(cookie.getPath());    // Ensure the path matches the cookie's original path
+//	                cookie.setHttpOnly(true);  // Secure the cookie so it can't be accessed via JS
+//	                cookie.setSecure(true);    // Only send over HTTPS if you're using secure connections
+//	                cookie.setAttribute("SameSite", "Strict");
+//	                // Add the invalidated cookie back to the response
+//	                response.addCookie(cookie);
+//	                break;  // If we found the JWT cookie, no need to continue looping
+//	            }
+//	        }
+//	    } else {
+//	        // Log or handle the case when no cookies are found in the request
+//	        logger.warn("No cookies found in the request.");
+//	    }
+//	}
 
 	
 	@CrossOrigin()
