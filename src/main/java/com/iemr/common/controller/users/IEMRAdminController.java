@@ -981,69 +981,6 @@ public class IEMRAdminController {
 	    return null;
 	}
 
-
-
-//	@CrossOrigin()
-//	@Operation(summary = "Force log out")
-//	@RequestMapping(value = "/forceLogout", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
-//	public String forceLogout(@RequestBody ForceLogoutRequestModel request, HttpServletRequest httpRequest, HttpServletResponse response) {
-//	    OutputResponse outputResponse = new OutputResponse();
-//	    try {
-//	        // Perform the force logout logic
-//	        iemrAdminUserServiceImpl.forceLogout(request);
-//	        String token = null;
-//	        token = getJwtTokenFromCookies(httpRequest);
-//	        if(null == token) {
-//	        	token = httpRequest.getHeader(Constants.JWT_TOKEN);
-//	        }
-//	        TokenBlacklist.blacklistToken(token,BLACK_LIST_EXPIRATION_TIME);
-//	        // Extract and invalidate JWT token cookie dynamically from the request
-//	       // invalidateJwtCookie(httpRequest, response);
-//
-//	        // Set the response message
-//	        outputResponse.setResponse("Success");
-//	    } catch (Exception e) {
-//	        outputResponse.setError(e);
-//	    }
-//	    return outputResponse.toString();
-//	}
-//	private String getJwtTokenFromCookies(HttpServletRequest request) {
-//		Cookie[] cookies = request.getCookies();
-//		if (cookies != null) {
-//			for (Cookie cookie : cookies) {
-//				if (cookie.getName().equalsIgnoreCase("Jwttoken")) {
-//					return cookie.getValue();
-//				}
-//			}
-//		}
-//		return null;
-//	}
-//	private void invalidateJwtCookie(HttpServletRequest request, HttpServletResponse response) {
-//	    // Get the cookies from the incoming request
-//	    Cookie[] cookies = request.getCookies();
-//
-//	    if (cookies != null) {
-//	        for (Cookie cookie : cookies) {
-//	            // Check if the cookie name matches "Jwttoken" (case-sensitive)
-//	            if (cookie.getName().equalsIgnoreCase("Jwttoken")) {
-//	                // Invalidate the JWT token cookie by setting the value to null and max age to 0
-//	                cookie.setValue(null);
-//	                cookie.setMaxAge(0);    // Expire the cookie immediately
-//	                cookie.setPath(cookie.getPath());    // Ensure the path matches the cookie's original path
-//	                cookie.setHttpOnly(true);  // Secure the cookie so it can't be accessed via JS
-//	                cookie.setSecure(true);    // Only send over HTTPS if you're using secure connections
-//	                cookie.setAttribute("SameSite", "Strict");
-//	                // Add the invalidated cookie back to the response
-//	                response.addCookie(cookie);
-//	                break;  // If we found the JWT cookie, no need to continue looping
-//	            }
-//	        }
-//	    } else {
-//	        // Log or handle the case when no cookies are found in the request
-//	        logger.warn("No cookies found in the request.");
-//	    }
-//	}
-
 	
 	@CrossOrigin()
 	@Operation(summary = "User force log out")
