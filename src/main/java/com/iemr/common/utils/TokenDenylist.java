@@ -31,7 +31,6 @@ public class TokenDenylist {
             String key = PREFIX + jti;
             redisTemplate.opsForValue().set(key, " ", expirationTime * 1000, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            logger.error("Failed to denylist token with jti: " + jti, e);
             throw new RuntimeException("Failed to denylist token", e);
         }
     }

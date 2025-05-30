@@ -947,8 +947,7 @@ public class IEMRAdminController {
 
 	        // Validate the token: Check if it is expired or in the deny list
 	        Claims claims = jwtUtil.validateToken(token);
-	        if (claims == null) {
-	            // If token is either expired or in the deny list, return 401 Unauthorized
+	        if (claims.isEmpty() || claims.getExpiration() == null || claims.getId() == null) {	            // If token is either expired or in the deny list, return 401 Unauthorized
 	        	response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 	        	outputResponse.setError(new RuntimeException("Token is expired or has been logged out"));
 	        	return outputResponse.toString();
