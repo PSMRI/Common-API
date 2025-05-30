@@ -1,5 +1,7 @@
 package com.iemr.common.utils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -8,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 public class TokenDenylist {
+	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
@@ -17,17 +20,30 @@ public class TokenDenylist {
         if (jti == null || jti.trim().isEmpty()) {
             return;
         }
+        if (expirationTime == null || expirationTime <= 0) {
+           throw new IllegalArgumentException("Expiration time must be positive");
+           }
         // Store the jti in Redis with expiration time set to the token's exp time (in milliseconds)
-        redisTemplate.opsForValue().set(jti, "denied", expirationTime, TimeUnit.MILLISECONDS);
-    }
+        try {
+              redisTemplate.opsForValue().set(jti, "denied", expirationTime, TimeUnit.MILLISECONDS);
+        	} catch (Exception e) {
+              logger.error("Failed to denylist token with jti: " + jti, e);
+              throw new RuntimeException("Failed to denylist token", e);
+           }
+        }
 
     // Check if a token's jti is in the denylist
     public boolean isTokenDenylisted(String jti) {
         if (jti == null || jti.trim().isEmpty()) {
             return false;
         }
-        return redisTemplate.hasKey(jti);
-    }
+        try {
+            return Boolean.TRUE.equals(redisTemplate.hasKey(jti));
+        	} catch (Exception e) {
+        	        logger.error("Failed to check denylist status for jti: " + jti, e);
+        	        // In case of Redis failure, consider the token as not denylisted to avoid blocking all requests
+        	        return false;
+        	    }    }
 
     // Remove a token's jti from the denylist (Redis)
     public void removeTokenFromDenylist(String jti) {
