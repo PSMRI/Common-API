@@ -30,7 +30,6 @@ public class TokenDenylist {
             throw new IllegalArgumentException("Expiration time must be positive");
         }
 
-        // Store the jti in Redis with expiration time set to the token's exp time (in milliseconds)
         try {
             String key = getKey(jti);  // Use helper method to get the key
             redisTemplate.opsForValue().set(key, " ", expirationTime, TimeUnit.MILLISECONDS);
