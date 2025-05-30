@@ -17,6 +17,10 @@ public class TokenDenylist {
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
+    private String getKey(String jti) {
+        return PREFIX + jti;
+    }  
+    
     // Add a token's jti to the denylist with expiration time
     public void addTokenToDenylist(String jti, Long expirationTime) {
         if (jti == null || jti.trim().isEmpty()) {
@@ -28,7 +32,7 @@ public class TokenDenylist {
 
         // Store the jti in Redis with expiration time set to the token's exp time (in milliseconds)
         try {
-            String key = PREFIX + jti;
+            String key = getKey(jti);  // Use helper method to get the key
             redisTemplate.opsForValue().set(key, " ", expirationTime, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             throw new RuntimeException("Failed to denylist token", e);
@@ -41,7 +45,7 @@ public class TokenDenylist {
             return false;
         }
         try {
-            String key = PREFIX + jti;
+        	String key = getKey(jti);  // Use helper method to get the key
             return Boolean.TRUE.equals(redisTemplate.hasKey(key));
         } catch (Exception e) {
             logger.error("Failed to check denylist status for jti: " + jti, e);
@@ -53,7 +57,7 @@ public class TokenDenylist {
     // Remove a token's jti from the denylist (Redis)
     public void removeTokenFromDenylist(String jti) {
         if (jti != null && !jti.trim().isEmpty()) {
-            String key = PREFIX + jti;
+        	String key = getKey(jti);  // Use helper method to get the key
             redisTemplate.delete(key);
         }
     }
