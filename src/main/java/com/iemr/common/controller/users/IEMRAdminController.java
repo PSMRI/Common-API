@@ -956,6 +956,8 @@ public class IEMRAdminController {
 	        // Extract the jti (JWT ID) and expiration time from the validated claims
 	        String jti = claims.getId();  // jti is in the 'id' field of claims
 	        long expirationTime = claims.getExpiration().getTime(); // Use expiration from claims
+	        long ttlMillis = expirationTime - System.currentTimeMillis();
+	        tokenDenylist.addTokenToDenylist(jti, ttlMillis);
 
 	        // Denylist the token's jti in Redis with its expiration time
 	        tokenDenylist.addTokenToDenylist(jti, expirationTime);

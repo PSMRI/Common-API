@@ -29,7 +29,7 @@ public class TokenDenylist {
         // Store the jti in Redis with expiration time set to the token's exp time (in milliseconds)
         try {
             String key = PREFIX + jti;
-            redisTemplate.opsForValue().set(key, " ", expirationTime * 1000, TimeUnit.MILLISECONDS);
+            redisTemplate.opsForValue().set(key, " ", expirationTime, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             throw new RuntimeException("Failed to denylist token", e);
         }
@@ -41,7 +41,8 @@ public class TokenDenylist {
             return false;
         }
         try {
-            return Boolean.TRUE.equals(redisTemplate.hasKey(jti));
+            String key = PREFIX + jti;
+            return Boolean.TRUE.equals(redisTemplate.hasKey(key));
         } catch (Exception e) {
             logger.error("Failed to check denylist status for jti: " + jti, e);
             // In case of Redis failure, consider the token as not denylisted to avoid blocking all requests
@@ -52,7 +53,8 @@ public class TokenDenylist {
     // Remove a token's jti from the denylist (Redis)
     public void removeTokenFromDenylist(String jti) {
         if (jti != null && !jti.trim().isEmpty()) {
-            redisTemplate.delete(jti);
+            String key = PREFIX + jti;
+            redisTemplate.delete(key);
         }
     }
 }
