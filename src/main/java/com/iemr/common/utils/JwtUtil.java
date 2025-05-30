@@ -97,13 +97,9 @@ public class JwtUtil {
         try {
             return Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
         } catch (ExpiredJwtException ex) {
-            // Handle expired token specifically
-            // Optionally, log the exception or return a custom message if required
+
             return null;  // Token is expired, so return null
         } catch (UnsupportedJwtException | MalformedJwtException | SignatureException | IllegalArgumentException ex) {
-            // Log specific error types for debugging
-            // Optionally, you can log each exception for specific handling or debugging
-            // Example: logger.error("JWT validation failed: " + ex.getMessage());
             return null;  // Return null for any other JWT-related issue (invalid format, bad signature, etc.)
         }
     }
