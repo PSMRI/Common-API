@@ -88,8 +88,6 @@ public class IEMRAdminController {
 	private CookieUtil cookieUtil;
 	@Autowired
 	private RedisTemplate<String, Object> redisTemplate;
-	@Value("${jwt.blacklist.expiration}")
-	private static long BLACK_LIST_EXPIRATION_TIME;
 
 	private AESUtil aesUtil;
 
