@@ -954,12 +954,12 @@ public class IEMRAdminController {
 	        	return outputResponse.toString();
 	        }
 
-	        // Extract the jti (JWT ID) and expiration time from the JWT token
-	        String jti = jwtUtil.getJtiFromToken(token);
-	        long expirationTime = jwtUtil.getAllClaimsFromToken(token).getExpiration().getTime();
+	        // Extract the jti (JWT ID) and expiration time from the validated claims
+	        String jti = claims.getId();  // jti is in the 'id' field of claims
+	        long expirationTime = claims.getExpiration().getTime(); // Use expiration from claims
 
 	        // Denylist the token's jti in Redis with its expiration time
-	        tokenDenylist.denylistToken(jti, expirationTime);
+	        tokenDenylist.addTokenToDenylist(jti, expirationTime);
 
 	        // Set the response message
 	        outputResponse.setResponse("Success");
