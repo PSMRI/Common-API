@@ -959,9 +959,6 @@ public class IEMRAdminController {
 	        long ttlMillis = expirationTime - System.currentTimeMillis();
 	        tokenDenylist.addTokenToDenylist(jti, ttlMillis);
 
-	        // Denylist the token's jti in Redis with its expiration time
-	        tokenDenylist.addTokenToDenylist(jti, expirationTime);
-
 	        // Set the response message
 	        outputResponse.setResponse("Success");
 	    } catch (Exception e) {
