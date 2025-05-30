@@ -940,8 +940,10 @@ public class IEMRAdminController {
 	        // Extract token from cookies or headers
 	        String token = getJwtTokenFromCookies(httpRequest);
 	        if (token == null) {
-	            token = httpRequest.getHeader(Constants.JWT_TOKEN);
-	        }
+	        	 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+	             outputResponse.setError(new RuntimeException("No JWT token found in request"));
+	        	 return outputResponse.toString();	
+	        	 }
 
 	        // Validate the token: Check if it is expired or in the deny list
 	        Claims claims = jwtUtil.validateToken(token);
