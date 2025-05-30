@@ -11,5 +11,6 @@ public class Constants {
 	public static final String HOLD = "Hold";
 	public static final String NOT_READY = "Not Ready";
 	public static final String AUX = "Aux";
+	public static final String JWT_TOKEN = "Jwttoken";
 
 }
