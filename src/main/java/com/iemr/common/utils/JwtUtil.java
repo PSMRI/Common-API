@@ -83,35 +83,22 @@ public class JwtUtil {
      * @return Claims if valid, null if invalid (expired or denylisted)
      */
     public Claims validateToken(String token) {
-        // Check if the token is blacklisted (invalidated by force logout)
-        if (tokenDenylist.isTokenDenylisted(getJtiFromToken(token))) {
-            return null;  // Token is denylisted, so return null
-        }
-
-        // Check if the token is expired
-        if (isTokenExpired(token)) {
-            return null;  // Token is expired, so return null
-        }
-
-        // If token is not blacklisted and not expired, verify the token signature and return claims
         try {
-            return Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
+            Claims claims = Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
+            String jti = claims.getId();
+            
+            // Check if token is denylisted (only if jti exists)
+            if (jti != null && tokenDenylist.isTokenDenylisted(jti)) {
+                return null;
+            }
+            
+            return claims;
         } catch (ExpiredJwtException ex) {
 
             return null;  // Token is expired, so return null
         } catch (UnsupportedJwtException | MalformedJwtException | SignatureException | IllegalArgumentException ex) {
             return null;  // Return null for any other JWT-related issue (invalid format, bad signature, etc.)
         }
-    }
-
-    /**
-     * Check if the JWT token is expired
-     * @param token the JWT token
-     * @return true if expired, false otherwise
-     */
-    private boolean isTokenExpired(String token) {
-        Date expirationDate = getAllClaimsFromToken(token).getExpiration();
-        return expirationDate.before(new Date());
     }
 
     /**
