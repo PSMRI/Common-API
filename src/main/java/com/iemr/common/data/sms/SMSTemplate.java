@@ -26,6 +26,8 @@ import java.util.List;
 
 import com.iemr.common.utils.mapper.OutputMapper;
 
+import com.google.gson.GsonBuilder;
+import com.google.gson.LongSerializationPolicy;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -76,9 +78,17 @@ public class SMSTemplate
 	@Column(name = "LastModDate", insertable = false, updatable = false)
 	Timestamp lastModDate;
 
-	@Override
-	public String toString()
-	{
-		return OutputMapper.gsonWithoutExposeRestriction().toJson(this);
+	// @Override
+	// public String toString()
+	// {
+	// 	return OutputMapper.gsonWithoutExposeRestriction().toJson(this);
+	// }
+
+@Override
+	public String toString() {
+
+		return new GsonBuilder().excludeFieldsWithoutExposeAnnotation().setLongSerializationPolicy(LongSerializationPolicy.STRING).serializeNulls()
+				.setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").create().toJson(this);
 	}
+
 }
