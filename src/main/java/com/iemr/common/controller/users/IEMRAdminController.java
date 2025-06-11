@@ -187,16 +187,12 @@ public class IEMRAdminController {
 
 			String jwtToken = null;
 			String refreshToken = null;
-			// boolean isMobile = false;
 			if (mUser.size() == 1) {
 				jwtToken = jwtUtil.generateToken(m_User.getUserName(), mUser.get(0).getUserID().toString());
 				
 				User user = new User(); // Assuming the Users class exists
-	            user.setUserID(mUser.get(0).getUserID());
-	            user.setUserName(mUser.get(0).getUserName());
-
-				// String userAgent = request.getHeader("User-Agent");
-				// isMobile = UserAgentUtil.isMobileDevice(userAgent);
+				user.setUserID(mUser.get(0).getUserID());
+				user.setUserName(mUser.get(0).getUserName());
 				logger.info("UserAgentUtil isMobile : " + isMobile);
 
 				if (isMobile) {
