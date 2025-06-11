@@ -80,6 +80,9 @@ public class IEMRAdminController {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	private InputMapper inputMapper = new InputMapper();
 
+	@Value("${captcha.enable-captcha}")
+	private boolean enableCaptcha;
+
 	@Autowired
 	private CaptchaValidationService captchaValidatorService;
 	private IEMRAdminUserService iemrAdminUserServiceImpl;
@@ -138,17 +141,28 @@ public class IEMRAdminController {
 		OutputResponse response = new OutputResponse();
 		logger.info("userAuthenticate request - " + m_User + " " + m_User.getUserName() + " " + m_User.getPassword());
 		try {
-			
+
+			boolean isMobile = false;
+			String userAgent = request.getHeader("User-Agent");
+			isMobile = UserAgentUtil.isMobileDevice(userAgent);
+			logger.info("UserAgentUtil isMobile : " + isMobile);
+
 			String captchaToken = m_User.getCaptchaToken();
-			if (captchaToken != null && !captchaToken.trim().isEmpty()) {
-				if (!captchaValidatorService.validateCaptcha(captchaToken)) {
-					logger.warn("CAPTCHA validation failed for user: {}", m_User.getUserName());
-					response.setError(new IEMRException("CAPTCHA validation failed"));
-					return response.toString(); // Return error immediately
+			if (enableCaptcha && !isMobile) {
+				if (captchaToken != null && !captchaToken.trim().isEmpty()) {
+					if (!captchaValidatorService.validateCaptcha(captchaToken)) {
+						logger.warn("CAPTCHA validation failed for user: {}", m_User.getUserName());
+						response.setError(new IEMRException("CAPTCHA validation failed"));
+						return response.toString();
+					}
+					logger.info("CAPTCHA validated successfully for user: {}", m_User.getUserName());
+				} else {
+					logger.warn("CAPTCHA token missing for user: {}", m_User.getUserName());
+					response.setError(new IEMRException("CAPTCHA token is required"));
+					return response.toString();
 				}
-				logger.info("CAPTCHA validated successfully for user: {}", m_User.getUserName());
 			} else {
-				logger.info("CAPTCHA token not provided. Skipping CAPTCHA validation.");
+				logger.info("CAPTCHA validation skipped");
 			}
 
 			String decryptPassword = aesUtil.decrypt("Piramal12Piramal", m_User.getPassword());
@@ -173,7 +187,7 @@ public class IEMRAdminController {
 
 			String jwtToken = null;
 			String refreshToken = null;
-			boolean isMobile = false;
+			// boolean isMobile = false;
 			if (mUser.size() == 1) {
 				jwtToken = jwtUtil.generateToken(m_User.getUserName(), mUser.get(0).getUserID().toString());
 				
@@ -181,8 +195,8 @@ public class IEMRAdminController {
 	            user.setUserID(mUser.get(0).getUserID());
 	            user.setUserName(mUser.get(0).getUserName());
 
-				String userAgent = request.getHeader("User-Agent");
-				isMobile = UserAgentUtil.isMobileDevice(userAgent);
+				// String userAgent = request.getHeader("User-Agent");
+				// isMobile = UserAgentUtil.isMobileDevice(userAgent);
 				logger.info("UserAgentUtil isMobile : " + isMobile);
 
 				if (isMobile) {
