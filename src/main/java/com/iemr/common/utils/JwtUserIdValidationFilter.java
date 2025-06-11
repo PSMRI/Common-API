@@ -33,6 +33,11 @@ public class JwtUserIdValidationFilter implements Filter {
 		HttpServletRequest request = (HttpServletRequest) servletRequest;
 		HttpServletResponse response = (HttpServletResponse) servletResponse;
 
+		if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+			filterChain.doFilter(servletRequest, servletResponse); // allow it through
+			return;
+		}
+
 		String path = request.getRequestURI();
 		String contextPath = request.getContextPath();
 		logger.info("JwtUserIdValidationFilter invoked for path: " + path);
@@ -87,7 +92,7 @@ public class JwtUserIdValidationFilter implements Filter {
 				logger.info("User-Agent: " + userAgent);
 				if (userAgent != null && isMobileClient(userAgent) && authHeader != null) {
 					try {
-						logger.info("Common-API incoming userAget : "+userAgent);
+						logger.info("Common-API incoming userAget : " + userAgent);
 						UserAgentContext.setUserAgent(userAgent);
 						filterChain.doFilter(servletRequest, servletResponse);
 					} finally {
