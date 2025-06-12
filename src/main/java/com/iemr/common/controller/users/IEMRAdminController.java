@@ -369,7 +369,7 @@ public class IEMRAdminController {
 							m_UserServiceRoleMapping.getM_ProviderServiceMapping().getM_ServiceMaster().toString()));
 					previlegeObj.getJSONObject(serv).put("serviceName", serv);
 					previlegeObj.getJSONObject(serv).put("serviceID",
-							m_UserServiceRoleMapping.getM_ProviderServiceMapping().getProviderServiceMapID());
+							m_UserServiceRoleMapping.getM_ProviderServiceMapping().getM_ServiceMaster().getServiceID());
 					previlegeObj.getJSONObject(serv).put("providerServiceMapID",
 							m_UserServiceRoleMapping.getM_ProviderServiceMapping().getProviderServiceMapID());
 					previlegeObj.getJSONObject(serv).put("apimanClientKey",
