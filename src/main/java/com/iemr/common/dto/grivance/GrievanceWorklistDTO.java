@@ -37,15 +37,14 @@ public class GrievanceWorklistDTO implements Serializable {
 	    private String age;
 	    private Boolean retryNeeded;
 	    private Integer callCounter;
-	 //   private String lastCall; // Add this field if you want
-	    
+	    private Timestamp lastCall;	    
 	    
 		public GrievanceWorklistDTO(String complaintID, String subjectOfComplaint, String complaint,
 				Long beneficiaryRegID, Integer providerServiceMapID, String firstName, String lastName,
 				String primaryNumber, List<GrievanceTransactionDTO> transactions, String severety, String state,
 				Integer userId, Boolean deleted, String createdBy, Timestamp createdDate, Timestamp lastModDate,
 				Boolean isCompleted, String gender, String district, Long beneficiaryID, String age,
-				Boolean retryNeeded, Integer callCounter) {
+				Boolean retryNeeded, Integer callCounter, Timestamp lastCall) {
 			super();
 			this.complaintID = complaintID;
 			this.subjectOfComplaint = subjectOfComplaint;
@@ -70,6 +69,7 @@ public class GrievanceWorklistDTO implements Serializable {
 			this.age = age;
 			this.retryNeeded = retryNeeded;
 			this.callCounter = callCounter;
+			this.lastCall = lastCall;
 		}
 
 	    

@@ -2,6 +2,7 @@ package com.iemr.common.repository.grievance;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -32,9 +33,15 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 	public int allocateGrievance(@Param("grievanceId") Long grievanceId,
 			@Param("userId") Integer userId);
 
-	@Query(nativeQuery = true, value = "SELECT PreferredLanguageId, PreferredLanguage, VanSerialNo, VanID, ParkingPlaceId, VehicalNo FROM db_identity.i_beneficiarydetails WHERE BeneficiaryRegID = :benRegId")
+	@Query(nativeQuery = true, value = "SELECT PreferredLanguageId, PreferredLanguage, VanSerialNo, VanID, ParkingPlaceId, VehicalNo FROM db_1097_identity.i_beneficiarydetails WHERE BeneficiaryRegID = :benRegId")
 	public ArrayList<Object[]> getBeneficiaryGrievanceDetails(@Param("benRegId") Long benRegId);
 
+	@Query(nativeQuery = true, value = "SELECT t2.preferredPhoneNum FROM db_1097_identity.i_beneficiarymapping t1 join" 
+			+ " db_1097_identity.i_beneficiarycontacts t2 on t1.benContactsId = t2.benContactsID" 
+			+ " where benRegId = :benRegId")	
+	public String getPrimaryNumber(@Param("benRegId") Long benRegId);
+	
+	
 	@Query("select grievance.preferredLanguage, count(distinct grievance.grievanceId) "
 			+ "from GrievanceDetails grievance " + "where grievance.providerServiceMapID = :providerServiceMapID "
 			+ "and grievance.userID = :userID " + "and grievance.deleted = false "
@@ -59,14 +66,20 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 
 	@Modifying
 	@Transactional
+
 	@Query("UPDATE GrievanceDetails g SET g.userID = NULL WHERE g.grievanceId = :grievanceId AND g.userID = :userID")
 	int unassignGrievance(@Param("grievanceId") Long grievanceId, @Param("userID") Integer userID);
 
+	@Query("UPDATE GrievanceDetails g SET g.userID = :userID WHERE g.gwid = :gwid")
+	int unassignGrievance(@Param("userID") Integer userID, @Param("gwid") Long gwid);
+
+
 	@Modifying
 	@Transactional
-	@Query("UPDATE GrievanceDetails g SET g.isAllocated = :isAllocated WHERE g.grievanceId = :grievanceId")
-	int updateGrievanceAllocationStatus(@Param("grievanceId") Long grievanceId,
+	@Query("UPDATE GrievanceDetails g SET g.isAllocated = :isAllocated WHERE g.gwid = :gwid")
+	int updateGrievanceAllocationStatus(@Param("gwid") Long gwid,
 			@Param("isAllocated") Boolean isAllocated);
+
 
 	@Query("Select grievance.preferredLanguage, count(grievance) from GrievanceDetails grievance where grievance.isAllocated=false group by grievance.preferredLanguage")
 	public Set<Object[]> fetchUnallocatedGrievanceCount();
@@ -74,11 +87,25 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 	@Modifying
 	@Query("UPDATE GrievanceDetails g SET g.complaintResolution = :complaintResolution, g.remarks = :remarks, g.modifiedBy =  :modifiedBy "
 	       + "WHERE g.complaintID = :complaintID AND g.beneficiaryRegID = :beneficiaryRegID AND g.providerServiceMapID = :providerServiceMapID"
+
+	@Query("Select grievance.preferredLanguage, count(grievance) from GrievanceDetails grievance where grievance.isAllocated=false "
+			+ "AND grievance.createdDate BETWEEN :filterStartDate AND :filterEndDate "
+			+ "group by grievance.preferredLanguage")
+	public Set<Object[]> fetchUnallocatedGrievanceCount(
+			@Param("filterStartDate") Timestamp filterStartDate,
+		    @Param("filterEndDate") Timestamp filterEndDate);
+	
+	@Modifying
+	@Query("UPDATE GrievanceDetails g SET g.complaintResolution = :complaintResolution, g.remarks = :remarks, g.modifiedBy =  :modifiedBy, "
+			+ "g.benCallID = :benCallID "
+			+ "WHERE g.complaintID = :complaintID AND g.beneficiaryRegID = :beneficiaryRegID AND g.providerServiceMapID = :providerServiceMapID"
 		   + " AND g.userID = :userID")
 	@Transactional
 	int updateComplaintResolution(@Param("complaintResolution") String complaintResolution,
 	                              @Param("remarks") String remarks,
 	                              @Param("modifiedBy") String modifiedBy,
+
+	                              @Param("benCallID") Long benCallID,
 	                              @Param("complaintID") String complaintID,
 	                              @Param("beneficiaryRegID") Long beneficiaryRegID,
 	                              @Param("providerServiceMapID") Integer providerServiceMapID,
@@ -87,16 +114,25 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 	@Modifying
 	@Query("UPDATE GrievanceDetails g SET g.complaintResolution = :complaintResolution, g.modifiedBy =  :modifiedBy "
 	       + "WHERE g.complaintID = :complaintID AND g.beneficiaryRegID = :beneficiaryRegID AND g.providerServiceMapID = :providerServiceMapID"
+
+	@Query("UPDATE GrievanceDetails g SET g.complaintResolution = :complaintResolution, g.modifiedBy =  :modifiedBy, "
+			+ "g.benCallID = :benCallID "
+			+ "WHERE g.complaintID = :complaintID AND g.beneficiaryRegID = :beneficiaryRegID AND g.providerServiceMapID = :providerServiceMapID"
 			+ " AND g.userID = :userID")
 	@Transactional
 	int updateComplaintResolution(@Param("complaintResolution") String complaintResolution,
 			   					  @Param("modifiedBy") String modifiedBy,
+
+	                              @Param("benCallID") Long benCallID,
 	                              @Param("complaintID") String complaintID,
 	                              @Param("beneficiaryRegID") Long beneficiaryRegID,
 	                              @Param("providerServiceMapID") Integer providerServiceMapID,
 	                              @Param("userID") Integer userID);
 	
+
 	@Query(" Select grievance.callCounter, grievance.retryNeeded FROM GrievanceDetails grievance where complaintID = :complaintID")
+
+	@Query(" Select grievance.callCounter, grievance.retryNeeded FROM GrievanceDetails grievance where grievance.complaintID = :complaintID")
 	public List<Object[]> getCallCounter(@Param("complaintID") String complaintID);
 	
 	@Modifying
@@ -123,5 +159,29 @@ public interface GrievanceDataRepo extends CrudRepository<GrievanceDetails, Long
 	                              @Param("beneficiaryRegID") Long beneficiaryRegID,
 	                              @Param("providerServiceMapID") Integer providerServiceMapID,
 	                              @Param("userID") Integer userID);
+
+	
+	@Query("SELECT g FROM GrievanceDetails g WHERE "
+	        + "(g.state = :state OR :state IS NULL) "
+	        + "AND (g.complaintResolution = :complaintResolution OR :complaintResolution IS NULL) "
+	        + "AND g.createdDate BETWEEN :startDate AND :endDate")
+	List<GrievanceDetails> fetchGrievanceDetailsBasedOnParams(
+	    @Param("state") String state,
+	    @Param("complaintResolution") String complaintResolution,
+	    @Param("startDate") Date startDate,
+	    @Param("endDate") Date endDate);
+
+
+	@Query("SELECT g FROM GrievanceDetails g WHERE g.complaintID = :complaintID")
+	List<GrievanceDetails> fetchGrievanceWorklistByComplaintID(@Param("complaintID") String complaintID);
+
+
+@Query("SELECT g.remarks FROM GrievanceDetails g WHERE g.complaintID = :complaintID")
+List<Object[]> fetchGrievanceWorklistRemarks(@Param("complaintID") String complaintID);
+
+@Query("SELECT g.gwid FROM GrievanceDetails g WHERE g.grievanceId = :grievanceId")
+Long getUniqueGwid(@Param("grievanceId")Long grievanceIdObj);
+
+
 
 }

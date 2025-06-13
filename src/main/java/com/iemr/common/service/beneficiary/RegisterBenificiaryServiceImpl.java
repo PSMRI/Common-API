@@ -169,6 +169,7 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 		CommonIdentityDTO identityDTO = identityMapper.beneficiaryModelCommonIdentityDTO(beneficiaryModel);
 		setSaveDemographicDetails(identityDTO,beneficiaryModel);
 		// identityDTO.setOtherFields(beneficiaryModel.getOtherFields());
+		identityDTO.setIsConsent(beneficiaryModel.getIsConsent());
 		identityDTO.setFaceEmbedding(beneficiaryModel.getFaceEmbedding());
 		identityDTO.setEmergencyRegistration(beneficiaryModel.isEmergencyRegistration());
 		identityDTO.setIsConsent(beneficiaryModel.getIsConsent());

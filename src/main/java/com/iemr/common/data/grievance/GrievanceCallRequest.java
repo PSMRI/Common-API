@@ -12,6 +12,8 @@ public class GrievanceCallRequest {
       Integer callTypeID;
       Long benCallID;
       Integer providerServiceMapId;
+
+      Integer providerServiceMapID;
       String createdBy;
 	
 }

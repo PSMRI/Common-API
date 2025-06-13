@@ -71,14 +71,10 @@ public class GrievanceDetails {
 
 	@Expose
 	@Column(name = "Level")
-	private String level;
+	private Integer level;
 	@Expose
 	@Column(name = "State")
 	private String state;
-
-	@Expose
-	@Column(name = "Agentid")
-	private String agentid;
 
 	@Expose
 	@Column(name = "userid")
@@ -140,7 +136,7 @@ public class GrievanceDetails {
 
 	@Expose
 	@Column(name = "VanSerialNo")
-	private Integer vanSerialNo;
+	private Long vanSerialNo;
 	@Expose
 	@Column(name = "VanID")
 	private Integer vanID;
@@ -169,10 +165,10 @@ public class GrievanceDetails {
 
 	public GrievanceDetails(Long gwid, Long grievanceId, Long beneficiaryRegID, Long benCallID,
 			Integer providerServiceMapID, String complaintID, String subjectOfComplaint, String complaint,
-			String primaryNumber, String severety, String state, String agentID, Integer userid, Boolean isAllocated,
+			String primaryNumber, String severety, Integer level, String state, Integer userid, Boolean isAllocated,
 			Boolean retryNeeded, Boolean isRegistered, Integer callCounter, Integer preferredLanguageId,
 			String preferredLanguage, String complaintResolution, String remarks, Boolean deleted, Character processed, String createdBy, Timestamp createdDate,
-			String modifiedBy, Timestamp lastModDate, Integer vanSerialNo, Integer vanID, String vehicalNo,
+			String modifiedBy, Timestamp lastModDate, Long vanSerialNo, Integer vanID, String vehicalNo,
 			Integer parkingPlaceID, String syncedBy, Timestamp syncedDate, Boolean isCompleted) {
 		super();
 		this.gwid = gwid;
@@ -185,6 +181,7 @@ public class GrievanceDetails {
 		this.complaint = complaint;
 		this.primaryNumber = primaryNumber;
 		this.severety = severety;
+		this.level = level;
 		this.state = state;
 		this.agentid = agentID;
 		this.userID = userid;

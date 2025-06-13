@@ -89,6 +89,8 @@ public interface IEMRCalltypeRepositoryImplCustom extends CrudRepository<CallTyp
 	CallType getCallTypeDetails(@Param("callTypeID") Integer callTypeID);
 	
 	@Query("select callType, callGroupType from CallType "
+
+	@Query("select callGroupType, callType from CallType "
 			+ "where callTypeID = :callTypeID")
 	Set<Object[]> getCallDetails(@Param("callTypeID") Integer callTypeID);
 }

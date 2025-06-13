@@ -22,5 +22,8 @@ public interface GrievanceHandlingService {
 
 	public String saveComplaintResolution(String request) throws Exception;
 
+	
+	public String getGrievanceDetailsWithRemarks(String request) throws Exception;
+
 
 }
