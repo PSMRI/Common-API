@@ -3,6 +3,7 @@ package com.iemr.common.utils;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 import org.springframework.beans.factory.annotation.Value;
 
 @Configuration
@@ -20,6 +21,7 @@ public class FilterConfig {
 		JwtUserIdValidationFilter filter = new JwtUserIdValidationFilter(jwtAuthenticationUtil, allowedOrigins);
 
 		registrationBean.setFilter(filter);
+		registrationBean.setOrder(Ordered.LOWEST_PRECEDENCE);
 		registrationBean.addUrlPatterns("/*"); // Apply filter to all API endpoints
 		return registrationBean;
 	}
