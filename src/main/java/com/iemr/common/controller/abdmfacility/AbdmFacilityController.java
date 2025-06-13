@@ -3,7 +3,6 @@ package com.iemr.common.controller.abdmfacility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -25,7 +24,6 @@ public class AbdmFacilityController {
 	@Autowired
 	private AbdmFacilityService abdmFacilityService;
 	
-	@CrossOrigin
 	@Operation(summary = "Get Abdm facility mapped to worklocation")
 	@GetMapping(value = { "/getWorklocationMappedAbdmFacility/{workLocationId}" })
 	public String getAbdmFacilityDetails(@PathVariable int workLocationId, @RequestHeader(value = "Authorization") String Authorization) {

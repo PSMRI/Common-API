@@ -25,7 +25,6 @@ import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,7 +44,6 @@ public class EverwellController {
 	InputMapper inputMapper = new InputMapper();
 	Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
-	@CrossOrigin()
 	@Operation(summary = "Get data")
 	@RequestMapping(value = "/getjson", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getdata() {
@@ -74,7 +72,6 @@ public class EverwellController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Add support action")
 	@RequestMapping(value = {
 			"/addSupportAction/{id}" }, method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
@@ -95,7 +92,6 @@ public class EverwellController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Edit manual doses")
 	@RequestMapping(value = {
 			"/editManualDoses/{id}" }, method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
@@ -112,7 +108,6 @@ public class EverwellController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Everwell login")
 	@RequestMapping(value = "/login", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String everwellLogin(@RequestBody LoginRequestModelEverwell login) {

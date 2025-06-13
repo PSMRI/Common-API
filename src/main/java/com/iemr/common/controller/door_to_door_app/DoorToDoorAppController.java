@@ -24,7 +24,6 @@ package com.iemr.common.controller.door_to_door_app;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,8 +37,6 @@ import com.iemr.common.utils.response.OutputResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 
-
-@CrossOrigin
 @RestController
 @RequestMapping(value = "/doortodoorapp", headers = "Authorization")
 public class DoorToDoorAppController {
@@ -49,7 +46,6 @@ public class DoorToDoorAppController {
 	@Autowired
 	private DoorToDoorService doorToDoorService;
 
-	@CrossOrigin
 	@Operation(summary = "Get user details")
 	@RequestMapping(value = { "/getUserDetails" }, method = { RequestMethod.POST }, consumes = "application/json", produces = "application/json")
 	public String getUserDetails(@RequestBody String requestObj) {
@@ -70,7 +66,6 @@ public class DoorToDoorAppController {
 		return response.toString();
 	}
 
-	@CrossOrigin
 	@Operation(summary = "Get NCD TB HRP suspected status")
 	@PostMapping(value = { "/getSuspectedData_HRP_TB_NCD" }, consumes = "application/json", produces = "application/json")
 	public String getSuspectedData_HRP_TB_NCD(@RequestBody String requestObj) {

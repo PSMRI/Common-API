@@ -26,7 +26,6 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -59,7 +58,6 @@ public class CovidVaccinationController {
 	 * @return list of vaccination type and dose taken
 	 */
 
-	@CrossOrigin
 	@Operation(summary = "Master Data for Vaccination Type & Dose Taken")
 	@GetMapping(value = {
 			"/master/VaccinationTypeAndDoseTaken" }, produces = MediaType.APPLICATION_JSON)
@@ -84,7 +82,6 @@ public class CovidVaccinationController {
 	 * @param Authorization
 	 * @return Covid vaccination details of a beneficiary
 	 */
-	@CrossOrigin
 	@Operation(summary = "Getting beneficiary covid vaccination details")
 
 	@PostMapping(value = { "/getCovidVaccinationDetails" })
@@ -128,7 +125,6 @@ public class CovidVaccinationController {
 	 * @return Saving beneficiary vaccination details
 	 */
 
-	@CrossOrigin
 	@Operation(summary = "Save beneficiary covid vaccination details")
 	@PostMapping(value = { "/saveCovidVaccinationDetails" })
 	public String saveCovidVaccinationDetails(
