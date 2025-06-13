@@ -77,7 +77,7 @@ public class StockAlertData {
 	@Expose
 	private String districtName;
 	
-	@Column(name = "QuantityinhandPercent")
+	@Column(name = "QuantityConsumedPercent")
 	@Expose
 	private Double quantityinhandPercent;
 }
