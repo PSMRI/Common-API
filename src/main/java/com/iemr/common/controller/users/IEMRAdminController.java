@@ -21,17 +21,14 @@
 */
 package com.iemr.common.controller.users;
 
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.core.MediaType;
 
+import com.iemr.common.utils.UserAgentUtil;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -40,20 +37,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.iemr.common.config.encryption.SecurePassword;
-import com.iemr.common.data.directory.Directory;
 import com.iemr.common.data.users.LoginSecurityQuestions;
 import com.iemr.common.data.users.M_Role;
 import com.iemr.common.data.users.ServiceRoleScreenMapping;
@@ -63,10 +53,8 @@ import com.iemr.common.data.users.UserServiceRoleMapping;
 import com.iemr.common.model.user.ChangePasswordModel;
 import com.iemr.common.model.user.ForceLogoutRequestModel;
 import com.iemr.common.model.user.LoginRequestModel;
-import com.iemr.common.model.user.LoginResponseModel;
 import com.iemr.common.service.users.IEMRAdminUserService;
 import com.iemr.common.utils.CookieUtil;
-import com.iemr.common.utils.JwtAuthenticationUtil;
 import com.iemr.common.utils.JwtUtil;
 import com.iemr.common.utils.encryption.AESUtil;
 import com.iemr.common.utils.exception.IEMRException;
@@ -93,8 +81,6 @@ public class IEMRAdminController {
 	private JwtUtil jwtUtil;
 	@Autowired
 	private CookieUtil cookieUtil;
-	@Autowired
-	private JwtAuthenticationUtil jwtAuthenticationUtil;
 	@Autowired
 	private RedisTemplate<String, Object> redisTemplate;
 
@@ -164,21 +150,39 @@ public class IEMRAdminController {
 			} else if (m_User.getUserName() != null && m_User.getDoLogout() != null && m_User.getDoLogout() == true) {
 				deleteSessionObject(m_User.getUserName().trim().toLowerCase());
 			}
+
+			String jwtToken = null;
+			String refreshToken = null;
+			boolean isMobile = false;
 			if (mUser.size() == 1) {
-				String Jwttoken = jwtUtil.generateToken(m_User.getUserName(), mUser.get(0).getUserID().toString());
-				logger.info("jwt token is:" + Jwttoken);
+				jwtToken = jwtUtil.generateToken(m_User.getUserName(), mUser.get(0).getUserID().toString());
 				
 				User user = new User(); // Assuming the Users class exists
 	            user.setUserID(mUser.get(0).getUserID());
 	            user.setUserName(mUser.get(0).getUserName());
-	            
-	            String redisKey = "user_" + mUser.get(0).getUserID(); // Use user ID to create a unique key
 
-	            // Store the user in Redis (set a TTL of 30 minutes)
-	            redisTemplate.opsForValue().set(redisKey, user, 30, TimeUnit.MINUTES);
+				String userAgent = request.getHeader("User-Agent");
+				isMobile = UserAgentUtil.isMobileDevice(userAgent);
+				logger.info("UserAgentUtil isMobile : " + isMobile);
 
-				// Set Jwttoken in the response cookie
-				cookieUtil.addJwtTokenToCookie(Jwttoken, httpResponse, request);
+				if (isMobile) {
+					refreshToken = jwtUtil.generateRefreshToken(m_User.getUserName(), user.getUserID().toString());
+					logger.debug("Refresh token generated successfully for user: {}", user.getUserName());
+					String jti = jwtUtil.getJtiFromToken(refreshToken);
+					redisTemplate.opsForValue().set(
+							"refresh:" + jti,
+							user.getUserID().toString(),
+							jwtUtil.getRefreshTokenExpiration(),
+							TimeUnit.MILLISECONDS
+					);
+				} else {
+					cookieUtil.addJwtTokenToCookie(jwtToken, httpResponse, request);
+				}
+
+				String redisKey = "user_" + mUser.get(0).getUserID(); // Use user ID to create a unique key
+
+				// Store the user in Redis (set a TTL of 30 minutes)
+				redisTemplate.opsForValue().set(redisKey, user, 30, TimeUnit.MINUTES);
 
 				createUserMapping(mUser.get(0), resMap, serviceRoleMultiMap, serviceRoleMap, serviceRoleList,
 						previlegeObj);
@@ -199,6 +203,13 @@ public class IEMRAdminController {
 			}
 			responseObj = iemrAdminUserServiceImpl.generateKeyAndValidateIP(responseObj, remoteAddress,
 					request.getRemoteHost());
+
+			// Add tokens to response for mobile
+			if (isMobile && !mUser.isEmpty()) {
+				responseObj.put("jwtToken", jwtToken);
+				responseObj.put("refreshToken", refreshToken);
+			}
+
 			response.setResponse(responseObj.toString());
 		} catch (Exception e) {
 			logger.error("userAuthenticate failed with error " + e.getMessage(), e);
@@ -206,6 +217,68 @@ public class IEMRAdminController {
 		}
 		logger.info("userAuthenticate response " + response.toString());
 		return response.toString();
+	}
+
+	@Operation(summary = "generating a auth token with the refreshToken.")
+	@RequestMapping(value = "/refreshToken", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
+	public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> request) {
+		String refreshToken = request.get("refreshToken");
+
+		try {
+			if (jwtUtil.validateToken(refreshToken) == null) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+			}
+
+			Claims claims = jwtUtil.getAllClaimsFromToken(refreshToken);
+
+			// Verify token type
+			if (!"refresh".equals(claims.get("token_type", String.class))) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token type");
+			}
+
+			// Check revocation using JTI
+			String jti = claims.getId();
+			if (!redisTemplate.hasKey("refresh:" + jti)) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token revoked");
+			}
+
+			// Get user details
+			// Get user details
+			String userId = claims.get("userId", String.class);
+			User user = iemrAdminUserServiceImpl.getUserById(Long.parseLong(userId));
+			
+			// Validate that the user still exists and is active
+			if (user == null) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+			}
+			
+			if (user.getM_status() == null || !"Active".equalsIgnoreCase(user.getM_status().getStatus())) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User account is inactive");
+			}
+			// Generate new tokens
+			String newJwt = jwtUtil.generateToken(user.getUserName(), userId);
+
+			Map<String, String> tokens = new HashMap<>();
+			tokens.put("jwtToken", newJwt);
+			
+			// Generate and store a new refresh token (token rotation)
+			String newRefreshToken = jwtUtil.generateRefreshToken(user.getUserName(), userId);
+			String newJti = jwtUtil.getJtiFromToken(newRefreshToken);
+			redisTemplate.opsForValue().set(
+				"refresh:" + newJti,
+				userId,
+				jwtUtil.getRefreshTokenExpiration(),
+				TimeUnit.MILLISECONDS
+			);
+			tokens.put("refreshToken", newRefreshToken);
+
+			return ResponseEntity.ok(tokens);
+		} catch (ExpiredJwtException ex) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token expired");
+		} catch (Exception e) {
+			logger.error("Refresh failed: ", e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Token refresh failed");
+		}
 	}
 
 	@CrossOrigin()
@@ -740,7 +813,7 @@ public class IEMRAdminController {
 
 	/**
 	 * 
-	 * @param request
+	 * @param key
 	 * @return
 	 */
 	private void deleteSessionObjectByGettingSessionDetails(String key) {
