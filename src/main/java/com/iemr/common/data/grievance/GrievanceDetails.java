@@ -183,6 +183,7 @@ public class GrievanceDetails {
 		this.severety = severety;
 		this.level = level;
 		this.state = state;
+		this.agentid = agentID;
 		this.userID = userid;
 		this.isAllocated = isAllocated;
 		this.retryNeeded = retryNeeded;

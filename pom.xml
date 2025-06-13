@@ -165,7 +165,6 @@
 			<artifactId>hibernate-jpa-2.0-api</artifactId>
 			<version>1.0.1.Final</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-cache</artifactId>
@@ -497,7 +496,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>commonapi-v3.0.0</finalName>
+		<finalName>commonapi-v1.0</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

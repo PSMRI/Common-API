@@ -55,6 +55,7 @@ public class OTPGateway {
 	@Operation(summary = "Send OTP")
 	@RequestMapping(value = "/sendOTP", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String sendOTP(@Param(value = "{\"mobNo\":\"String\"}") @RequestBody String requestOBJ) {
+		logger.info(requestOBJ.toString());
 
 		OutputResponse response = new OutputResponse();
 
@@ -62,7 +63,8 @@ public class OTPGateway {
 			OTPRequestParsor obj = InputMapper.gson().fromJson(requestOBJ, OTPRequestParsor.class);
 
 			String success = otpHandler.sendOTP(obj);
-			if (success.equalsIgnoreCase("success"))
+			logger.info(success.toString());
+			if (success.contains("otp"))
 				response.setResponse(success);
 			else
 				response.setError(5000, "failure");
@@ -102,6 +104,7 @@ public class OTPGateway {
 	@Operation(summary = "Resend OTP")
 	@RequestMapping(value = "/resendOTP", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String resendOTP(@Param(value = "{\"mobNo\":\"String\"}") @RequestBody String requestOBJ) {
+		logger.info(requestOBJ.toString());
 
 		OutputResponse response = new OutputResponse();
 
@@ -109,7 +112,9 @@ public class OTPGateway {
 			OTPRequestParsor obj = InputMapper.gson().fromJson(requestOBJ, OTPRequestParsor.class);
 
 			String success = otpHandler.resendOTP(obj);
-			if (success.equalsIgnoreCase("success"))
+			logger.info(success.toString());
+
+			if (success.contains("otp"))
 				response.setResponse(success);
 			else
 				response.setError(5000, "failure");
