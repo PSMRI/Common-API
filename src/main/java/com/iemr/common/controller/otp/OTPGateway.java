@@ -27,7 +27,6 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -51,7 +50,6 @@ public class OTPGateway {
 	@Autowired
 	private OTPHandler otpHandler;
 
-	@CrossOrigin()
 	@Operation(summary = "Send OTP")
 	@RequestMapping(value = "/sendOTP", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String sendOTP(@Param(value = "{\"mobNo\":\"String\"}") @RequestBody String requestOBJ) {
@@ -74,7 +72,6 @@ public class OTPGateway {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Validate OTP")
 	@RequestMapping(value = "/validateOTP", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String validateOTP(
@@ -98,7 +95,6 @@ public class OTPGateway {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Resend OTP")
 	@RequestMapping(value = "/resendOTP", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String resendOTP(@Param(value = "{\"mobNo\":\"String\"}") @RequestBody String requestOBJ) {

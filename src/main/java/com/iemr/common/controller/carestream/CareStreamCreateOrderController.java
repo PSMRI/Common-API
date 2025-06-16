@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -60,7 +59,6 @@ public class CareStreamCreateOrderController {
 	@Value("${carestream_socket_port}")
 	private int carestreamSocketPort;
 
-	@CrossOrigin()
 	@Operation(summary = "Create order")
 	@RequestMapping(value = "/createOrder", headers = "Authorization", method = { RequestMethod.POST }, produces = {
 			"application/json" })
@@ -122,7 +120,6 @@ public class CareStreamCreateOrderController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Update order")
 	@RequestMapping(value = "/UpdateOrder", headers = "Authorization", method = { RequestMethod.POST }, produces = {
 			"application/json" })
@@ -184,7 +181,6 @@ public class CareStreamCreateOrderController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Delete order")
 	@RequestMapping(value = "/deleteOrder", headers = "Authorization", method = { RequestMethod.POST }, produces = {
 			"application/json" })

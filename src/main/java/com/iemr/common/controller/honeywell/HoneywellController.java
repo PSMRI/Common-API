@@ -26,7 +26,6 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -39,7 +38,6 @@ import com.iemr.common.utils.response.OutputResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 
-@CrossOrigin
 @RequestMapping({ "/honeywell" })
 @RestController
 public class HoneywellController {
@@ -48,7 +46,6 @@ public class HoneywellController {
 	@Autowired
 	private HoneywellService honeywellService;
 
-	@CrossOrigin
 	@Operation(summary = "Get real time district wise call report")
 	@RequestMapping(value = "/realtimeDistrictDistribution", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getRealtimeDistrictWiseCallReport() {
@@ -62,7 +59,6 @@ public class HoneywellController {
 		return response.toString();
 	}
 
-	@CrossOrigin
 	@Operation(summary = "District wise call distribution")
 	@RequestMapping(value = "/districtWiseCallDistribution", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getDistrictWiseCallReport(@RequestBody String request, HttpServletRequest httpRequest) {
@@ -77,7 +73,6 @@ public class HoneywellController {
 		return response.toString();
 	}
 
-	@CrossOrigin
 	@Operation(summary = "Urban and rural calls")
 	@RequestMapping(value = "/urban_rural_calls", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getUrbanRuralCallReport(@RequestBody String request, HttpServletRequest httpRequest) {
