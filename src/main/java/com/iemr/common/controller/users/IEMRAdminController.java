@@ -512,7 +512,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-//	@CrossOrigin()
 //	@Operation(summary = "User authentication V1")
 //	@RequestMapping(value = "/userAuthenticateV1", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 //	public String userAuthenticateV1(

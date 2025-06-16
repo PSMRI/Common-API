@@ -41,6 +41,8 @@ public class JwtUserIdValidationFilter implements Filter {
 			response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
 			response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, Jwttoken");
 			response.setHeader("Access-Control-Allow-Credentials", "true");
+		} else {
+			logger.warn("Origin [{}] is NOT allowed. CORS headers NOT added.", origin);
 		}
 
 		if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
@@ -129,7 +131,15 @@ public class JwtUserIdValidationFilter implements Filter {
 
 		return Arrays.stream(allowedOrigins.split(","))
 				.map(String::trim)
-				.anyMatch(pattern -> origin.matches(pattern.replace(".", "\\.").replace("*", ".*")));
+				.anyMatch(pattern -> {
+					String regex = pattern
+							.replace(".", "\\.")
+							.replace("*", ".*")
+							.replace("http://localhost:.*", "http://localhost:\\d+"); // special case for wildcard port
+
+					boolean matched = origin.matches(regex);
+					return matched;
+				});
 	}
 
 	private boolean isMobileClient(String userAgent) {
