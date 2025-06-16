@@ -36,33 +36,15 @@ public class JwtUserIdValidationFilter implements Filter {
 		HttpServletResponse response = (HttpServletResponse) servletResponse;
 
 		String origin = request.getHeader("Origin");
-		String method;
-
-		logger.info("Incoming Origin Header: {}", origin);
-		logger.info("Incoming Origin Header: {}", method = request.getMethod());
-		logger.info("Configured allowedOrigins: {}", allowedOrigins);
-
 		if (origin != null && isOriginAllowed(origin)) {
-			logger.info("Origin [{}] is allowed. Adding CORS headers.", origin);
 			response.setHeader("Access-Control-Allow-Origin", origin);
 			response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
 			response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, Jwttoken");
 			response.setHeader("Access-Control-Allow-Credentials", "true");
-		} else {
-			logger.warn("Origin [{}] is NOT allowed. CORS headers NOT added.", origin);
 		}
 
 		if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
 			logger.info("OPTIONS request - skipping JWT validation");
-
-			if (origin == null) {
-				logger.warn("OPTIONS request missing Origin header!");
-			} else if (!isOriginAllowed(origin)) {
-				logger.warn("Origin [{}] is not allowed by CORS policy!", origin);
-			} else {
-				logger.info("CORS headers applied successfully for origin: {}", origin);
-			}
-
 			response.setStatus(HttpServletResponse.SC_OK);
 			return;
 		}
@@ -145,20 +127,9 @@ public class JwtUserIdValidationFilter implements Filter {
 			return false;
 		}
 
-		logger.info("Checking if origin [{}] is allowed among [{}]", origin, allowedOrigins);
-
 		return Arrays.stream(allowedOrigins.split(","))
 				.map(String::trim)
-				.anyMatch(pattern -> {
-					String regex = pattern
-							.replace(".", "\\.")
-							.replace("*", ".*")
-							.replace("http://localhost:.*", "http://localhost:\\d+"); // special case for wildcard port
-
-					boolean matched = origin.matches(regex);
-					logger.debug("Trying origin [{}] against regex [{}]: {}", origin, regex, matched);
-					return matched;
-				});
+				.anyMatch(pattern -> origin.matches(pattern.replace(".", "\\.").replace("*", ".*")));
 	}
 
 	private boolean isMobileClient(String userAgent) {
