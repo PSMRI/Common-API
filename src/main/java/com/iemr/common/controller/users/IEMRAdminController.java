@@ -144,6 +144,7 @@ public class IEMRAdminController {
 			String userAgent = request.getHeader("User-Agent");
 			isMobile = UserAgentUtil.isMobileDevice(userAgent);
 			logger.info("UserAgentUtil isMobile : " + isMobile);
+			logger.info("isCaptha : " + enableCaptcha);
 
 			String captchaToken = m_User.getCaptchaToken();
 			if (enableCaptcha && !isMobile) {
@@ -170,9 +171,9 @@ public class IEMRAdminController {
 			JSONObject serviceRoleMap = new JSONObject();
 			JSONArray serviceRoleList = new JSONArray();
 			JSONObject previlegeObj = new JSONObject();
-			if (m_User.getUserName() != null 
-					    && (m_User.getDoLogout() == null || !m_User.getDoLogout()) 
-					    && (m_User.getWithCredentials() != null && m_User.getWithCredentials())) {
+			if (m_User.getUserName() != null
+					&& (m_User.getDoLogout() == null || !m_User.getDoLogout())
+					&& (m_User.getWithCredentials() != null && m_User.getWithCredentials())) {
 				String tokenFromRedis = getConcurrentCheckSessionObjectAgainstUser(
 						m_User.getUserName().trim().toLowerCase());
 				if (tokenFromRedis != null) {
@@ -187,7 +188,7 @@ public class IEMRAdminController {
 			String refreshToken = null;
 			if (mUser.size() == 1) {
 				jwtToken = jwtUtil.generateToken(m_User.getUserName(), mUser.get(0).getUserID().toString());
-				
+
 				User user = new User(); // Assuming the Users class exists
 				user.setUserID(mUser.get(0).getUserID());
 				user.setUserName(mUser.get(0).getUserName());
@@ -201,8 +202,7 @@ public class IEMRAdminController {
 							"refresh:" + jti,
 							user.getUserID().toString(),
 							jwtUtil.getRefreshTokenExpiration(),
-							TimeUnit.MILLISECONDS
-					);
+							TimeUnit.MILLISECONDS);
 				} else {
 					cookieUtil.addJwtTokenToCookie(jwtToken, httpResponse, request);
 				}
@@ -274,12 +274,12 @@ public class IEMRAdminController {
 			// Get user details
 			String userId = claims.get("userId", String.class);
 			User user = iemrAdminUserServiceImpl.getUserById(Long.parseLong(userId));
-			
+
 			// Validate that the user still exists and is active
 			if (user == null) {
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
 			}
-			
+
 			if (user.getM_status() == null || !"Active".equalsIgnoreCase(user.getM_status().getStatus())) {
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User account is inactive");
 			}
@@ -288,16 +288,15 @@ public class IEMRAdminController {
 
 			Map<String, String> tokens = new HashMap<>();
 			tokens.put("jwtToken", newJwt);
-			
+
 			// Generate and store a new refresh token (token rotation)
 			String newRefreshToken = jwtUtil.generateRefreshToken(user.getUserName(), userId);
 			String newJti = jwtUtil.getJtiFromToken(newRefreshToken);
 			redisTemplate.opsForValue().set(
-				"refresh:" + newJti,
-				userId,
-				jwtUtil.getRefreshTokenExpiration(),
-				TimeUnit.MILLISECONDS
-			);
+					"refresh:" + newJti,
+					userId,
+					jwtUtil.getRefreshTokenExpiration(),
+					TimeUnit.MILLISECONDS);
 			tokens.put("refreshToken", newRefreshToken);
 
 			return ResponseEntity.ok(tokens);
@@ -404,7 +403,7 @@ public class IEMRAdminController {
 					previlegeObj.getJSONObject(serv).put("agentPassword", m_UserServiceRoleMapping.getAgentPassword());
 				}
 				JSONArray roles = previlegeObj.getJSONObject(serv).getJSONArray("roles");
-//            roles.put(new JSONObject(m_UserServiceRoleMapping.getM_Role().toString()));
+				// roles.put(new JSONObject(m_UserServiceRoleMapping.getM_Role().toString()));
 				JSONObject roleObject = new JSONObject(m_UserServiceRoleMapping.getM_Role().toString());
 				roleObject.put("isSanjeevani", m_UserServiceRoleMapping.getIsSanjeevani());
 				roles.put(roleObject);
@@ -423,7 +422,7 @@ public class IEMRAdminController {
 	@RequestMapping(value = "/superUserAuthenticate", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String superUserAuthenticate(
 			@Param(value = "\"{\\\"userName\\\":\\\"String\\\",\\\"doLogout\\\":\\\"Boolean\\\"}\"") @RequestBody LoginRequestModel m_User,
-			HttpServletRequest request,HttpServletResponse httpResponse) {
+			HttpServletRequest request, HttpServletResponse httpResponse) {
 		OutputResponse response = new OutputResponse();
 		logger.info("userAuthenticate request ");
 		try {
@@ -453,10 +452,10 @@ public class IEMRAdminController {
 				resMap.put("isAuthenticated", /* Boolean.valueOf(true) */true);
 				resMap.put("userName", mUser.getUserName());
 				jwtToken = jwtUtil.generateToken(m_User.getUserName(), mUser.getUserID().toString());
-				
+
 				User user = new User(); // Assuming the Users class exists
-	            user.setUserID(mUser.getUserID());
-	            user.setUserName(mUser.getUserName());
+				user.setUserID(mUser.getUserID());
+				user.setUserName(mUser.getUserName());
 
 				String userAgent = request.getHeader("User-Agent");
 				isMobile = UserAgentUtil.isMobileDevice(userAgent);
@@ -470,8 +469,7 @@ public class IEMRAdminController {
 							"refresh:" + jti,
 							user.getUserID().toString(),
 							jwtUtil.getRefreshTokenExpiration(),
-							TimeUnit.MILLISECONDS
-					);
+							TimeUnit.MILLISECONDS);
 				} else {
 					cookieUtil.addJwtTokenToCookie(jwtToken, httpResponse, request);
 				}
@@ -512,33 +510,39 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-//	@CrossOrigin()
-//	@Operation(summary = "User authentication V1")
-//	@RequestMapping(value = "/userAuthenticateV1", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
-//	public String userAuthenticateV1(
-//			@Param(value = "\"{\\\"userName\\\":\\\"String\\\",\\\"password\\\":\\\"String\\\"}\"") @RequestBody LoginRequestModel loginRequest,
-//			HttpServletRequest request) {
-//		OutputResponse response = new OutputResponse();
-//		logger.info("userAuthenticate request ");
-//		try {
-//
-//			String remoteAddress = request.getHeader("X-FORWARDED-FOR");
-//			if (remoteAddress == null || remoteAddress.trim().length() == 0) {
-//				remoteAddress = request.getRemoteAddr();
-//			}
-//			LoginResponseModel resp = iemrAdminUserServiceImpl.userAuthenticateV1(loginRequest, remoteAddress,
-//					request.getRemoteHost());
-//			JSONObject responseObj = new JSONObject(OutputMapper.gsonWithoutExposeRestriction().toJson(resp));
-//			responseObj = iemrAdminUserServiceImpl.generateKeyAndValidateIP(responseObj, remoteAddress,
-//					request.getRemoteHost());
-//			response.setResponse(responseObj.toString());
-//		} catch (Exception e) {
-//			logger.error("userAuthenticate failed with error " + e.getMessage(), e);
-//			response.setError(e);
-//		}
-//		logger.info("userAuthenticate response " + response.toString());
-//		return response.toString();
-//	}
+	// @CrossOrigin()
+	// @Operation(summary = "User authentication V1")
+	// @RequestMapping(value = "/userAuthenticateV1", method = RequestMethod.POST,
+	// produces = MediaType.APPLICATION_JSON)
+	// public String userAuthenticateV1(
+	// @Param(value =
+	// "\"{\\\"userName\\\":\\\"String\\\",\\\"password\\\":\\\"String\\\"}\"")
+	// @RequestBody LoginRequestModel loginRequest,
+	// HttpServletRequest request) {
+	// OutputResponse response = new OutputResponse();
+	// logger.info("userAuthenticate request ");
+	// try {
+	//
+	// String remoteAddress = request.getHeader("X-FORWARDED-FOR");
+	// if (remoteAddress == null || remoteAddress.trim().length() == 0) {
+	// remoteAddress = request.getRemoteAddr();
+	// }
+	// LoginResponseModel resp =
+	// iemrAdminUserServiceImpl.userAuthenticateV1(loginRequest, remoteAddress,
+	// request.getRemoteHost());
+	// JSONObject responseObj = new
+	// JSONObject(OutputMapper.gsonWithoutExposeRestriction().toJson(resp));
+	// responseObj = iemrAdminUserServiceImpl.generateKeyAndValidateIP(responseObj,
+	// remoteAddress,
+	// request.getRemoteHost());
+	// response.setResponse(responseObj.toString());
+	// } catch (Exception e) {
+	// logger.error("userAuthenticate failed with error " + e.getMessage(), e);
+	// response.setError(e);
+	// }
+	// logger.info("userAuthenticate response " + response.toString());
+	// return response.toString();
+	// }
 
 	@Operation(summary = "Get login response")
 	@RequestMapping(value = "/getLoginResponse", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
@@ -549,7 +553,7 @@ public class IEMRAdminController {
 			if (authHeader.isEmpty()) {
 				// Try JWT token from header first
 				String jwtToken = request.getHeader("Jwttoken");
-				
+
 				// If not in header, try cookie
 				if (jwtToken == null) {
 					Cookie[] cookies = request.getCookies();
@@ -562,14 +566,14 @@ public class IEMRAdminController {
 						}
 					}
 				}
-				
+
 				if (jwtToken == null) {
 					throw new IEMRException("No authentication token found in header or cookie");
 				}
-				
+
 				// Extract user ID from the JWT token
 				String userId = jwtUtil.getUserIdFromToken(jwtToken);
-				
+
 				// Get user details and prepare response
 				User user = iemrAdminUserServiceImpl.getUserById(Long.parseLong(userId));
 				if (user == null) {
@@ -918,55 +922,58 @@ public class IEMRAdminController {
 
 	@Operation(summary = "Force log out")
 	@RequestMapping(value = "/forceLogout", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
-	public String forceLogout(@RequestBody ForceLogoutRequestModel request, HttpServletRequest httpRequest, HttpServletResponse response) {
-	    OutputResponse outputResponse = new OutputResponse();
-	    try {
-	        // Perform the force logout logic
-	        iemrAdminUserServiceImpl.forceLogout(request);
+	public String forceLogout(@RequestBody ForceLogoutRequestModel request, HttpServletRequest httpRequest,
+			HttpServletResponse response) {
+		OutputResponse outputResponse = new OutputResponse();
+		try {
+			// Perform the force logout logic
+			iemrAdminUserServiceImpl.forceLogout(request);
 
-	        // Extract token from cookies or headers
-	        String token = getJwtTokenFromCookies(httpRequest);
-	        if (token == null) {
-	        	 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-	             outputResponse.setError(new RuntimeException("No JWT token found in request"));
-	        	 return outputResponse.toString();	
-	        	 }
+			// Extract token from cookies or headers
+			String token = getJwtTokenFromCookies(httpRequest);
+			if (token == null) {
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				outputResponse.setError(new RuntimeException("No JWT token found in request"));
+				return outputResponse.toString();
+			}
 
-	        // Validate the token: Check if it is expired or in the deny list
-	        Claims claims = jwtUtil.validateToken(token);
-	        if (claims.isEmpty() || claims.getExpiration() == null || claims.getId() == null) {	            // If token is either expired or in the deny list, return 401 Unauthorized
-	        	response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-	        	outputResponse.setError(new RuntimeException("Token is expired or has been logged out"));
-	        	return outputResponse.toString();
-	        }
+			// Validate the token: Check if it is expired or in the deny list
+			Claims claims = jwtUtil.validateToken(token);
+			if (claims.isEmpty() || claims.getExpiration() == null || claims.getId() == null) { // If token is either
+																								// expired or in the
+																								// deny list, return 401
+																								// Unauthorized
+				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+				outputResponse.setError(new RuntimeException("Token is expired or has been logged out"));
+				return outputResponse.toString();
+			}
 
-	        // Extract the jti (JWT ID) and expiration time from the validated claims
-	        String jti = claims.getId();  // jti is in the 'id' field of claims
-	        long expirationTime = claims.getExpiration().getTime(); // Use expiration from claims
-	        long ttlMillis = expirationTime - System.currentTimeMillis();
-	        tokenDenylist.addTokenToDenylist(jti, ttlMillis);
+			// Extract the jti (JWT ID) and expiration time from the validated claims
+			String jti = claims.getId(); // jti is in the 'id' field of claims
+			long expirationTime = claims.getExpiration().getTime(); // Use expiration from claims
+			long ttlMillis = expirationTime - System.currentTimeMillis();
+			tokenDenylist.addTokenToDenylist(jti, ttlMillis);
 
-	        // Set the response message
-	        outputResponse.setResponse("Success");
-	    } catch (Exception e) {
-	        outputResponse.setError(e);
-	    }
-	    return outputResponse.toString();
+			// Set the response message
+			outputResponse.setResponse("Success");
+		} catch (Exception e) {
+			outputResponse.setError(e);
+		}
+		return outputResponse.toString();
 	}
 
 	private String getJwtTokenFromCookies(HttpServletRequest request) {
-	    Cookie[] cookies = request.getCookies();
-	    if (cookies != null) {
-	        for (Cookie cookie : cookies) {
-	        	 if (cookie.getName().equalsIgnoreCase(Constants.JWT_TOKEN)) {
-	        		 return cookie.getValue();
-	            }
-	        }
-	    }
-	    return null;
+		Cookie[] cookies = request.getCookies();
+		if (cookies != null) {
+			for (Cookie cookie : cookies) {
+				if (cookie.getName().equalsIgnoreCase(Constants.JWT_TOKEN)) {
+					return cookie.getValue();
+				}
+			}
+		}
+		return null;
 	}
 
-	
 	@Operation(summary = "User force log out")
 	@RequestMapping(value = "/userForceLogout", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String userForceLogout(
@@ -1163,7 +1170,8 @@ public class IEMRAdminController {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body("JWT token not found");
 	}
 
-	private JSONObject prepareAuthenticationResponse(User mUser, String remoteAddress, String remoteHost) throws Exception {
+	private JSONObject prepareAuthenticationResponse(User mUser, String remoteAddress, String remoteHost)
+			throws Exception {
 		JSONObject resMap = new JSONObject();
 		JSONObject serviceRoleMultiMap = new JSONObject();
 		JSONObject serviceRoleMap = new JSONObject();
