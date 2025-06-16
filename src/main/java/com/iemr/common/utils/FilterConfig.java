@@ -21,7 +21,7 @@ public class FilterConfig {
 		JwtUserIdValidationFilter filter = new JwtUserIdValidationFilter(jwtAuthenticationUtil, allowedOrigins);
 
 		registrationBean.setFilter(filter);
-		registrationBean.setOrder(Ordered.LOWEST_PRECEDENCE);
+		registrationBean.setOrder(Ordered.HIGHEST_PRECEDENCE);
 		registrationBean.addUrlPatterns("/*"); // Apply filter to all API endpoints
 		return registrationBean;
 	}
