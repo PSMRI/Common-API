@@ -406,7 +406,7 @@ public class IEMRAdminController {
 				JSONArray roles = previlegeObj.getJSONObject(serv).getJSONArray("roles");
 //            roles.put(new JSONObject(m_UserServiceRoleMapping.getM_Role().toString()));
 				JSONObject roleObject = new JSONObject(m_UserServiceRoleMapping.getM_Role().toString());
-				roleObject.put("isSanjeevani", m_UserServiceRoleMapping.getIsSanjeevani());
+				roleObject.put("teleConsultation", m_UserServiceRoleMapping.getTeleConsultation());
 				roles.put(roleObject);
 			}
 		}
