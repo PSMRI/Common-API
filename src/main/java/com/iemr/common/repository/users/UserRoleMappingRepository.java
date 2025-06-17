@@ -36,7 +36,7 @@ import com.iemr.common.data.users.UserServiceRoleMapping;
 public interface UserRoleMappingRepository extends CrudRepository<UserServiceRoleMapping, Long>
 {
 	@Query("select map.USRMappingID, map.UserID, map.RoleID, map.m_Role, map.providerServiceMapID, "
-			+ "map.agentID, map.inbound, map.outbound, map.isSanjeevani, map.agentPassword, map.workingLocationID, map.providerServiceAddressMapping from "
+			+ "map.agentID, map.inbound, map.outbound, map.teleConsultation, map.agentPassword, map.workingLocationID, map.providerServiceAddressMapping from "
 			+ "UserServiceRoleMapping map left join map.m_ProviderServiceMapping psm left join psm.serviceProvider sp "
 			+ "left join map.m_Role left join map.providerServiceAddressMapping "
 			+ "where map.Deleted = false and UserID = :UserID and sp.statusID in (1,2) "
