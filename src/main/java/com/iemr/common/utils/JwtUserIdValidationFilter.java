@@ -36,6 +36,10 @@ public class JwtUserIdValidationFilter implements Filter {
 		HttpServletResponse response = (HttpServletResponse) servletResponse;
 
 		String origin = request.getHeader("Origin");
+
+		logger.debug("Incoming Origin: {}", origin);
+		logger.debug("Allowed Origins Configured: {}", allowedOrigins);
+
 		if (origin != null && isOriginAllowed(origin)) {
 			response.setHeader("Access-Control-Allow-Origin", origin);
 			response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
