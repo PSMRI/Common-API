@@ -7,6 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.sql.Timestamp;
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.io.IOException;
 import com.iemr.common.data.videocall.VideoCallParameters;
 import com.iemr.common.mapper.videocall.VideoCallMapper;
 import com.iemr.common.model.videocall.UpdateCallRequest;
@@ -87,6 +93,10 @@ public String updateCallStatus(UpdateCallRequest callRequest) throws Exception {
     if (updateCount > 0) {
         videoCall.setLinkUsed(true);
         videoCallRepository.save(videoCall); 
+        
+        //  if ("Completed".equalsIgnoreCase(requestEntity.getCallStatus())) {
+        //     saveRecordingFile(videoCall.getMeetingLink());
+        //  }
     } else {
         throw new Exception("Failed to update the call status");
     }
@@ -94,7 +104,29 @@ public String updateCallStatus(UpdateCallRequest callRequest) throws Exception {
     return OutputMapper.gsonWithoutExposeRestriction()
         .toJson(videoCallMapper.videoCallToResponse(videoCall));
 }
+private void saveRecordingFile(String meetingLink) {
+    try {
+        // Configurable Jibri recording location
+        String jibriOutputDir = ConfigProperties.getPropertyByName("jibri.output.path"); // e.g., /srv/jibri/recordings
+        String saveDir = ConfigProperties.getPropertyByName("video.recording.path"); // e.g., /srv/recordings
 
+        File jibriDir = new File(jibriOutputDir);
+        File[] matchingFiles = jibriDir.listFiles((dir, name) -> name.contains(meetingLink) && name.endsWith(".mp4"));
 
+        if (matchingFiles != null && matchingFiles.length > 0) {
+            File recording = matchingFiles[0];
+            Path targetPath = Paths.get(saveDir, meetingLink + ".mp4");
+
+            Files.copy(recording.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+            logger.info("Recording file saved: " + targetPath);
+        } else {
+            logger.warn("No matching recording file found for meeting: " + meetingLink);
+        }
+    } catch (IOException e) {
+        logger.error("Error saving recording file: ", e);
+    }
+}
 
 }
+
+
