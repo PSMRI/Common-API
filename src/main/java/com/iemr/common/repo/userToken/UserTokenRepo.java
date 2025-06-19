@@ -22,17 +22,10 @@
 /*
 * AMRIT – Accessible Medical Records via Integrated Technology
 */
-package com.iemr.common.model.notification;
+package com.iemr.common.repo.userToken;
 
-import lombok.Data;
+import com.iemr.common.data.userToken.UserTokenData;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.Map;
-
-@Data
-public class NotificationMessage {
-    private String appType;
-    private String token;
-    private String title;
-    private String body;
-    private Map<String ,String> data;
+public interface UserTokenRepo extends JpaRepository<UserTokenData,Integer> {
 }
