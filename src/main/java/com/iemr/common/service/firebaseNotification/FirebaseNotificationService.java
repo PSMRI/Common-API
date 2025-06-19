@@ -86,12 +86,10 @@ public class FirebaseNotificationService {
         UserTokenData userTokenData;
 
         if (existingTokenData.isPresent()) {
-            // User token exist karta hai => update karna hai
             userTokenData = existingTokenData.get();
             userTokenData.setToken(userToken.getToken());
             userTokenData.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
         } else {
-            // User token nahi mila => naya insert karna hai
             userTokenData = new UserTokenData();
             userTokenData.setUserId(userToken.getUserId());
             userTokenData.setToken(userToken.getToken());
@@ -107,8 +105,8 @@ public class FirebaseNotificationService {
                 .getRequest();
         String jwtTokenFromCookie = cookieUtil.getJwtTokenFromCookie(requestHeader);
         return userTokenRepo.findById(Integer.parseInt(jwtUtil.extractUserId(jwtTokenFromCookie))) // because your userId is Long in DB
-                .map(UserTokenData::getToken)  // mil gaya to token nikalo
-                .orElse(null); // nah
+                .map(UserTokenData::getToken)
+                .orElse(null); //
     }
 
 }
