@@ -4,8 +4,9 @@ import lombok.Data;
 
 @Data
 public class UpdateCallRequest {
-	 String meetingLink;
-	 String callStatus; 
-	 String callDuration; 
-	 String modifiedBy;
+	
+	private String meetingLink;
+	 private String callStatus; 
+	 private String callDuration; 
+	 private String modifiedBy;
 }

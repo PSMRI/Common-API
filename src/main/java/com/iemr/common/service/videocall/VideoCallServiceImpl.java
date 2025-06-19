@@ -21,8 +21,6 @@ import com.iemr.common.repository.videocall.VideoCallParameterRepository;
 import com.iemr.common.utils.config.ConfigProperties;
 import com.iemr.common.utils.mapper.OutputMapper;
 import com.iemr.common.utils.response.OutputResponse;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 
 @Service
 public class VideoCallServiceImpl implements VideoCallService {

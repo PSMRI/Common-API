@@ -19,37 +19,37 @@ public class VideoCallParameters {
 		@Id
 	    @GeneratedValue(strategy = GenerationType.IDENTITY)
 	    @Column(name = "MeetingID")
-	    Integer meetingID;
+	    private Integer meetingID;
 
 	    @Column(name = "DateOfCall")
-	    Timestamp dateOfCall;
+	    private Timestamp dateOfCall;
 
 	    @Column(name = "CallerPhoneNumber")
-	    String callerPhoneNumber;
+	    private String callerPhoneNumber;
 
 	    @Column(name = "AgentID")
-	    String agentID;
+	    private String agentID;
 
 	    @Column(name = "AgentName")
-	    String agentName;
+	    private String agentName;
 
 	    @Column(name = "MeetingLink")
-	    String meetingLink;
+	    private String meetingLink;
 
 	    @Column(name = "CallStatus")
-	    String callStatus;
+	    private String callStatus;
 
 	    @Column(name = "CallDuration")
-	    String callDuration;
+	    private String callDuration;
 
 	    @Column(name = "ProviderServiceMapID")
-	    Integer providerServiceMapID;
+	    private Integer providerServiceMapID;
 
 	    @Column(name = "BeneficiaryRegID")
     	private Long beneficiaryRegID;
 
 	    @Column(name = "ClosureRemark")
-	    String closureRemark;
+	    private String closureRemark;
 	    
 		@Column(name = "LinkGeneratedAt")
 		private Timestamp linkGeneratedAt;
@@ -58,19 +58,19 @@ public class VideoCallParameters {
 		private boolean linkUsed;
 
 	    @Column(name = "Deleted", insertable = false, updatable = true)
-		Boolean deleted;
+		private Boolean deleted;
 
 		@Column(name = "CreatedBy", insertable = true, updatable = false)
-		String createdBy;
+		private String createdBy;
 
 		@Column(name = "CreatedDate", insertable = false, updatable = false)
-		Timestamp createdDate;
+		private Timestamp createdDate;
 
 		@Column(name = "ModifiedBy", insertable = false, updatable = true)
-		String modifiedBy;
+		private String modifiedBy;
 
 		@Column(name = "LastModDate", insertable = false, updatable = false)
-		Timestamp lastModDate;
+		private Timestamp lastModDate;
 		
 		@Override
 		public String toString()

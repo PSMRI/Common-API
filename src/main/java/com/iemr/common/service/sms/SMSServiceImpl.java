@@ -1087,16 +1087,17 @@ public class SMSServiceImpl implements SMSService {
 	private String getBloodOnCallData(String className, String methodName, SMSRequest request,
 			BeneficiaryModel beneficiary) throws NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, ClassNotFoundException {
-		T_BloodRequest bloodRequest = prescribedDrugRepository.getBloodRequest(request.getBloodReqID());
-		T_RequestedBloodBank requestedBloodBank = prescribedDrugRepository
+			T_BloodRequest bloodRequest = prescribedDrugRepository.getBloodRequest(request.getBloodReqID());
+			T_RequestedBloodBank requestedBloodBank = prescribedDrugRepository
 				.getBloodBankAddress(request.getRequestedBloodBankID());
-		String variableValue = "";
+			String variableValue = "";
+
 		switch (methodName.toLowerCase()) {
 		case "dateofrequest":
- 		Date requestDate = bloodRequest.getCreatedDate();
-        String reportDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(requestDate);
-        variableValue = reportDate + " ";
-      	break;
+ 			Date requestDate = bloodRequest.getCreatedDate();
+       		String reportDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(requestDate);
+        	variableValue = reportDate + " ";
+      		break;
 		case "callercontactno":
 			if (request.getIsBloodBankSMS() == true) {
 				variableValue = (beneficiary.getBenPhoneMaps().size() > 0
@@ -1153,9 +1154,10 @@ public class SMSServiceImpl implements SMSService {
 	private String getDirectoryserviceData(String className, String methodName, SMSRequest request)
 			throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException {
-		Directoryservice directoryservice = prescribedDrugRepository
+			Directoryservice directoryservice = prescribedDrugRepository
 				.getDirectoryservice(request.getDirectoryServiceID());
-		String variableValue = "";
+			String variableValue = "";
+		
 		if(null != directoryservice && null != directoryservice.getInstitute()) {
 		switch (methodName.toLowerCase()) {
 		case "institutename":

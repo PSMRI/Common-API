@@ -8,13 +8,13 @@ import lombok.Data;
 
 @Data
 public class UpdateCallResponse {
-	String meetingLink;
-    String callStatus;
-    String callDuration;
-    String modifiedBy;
-    boolean isLinkUsed;
+	private String meetingLink;
+    private String callStatus;
+    private String callDuration;
+    private String modifiedBy;
+    private boolean isLinkUsed;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-    Timestamp lastModified;
+    private Timestamp lastModified;
 
     public UpdateCallResponse() {
     }
