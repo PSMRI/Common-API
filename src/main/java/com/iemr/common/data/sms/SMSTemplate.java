@@ -78,13 +78,7 @@ public class SMSTemplate
 	@Column(name = "LastModDate", insertable = false, updatable = false)
 	Timestamp lastModDate;
 
-	// @Override
-	// public String toString()
-	// {
-	// 	return OutputMapper.gsonWithoutExposeRestriction().toJson(this);
-	// }
-
-@Override
+	@Override
 	public String toString() {
 
 		return new GsonBuilder().excludeFieldsWithoutExposeAnnotation().setLongSerializationPolicy(LongSerializationPolicy.STRING).serializeNulls()

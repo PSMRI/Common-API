@@ -78,6 +78,6 @@ public class SMSRequest {
 	private Long beneficiaryId;
 	private String appointmentDate;
 	private String appointmentTime;
-	   @JsonProperty("sms_Advice")
-private String smsAdvice;  
+	@JsonProperty("sms_Advice")
+	private String smsAdvice;  
 }
