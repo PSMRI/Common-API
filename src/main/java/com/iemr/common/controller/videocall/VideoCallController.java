@@ -34,7 +34,6 @@ public class VideoCallController {
     @Autowired
     private VideoCallService videoCallService;
 
-    @CrossOrigin()
     @PostMapping(value = "/generate-link", produces = MediaType.APPLICATION_JSON_VALUE, headers = "Authorization")
     public ResponseEntity<Map<String, String>> generateJitsiLink() {
         Map<String, String> response = new HashMap<>();
