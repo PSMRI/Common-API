@@ -35,6 +35,7 @@ public class JwtUserIdValidationFilter implements Filter {
 		String contextPath = request.getContextPath();
 		logger.info("JwtUserIdValidationFilter invoked for path: " + path);
 
+
 		// Log cookies for debugging
 		Cookie[] cookies = request.getCookies();
 		if (cookies != null) {

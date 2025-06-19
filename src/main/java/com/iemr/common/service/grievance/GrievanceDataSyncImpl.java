@@ -38,6 +38,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.iemr.common.data.callhandling.CallType;
+import com.iemr.common.data.everwell.EverwellDetails;
 import com.iemr.common.data.grievance.GrievanceCallRequest;
 import com.iemr.common.data.grievance.GrievanceDetails;
 import com.iemr.common.data.grievance.GrievanceTransaction;
@@ -194,6 +195,26 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 												: null);
 								ArrayList<Object[]> lists = grievanceFetchBenDetailsRepo
 										.findByComplaintId(formattedComplaintId);
+
+				grievance.setComplaint(grievanceJsonData.has("Complaint")
+						? grievanceJsonData.get("Complaint").getAsString() : null);
+				  String severityName = grievanceJsonData.has("severity") && grievanceJsonData.get("severity").getAsJsonObject().has("severity")
+				            ? grievanceJsonData.get("severity").getAsJsonObject().get("severity").getAsString()
+				            : null;
+				    grievance.setSeverety(severityName);
+
+				    // Setting Level
+				    Integer levelId = grievanceJsonData.has("level") && grievanceJsonData.get("level").getAsJsonObject().has("levelId")
+				            ? grievanceJsonData.get("level").getAsJsonObject().get("levelId").getAsInt()
+				            : null;
+				    grievance.setLevel(levelId);
+				    
+				    // Setting state
+				    String stateName = grievanceJsonData.has("state") && grievanceJsonData.get("state").getAsJsonObject().has("stateName")
+				            ? grievanceJsonData.get("state").getAsJsonObject().get("stateName").getAsString()
+				            : null;
+				    grievance.setState(stateName);;
+                
 								grievance.setComplaint(grievanceJsonData.has("Complaint")
 										? grievanceJsonData.get("Complaint").getAsString()
 										: null);
@@ -220,6 +241,7 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 												: null;
 								grievance.setState(stateName);
 
+
 								for (Object[] objects : lists) {
 									if (objects != null && objects.length <= 4) {
 										grievance.setComplaintID((String) objects[0]);
@@ -228,6 +250,12 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 										grievance.setProviderServiceMapID((Integer) objects[3]);
 									}
 								}
+								
+										
+								
+								
+								// setting language related properties and other
+
 								Long benDetailsID = grievanceDataRepo
 										.getBeneficiaryMapping(grievance.getBeneficiaryRegID());
 								ArrayList<Object[]> list1 = grievanceDataRepo
@@ -538,6 +566,120 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 	public String completeGrievanceCall(String request) throws Exception {
 
 		GrievanceCallRequest grievanceCallRequest = InputMapper.gson().fromJson(request, GrievanceCallRequest.class);
+		   String complaintID = grievanceCallRequest.getComplaintID();
+		   Integer userID = grievanceCallRequest.getUserID();
+	        Boolean isCompleted = grievanceCallRequest.getIsCompleted();
+	        Long beneficiaryRegID = grievanceCallRequest.getBeneficiaryRegID();
+	        Integer callTypeID = grievanceCallRequest.getCallTypeID();
+	        Integer providerServiceMapId = grievanceCallRequest.getProviderServiceMapId();
+
+	        Integer providerServiceMapID = grievanceCallRequest.getProviderServiceMapID();
+
+	        CallType callTypeObj = new CallType();
+	        String response = "failure"; 
+	        int updateCount = 0;
+	        int updateCallCounter = 0;
+	        int callCounter = 0;
+
+	        try {
+	        	
+		        	GrievanceDetails grievanceCallStatus = new GrievanceDetails();
+
+	    		List<Object[]> lists = grievanceDataRepo.getCallCounter(complaintID);
+	    		for (Object[] objects : lists) {
+					if (objects != null && objects.length >= 2) {
+						grievanceCallStatus.setCallCounter((Integer) objects[0]);
+						grievanceCallStatus.setRetryNeeded((Boolean)objects[1]);	
+					}
+				}
+	        	
+	        	  // Fetching CallDetails using BenCallID and CallTypeID
+	    		Set<Object[]> callTypesArray = new HashSet<Object[]>();
+	            callTypesArray = iEMRCalltypeRepositoryImplCustom.getCallDetails(callTypeID);
+	        	for (Object[] object : callTypesArray)
+	    		{
+	    			if (object != null && object.length >= 2)
+	    			{
+	    				callTypeObj.setCallGroupType((String) object[0]);
+	    				callTypeObj.setCallType((String) object[1]);
+	    				
+	    			}
+	    			
+	    		}
+	    
+	    		       String callGroupType = callTypeObj.getCallGroupType();
+	    		        String callType = callTypeObj.getCallType();
+
+	        	
+	            // Logic for reattempt based on call group type and call type
+	    		        
+	    		      boolean  isRetryNeeded = grievanceCallStatus.getRetryNeeded();
+	    		        if (callGroupType.equals("Valid")) {
+	                // Conditions when no reattempt is needed
+
+	                if (callType.equals("Valid") || callType.equals("Wrong Number") || callType.equals("Test Call")) {
+
+	                if (callType.equals("Valid")  || callType.equals("Test Call")) {
+	                	isRetryNeeded = false;
+	                } else if (callType.equals("Disconnected Call") || callType.equals("Serviced Call") ||
+	                           callType.equals("Silent Call") || callType.equals("Call Back")) {
+	                    // Reattempt is needed for these call subtypes
+	                	isRetryNeeded = true;
+	                }
+	            }
+
+	            // Check if max attempts (3) are reached
+	            if (isRetryNeeded == true && callCounter < grievanceAllocationRetryConfiguration) {
+	                // Increment the call counter for reattempt
+	                grievanceCallStatus.setCallCounter(grievanceCallStatus.getCallCounter() + 1);
+	             // Update the retryNeeded flag
+	                grievanceCallStatus.setRetryNeeded(true);
+	                updateCallCounter = grievanceDataRepo.updateCallCounter(callCounter, grievanceCallStatus.getRetryNeeded(), grievanceCallRequest.getComplaintID(), 
+	                		grievanceCallRequest.getBeneficiaryRegID(), grievanceCallRequest.getProviderServiceMapId(),
+	                		grievanceCallRequest.getUserID());
+	            //    response = "Successfully closing call.";  // Return success when reattempt logic is applied successfully. The grievance call needs to be retried, and a reattempt is performed.
+	                if (updateCallCounter > 0)
+	                	response = "Successfully closing call";
+					else {
+						response = "failure";
+					}
+	            } else if (callCounter == grievanceAllocationRetryConfiguration) {
+	                // Max attempts reached, no further reattempt
+	                grievanceCallStatus.setRetryNeeded(false);
+	            	updateCount = grievanceDataRepo.updateCompletedStatusInCall(isCompleted, grievanceCallStatus.getRetryNeeded(), complaintID, userID, beneficiaryRegID, providerServiceMapId);
+
+	    		        if (callGroupType.equals("Invalid") && callType.equals("Wrong Number")) {
+	    		        	isRetryNeeded = false;
+	    		        	//isCompleted = true;
+	    		        	grievanceDataRepo.updateCompletedStatusInCall(isCompleted, isRetryNeeded, complaintID, userID, beneficiaryRegID, providerServiceMapID);
+	    		        }
+
+	            // Check if max attempts (3) are reached
+	            if (isRetryNeeded == true && grievanceCallStatus.getCallCounter() < grievanceAllocationRetryConfiguration) {
+	                // Increment the call counter for reattempt
+	                grievanceCallStatus.setCallCounter(grievanceCallStatus.getCallCounter() + 1);
+	             // Update the retryNeeded flag
+	                isRetryNeeded = true;
+	                //isCompleted = false;
+	                updateCallCounter = grievanceDataRepo.updateCallCounter(grievanceCallStatus.getCallCounter(), isRetryNeeded, grievanceCallRequest.getComplaintID(), 
+	                		grievanceCallRequest.getBeneficiaryRegID(), grievanceCallRequest.getProviderServiceMapID(),
+	                		grievanceCallRequest.getUserID());
+	            // Return success when reattempt logic is applied successfully. The grievance call needs to be retried, and a reattempt is performed.
+	                if (updateCallCounter > 0)
+	                	response = "Successfully closing call";
+					else {
+						response = "failure in closing call";
+					}
+	            } else if (grievanceCallStatus.getCallCounter()== grievanceAllocationRetryConfiguration) {
+	                // Max attempts reached, no further reattempt
+	                isRetryNeeded = false;
+	                //isCompleted = true;
+	            	updateCount = grievanceDataRepo.updateCompletedStatusInCall(isCompleted, isRetryNeeded, complaintID, userID, beneficiaryRegID, providerServiceMapID);
+	                response = "max_attempts_reached";  // Indicate that max attempts are reached
+	                
+	                
+	            } else {
+
 		String complaintID = grievanceCallRequest.getComplaintID();
 		Integer userID = grievanceCallRequest.getUserID();
 		Boolean isCompleted = grievanceCallRequest.getIsCompleted();
@@ -617,11 +759,13 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 				response = "Successfully closing call";
 			}
 
+
 		} catch (Exception e) {
 			response = "error: " + e.getMessage();
 		}
 
 		return response; // Return the response (either success or error message)
 	}
+
 
 }

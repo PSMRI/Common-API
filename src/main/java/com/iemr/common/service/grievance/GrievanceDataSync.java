@@ -19,4 +19,6 @@ public interface GrievanceDataSync {
 
 	public String completeGrievanceCall(String request) throws Exception;
 
+	public String completeGrievanceCall(String request) throws Exception;
+
 }

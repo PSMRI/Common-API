@@ -78,6 +78,10 @@ public class BeneficiaryModel implements Comparable<BeneficiaryModel> {
 	// private List<BeneficiaryCallModel> beneficiaryCalls;
 	// private List<FeedbackDetailsModel> feedbacks;
 	@Expose
+	private Boolean isConsent=false;
+
+
+	@Expose
 	private String beneficiaryID;
 	@Expose
 	private Short titleId;

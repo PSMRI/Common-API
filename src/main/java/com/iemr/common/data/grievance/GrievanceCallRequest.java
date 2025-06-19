@@ -11,6 +11,8 @@ public class GrievanceCallRequest {
       Long beneficiaryRegID;
       Integer callTypeID;
       Long benCallID;
+      Integer providerServiceMapId;
+
       Integer providerServiceMapID;
       String createdBy;
 	
