@@ -15,18 +15,14 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Arrays;
 
 public class JwtUserIdValidationFilter implements Filter {
 
 	private final JwtAuthenticationUtil jwtAuthenticationUtil;
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
-	private final String allowedOrigins;
 
-	public JwtUserIdValidationFilter(JwtAuthenticationUtil jwtAuthenticationUtil,
-			String allowedOrigins) {
+	public JwtUserIdValidationFilter(JwtAuthenticationUtil jwtAuthenticationUtil) {
 		this.jwtAuthenticationUtil = jwtAuthenticationUtil;
-		this.allowedOrigins = allowedOrigins;
 	}
 
 	@Override
@@ -38,20 +34,25 @@ public class JwtUserIdValidationFilter implements Filter {
 		String origin = request.getHeader("Origin");
 
 		logger.debug("Incoming Origin: {}", origin);
-		logger.debug("Allowed Origins Configured: {}", allowedOrigins);
+		System.out.println("Incoming Origin: " + origin);
 
-		if (origin != null && isOriginAllowed(origin)) {
-			response.setHeader("Access-Control-Allow-Origin", origin);
-			response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-			response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, Jwttoken");
-			response.setHeader("Access-Control-Allow-Credentials", "true");
-		} else {
-			logger.warn("Origin [{}] is NOT allowed. CORS headers NOT added.", origin);
-		}
+		// logger.debug("Allowed Origins Configured: {}", allowedOrigins);
+		// System.out.println("Allowed Origins Configured: " + allowedOrigins);
+
+		// if (origin != null && isOriginAllowed(origin)) {
+		// response.setHeader("Access-Control-Allow-Origin", origin);
+		// response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE,
+		// OPTIONS");
+		// response.setHeader("Access-Control-Allow-Headers", "Authorization,
+		// Content-Type, Accept, Jwttoken");
+		// response.setHeader("Access-Control-Allow-Credentials", "true");
+		// } else {
+		// logger.warn("Origin [{}] is NOT allowed. CORS headers NOT added.", origin);
+		// }
 
 		if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
 			logger.info("OPTIONS request - skipping JWT validation");
-			response.setStatus(HttpServletResponse.SC_OK);
+			filterChain.doFilter(servletRequest, servletResponse); // ✅ Let Spring handle CORS
 			return;
 		}
 
@@ -125,25 +126,6 @@ public class JwtUserIdValidationFilter implements Filter {
 			logger.error("Authorization error: ", e);
 			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization error: " + e.getMessage());
 		}
-	}
-
-	private boolean isOriginAllowed(String origin) {
-		if (origin == null || allowedOrigins == null || allowedOrigins.trim().isEmpty()) {
-			logger.warn("No allowed origins configured or origin is null");
-			return false;
-		}
-
-		return Arrays.stream(allowedOrigins.split(","))
-				.map(String::trim)
-				.anyMatch(pattern -> {
-					String regex = pattern
-							.replace(".", "\\.")
-							.replace("*", ".*")
-							.replace("http://localhost:.*", "http://localhost:\\d+"); // special case for wildcard port
-
-					boolean matched = origin.matches(regex);
-					return matched;
-				});
 	}
 
 	private boolean isMobileClient(String userAgent) {
