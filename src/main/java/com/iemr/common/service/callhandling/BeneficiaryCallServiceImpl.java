@@ -524,9 +524,13 @@ public class BeneficiaryCallServiceImpl implements BeneficiaryCallService {
 			BeneficiaryCall callData = beneficiaryCallRepository.findCallDetails(benCall.getBenCallID());
 			JSONObject dispRequestObj = new JSONObject();
 			dispRequestObj.put("session_id", callData.getCallID());
-			dispRequestObj.put("cust_disp", callData.getCallTypeObj().getCallType());
+			if (null != callData.getCallTypeObj() && null != callData.getCallTypeObj().getCallType()) {
+				dispRequestObj.put("cust_disp", callData.getCallTypeObj().getCallType());
+			}
 			dispRequestObj.put("agent_id", callData.getAgentID());
-			dispRequestObj.put("category", callData.getCallTypeObj().getCallGroupType());
+			if (null != callData.getCallTypeObj() && null != callData.getCallTypeObj().getCallGroupType()) {
+				dispRequestObj.put("category", callData.getCallTypeObj().getCallGroupType());
+			}
 			logger.info(
 					ctiService.setCallDisposition(dispRequestObj.toString(), benCall.getAgentIPAddress()).toString());
 

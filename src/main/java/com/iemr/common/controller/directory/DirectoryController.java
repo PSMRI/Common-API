@@ -29,7 +29,6 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -79,7 +78,6 @@ public class DirectoryController
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
-	@CrossOrigin()
 	@Operation(summary = "Get directory")
 	@RequestMapping(value = "/getDirectory", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON,
 			headers = "Authorization")
@@ -100,7 +98,6 @@ public class DirectoryController
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get directory V1")
 	@RequestMapping(value = "/getDirectoryV1", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON,
 			headers = "Authorization")
@@ -124,7 +121,6 @@ public class DirectoryController
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "This API is used for getting subdirectories for a given institute directory")
 	@RequestMapping(value = "/getSubDirectory", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON,
 			consumes = MediaType.APPLICATION_JSON, headers = "Authorization")
@@ -148,7 +144,6 @@ public class DirectoryController
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "This API is used for getting institutes for a given directory, subdirectory and location")
 	@RequestMapping(value = "/getInstitutesDirectories", method = RequestMethod.POST,
 			produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON, headers = "Authorization")

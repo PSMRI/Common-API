@@ -243,9 +243,6 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 		// Step 4: Unassign grievances from the user and "move them to bin"
 		int totalUnassigned = 0;
 		for (GrievanceDetails grievance : grievancesToMove) {
-			int rowsAffected = grievanceDataRepo.unassignGrievance(grievance.getGrievanceId(),
-					moveToBinRequest.getUserID());
-
 			grievance.setUserID(null);
 			int rowsAffected = grievanceDataRepo.unassignGrievance(grievance.getUserID(), grievance.getGwid());
 			if (rowsAffected > 0) {
@@ -254,15 +251,6 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 						grievance.getIsAllocated());
 				if (updateFlagResult > 0) {
 					totalUnassigned++;
-					logger.debug("Unassigned grievance ID {} from user ID {}", grievance.getGrievanceId(),
-							moveToBinRequest.getUserID());
-				} else {
-					logger.error("Failed to unassign grievance ID {} from user ID {}", grievance.getGrievanceId(),
-							moveToBinRequest.getUserID());
-				}
-			} else {
-				logger.error("Failed to unassign grievance ID {} from user ID {}", grievance.getGrievanceId(),
-
 					logger.debug("Unassigned grievance gwid {} from user ID {}", grievance.getGwid(),
 							moveToBinRequest.getUserID());
 				} else {
@@ -404,7 +392,6 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	                if (grievanceRequest.getCreatedBy() == null) {
 	                    throw new IllegalArgumentException("CreatedBy is required");
 	                }
-
 	                if(grievanceRequest.getBenCallID() == null) {
 	                	throw new IllegalArgumentException("BencallId is required");
 	                }
@@ -416,22 +403,16 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	        Integer providerServiceMapID = grievanceRequest.getProviderServiceMapID();
 	        Integer userID = grievanceRequest.getUserID();
 	        String createdBy = grievanceRequest.getCreatedBy();
-
-
 	        Long benCallID = grievanceRequest.getBenCallID();
 	      
 	        String modifiedBy = createdBy;
 	        int updateCount = 0;
 	        if (remarks == null) {
-	        	updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, modifiedBy, complaintID,
-
 	        	updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, modifiedBy, benCallID, complaintID,
                         beneficiaryRegID, userID);
 	        	logger.debug("updated complaint resolution without remarks for complaint id: {}", complaintID);
 	        }
 	        else {
-	        updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, remarks,  modifiedBy, complaintID, 
-
 	        updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, remarks,  modifiedBy, benCallID, complaintID, 
 	                                                                      beneficiaryRegID, userID);
         	logger.debug("updated complaint resolution with remarks for complaint id: {}", complaintID);
@@ -443,7 +424,8 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	            throw new Exception("Failed to update complaint resolution");
 	        }
 	    }
-				
+		
+		
 		
 
 		private Date parseDate(String dateStr) {

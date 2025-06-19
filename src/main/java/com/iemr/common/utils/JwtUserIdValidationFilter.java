@@ -4,7 +4,8 @@ import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
+
+import com.iemr.common.utils.http.AuthorizationHeaderRequestWrapper;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -14,15 +15,18 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Arrays;
 
-@Component
 public class JwtUserIdValidationFilter implements Filter {
 
 	private final JwtAuthenticationUtil jwtAuthenticationUtil;
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+	private final String allowedOrigins;
 
-	public JwtUserIdValidationFilter(JwtAuthenticationUtil jwtAuthenticationUtil) {
+	public JwtUserIdValidationFilter(JwtAuthenticationUtil jwtAuthenticationUtil,
+			String allowedOrigins) {
 		this.jwtAuthenticationUtil = jwtAuthenticationUtil;
+		this.allowedOrigins = allowedOrigins;
 	}
 
 	@Override
@@ -30,6 +34,26 @@ public class JwtUserIdValidationFilter implements Filter {
 			throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) servletRequest;
 		HttpServletResponse response = (HttpServletResponse) servletResponse;
+
+		String origin = request.getHeader("Origin");
+
+		logger.debug("Incoming Origin: {}", origin);
+		logger.debug("Allowed Origins Configured: {}", allowedOrigins);
+
+		if (origin != null && isOriginAllowed(origin)) {
+			response.setHeader("Access-Control-Allow-Origin", origin);
+			response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+			response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, Jwttoken");
+			response.setHeader("Access-Control-Allow-Credentials", "true");
+		} else {
+			logger.warn("Origin [{}] is NOT allowed. CORS headers NOT added.", origin);
+		}
+
+		if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+			logger.info("OPTIONS request - skipping JWT validation");
+			response.setStatus(HttpServletResponse.SC_OK);
+			return;
+		}
 
 		String path = request.getRequestURI();
 		String contextPath = request.getContextPath();
@@ -40,7 +64,7 @@ public class JwtUserIdValidationFilter implements Filter {
 		Cookie[] cookies = request.getCookies();
 		if (cookies != null) {
 			for (Cookie cookie : cookies) {
-				if ("userId".equals(cookie.getName())) {
+				if ("userId".equalsIgnoreCase(cookie.getName())) {
 					logger.warn("userId found in cookies! Clearing it...");
 					clearUserIdCookie(response); // Explicitly remove userId cookie
 				}
@@ -61,48 +85,97 @@ public class JwtUserIdValidationFilter implements Filter {
 		}
 
 		try {
-			// Retrieve JWT token from cookies
-			String jwtTokenFromCookie = getJwtTokenFromCookies(request);
-			logger.info("JWT token from cookie: ");
+			String jwtFromCookie = getJwtTokenFromCookies(request);
+			String jwtFromHeader = request.getHeader("JwtToken");
+			String authHeader = request.getHeader("Authorization");
 
-			// Determine which token (cookie or header) to validate
-			String jwtToken = jwtTokenFromCookie != null ? jwtTokenFromCookie : jwtTokenFromHeader;
-			if (jwtToken == null) {
-				logger.error("JWT token not found in cookies or headers");
-				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "JWT token not found in cookies or headers");
-				return;
-			}
-
-			// Validate JWT token and userId
-			if (jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtToken)) {
-				// If token is valid, allow the request to proceed
-				logger.info("Valid JWT token");
-				filterChain.doFilter(servletRequest, servletResponse);
+			if (jwtFromCookie != null) {
+				logger.info("Validating JWT token from cookie");
+				if (jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtFromCookie)) {
+					AuthorizationHeaderRequestWrapper authorizationHeaderRequestWrapper = new AuthorizationHeaderRequestWrapper(
+							request, "");
+					filterChain.doFilter(authorizationHeaderRequestWrapper, servletResponse);
+					return;
+				}
+			} else if (jwtFromHeader != null) {
+				logger.info("Validating JWT token from header");
+				if (jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtFromHeader)) {
+					AuthorizationHeaderRequestWrapper authorizationHeaderRequestWrapper = new AuthorizationHeaderRequestWrapper(
+							request, "");
+					filterChain.doFilter(authorizationHeaderRequestWrapper, servletResponse);
+					return;
+				}
 			} else {
-				logger.error("Invalid JWT token");
-				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT token");
+				String userAgent = request.getHeader("User-Agent");
+				logger.info("User-Agent: " + userAgent);
+				if (userAgent != null && isMobileClient(userAgent) && authHeader != null) {
+					try {
+						logger.info("Common-API incoming userAget : " + userAgent);
+						UserAgentContext.setUserAgent(userAgent);
+						filterChain.doFilter(servletRequest, servletResponse);
+					} finally {
+						UserAgentContext.clear();
+					}
+					return;
+				}
 			}
+
+			logger.warn("No valid authentication token found");
+			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized: Invalid or missing token");
 		} catch (Exception e) {
 			logger.error("Authorization error: ", e);
 			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization error: " + e.getMessage());
 		}
 	}
 
+	private boolean isOriginAllowed(String origin) {
+		if (origin == null || allowedOrigins == null || allowedOrigins.trim().isEmpty()) {
+			logger.warn("No allowed origins configured or origin is null");
+			return false;
+		}
+
+		return Arrays.stream(allowedOrigins.split(","))
+				.map(String::trim)
+				.anyMatch(pattern -> {
+					String regex = pattern
+							.replace(".", "\\.")
+							.replace("*", ".*")
+							.replace("http://localhost:.*", "http://localhost:\\d+"); // special case for wildcard port
+
+					boolean matched = origin.matches(regex);
+					return matched;
+				});
+	}
+
+	private boolean isMobileClient(String userAgent) {
+		if (userAgent == null)
+			return false;
+		userAgent = userAgent.toLowerCase();
+		return userAgent.contains("okhttp"); // iOS (custom clients)
+	}
+
 	private boolean shouldSkipAuthentication(String path, String contextPath) {
 		return path.equals(contextPath + "/user/userAuthenticate")
 				|| path.equalsIgnoreCase(contextPath + "/user/logOutUserFromConcurrentSession")
-				|| path.startsWith(contextPath + "/swagger-ui")
-				|| path.startsWith(contextPath + "/v3/api-docs")
-				|| path.startsWith(contextPath + "/public")
-				|| path.equals(contextPath + "/user/refreshToken")
-				;
+				|| path.startsWith(contextPath + "/swagger-ui") || path.startsWith(contextPath + "/v3/api-docs")
+				|| path.startsWith(contextPath + "/public") || path.equals(contextPath + "/user/refreshToken")
+				|| path.startsWith(contextPath + "/user/superUserAuthenticate")
+				|| path.startsWith(contextPath + "/user/user/userAuthenticateNew")
+				|| path.startsWith(contextPath + "/user/userAuthenticateV1")
+				|| path.startsWith(contextPath + "/user/forgetPassword")
+				|| path.startsWith(contextPath + "/user/setForgetPassword")
+				|| path.startsWith(contextPath + "/user/changePassword")
+				|| path.startsWith(contextPath + "/user/saveUserSecurityQuesAns")
+				|| path.startsWith(contextPath + "/user/userLogout")
+				|| path.startsWith(contextPath + "/user/validateSecurityQuestionAndAnswer")
+				|| path.startsWith(contextPath + "/user/logOutUserFromConcurrentSession");
 	}
 
 	private String getJwtTokenFromCookies(HttpServletRequest request) {
 		Cookie[] cookies = request.getCookies();
 		if (cookies != null) {
 			for (Cookie cookie : cookies) {
-				if (cookie.getName().equals("Jwttoken")) {
+				if (cookie.getName().equalsIgnoreCase("Jwttoken")) {
 					return cookie.getValue();
 				}
 			}

@@ -29,7 +29,6 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -78,7 +77,6 @@ public class KMFileManagerController {
 	    }
 	
 	
-	@CrossOrigin()
 	@Operation(summary = "Save beneficairy documents locally")
 	@PostMapping(value = { "/saveFiles" }, consumes = "application/json", produces = "application/json")
 	public String saveFiles(@RequestBody String request) {
@@ -99,9 +97,6 @@ public class KMFileManagerController {
 		return response.toString();
 	}
 
-	
-
-	@CrossOrigin
 	@Operation(summary = "Add file")
 	@RequestMapping(value = "/addFile", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String addFile(
@@ -127,7 +122,6 @@ public class KMFileManagerController {
 		return response.toString();
 	}
 
-	@CrossOrigin
 	@Operation(summary = "Get KM file download URL")
 	@RequestMapping(value = "/getKMFileDownloadURL", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getKMFileDownloadURL(@Param(value = "{}") @RequestBody String request) {

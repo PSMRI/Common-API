@@ -234,7 +234,6 @@ public class GrievanceController {
 		  }
 
 
-
 		  @Operation(summary = "Get Grievance Details with Remarks")
 		  @PostMapping(value = "/getCompleteGrievanceDetails", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 		  public String getGrievanceDetailsWithRemarks(@RequestBody String request) {

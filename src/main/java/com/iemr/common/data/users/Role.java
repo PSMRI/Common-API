@@ -99,11 +99,8 @@ public class Role
 	
 	@Expose
 	@Transient
-	private Boolean isSanjeevani;
+	private String teleConsultation;
 
-	// protected Role() {
-	// }
-	//
 	public Role createRole(Integer roleID, String roleName, String roleDesc, Boolean deleted, String createdBy,
 			Timestamp createdDate, String modifiedBy, Timestamp lastModDate,
 			Set<UserServiceRoleMapping> m_UserServiceRoleMapping)
@@ -124,35 +121,7 @@ public class Role
 		return this;
 	}
 
-//	public Integer getRoleID()
-//	{
-//		return this.RoleID;
-//	}
-//
-//	public void setRoleID(int roleID)
-//	{
-//		this.RoleID = Integer.valueOf(roleID);
-//	}
-//
-//	public String getRoleName()
-//	{
-//		return this.RoleName;
-//	}
-//
-//	public void setRoleName(String roleName)
-//	{
-//		this.RoleName = roleName;
-//	}
-//
-//	public String getRoleDesc()
-//	{
-//		return this.RoleDesc;
-//	}
-//
-//	public void setRoleDesc(String roleDesc)
-//	{
-//		this.RoleDesc = roleDesc;
-//	}
+
 
 	public boolean isDeleted()
 	{
@@ -204,15 +173,6 @@ public class Role
 		this.LastModDate = lastModDate;
 	}
 
-	// public Set<UserServiceRoleMapping> getM_UserServiceRoleMapping()
-	// {
-	// return this.m_UserServiceRoleMapping;
-	// }
-	//
-	// public void setM_UserServiceRoleMapping(Set<UserServiceRoleMapping> m_UserServiceRoleMapping)
-	// {
-	// this.m_UserServiceRoleMapping = m_UserServiceRoleMapping;
-	// }
 
 	public void setServiceRoleScreenMappings(List<ServiceRoleScreenMapping> serviceRoleScreenMappings)
 	{

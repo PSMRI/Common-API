@@ -88,8 +88,6 @@ public interface IEMRCalltypeRepositoryImplCustom extends CrudRepository<CallTyp
 	@Query("select callType from CallType callType where deleted = false and callTypeID = :callTypeID")
 	CallType getCallTypeDetails(@Param("callTypeID") Integer callTypeID);
 	
-	@Query("select callType, callGroupType from CallType "
-
 	@Query("select callGroupType, callType from CallType "
 			+ "where callTypeID = :callTypeID")
 	Set<Object[]> getCallDetails(@Param("callTypeID") Integer callTypeID);
