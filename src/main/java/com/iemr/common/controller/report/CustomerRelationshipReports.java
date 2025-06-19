@@ -26,7 +26,6 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -39,8 +38,6 @@ import com.iemr.common.utils.response.OutputResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 
-
-@CrossOrigin
 @RequestMapping({ "/crmReports" })
 @RestController
 public class CustomerRelationshipReports {
@@ -58,7 +55,6 @@ public class CustomerRelationshipReports {
 	@Autowired
 	Report1097Mapper mapper;
 
-	@CrossOrigin()
 	@Operation(summary = "QA report type master data")
 	@RequestMapping(value = "/getReportTypes/{providerServiceMapID}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
 	public String patientAppChiefComplaintsMasterData(

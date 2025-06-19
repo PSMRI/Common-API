@@ -27,7 +27,6 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -40,7 +39,6 @@ import io.swagger.v3.oas.annotations.Operation;
 
 @RestController
 @RequestMapping("/brd")
-@CrossOrigin()
 public class BRDIntegrationController {
 
 	private Logger logger = LoggerFactory.getLogger(BRDIntegrationController.class);
@@ -50,7 +48,6 @@ public class BRDIntegrationController {
 
 	@Operation(summary = "Get integration data")
 	@RequestMapping(value = "/getIntegrationData", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
-	@CrossOrigin()
 	public String getDetails(@RequestBody String request) {
 		OutputResponse response = new OutputResponse();
 		String brdDetails = null;

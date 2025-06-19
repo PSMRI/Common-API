@@ -35,7 +35,6 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -188,7 +187,6 @@ public class BeneficiaryRegistrationController {
 	private CallReportsService callReportsService;
 
 	@Operation(summary = "Create a new beneficiary")
-	@CrossOrigin()
 	@RequestMapping(value = "/create", method = RequestMethod.POST, produces = "application/json", consumes = "application/json", headers = "Authorization")
 
 	public String createBeneficiary(
@@ -219,7 +217,6 @@ public class BeneficiaryRegistrationController {
 	}
 
 	@Operation(summary = "Create a new beneficiary for customization")
-	@CrossOrigin()
 	@RequestMapping(value = "/createBeneficiary", method = RequestMethod.POST, produces = "application/json", consumes = "application/json", headers = "Authorization")
 	public String createBeneficiary(@RequestBody String request, HttpServletRequest httpRequest)
 			throws JsonMappingException, JsonProcessingException {
@@ -266,7 +263,6 @@ public class BeneficiaryRegistrationController {
 		return otherFieldsJson.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Provide the list of beneficiaries based on beneficiary id")
 	@RequestMapping(value = "/searchUserByID", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String searchUserByID(
@@ -315,7 +311,6 @@ public class BeneficiaryRegistrationController {
 	}
 
 	@Operation(summary = "Provide the list of beneficiaries based on phone number")
-	@CrossOrigin()
 	@RequestMapping(value = "/searchUserByPhone", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String searchUserByPhone(
 			@Param(value = "{\"phoneNo\":\"String\",\"pageNo\":\"Integer\",\"rowsPerPage\":\"Integer\"}") @RequestBody String request,
@@ -346,7 +341,6 @@ public class BeneficiaryRegistrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Provide the list of beneficiaries based on search criteria")
 	@RequestMapping(value = "/searchBeneficiary", method = RequestMethod.POST, headers = "Authorization")
 	public String searchBeneficiary(
@@ -369,7 +363,6 @@ public class BeneficiaryRegistrationController {
 		return output.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Provide all common data list needed for beneficiary registration")
 	@RequestMapping(value = "/getRegistrationData", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getRegistrationData() {
@@ -400,7 +393,6 @@ public class BeneficiaryRegistrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Provide all common data V1 list needed for beneficiary registration")
 	@RequestMapping(value = "/getRegistrationDataV1", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getRegistrationDataV1(
@@ -435,7 +427,6 @@ public class BeneficiaryRegistrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Update beneficiary details")
 	@RequestMapping(value = "/update", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String updateBenefciary(
@@ -479,7 +470,6 @@ public class BeneficiaryRegistrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Update beneficiary details")
 	@RequestMapping(value = "/updateBenefciaryDetails", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String updateBenefciaryDetails(@RequestBody String benificiaryRequest, HttpServletRequest httpRequest) {
@@ -514,7 +504,6 @@ public class BeneficiaryRegistrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Fetch beneficiary details by phone no")
 	@RequestMapping(value = "/getBeneficiariesByPhoneNo", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getBeneficiariesByPhone(@Param(value = "{\"phoneNo\":\"String\"}") @RequestBody String request,
@@ -534,7 +523,6 @@ public class BeneficiaryRegistrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Update beneficiary community or education")
 	@RequestMapping(value = "/updateCommunityorEducation", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String updateBenefciaryCommunityorEducation(
@@ -564,7 +552,6 @@ public class BeneficiaryRegistrationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Generate beneficiary id")
 	@RequestMapping(value = "/generateBeneficiaryIDs", headers = "Authorization", method = {
 			RequestMethod.POST }, produces = { "application/json" })
