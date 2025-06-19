@@ -1,17 +1,17 @@
 package com.iemr.common.service.grievance;
 
+import java.lang.reflect.Type;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,6 +22,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.iemr.common.data.grievance.GetGrievanceWorklistRequest;
 import com.iemr.common.data.grievance.GrievanceAllocationRequest;
 import com.iemr.common.data.grievance.GrievanceDetails;
@@ -33,6 +38,7 @@ import com.iemr.common.dto.grivance.GrievanceWorklistDTO;
 import com.iemr.common.repository.callhandling.BeneficiaryCallRepository;
 import com.iemr.common.repository.grievance.GrievanceDataRepo;
 import com.iemr.common.repository.grievance.GrievanceOutboundRepository;
+import com.iemr.common.repository.grievance.GrievanceTransactionRepo;
 import com.iemr.common.utils.exception.IEMRException;
 import com.iemr.common.utils.mapper.InputMapper;
 
@@ -46,13 +52,15 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	private final GrievanceDataRepo grievanceDataRepo;
 	private final GrievanceOutboundRepository grievanceOutboundRepo;
 	private final BeneficiaryCallRepository beneficiaryCallRepo;
+	private final GrievanceTransactionRepo grievanceTransactionRepo;
 
 	@Autowired
 	public GrievanceHandlingServiceImpl(GrievanceDataRepo grievanceDataRepo, GrievanceOutboundRepository grievanceOutboundRepo, 
-			BeneficiaryCallRepository beneficiaryCallRepo) {
+			BeneficiaryCallRepository beneficiaryCallRepo,GrievanceTransactionRepo grievanceTransactionRepo) {
 		this.grievanceDataRepo = grievanceDataRepo;
 		this.grievanceOutboundRepo = grievanceOutboundRepo;
 		this.beneficiaryCallRepo = beneficiaryCallRepo;
+		this.grievanceTransactionRepo = grievanceTransactionRepo;
 	}
 
 	@Value("${grievanceAllocationRetryConfiguration}")
@@ -60,7 +68,6 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 															// configure
 															// retry logic
 
-	private InputMapper inputMapper = new InputMapper(); // InputMapper used to map the JSON request
 	
 	@Override
 	public String allocateGrievances(String request) throws Exception {
@@ -82,9 +89,7 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	    int allocateNo = allocationRequest.getAllocateNo(); // Number of grievances to allocate per user
 
 	    // Step 4: Initialize counters
-	    int totalAllocated = 0;
 	    int grievanceIndex = 0;  // Start from the first grievance
-	    int totalUsers = userIds.size();
 	    int totalGrievances = grievances.size();
 	    
 	    // Step 5: Allocate grievances to users, ensuring each user gets exactly 'allocateNo' grievances
@@ -98,7 +103,6 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	            // Allocate the grievance to the user
 	            int rowsAffected = grievanceDataRepo.allocateGrievance(grievance.getGrievanceId(), userId);
 	            if (rowsAffected > 0) {
-	                totalAllocated++;
 	                logger.debug("Allocated grievance ID {} to user ID {}", grievance.getGrievanceId(), userId);
 	            } else {
 	                logger.error("Failed to allocate grievance ID {} to user ID {}", grievance.getGrievanceId(), userId);
@@ -120,10 +124,9 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	public String allocatedGrievanceRecordsCount(String request) throws IEMRException, JSONException {
 		GrievanceDetails grievanceRequest = InputMapper.gson().fromJson(request, GrievanceDetails.class);
 
-		Integer providerServiceMapID = grievanceRequest.getProviderServiceMapID();
 		Integer userID = grievanceRequest.getUserID();
 
-		Set<Object[]> resultSet = grievanceDataRepo.fetchGrievanceRecordsCount(providerServiceMapID, userID);
+		Set<Object[]> resultSet = grievanceDataRepo.fetchGrievanceRecordsCount(userID);
 
 		JSONObject result = new JSONObject();
 		result.put("All", 0);
@@ -289,11 +292,10 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	        // Fetch grievance worklist data using @Procedure annotation
 	        List<Object[]> worklistData;
 	        try {
-	        	if (getGrievanceWorklistRequest.getProviderServiceMapID() == null || 
-	        		getGrievanceWorklistRequest.getUserId() == null) {
-	        			throw new IllegalArgumentException("ProviderServiceMapID and UserId are required");
+	        	if (getGrievanceWorklistRequest.getUserId() == null) {
+	        			throw new IllegalArgumentException("UserId are required");
 	        		}
-	        worklistData = grievanceOutboundRepo.getGrievanceWorklistData(getGrievanceWorklistRequest.getProviderServiceMapID(), getGrievanceWorklistRequest.getUserId());
+	        worklistData = grievanceOutboundRepo.getGrievanceWorklistData(getGrievanceWorklistRequest.getUserId());
 	        if (worklistData == null || worklistData.isEmpty()) {
 	        	logger.info("No grievance data found for the given criteria");
 	        	return new ArrayList<>();
@@ -306,7 +308,7 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	        
 	        // Loop through the worklist data and format the response
 	        for (Object[] row : worklistData) {
-	        	if (row == null || row.length < 30)
+	        	if (row == null || row.length < 22)
 	        	{
 	        		logger.warn("invalid row data received");
 	        		continue;
@@ -314,56 +316,57 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	        	
 	            // Handle age conversion from Double to "x years" format
 	            String ageFormatted = null;  // Default value for age if it's not available
-	            if (row[25] != null) {
-	                Long age = (Long) row[25];
+	            if (row[20] != null) {
+	                Long age = (Long) row[20];
 	                ageFormatted = age.intValue() + " years";  // Convert the age to integer and append " years"
 	            }
 	            
 	            GrievanceWorklistDTO grievance = new GrievanceWorklistDTO(
 	                (String) row[0], // complaintID
-	                (String) row[1], // subjectOfComplaint
-	                (String) row[2], // complaint
-	                (Long) row[3],   // beneficiaryRegID
-	                (Integer) row[4],// providerServiceMapID
-
-	                (String) row[20], // firstName
-	                (String) row[21], // lastName
-	    			(String) row[5], // primaryNumber
-
-	                new ArrayList<>(),// transactions (initially empty, will be populated later)
-	                (String) row[12], // severety
-	                (String) row[13], // state
-	                (Integer) row[14],// userId
-	                (Boolean) row[15],// deleted
-	                (String) row[16],// createdBy
-	                (Timestamp) row[17], // createdDate
-	                (Timestamp) row[18], // lastModDate
-	                (Boolean) row[19], // isCompleted
-	                (String) row[22], // gender
-	                (String) row[23], // district
-	                (Long) row[24], // beneficiaryID
-	           //     (Double) row[25], // age
+	                (Long) row[1], //grievanceId
+	                (String) row[2], // subjectOfComplaint
+	                (String) row[3], // complaint
+	                (Long) row[4],   // beneficiaryRegID
+	                (Integer) row[5],// providerServiceMapID
+	                (String) row[6], // primaryNumber
+	                (String) row[7], // severety
+	                (String) row[8], // state
+	                (Integer) row[9],// userId
+	                (Boolean) row[10],// deleted
+	                (String) row[11],// createdBy
+	                (Timestamp) row[12], // createdDate
+	                (Timestamp) row[13], // lastModDate
+	                (Boolean) row[14], // isCompleted
+	               
+	                (String) row[15], // firstName
+	                (String) row[16], // lastName
+	                (String) row[17], // gender
+	                (String) row[18], // district
+	                (Long) row[19], // beneficiaryID
 	                ageFormatted,
-	                (Boolean) row[26], // retryNeeded
-	                (Integer) row[27], // callCounter
-	                (Timestamp) row[17] //lastCall yet to fill
+	                (Boolean) row[21], // retryNeeded
+	                (Integer) row[22], // callCounter
+	                (Timestamp) row[13] //lastCall 
+
 	            );
 
 	            // Extract transactions from the current row and add them to the grievance object
-	            GrievanceTransactionDTO transaction = new GrievanceTransactionDTO(
-	            	(String) row[28], //actionTakenBy yet to fill
-	            	(String) row[29], //status yet to fill
-	                (String) row[6], // fileName
-	                (String) row[7], // fileType
-	                (String) row[8], // redressed
-	                (Timestamp) row[9], // createdAt
-	                (Timestamp) row[10], // updatedAt
-	                (String) row[11] // comment
-	            );
+	            List<Object[]> transaction = grievanceTransactionRepo.getGrievanceTransaction((Long) row[1]);
+	           List<GrievanceTransactionDTO> arrayList = new ArrayList<>();
+	            for (Object[] tras : transaction) {
+	            	String actionTakenBy = (tras[0]!=null)?(String) tras[0]:null;
+	            	String status = (tras[1]!=null)?(String) tras[1]:null;
+	            	String fileName = (tras[2]!=null)?(String) tras[2]:null;
+	            	String fileType = (tras[3]!=null)?(String) tras[3]:null;
+	            	String redressed = (tras[4]!=null)?(String) tras[4]:null;
+	            	Timestamp createdAt = (tras[5]!=null)?(Timestamp) tras[5]:null;
+	            	Timestamp updatedAt = (tras[6]!=null)?(Timestamp) tras[6]:null;
+	            	String comment = (tras[7]!=null)?(String) tras[7]:null;
+					GrievanceTransactionDTO grievanceTransactionDTO = new GrievanceTransactionDTO(actionTakenBy, status, fileName, fileType, redressed, createdAt, updatedAt,comment);
+					arrayList.add(grievanceTransactionDTO);
+	            }
+	            grievance.setTransactions(arrayList);
 	            
-	            grievance.getTransactions().add(transaction);  // Add the transaction to the grievance's list
-
-	            // Add the grievance to the result list
 	            formattedGrievances.add(grievance);
 	        }
 
@@ -423,14 +426,14 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	        	updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, modifiedBy, complaintID,
 
 	        	updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, modifiedBy, benCallID, complaintID,
-                        beneficiaryRegID, providerServiceMapID, userID);
+                        beneficiaryRegID, userID);
 	        	logger.debug("updated complaint resolution without remarks for complaint id: {}", complaintID);
 	        }
 	        else {
 	        updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, remarks,  modifiedBy, complaintID, 
 
 	        updateCount = grievanceDataRepo.updateComplaintResolution(complaintResolution, remarks,  modifiedBy, benCallID, complaintID, 
-	                                                                      beneficiaryRegID, providerServiceMapID, userID);
+	                                                                      beneficiaryRegID, userID);
         	logger.debug("updated complaint resolution with remarks for complaint id: {}", complaintID);
 
 	        }
@@ -496,32 +499,29 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 
 		            // Fetch and set remarks based on complaintResolution value
 		            String remarks = "";
-		            if ("unresolved".equalsIgnoreCase(complaintResolution)) {
-		                // Fetch remarks from t_bencall by joining with t_grievanceworklist based on benRegId
-		                remarks = fetchRemarksFromBenCallByComplaint(grievance.getComplaintID());
-		            } else if ("resolved".equalsIgnoreCase(complaintResolution)) {
-		                // Fetch remarks from t_grievanceworklist
-		                remarks = fetchRemarksFromGrievanceWorklist(grievance.getComplaintID());
-		            } else {
-		                // Default: Fetch remarks based on the grievance's specific conditions (no specific resolution status)
-		            	String callRemarks = fetchRemarksFromBenCallByComplaint(grievance.getComplaintID());
-		            	if(remarks != null && !remarks.startsWith("No remarks found")) {
-		            		remarks = callRemarks;
-		            	}
-		            	else {
-			                remarks = fetchRemarksFromGrievanceWorklist(grievance.getComplaintID());
-
-		            	}
+		            if(!StringUtils.isEmpty(grievance.getRemarks())) {
+		            	remarks = grievance.getRemarks();
+		            }else {
+		            	remarks = fetchRemarksFromBenCallByComplaint(grievance.getComplaintID());
 		            }
+		            
 		            
 		            grievanceResponse.setRemarks(remarks);
 		            
 		            // Add to response list
 		            grievanceResponseList.add(grievanceResponse);
 		        }
-
-		        // Convert the list of GrievanceResponse objects to JSON and return as a string
-		        return objectMapper.writeValueAsString(grievanceResponseList);
+		        Gson gson = new GsonBuilder()
+		        		.serializeNulls()
+			            .registerTypeAdapter(Date.class, new JsonSerializer<Date>() {
+			                @Override
+			                public JsonElement serialize(Date date, Type typeOfSrc, JsonSerializationContext context) {
+			                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			                    return context.serialize(sdf.format(date));  // Format date
+			                }
+			            })
+			            .create();
+		        return gson.toJson(grievanceResponseList);
 		        
 		    } catch (Exception e) {
 		        logger.error("Error while getting grievance details with remarks: " + e.getMessage(), e);
@@ -538,16 +538,17 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 		    if (grievanceWorklist != null && !grievanceWorklist.isEmpty()) {
 		        GrievanceDetails grievance = grievanceWorklist.get(0);
 		        Long beneficiaryRegID = grievance.getBeneficiaryRegID();  // Fetch the beneficiaryRegID from the grievance
-
+		        Long benCallID = grievance.getBenCallID();
 		        // Query t_bencall to fetch remarks based on benRegId
-		        List<Object[]> benCallResults = beneficiaryCallRepo.fetchBenCallRemarks(beneficiaryRegID);
+		        List<Object[]> benCallResults = beneficiaryCallRepo.fetchBenCallRemarks(benCallID);
 
 		        if (benCallResults != null && !benCallResults.isEmpty()) {
-		            return (String) benCallResults.get(0)[0];  // Fetch the remarks
+		        	if(null != benCallResults.get(0) && null != benCallResults.get(0)[0])
+		        		return (String) benCallResults.get(0)[0];  // Fetch the remarks
 		        }
 		    }
 		    
-		    return "No remarks found in t_bencall";
+		    return "No remarks found";
 		}
 
 		    private String fetchRemarksFromGrievanceWorklist(String complaintID) throws JSONException {

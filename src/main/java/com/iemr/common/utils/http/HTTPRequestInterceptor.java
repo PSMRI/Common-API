@@ -135,6 +135,81 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
         return status;
     }
 
+	@Override
+	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object object) throws Exception {
+		boolean status = true;
+		logger.info("In info preHandle we are Intercepting the Request");
+		logger.debug("In preHandle we are Intercepting the Request");
+	//	String authorization = request.getHeader("Authorization");
+		String authorization = null;
+		String preAuth = request.getHeader("Authorization");
+		if(null != preAuth && preAuth.contains("Bearer "))
+			authorization=preAuth.replace("Bearer ", "");
+		else
+			authorization = preAuth;
+		logger.debug("RequestURI::" + request.getRequestURI() + " || Authorization ::" + authorization
+				+ " || method :: " + request.getMethod());
+		if (!request.getMethod().equalsIgnoreCase("OPTIONS")) {
+			try {
+				String[] requestURIParts = request.getRequestURI().split("/");
+				String requestAPI = requestURIParts[requestURIParts.length - 1];
+				switch (requestAPI) {
+				case "userAuthenticate":
+				case "superUserAuthenticate":
+				case "userAuthenticateNew":
+				case "userAuthenticateV1":
+				case "forgetPassword":
+				case "setForgetPassword":
+				case "changePassword":
+				case "saveUserSecurityQuesAns":
+				case "doAgentLogout":
+				case "userLogout":
+				case "swagger-ui.html":
+				case "index.html":
+				case "index.css":
+				case "swagger-initializer.js":
+				case "swagger-config":
+				case "swagger-ui-bundle.js":
+				case "swagger-ui.css":
+				case "ui":
+				case "swagger-ui-standalone-preset.js":
+				case "favicon-32x32.png":
+				case "favicon-16x16.png":
+				case "swagger-resources":
+				case "api-docs":
+				case "updateBenCallIdsInPhoneBlock":
+				case "userAuthenticateByEncryption":
+				case "sendOTP":
+				case "validateOTP":
+				case "resendOTP":
+				case "validateSecurityQuestionAndAnswer":
+				case "logOutUserFromConcurrentSession":
+				case "refreshToken":
+					break;
+				case "error":
+					status = false;
+					break;
+				default:
+					String remoteAddress = request.getHeader("X-FORWARDED-FOR");
+					if (remoteAddress == null || remoteAddress.trim().length() == 0) {
+						remoteAddress = request.getRemoteAddr();
+					}
+					validator.checkKeyExists(authorization, remoteAddress);
+					break;
+				}
+			} catch (Exception e) {
+				OutputResponse output = new OutputResponse();
+				output.setError(e);
+				response.getOutputStream().print(output.toString());
+				response.setContentType(MediaType.APPLICATION_JSON);
+				response.setContentLength(output.toString().length());
+				response.setHeader("Access-Control-Allow-Origin", "*");
+				status = false;
+			}
+		}
+		return status;
+	}
+
     @Override
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object object, ModelAndView model)
             throws Exception {
