@@ -54,6 +54,8 @@ public class CommonIdentityDTO {
 	private Integer beneficiaryRegId;
 	private Integer communityId;
 	private String community;
+	private Boolean isConsent=false;
+
 	private Timestamp dob;
 	private Integer ageAtMarriage;
 	private Integer educationId;

@@ -567,7 +567,7 @@ public class IEMRAdminController {
 				}
 				
 				// Extract user ID from the JWT token
-				String userId = jwtUtil.getUserIdFromToken(jwtToken);
+				String userId = jwtUtil.extractUserId(jwtToken);
 				
 				// Get user details and prepare response
 				User user = iemrAdminUserServiceImpl.getUserById(Long.parseLong(userId));
