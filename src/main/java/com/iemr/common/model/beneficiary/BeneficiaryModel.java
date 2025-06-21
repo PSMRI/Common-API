@@ -91,8 +91,7 @@ public class BeneficiaryModel implements Comparable<BeneficiaryModel> {
 	private TitleModel m_title;
 	@Expose
 	private String firstName;
-	@Expose
-	private Boolean isConsent=false;
+
 
 	@Expose
 	private String middleName;
