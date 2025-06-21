@@ -54,7 +54,7 @@ public class BeneficiaryConsentController {
         OutputResponse response = new OutputResponse();
 
         try {
-            OTPRequestParsor obj = InputMapper.gson().fromJson(requestOBJ, OTPRequestParsor.class);
+            BeneficiaryConsentRequest obj = InputMapper.gson().fromJson(requestOBJ, BeneficiaryConsentRequest.class);
 
             JSONObject responseOBJ = beneficiaryOTPHandler.validateOTP(obj);
             if (responseOBJ != null)
@@ -77,7 +77,7 @@ public class BeneficiaryConsentController {
         OutputResponse response = new OutputResponse();
 
         try {
-            OTPRequestParsor obj = InputMapper.gson().fromJson(requestOBJ, OTPRequestParsor.class);
+            BeneficiaryConsentRequest obj = InputMapper.gson().fromJson(requestOBJ, BeneficiaryConsentRequest.class);
 
             String success = beneficiaryOTPHandler.resendOTP(obj);
             logger.info(success.toString());
