@@ -75,6 +75,7 @@ import com.iemr.common.data.sms.SMSTemplate;
 import com.iemr.common.data.sms.SMSType;
 import com.iemr.common.data.telemedicine.PrescribedDrugDetail;
 import com.iemr.common.data.users.User;
+import com.iemr.common.data.videocall.VideoCallParameters;
 import com.iemr.common.mapper.sms.SMSMapper;
 import com.iemr.common.model.beneficiary.BeneficiaryModel;
 import com.iemr.common.model.sms.CreateSMSRequest;
@@ -100,6 +101,7 @@ import com.iemr.common.repository.sms.SMSParameterRepository;
 import com.iemr.common.repository.sms.SMSTemplateRepository;
 import com.iemr.common.repository.sms.SMSTypeRepository;
 import com.iemr.common.repository.users.IEMRUserRepositoryCustom;
+import com.iemr.common.repository.videocall.VideoCallParameterRepository;
 import com.iemr.common.service.beneficiary.IEMRSearchUserService;
 import com.iemr.common.utils.CryptoUtil;
 import com.iemr.common.utils.config.ConfigProperties;
@@ -165,6 +167,9 @@ public class SMSServiceImpl implements SMSService {
 
 	@Autowired
 	private TCRequestModelRepo tCRequestModelRepo;
+	
+	 @Autowired
+	 private VideoCallParameterRepository videoCallParameterRepository;
 
 	Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
@@ -248,23 +253,138 @@ public class SMSServiceImpl implements SMSService {
 		return smaParamsResponse.toString();
 	}
 
+	 public VideoCallParameters getVideoCallParameters(String meetingLink) {
+	        return videoCallParameterRepository.findByMeetingLink(meetingLink);
+	    }
+	 
 	@Override
 	public String sendSMS(List<SMSRequest> requests, String authToken) throws Exception {
 		List<SMSNotification> sentSMS = new ArrayList<SMSNotification>();
 		SMSTemplate smsTemplate = null;
+
 		for (SMSRequest request : requests) {
 			SMSNotification sms;
 			
 			smsTemplate = smsTemplateRepository.findBySmsTemplateID(request.getSmsTemplateID());
+			
 			if (null != smsTemplate && smsTemplate.getSmsTemplateName().equalsIgnoreCase(prescription)) {
 				sentSMS = prepareTMSMS(request, authToken);
-			} else {
+			}
+			else if(null != smsTemplate && smsTemplate.getSmsTemplateName().equalsIgnoreCase("Video Consultation"))
+			{
+                String meetingLink = request.getSmsAdvice();
+            	if (meetingLink == null || meetingLink.isEmpty()) {
+                throw new Exception("Meeting link is missing in the request");
+            }
+
+            VideoCallParameters vcParams = getVideoCallParameters(meetingLink);
+            if (vcParams == null) {
+                throw new Exception("Video Call Parameters not found for the provided meeting link: " + meetingLink);
+            }
+
+            sms = prepareVideoCallSMS(request, vcParams, authToken);
+            sentSMS.add(sms);
+			}
+			else {
 				sms = prepareSMS(request, authToken);
 				sentSMS.add(sms);
 			}
 		}
 		return sentSMS.toString();
 	}
+	
+	public SMSNotification prepareSMSWithVideoCall(SMSRequest request, String authToken, String meetingLink) throws Exception {
+    VideoCallParameters vcParams = getVideoCallParameters(meetingLink);
+
+    if (vcParams != null) {
+        return prepareVideoCallSMS(request, vcParams, authToken);
+    } else {
+        throw new Exception("Video Call Parameters not found for the provided meeting link: " + meetingLink);
+    }
+}
+	public SMSNotification prepareVideoCallSMS(SMSRequest request, VideoCallParameters vcParams, String authToken) throws Exception {
+
+    SMSNotification sms = new SMSNotification();
+    sms.setSmsStatus(SMSNotification.NOT_SENT);
+    sms.setCreatedBy(request.getCreatedBy());
+    sms.setSmsTriggerDate(new Timestamp(Calendar.getInstance().getTime().getTime()));
+    sms.setBeneficiaryRegID(request.getBeneficiaryRegID());
+    sms.setReceivingUserID(request.getUserID());
+
+    String smsToSend = "";
+    SMSTemplate smsTemplate = smsTemplateRepository.findBySmsTemplateID(request.getSmsTemplateID());
+
+    if (smsTemplate != null) {
+        sms.setSmsTemplateID(smsTemplate.getSmsTemplateID());
+        smsToSend = smsTemplate.getSmsTemplate();
+
+        List<SMSParametersMap> smsParameters = smsParameterMapRepository
+                .findSMSParametersMapBySmsTemplateID(request.getSmsTemplateID());
+
+        for (SMSParametersMap smsParametersMap : smsParameters) {
+            String variable = smsParametersMap.getSmsParameterName();
+            String methodName = smsParametersMap.getSmsParameter().getDataName();
+            String variableValue = "";
+			variableValue = getVideoCallData(methodName, vcParams);
+ 			smsToSend = smsToSend.replace("$$" + variable + "$$", variableValue);
+
+            if ("VideoCall".equalsIgnoreCase(smsParametersMap.getSmsParameter().getSmsParameterType())) {
+                variableValue = getVideoCallData(methodName, vcParams);
+            }
+
+            if ("SMS_PHONE_NO".equalsIgnoreCase(variable)) {
+                sms.setPhoneNo(request.getBenPhoneNo() != null ? request.getBenPhoneNo() : variableValue);
+            } 
+			else {
+                smsToSend = smsToSend.replace("$$" + variable + "$$", variableValue);
+            }
+        }
+
+        if (request.getAlternateNo() != null) {
+            sms.setPhoneNo(request.getAlternateNo());
+        }
+        if (request.getFacilityPhoneNo() != null) {
+            sms.setPhoneNo(request.getFacilityPhoneNo());
+        }
+    }
+
+    sms.setSms(smsToSend);
+    return smsNotification.save(sms);  
+}
+
+	
+	public String getVideoCallData(String methodName, VideoCallParameters videoCall) throws Exception {
+	    String variableValue = "";
+	    switch (methodName.toLowerCase()) {
+	        case "videoconsultationlink":
+	            variableValue = videoCall.getMeetingLink() != null ? videoCall.getMeetingLink() : "";
+	            break;
+	        case "consultationdate":
+				if (videoCall.getDateOfCall() != null) {
+        			SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        			SimpleDateFormat outputFormat = new SimpleDateFormat("dd-MM-yyyy h:mm a");
+        			String formattedDate = outputFormat.format(videoCall.getDateOfCall());
+        			variableValue = formattedDate;
+    			} 
+	            break;
+			case "phoneno":
+				variableValue = videoCall.getCallerPhoneNumber() !=null ? videoCall.getCallerPhoneNumber().toString() : "";
+				break;
+	        default:
+	            Method method = videoCall.getClass().getDeclaredMethod("get" + capitalize(methodName));
+	            method.setAccessible(true);
+	            Object result = method.invoke(videoCall);
+	            variableValue = result != null ? result.toString() : "";
+	            break;
+	    }
+
+	    return variableValue.trim();
+	}
+
+	private String capitalize(String str) {
+	    return str == null || str.isEmpty() ? str : str.substring(0, 1).toUpperCase() + str.substring(1);
+	}
+
 
 	// Shubham Shekhar,16-10-2020,TM Prescription SMS
 	private List<SMSNotification> prepareTMSMS(
@@ -691,7 +811,7 @@ public class SMSServiceImpl implements SMSService {
 			Class clazz = Class.forName(className);
 			Method method = clazz.getDeclaredMethod("get" + methodName, null);
 			variableValue = method.invoke(beneficiary, null).toString();
-			break;
+            break;
 		}
 
 		return variableValue.replace("null", "").trim();
@@ -967,17 +1087,17 @@ public class SMSServiceImpl implements SMSService {
 	private String getBloodOnCallData(String className, String methodName, SMSRequest request,
 			BeneficiaryModel beneficiary) throws NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, ClassNotFoundException {
-		T_BloodRequest bloodRequest = prescribedDrugRepository.getBloodRequest(request.getBloodReqID());
-		T_RequestedBloodBank requestedBloodBank = prescribedDrugRepository
+			T_BloodRequest bloodRequest = prescribedDrugRepository.getBloodRequest(request.getBloodReqID());
+			T_RequestedBloodBank requestedBloodBank = prescribedDrugRepository
 				.getBloodBankAddress(request.getRequestedBloodBankID());
-		String variableValue = "";
+			String variableValue = "";
+
 		switch (methodName.toLowerCase()) {
 		case "dateofrequest":
-			Date requestDate = bloodRequest.getCreatedDate();
-			DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			String reportDate = df.format(requestDate);
-			variableValue = reportDate + " ";
-			break;
+ 			Date requestDate = bloodRequest.getCreatedDate();
+       		String reportDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(requestDate);
+        	variableValue = reportDate + " ";
+      		break;
 		case "callercontactno":
 			if (request.getIsBloodBankSMS() == true) {
 				variableValue = (beneficiary.getBenPhoneMaps().size() > 0
@@ -1034,9 +1154,10 @@ public class SMSServiceImpl implements SMSService {
 	private String getDirectoryserviceData(String className, String methodName, SMSRequest request)
 			throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException {
-		Directoryservice directoryservice = prescribedDrugRepository
+			Directoryservice directoryservice = prescribedDrugRepository
 				.getDirectoryservice(request.getDirectoryServiceID());
-		String variableValue = "";
+			String variableValue = "";
+		
 		if(null != directoryservice && null != directoryservice.getInstitute()) {
 		switch (methodName.toLowerCase()) {
 		case "institutename":
