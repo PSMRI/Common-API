@@ -22,7 +22,6 @@
 package com.iemr.common.controller.mctshistory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -47,7 +46,6 @@ public class OutboundHistoryController {
 		this.outboundHistoryService = outboundHistoryService;
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get MCTS call history")
 	@RequestMapping(value = "/getMctsCallHistory", method = RequestMethod.POST, headers = "Authorization")
 	public String getCallHistory(@Param("{\"beneficiaryRegID\":\"Long\"}") @RequestBody String request) {
@@ -63,7 +61,6 @@ public class OutboundHistoryController {
 		return response.toStringWithSerialization();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get MCTS call response")
 	@RequestMapping(value = "/getMctsCallResponse", method = RequestMethod.POST, headers = "Authorization")
 	public String getMctsCallResponse(@Param("{\"callDetailID\":\"Long\"}") @RequestBody String request) {
