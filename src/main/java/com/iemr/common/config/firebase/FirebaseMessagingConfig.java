@@ -22,8 +22,6 @@ public class FirebaseMessagingConfig {
     @Value("${firebase.credential-file:}")
     private String firebaseCredentialFile;
 
-    @Value("${firebase.credential-base64:}")
-    private String firebaseCredentialBase64;
 
     @Bean
     public FirebaseMessaging firebaseMessaging() throws IOException {
@@ -33,10 +31,7 @@ public class FirebaseMessagingConfig {
 
         GoogleCredentials credentials;
 
-        if (!firebaseCredentialBase64.isBlank()) {
-            byte[] decoded = Base64.getDecoder().decode(firebaseCredentialBase64);
-            credentials = GoogleCredentials.fromStream(new ByteArrayInputStream(decoded));
-        } else if (!firebaseCredentialFile.isBlank()) {
+         if (!firebaseCredentialFile.isBlank()) {
             credentials = GoogleCredentials.fromStream(
                 new ClassPathResource(firebaseCredentialFile).getInputStream()
             );
