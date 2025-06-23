@@ -21,6 +21,7 @@ import com.iemr.common.repository.videocall.VideoCallParameterRepository;
 import com.iemr.common.utils.config.ConfigProperties;
 import com.iemr.common.utils.mapper.OutputMapper;
 import com.iemr.common.utils.response.OutputResponse;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class VideoCallServiceImpl implements VideoCallService {
@@ -32,14 +33,15 @@ public class VideoCallServiceImpl implements VideoCallService {
 	@Autowired
     private VideoCallMapper videoCallMapper;
 
+    @Value("${video-call-url}")
     private String meetingLink;
+
     private boolean isLinkSent = false;
     private String consultationStatus = "Not Initiated";
     private String jitsiLink;
-
     public VideoCallServiceImpl() {
-        this.jitsiLink = ConfigProperties.getPropertyByName("video-call-url");
-        logger.info("Jitsi Link fetched: " + this.jitsiLink);
+        // this.jitsiLink = ConfigProperties.getPropertyByName("video-call-url");
+        // logger.info("Jitsi Link fetched: " + this.jitsiLink);
     }
 
     @Override
