@@ -35,7 +35,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 
+@RequestMapping(value = { "/beneficiaryConsent" },headers ="Authorization" )
+@RestController
 public class BeneficiaryConsentController {
     final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
@@ -53,10 +56,8 @@ public class BeneficiaryConsentController {
 
             String success = beneficiaryOTPHandler.sendOTP(obj); // method name unchanged if internal logic still uses 'OTP'
             logger.info(success.toString());
-            if (success.contains("otp"))
-                response.setResponse(success);
-            else
-                response.setError(500, "failure");
+            response.setResponse(success);
+
 
         } catch (Exception e) {
             response.setError(500, "error : " + e);

@@ -87,8 +87,7 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
     @Override
     public String sendOTP(BeneficiaryConsentRequest obj) throws Exception {
         int otp = generateOTP(obj.getMobNo());
-        sendSMS(otp, obj);
-        return "success";
+        return sendSMS(otp, obj);
     }
 
     /***
@@ -122,8 +121,7 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
     @Override
     public String resendOTP(BeneficiaryConsentRequest obj) throws Exception {
         int otp = generateOTP(obj.getMobNo());
-        sendSMS(otp, obj);
-        return "success";
+        return sendSMS(otp, obj);
     }
 
     // generate 6 digit random no #
@@ -161,16 +159,17 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
     public String sendSMS(int otp, BeneficiaryConsentRequest obj) {
 
         final RestTemplate restTemplate = new RestTemplate();
-        String sendSMSURL = ConfigProperties.getPropertyByName("send-message-url");
 
-        String sendSMSAPI = BeneficiaryOTPHandlerImpl.SMS_GATEWAY_URL + "/" + sendSMSURL;
+        String dltTemplateId = smsTemplateRepository.findDLTTemplateID(28);
+        SMSTemplate template = smsTemplateRepository.findBySmsTemplateID(28);
 
+        String sendSMSAPI = BeneficiaryOTPHandlerImpl.SMS_GATEWAY_URL;
 
         try {
-
-
-//			String message = "Dear Citizen, your OTP for login is " +otp+". Use it within 15 minutes. Do not share this code. Regards PSMRIAM.";
-            String message = "Hello! Your OTP for providing consent for registration on AMRIT is " + otp + ". This OTP is valid for 10 minutes. Kindly share it only with " + obj.getUserName() + " " + obj.getDesignation() + " to complete the process. PSMRI";
+            String message = template.getSmsTemplate()
+                    .replace("$$OTP$$",String.valueOf(otp))
+                    .replace("$$UserName$$", obj.getUserName())
+                    .replace("$$Designation$$", obj.getDesignation());
 
             // Build payload
             Map<String, Object> payload = new HashMap<>();
@@ -179,8 +178,8 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
             payload.put("message", message);
             payload.put("sourceAddress", ConfigProperties.getPropertyByName("source-address"));
             payload.put("messageType", "SERVICE_IMPLICIT");
-            payload.put("dltTemplateId", ConfigProperties.getPropertyByName("dltTemplateId"));
-            payload.put("entityId",ConfigProperties.getPropertyByName("entityId") );
+            payload.put("dltTemplateId", dltTemplateId);
+            payload.put("entityId",ConfigProperties.getPropertyByName("sms-entityid") );
             payload.put("otp", true);
             // Set headers
             HttpHeaders headers = new HttpHeaders();
@@ -194,9 +193,13 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
 
             // Call API
             ResponseEntity<String> response = restTemplate.postForEntity(sendSMSAPI, request, String.class);
+            logger.info("sms-response:"+response.getBody());
+            if(response.getStatusCode().value()==200){
+                return  "OTP sent successfully on register mobile number";
+            }else {
+                return "Fail";
 
-            // Return response
-            return response.getBody();
+            }
 
         } catch (Exception e) {
             return "Error sending SMS: " + e.getMessage();
