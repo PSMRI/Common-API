@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Base64;
 
@@ -29,15 +30,11 @@ public class FirebaseMessagingConfig {
             throw new IllegalStateException("Firebase is disabled");
         }
 
-        GoogleCredentials credentials;
-
-         if (!firebaseCredentialFile.isBlank()) {
-            credentials = GoogleCredentials.fromStream(
-                new ClassPathResource(firebaseCredentialFile).getInputStream()
-            );
-        } else {
-            throw new IllegalStateException("No Firebase credentials provided");
+        if (firebaseCredentialFile == null || firebaseCredentialFile.isBlank()) {
+            throw new IllegalStateException("No Firebase credentials path provided");
         }
+
+        GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(firebaseCredentialFile));
 
         FirebaseOptions options = FirebaseOptions.builder()
                 .setCredentials(credentials)
