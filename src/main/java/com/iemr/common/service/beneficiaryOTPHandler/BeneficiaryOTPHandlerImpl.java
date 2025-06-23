@@ -199,7 +199,6 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
             return response.getBody();
 
         } catch (Exception e) {
-            e.printStackTrace();
             return "Error sending SMS: " + e.getMessage();
         }
     }

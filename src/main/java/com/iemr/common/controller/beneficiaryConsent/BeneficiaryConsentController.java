@@ -1,9 +1,28 @@
+/*
+ * AMRIT – Accessible Medical Records via Integrated Technology
+ * Integrated EHR (Electronic Health Records) Solution
+ *
+ * Copyright (C) "Piramal Swasthya Management and Research Institute"
+ *
+ * This file is part of AMRIT.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see https://www.gnu.org/licenses/.
+ */
 package com.iemr.common.controller.beneficiaryConsent;
 
 import com.iemr.common.data.beneficiaryConsent.BeneficiaryConsentRequest;
-import com.iemr.common.data.otp.OTPRequestParsor;
 import com.iemr.common.service.beneficiaryOTPHandler.BeneficiaryOTPHandler;
-import com.iemr.common.service.otp.OTPHandler;
 import com.iemr.common.utils.mapper.InputMapper;
 import com.iemr.common.utils.response.OutputResponse;
 import io.lettuce.core.dynamic.annotation.Param;
@@ -26,7 +45,6 @@ public class BeneficiaryConsentController {
     @Operation(summary = "Send Consent")
     @RequestMapping(value = "/sendConsent", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
     public String sendConsent(@Param(value = "{\"mobNo\":\"String\"}") @RequestBody String requestOBJ) {
-        logger.info(requestOBJ.toString());
 
         OutputResponse response = new OutputResponse();
 
@@ -41,7 +59,6 @@ public class BeneficiaryConsentController {
                 response.setError(500, "failure");
 
         } catch (Exception e) {
-            logger.error("error in sending Consent : " + e);
             response.setError(500, "error : " + e);
         }
         return response.toString();
