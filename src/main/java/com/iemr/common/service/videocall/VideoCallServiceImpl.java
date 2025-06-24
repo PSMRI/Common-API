@@ -46,7 +46,7 @@ public class VideoCallServiceImpl implements VideoCallService {
 
     @Override
     public String generateMeetingLink() {
-        meetingLink=jitsiLink+RandomStringUtils.randomAlphanumeric(8);
+        meetingLink=jitsiLink+"m="+RandomStringUtils.randomAlphanumeric(8);
         logger.info("Meeting link: " + meetingLink);
         return meetingLink;
     }
