@@ -33,12 +33,14 @@ public class VideoCallServiceImpl implements VideoCallService {
 	@Autowired
     private VideoCallMapper videoCallMapper;
 
-    @Value("${video-call-url}")
     private String meetingLink;
 
     private boolean isLinkSent = false;
     private String consultationStatus = "Not Initiated";
+
+    @Value("${video-call-url}")
     private String jitsiLink;
+
     public VideoCallServiceImpl() {
         // this.jitsiLink = ConfigProperties.getPropertyByName("video-call-url");
         // logger.info("Jitsi Link fetched: " + this.jitsiLink);
@@ -46,7 +48,8 @@ public class VideoCallServiceImpl implements VideoCallService {
 
     @Override
     public String generateMeetingLink() {
-        meetingLink=jitsiLink+RandomStringUtils.randomAlphanumeric(8);
+        logger.info("Jitsi Link: " + jitsiLink);
+        meetingLink=jitsiLink+"m="+RandomStringUtils.randomAlphanumeric(8);
         logger.info("Meeting link: " + meetingLink);
         return meetingLink;
     }
