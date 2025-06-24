@@ -207,7 +207,13 @@ public class SMSController {
 		}
 		logger.debug("sendSMS sending response " + response);
 		logger.info("sendSMS sending response");
-		return response.toString();
+		String respStr = response.toString();
+		respStr = respStr.replace("\\u003d", "=")
+                 .replace("\\u003c", "<")
+                 .replace("\\u003e", ">")
+                 .replace("\\u0026", "&");
+		return respStr;
+
 	}
 
 }
