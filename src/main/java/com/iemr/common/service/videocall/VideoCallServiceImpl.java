@@ -75,7 +75,10 @@ public class VideoCallServiceImpl implements VideoCallService {
     response.setResponse(responseData.toJson());
 
     return OutputMapper.gsonWithoutExposeRestriction()
-        .toJson(response);
+        .toJson(response) .replace("\\u003d", "=")
+    .replace("\\u003c", "<")
+    .replace("\\u003e", ">")
+    .replace("\\u0026", "&");
     }
 
 @Override
