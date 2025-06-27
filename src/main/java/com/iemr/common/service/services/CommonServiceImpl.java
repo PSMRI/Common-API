@@ -134,28 +134,6 @@ public class CommonServiceImpl implements CommonService {
 		return categoriesList;
 	}
 
-//	@Override
-//	public Iterable<SubCategoryDetails> getSubCategories(String request) throws IEMRException, JsonMappingException, JsonProcessingException {
-//		ObjectMapper objectMapper = new ObjectMapper();
-//		SubCategoryDetails subCategoryDetails = objectMapper.readValue(request, SubCategoryDetails.class);
-//		List<SubCategoryDetails> subCategoriesList = new ArrayList<SubCategoryDetails>();
-//		ArrayList<Object[]> lists = subCategoryRepository.findByCategoryID(subCategoryDetails.getCategoryID());
-//		for (Object[] objects : lists) {
-//			if (objects != null && objects.length > 1) {
-//				String SubCatFilePath = (String) objects[2];
-//				String fileUIDAsURI = null;
-//				String fileNameWithExtension = null;
-//				if(SubCatFilePath!=null) {
-//				fileUIDAsURI=getFilePath(SubCatFilePath);
-//				List<Object[]> fileNameList = kmFileManagerRepository.getFileNameByUID(SubCatFilePath);
-//				Object[] fileobjects = fileNameList.get(0);
-//				fileNameWithExtension= (String)fileobjects[0]+ (String) fileobjects[1];
-//				}
-//				subCategoriesList.add(new SubCategoryDetails((Integer) objects[0], (String) objects[1], SubCatFilePath, fileUIDAsURI, fileNameWithExtension));
-//			}
-//		}
-//		return subCategoriesList;
-//	}
 	
 	//newChange
 	@Override
