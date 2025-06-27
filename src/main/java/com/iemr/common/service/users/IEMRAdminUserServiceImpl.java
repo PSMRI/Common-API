@@ -263,7 +263,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 					user.setFailedAttempt(user.getFailedAttempt() + 1);
 					user.setDeleted(true);
 					user = iEMRUserRepositoryCustom.save(user);
-					logger.warn("A user account was locked after reaching the limit of {} failed login attempts.",
+					logger.warn("User Account has been locked after reaching the limit of {} failed login attempts.",
 							ConfigProperties.getInteger("failedLoginAttempt"));
 
 					throw new IEMRException(
@@ -346,7 +346,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 					user.setFailedAttempt(user.getFailedAttempt() + 1);
 					user.setDeleted(true);
 					user = iEMRUserRepositoryCustom.save(user);
-					logger.warn("A user account was locked after reaching the limit of {} failed login attempts.",
+					logger.warn("User Account has been locked after reaching the limit of {} failed login attempts.",
 							ConfigProperties.getInteger("failedLoginAttempt"));
 
 					throw new IEMRException(
