@@ -156,7 +156,7 @@ public class IEMRAdminController {
 					logger.info("CAPTCHA validated successfully for user: {}", m_User.getUserName());
 				} else {
 					logger.warn("CAPTCHA token missing for user: {}", m_User.getUserName());
-					response.setError(new IEMRException("CAPTCHA token is required"));
+					response.setError(new IEMRException("CAPTCHA validation failed. Please try again."));
 					return response.toString();
 				}
 			} else {
@@ -254,20 +254,24 @@ public class IEMRAdminController {
 
 		try {
 			if (jwtUtil.validateToken(refreshToken) == null) {
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+				logger.warn("Token validation failed: invalid token provided.");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
 			}
 
 			Claims claims = jwtUtil.getAllClaimsFromToken(refreshToken);
 
 			// Verify token type
 			if (!"refresh".equals(claims.get("token_type", String.class))) {
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token type");
+				logger.warn("Token validation failed: incorrect token type in refresh request.");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
+
 			}
 
 			// Check revocation using JTI
 			String jti = claims.getId();
 			if (!redisTemplate.hasKey("refresh:" + jti)) {
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token revoked");
+				logger.warn("Token validation failed: refresh token is revoked or not found in store.");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
 			}
 
 			// Get user details
@@ -277,11 +281,13 @@ public class IEMRAdminController {
 			
 			// Validate that the user still exists and is active
 			if (user == null) {
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+				logger.warn("Token validation failed: user not found for userId in token.");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
 			}
 			
 			if (user.getM_status() == null || !"Active".equalsIgnoreCase(user.getM_status().getStatus())) {
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User account is inactive");
+				logger.warn("Token validation failed: user account is inactive or not in 'Active' status.");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
 			}
 			// Generate new tokens
 			String newJwt = jwtUtil.generateToken(user.getUserName(), userId);
@@ -302,10 +308,14 @@ public class IEMRAdminController {
 
 			return ResponseEntity.ok(tokens);
 		} catch (ExpiredJwtException ex) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token expired");
+			logger.warn("Token validation failed: token has expired.");
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body("Authentication failed. Please log in again.");
 		} catch (Exception e) {
 			logger.error("Refresh failed: ", e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Token refresh failed");
+			logger.error("Token refresh failed due to unexpected server error.");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("An unexpected error occurred. Please try again later.");
 		}
 	}
 
@@ -321,10 +331,12 @@ public class IEMRAdminController {
 				List<User> mUsers = iemrAdminUserServiceImpl.userExitsCheck(m_User.getUserName());
 
 				if (mUsers == null || mUsers.size() <= 0) {
-					throw new IEMRException("User not found, please contact administrator");
-				} else if (mUsers.size() > 1)
-					throw new IEMRException("More than 1 user found, please contact administrator");
-				else if (mUsers.size() == 1) {
+					logger.error("User not found");
+					throw new IEMRException("Logout request failed, please try again later");
+				} else if (mUsers.size() > 1) {
+					logger.error("More than 1 user found");
+					throw new IEMRException("Logout failed. Please retry or contact administrator");
+				} else if (mUsers.size() == 1) {
 					String previousTokenFromRedis = sessionObject
 							.getSessionObject((mUsers.get(0).getUserName().toString().trim().toLowerCase()));
 					if (previousTokenFromRedis != null) {
@@ -332,7 +344,8 @@ public class IEMRAdminController {
 						sessionObject.deleteSessionObject(previousTokenFromRedis);
 						response.setResponse("User successfully logged out");
 					} else
-						throw new IEMRException("Unable to fetch session from redis");
+						logger.error("Unable to fetch session from redis");
+					throw new IEMRException("Session error. Please try again later");
 				}
 			} else {
 				throw new IEMRException("Invalid request object");
@@ -404,7 +417,7 @@ public class IEMRAdminController {
 					previlegeObj.getJSONObject(serv).put("agentPassword", m_UserServiceRoleMapping.getAgentPassword());
 				}
 				JSONArray roles = previlegeObj.getJSONObject(serv).getJSONArray("roles");
-//            roles.put(new JSONObject(m_UserServiceRoleMapping.getM_Role().toString()));
+				// roles.put(new JSONObject(m_UserServiceRoleMapping.getM_Role().toString()));
 				JSONObject roleObject = new JSONObject(m_UserServiceRoleMapping.getM_Role().toString());
 				roleObject.put("teleConsultation", m_UserServiceRoleMapping.getTeleConsultation());
 				roles.put(roleObject);
@@ -563,7 +576,8 @@ public class IEMRAdminController {
 				}
 				
 				if (jwtToken == null) {
-					throw new IEMRException("No authentication token found in header or cookie");
+					logger.warn("Authentication failed: no token found in header or cookies.");
+					throw new IEMRException("Authentication failed. Please log in again.");
 				}
 				
 				// Extract user ID from the JWT token
@@ -572,7 +586,9 @@ public class IEMRAdminController {
 				// Get user details and prepare response
 				User user = iemrAdminUserServiceImpl.getUserById(Long.parseLong(userId));
 				if (user == null) {
-					throw new IEMRException("User not found");
+					logger.warn("User lookup failed for provided userId.");
+					throw new IEMRException("Authentication failed. Please try again.");
+
 				}
 
 				String remoteAddress = request.getHeader("X-FORWARDED-FOR");
@@ -603,10 +619,13 @@ public class IEMRAdminController {
 			List<User> mUsers = iemrAdminUserServiceImpl.userExitsCheck(m_User.getUserName());
 
 			if (mUsers == null || mUsers.size() <= 0) {
-				throw new IEMRException("user not found, please contact administrator");
-			} else if (mUsers.size() > 1)
-				throw new IEMRException("more than 1 user found, please contact administrator");
-			else if (mUsers.size() == 1) {
+				logger.error("User not found");
+				throw new IEMRException("Request failed, please try again later");
+			} else if (mUsers.size() > 1) {
+				logger.error("More than 1 user found");
+				throw new IEMRException("Request failed. Please retry again");
+
+			} else if (mUsers.size() == 1) {
 				List<Map<String, String>> quesAnsList = new ArrayList<>();
 				Map<String, String> quesAnsMap;
 				Map<Object, Object> resMap = new HashMap<>();
@@ -642,8 +661,11 @@ public class IEMRAdminController {
 			int noOfRowModified = 0;
 			List<User> mUsers = iemrAdminUserServiceImpl.userExitsCheck(m_user.getUserName());
 			if (mUsers.size() != 1) {
-				throw new IEMRException(
-						"Set forgot password failed as the user does not exist or is not active or multiple user found.Please contact with administrator");
+				logger.warn(
+						"Password reset failed for username '{}'. Reason: user not found, inactive, or multiple matches.",
+						m_user.getUserName());
+
+				throw new IEMRException("Unable to process your request. Please try again or contact support.");
 			}
 			User mUser = mUsers.get(0);
 			String setStatus;
@@ -660,7 +682,7 @@ public class IEMRAdminController {
 		} catch (Exception e) {
 			logger.error("setForgetPassword failed with error " + e.getMessage(), e);
 			if (e.getMessage().equals(
-					"Set forgot password failed as the user does not exist or is not active or multiple user found.Please contact with administrator"))
+					"Unable to process your request. Please try again or contact support."))
 				response.setError(e);
 			else
 				response.setError(5000, e.getMessage());
@@ -681,7 +703,9 @@ public class IEMRAdminController {
 			List<User> mUsers = iemrAdminUserServiceImpl.userExitsCheck(changePassword.getUserName());
 			String changeReqResult;
 			if (mUsers.size() != 1) {
-				throw new IEMRException("Change password failed with error as user is not available");
+				logger.warn("Change password attempt failed. User not found or not available.");
+
+				throw new IEMRException("Unable to change password. Please try again later");
 			}
 			try {
 				int validatePassword;
@@ -748,7 +772,7 @@ public class IEMRAdminController {
 			response.setResponse(test.toString());
 		} catch (Exception e) {
 			logger.error("getsecurityquetions failed with error " + e.getMessage(), e);
-			response.setError(e);
+			response.setError(5000, "Unable to fetch security questions");
 		}
 		logger.info("getsecurityquetions response " + response.toString());
 		return response.toString();
@@ -1034,7 +1058,7 @@ public class IEMRAdminController {
 			response.setResponse(responseObj.toString());
 		} catch (Exception e) {
 			logger.error("userAuthenticateByEncryption failed with error " + e.getMessage(), e);
-			response.setError(e);
+			response.setError(5000, "Request failed. Please try again.");
 		}
 		logger.info("userAuthenticateByEncryption response " + response.toString());
 		return response.toString();
@@ -1052,7 +1076,7 @@ public class IEMRAdminController {
 			}
 			response.setResponse(test.toString());
 		} catch (Exception e) {
-			response.setError(e);
+			response.setError(5000, "Request failed. Please try again.");
 		}
 		return response.toString();
 	}
@@ -1079,8 +1103,8 @@ public class IEMRAdminController {
 			} else
 				throw new IEMRException("Invalid Request");
 		} catch (Exception e) {
-			response.setError(5000, e.getMessage());
-			logger.error(e.toString());
+			logger.error("validateSecurityQuestionAndAnswer failed: {}", e.toString());
+			response.setError(5000, "Request failed. Please try again.");
 		}
 		logger.info("validateSecurityQuestionAndAnswer API response" + response.toString());
 		return response.toString();
@@ -1136,7 +1160,7 @@ public class IEMRAdminController {
 			response.setResponse(responseObj.toString());
 		} catch (Exception e) {
 			logger.error("userAuthenticate failed with error " + e.getMessage(), e);
-			response.setError(e);
+			response.setError(5000, "Authentication failed. Please try again.");
 		}
 		logger.info("userAuthenticate response " + response.toString());
 		return response.toString();
