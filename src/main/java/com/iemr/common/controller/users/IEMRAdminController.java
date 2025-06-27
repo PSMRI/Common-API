@@ -519,7 +519,7 @@ public class IEMRAdminController {
 			response.setResponse(responseObj.toString());
 		} catch (Exception e) {
 			logger.error("userAuthenticate failed with error " + e.getMessage(), e);
-			response.setError(e);
+			response.setError(5000, "Authentication failed. Please try again later."); // Generic fallback
 		}
 		logger.info("userAuthenticate response " + response.toString());
 		return response.toString();
@@ -645,7 +645,7 @@ public class IEMRAdminController {
 			}
 		} catch (Exception e) {
 			logger.error("forgetPassword failed with error " + e.getMessage(), e);
-			response.setError(e);
+			response.setError(5000, "ForgetPassword failed.");
 		}
 		logger.info("forgetPassword response " + response.toString());
 		return response.toString();
@@ -734,7 +734,7 @@ public class IEMRAdminController {
 			response.setResponse(changeReqResult);
 		} catch (Exception e) {
 			logger.error("changePassword failed with error " + e.getMessage(), e);
-			response.setError(e);
+			response.setError(5000, "Password change failed. Please try again later.");
 		}
 		logger.info("changePassword response " + response.toString());
 		return response.toString();
@@ -752,7 +752,7 @@ public class IEMRAdminController {
 			response.setResponse(responseData);
 		} catch (Exception e) {
 			logger.error("saveUserSecurityQuesAns failed with error " + e.getMessage(), e);
-			response.setError(e);
+			response.setError(5000, "Failed to save security questions. Please try again later.");
 		}
 		logger.info("saveUserSecurityQuesAns response " + response.toString());
 		return response.toString();
