@@ -110,11 +110,8 @@ import com.google.gson.LongSerializationPolicy;
 		@Transient
 		@Expose
 		private Integer categoryID;
-//		@Transient
-//		@Expose
-//		private Integer subCategoryID;
 		
-		@Column(name = "SubCategoryID")  // 🔴 DB-mapped field to associate files with a subcategory
+		@Column(name = "SubCategoryID")
 		@Expose
 		private Integer subCategoryID;
 		@Transient
