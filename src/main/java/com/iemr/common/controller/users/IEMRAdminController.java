@@ -519,7 +519,7 @@ public class IEMRAdminController {
 			response.setResponse(responseObj.toString());
 		} catch (Exception e) {
 			logger.error("userAuthenticate failed with error " + e.getMessage(), e);
-			response.setError(5000, "Authentication failed. Please try again later."); // Generic fallback
+			response.setError(e);
 		}
 		logger.info("userAuthenticate response " + response.toString());
 		return response.toString();
@@ -620,10 +620,10 @@ public class IEMRAdminController {
 
 			if (mUsers == null || mUsers.size() <= 0) {
 				logger.error("User not found");
-				throw new IEMRException("Request failed, please try again later");
+				throw new IEMRException("If the username is valid, you will be asked a security question");
 			} else if (mUsers.size() > 1) {
 				logger.error("More than 1 user found");
-				throw new IEMRException("Request failed. Please retry again");
+				throw new IEMRException("If the username is valid, you will be asked a security question");
 
 			} else if (mUsers.size() == 1) {
 				List<Map<String, String>> quesAnsList = new ArrayList<>();
@@ -645,7 +645,7 @@ public class IEMRAdminController {
 			}
 		} catch (Exception e) {
 			logger.error("forgetPassword failed with error " + e.getMessage(), e);
-			response.setError(5000, "ForgetPassword failed.");
+			response.setError(e);
 		}
 		logger.info("forgetPassword response " + response.toString());
 		return response.toString();
@@ -734,7 +734,7 @@ public class IEMRAdminController {
 			response.setResponse(changeReqResult);
 		} catch (Exception e) {
 			logger.error("changePassword failed with error " + e.getMessage(), e);
-			response.setError(5000, "Password change failed. Please try again later.");
+			response.setError(e);
 		}
 		logger.info("changePassword response " + response.toString());
 		return response.toString();
@@ -752,7 +752,7 @@ public class IEMRAdminController {
 			response.setResponse(responseData);
 		} catch (Exception e) {
 			logger.error("saveUserSecurityQuesAns failed with error " + e.getMessage(), e);
-			response.setError(5000, "Failed to save security questions. Please try again later.");
+			response.setError(e);
 		}
 		logger.info("saveUserSecurityQuesAns response " + response.toString());
 		return response.toString();
@@ -1058,7 +1058,7 @@ public class IEMRAdminController {
 			response.setResponse(responseObj.toString());
 		} catch (Exception e) {
 			logger.error("userAuthenticateByEncryption failed with error " + e.getMessage(), e);
-			response.setError(5000, "Request failed. Please try again.");
+			response.setError(e);
 		}
 		logger.info("userAuthenticateByEncryption response " + response.toString());
 		return response.toString();
@@ -1076,7 +1076,7 @@ public class IEMRAdminController {
 			}
 			response.setResponse(test.toString());
 		} catch (Exception e) {
-			response.setError(5000, "Request failed. Please try again.");
+			response.setError(e);
 		}
 		return response.toString();
 	}
@@ -1104,7 +1104,7 @@ public class IEMRAdminController {
 				throw new IEMRException("Invalid Request");
 		} catch (Exception e) {
 			logger.error("validateSecurityQuestionAndAnswer failed: {}", e.toString());
-			response.setError(5000, "Request failed. Please try again.");
+			response.setError(5000, e.getMessage());
 		}
 		logger.info("validateSecurityQuestionAndAnswer API response" + response.toString());
 		return response.toString();
@@ -1160,7 +1160,7 @@ public class IEMRAdminController {
 			response.setResponse(responseObj.toString());
 		} catch (Exception e) {
 			logger.error("userAuthenticate failed with error " + e.getMessage(), e);
-			response.setError(5000, "Authentication failed. Please try again.");
+			response.setError(e);
 		}
 		logger.info("userAuthenticate response " + response.toString());
 		return response.toString();
