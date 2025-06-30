@@ -75,7 +75,7 @@ public interface KMFileManagerRepository extends CrudRepository<KMFileManager, L
 			+ "where kmFileManager.fileUID = :fileUID")
 	List<Object[]> getFileNameByUID(@Param("fileUID") String fileUID);
 	
-	//newChange
+
     @Query("SELECT km FROM KMFileManager km WHERE km.subCategoryID = :subCategoryID AND km.deleted = false")
     List<KMFileManager> getFilesBySubCategoryID(@Param("subCategoryID") Integer subCategoryID);
 
