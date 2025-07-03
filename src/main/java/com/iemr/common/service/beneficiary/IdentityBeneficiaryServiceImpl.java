@@ -26,15 +26,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
+import com.google.gson.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.iemr.common.dto.identity.BeneficiariesDTO;
 import com.iemr.common.dto.identity.BeneficiariesPartialDTO;
 import com.iemr.common.dto.identity.IdentityEditDTO;
@@ -399,22 +395,39 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 
 	@Override
 	public String getIdentityResponse(String request, String auth, Boolean is1097) throws IEMRException {
-
 		String result;
 
 		HashMap<String, Object> header = new HashMap<>();
 		if (auth != null) {
 			header.put("Authorization", auth);
 		}
-		result = httpUtils.post(ConfigProperties.getPropertyByName("identity-api-url-benCreate")
-				.replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL)), request, header);
 
-		OutputResponse identityResponse = inputMapper.gson().fromJson(result, OutputResponse.class);
-		if (identityResponse.getStatusCode() == OutputResponse.USERID_FAILURE) {
-			throw new IEMRException(identityResponse.getErrorMessage());
+		String apiUrl = ConfigProperties.getPropertyByName("identity-api-url-benCreate")
+				.replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL));
+
+		logger.info("Calling URL: {}", apiUrl);
+		logger.info("Request Payload: {}", request);
+
+		result = httpUtils.post(apiUrl, request, header);
+
+		if (result == null || result.isEmpty()) {
+			logger.error("Empty response from Identity API");
+			throw new IEMRException("No response received from Identity API");
 		}
+
+		try {
+			OutputResponse identityResponse = inputMapper.gson().fromJson(result, OutputResponse.class);
+			if (identityResponse.getStatusCode() == OutputResponse.USERID_FAILURE) {
+				throw new IEMRException(identityResponse.getErrorMessage());
+			}
+		} catch (JsonSyntaxException e) {
+			logger.error("JSON parsing error: {}", e.getMessage());
+			throw new IEMRException("Invalid response format from Identity API");
+		}
+
 		return result;
 	}
+
 
 	public Integer editIdentityEditDTO(IdentityEditDTO identityEditDTO, String auth, Boolean is1097)
 			throws IEMRException {
