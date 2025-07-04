@@ -401,9 +401,9 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 		if (auth != null) {
 			header.put("Authorization", auth);
 		}
+		String baseUrl = is1097 ? identity1097BaseURL : identityBaseURL;
+		String apiUrl = baseUrl + ConfigProperties.getPropertyByName("identity-api-url-benCreate");
 
-		String apiUrl = ConfigProperties.getPropertyByName("identity-api-url-benCreate")
-				.replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL));
 
 		logger.info("Calling URL: {}", apiUrl);
 		logger.info("Request Payload: {}", request);
