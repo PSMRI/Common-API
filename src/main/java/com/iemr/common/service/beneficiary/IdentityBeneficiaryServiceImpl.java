@@ -52,7 +52,7 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 	private InputMapper inputMapper = new InputMapper();
 	private String identityBaseURL = ConfigProperties.getPropertyByName("identity-api-url");
 	private String identity1097BaseURL = ConfigProperties.getPropertyByName("identity-1097-api-url");
-	private static final String IDENTITY_BASE_URL = "IDENTITY_BASE_URL";
+	private static final String IDENTITY_BASE_URL = "https://amritdemo.piramalswasthya.org";
 
 	private static final String BEN_GEN = ConfigProperties.getPropertyByName("genben-api");
 	private static final String BEN_GEN_API_URL = ConfigProperties.getPropertyByName("generateBeneficiaryIDs-api-url");
@@ -79,8 +79,9 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 			header.put("Authorization", auth);
 		}
 
+
 		result = httpUtils.post(ConfigProperties.getPropertyByName("identity-api-url-getByBenRegIdList").replace(
-				IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL)), benIdList.toString(), header);
+				IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : "https://amritdemo.piramalswasthya.org")), benIdList.toString(), header);
 		OutputResponse identityResponse = inputMapper.gson().fromJson(result, OutputResponse.class);
 		if (identityResponse != null && identityResponse.getStatusCode() == OutputResponse.USERID_FAILURE) {
 			throw new IEMRException(identityResponse.getErrorMessage());
@@ -401,9 +402,9 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 		if (auth != null) {
 			header.put("Authorization", auth);
 		}
-		String baseUrl = is1097 ? identity1097BaseURL : identityBaseURL;
-		String apiUrl = baseUrl + ConfigProperties.getPropertyByName("identity-api-url-benCreate");
 
+		String apiUrl = ConfigProperties.getPropertyByName("identity-api-url-benCreate")
+				.replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL));
 
 		logger.info("Calling URL: {}", apiUrl);
 		logger.info("Request Payload: {}", request);
