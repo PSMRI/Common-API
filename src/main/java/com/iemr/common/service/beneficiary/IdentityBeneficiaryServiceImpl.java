@@ -405,9 +405,9 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 
 		String apiUrl = ConfigProperties.getPropertyByName("identity-api-url-benCreate")
 				.replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL));
+
 		logger.info("Calling URL: {}", apiUrl);
 		logger.info("Request Payload: {}", request);
-
 		result = httpUtils.post(apiUrl, request, header);
 
 		if (result == null || result.isEmpty()) {
