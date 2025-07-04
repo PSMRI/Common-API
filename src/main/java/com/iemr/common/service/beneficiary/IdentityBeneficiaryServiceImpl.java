@@ -79,7 +79,6 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 			header.put("Authorization", auth);
 		}
 
-
 		result = httpUtils.post(ConfigProperties.getPropertyByName("identity-api-url-getByBenRegIdList").replace(
 				IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL)), benIdList.toString(), header);
 		OutputResponse identityResponse = inputMapper.gson().fromJson(result, OutputResponse.class);
