@@ -402,10 +402,8 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 		if (auth != null) {
 			header.put("Authorization", auth);
 		}
-
-//		String apiUrl = ConfigProperties.getPropertyByName("identity-api-url-benCreate")
-//				.replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL));
-		String apiUrl ="https://amritdemo.piramalswasthya.org/identity-api/id/create";
+		String apiUrl = ConfigProperties.getPropertyByName("identity-api-url-benCreate")
+				.replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL));
 
 		logger.info("Calling URL: {}", apiUrl);
 		logger.info("Request Payload: {}", request);
