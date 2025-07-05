@@ -31,6 +31,7 @@ public @Data class LoginRequestModel {
 	private String authKey;
 	private Boolean doLogout;
 	private Boolean withCredentials;
+	private String captchaToken;
 
 	public LoginRequestModel() {
 

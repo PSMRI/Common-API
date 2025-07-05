@@ -26,7 +26,6 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -49,7 +48,6 @@ public class CommonController {
 	InputMapper inputMapper = new InputMapper();
 	final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
-	@CrossOrigin()
 	@Operation(summary = "Get category")
 	@RequestMapping(value = "/category", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	// public Iterable<CategoryDetails> getCategories(){
@@ -64,7 +62,6 @@ public class CommonController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get sub categories")
 	@RequestMapping(value = "/subcategory", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getSubcategories(@Param("{\"categoryID\":\"Integer\"}") @RequestBody String request) {
@@ -78,7 +75,6 @@ public class CommonController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get sub category files")
 	@RequestMapping(value = "/getSubCategoryFiles", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getSubCategoryFiles(@Param("{\"categoryID\":\"Integer\", \"providerServiceMapID\":\"Integer\", "
@@ -93,7 +89,6 @@ public class CommonController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get sub category files with URL")
 	@RequestMapping(value = "/getSubCategoryFilesWithURL", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getSubCategoryFilesWithURL(
@@ -109,7 +104,6 @@ public class CommonController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Category by id")
 	@RequestMapping(value = "/categoryByID", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getcategoriesById(
@@ -126,7 +120,6 @@ public class CommonController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Service types")
 	@RequestMapping(value = "/servicetypes", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getservicetypes(@Param("{\"providerServiceMapID\":\"Integer\"}") @RequestBody String request) {
@@ -156,7 +149,6 @@ public class CommonController {
 		this.services = services;
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Service list")
 	@RequestMapping(value = "/serviceList", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String serviceList(@RequestBody String request) {

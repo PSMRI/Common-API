@@ -26,7 +26,6 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -52,7 +51,6 @@ public class NotificationController {
 		this.notificationService = notificationService;
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get notification")
 	@RequestMapping(value = "/getNotification", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getNotification(@Param(value = "{\"providerServiceMapID\": \"integer-provider service map id\", "
@@ -72,7 +70,6 @@ public class NotificationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get supervisor notification")
 	@RequestMapping(value = "/getSupervisorNotification", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getSupervisorNotification(
@@ -92,7 +89,6 @@ public class NotificationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Create notification")
 	@RequestMapping(value = "/createNotification", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String createNotification(
@@ -120,7 +116,6 @@ public class NotificationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Update notification")
 	@RequestMapping(value = "/updateNotification", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String updateNotification(
@@ -146,7 +141,6 @@ public class NotificationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get notification type")
 	@RequestMapping(value = "/getNotificationType", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getNotificationType(
@@ -163,7 +157,6 @@ public class NotificationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Create notification type")
 	@RequestMapping(value = "/createNotificationType", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String createNotificationType(
@@ -182,7 +175,6 @@ public class NotificationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Update notification type")
 	@RequestMapping(value = "/updateNotificationType", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String updateNotificationType(
@@ -201,7 +193,6 @@ public class NotificationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get emergency contacts")
 	@RequestMapping(value = "/getEmergencyContacts", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getEmergencyContacts(
@@ -219,7 +210,6 @@ public class NotificationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get supervisor emergency contacts")
 	@RequestMapping(value = "/getSupervisorEmergencyContacts", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getSupervisorEmergencyContacts(
@@ -236,7 +226,6 @@ public class NotificationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Create emergency contact")
 	@RequestMapping(value = "/createEmergencyContacts", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String createEmergencyContacts(
@@ -258,7 +247,6 @@ public class NotificationController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Update emergency contacts")
 	@RequestMapping(value = "/updateEmergencyContacts", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String updateEmergencyContacts(
