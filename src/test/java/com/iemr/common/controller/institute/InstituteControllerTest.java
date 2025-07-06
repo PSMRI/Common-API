@@ -7,6 +7,7 @@ import com.iemr.common.service.institute.DesignationService;
 import com.iemr.common.service.institute.InstituteService;
 import com.iemr.common.service.institute.InstituteTypeService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -53,9 +54,10 @@ class InstituteControllerTest {
         sampleInstitute = new Institute(100, "Test Institute", 1, 2, 3);
     }
 
-    // Test 1: getInstitutesByLocation - Success
+    // Test 1: getInstitutesByLocation - Success (DISABLED due to known serialization bug)
     @Test
-    void testGetInstitutesByLocation_Success() throws Exception {
+    @Disabled("Known serialization bug - BUG-2024-001: GSON fails to serialize dates due to Java module system restrictions with SimpleDateFormat")
+    void testGetInstitutesByLocation_Success_KnownBug() throws Exception {
         List<Institute> institutes = Collections.singletonList(sampleInstitute);
         lenient().when(instituteService.getInstitutesByStateDistrictBranch(1, 2, 3)).thenReturn(institutes);
 
@@ -75,6 +77,30 @@ class InstituteControllerTest {
         assertTrue(responseBody.contains("\"statusCode\":5000"));
         assertTrue(responseBody.contains("\"status\":\"Failed with"));
         assertTrue(responseBody.contains("SimpleDateFormat"));
+    }
+
+    // Test 1a: getInstitutesByLocation - Success (Expected behavior after bug fix)
+    @Test
+    void testGetInstitutesByLocation_Success_ExpectedBehavior() throws Exception {
+        List<Institute> institutes = Collections.singletonList(sampleInstitute);
+        when(instituteService.getInstitutesByStateDistrictBranch(1, 2, 3)).thenReturn(institutes);
+
+        String requestBody = "{\"stateID\":1,\"districtID\":2,\"districtBranchMappingID\":3}";
+
+        MvcResult result = mockMvc.perform(post("/institute/getInstitutesByLocation")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
+
+        String responseBody = result.getResponse().getContentAsString();
+        // Expected behavior: Should return successful response with institute data
+        assertTrue(responseBody.contains("\"statusCode\":200"));
+        assertTrue(responseBody.contains("\"status\":\"Success\""));
+        assertTrue(responseBody.contains("\"institutionID\":100"));
+        assertTrue(responseBody.contains("\"institutionName\":\"Test Institute\""));
     }
 
     // Test 2: getInstitutesByLocation - Malformed JSON
@@ -111,9 +137,10 @@ class InstituteControllerTest {
         assertFalse(responseBody.contains("\"statusCode\":200"));
     }
 
-    // Test 4: getInstitutesByLocation - Service Exception
+    // Test 4: getInstitutesByLocation - Service Exception (DISABLED due to known serialization bug)
     @Test
-    void testGetInstitutesByLocation_ServiceException() throws Exception {
+    @Disabled("Known serialization bug - BUG-2024-001: GSON fails to serialize dates due to Java module system restrictions with SimpleDateFormat")
+    void testGetInstitutesByLocation_ServiceException_KnownBug() throws Exception {
         lenient().when(instituteService.getInstitutesByStateDistrictBranch(anyInt(), anyInt(), anyInt()))
                 .thenThrow(new RuntimeException("Database connection failed"));
 
@@ -133,9 +160,32 @@ class InstituteControllerTest {
         assertTrue(responseBody.contains("SimpleDateFormat"));
     }
 
-    // Test 5: getInstitutesByLocation - Empty Result
+    // Test 4a: getInstitutesByLocation - Service Exception (Expected behavior after bug fix)
     @Test
-    void testGetInstitutesByLocation_EmptyResult() throws Exception {
+    void testGetInstitutesByLocation_ServiceException_ExpectedBehavior() throws Exception {
+        when(instituteService.getInstitutesByStateDistrictBranch(anyInt(), anyInt(), anyInt()))
+                .thenThrow(new RuntimeException("Database connection failed"));
+
+        String requestBody = "{\"stateID\":1,\"districtID\":2,\"districtBranchMappingID\":3}";
+
+        MvcResult result = mockMvc.perform(post("/institute/getInstitutesByLocation")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String responseBody = result.getResponse().getContentAsString();
+        // Expected behavior: Should return error response due to service exception
+        assertTrue(responseBody.contains("\"statusCode\":5000"));
+        assertTrue(responseBody.contains("\"status\":\"Failed with"));
+        assertTrue(responseBody.contains("Database connection failed"));
+    }
+
+    // Test 5: getInstitutesByLocation - Empty Result (DISABLED due to known serialization bug)
+    @Test
+    @Disabled("Known serialization bug - BUG-2024-001: GSON fails to serialize dates due to Java module system restrictions with SimpleDateFormat")
+    void testGetInstitutesByLocation_EmptyResult_KnownBug() throws Exception {
         lenient().when(instituteService.getInstitutesByStateDistrictBranch(1, 2, 3)).thenReturn(new ArrayList<>());
 
         String requestBody = "{\"stateID\":1,\"districtID\":2,\"districtBranchMappingID\":3}";
@@ -155,9 +205,31 @@ class InstituteControllerTest {
         assertTrue(responseBody.contains("SimpleDateFormat"));
     }
 
-    // Test 6: getInstitutesByLocation - Null Values
+    // Test 5a: getInstitutesByLocation - Empty Result (Expected behavior after bug fix)
     @Test
-    void testGetInstitutesByLocation_NullValues() throws Exception {
+    void testGetInstitutesByLocation_EmptyResult_ExpectedBehavior() throws Exception {
+        when(instituteService.getInstitutesByStateDistrictBranch(1, 2, 3)).thenReturn(new ArrayList<>());
+
+        String requestBody = "{\"stateID\":1,\"districtID\":2,\"districtBranchMappingID\":3}";
+
+        MvcResult result = mockMvc.perform(post("/institute/getInstitutesByLocation")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String responseBody = result.getResponse().getContentAsString();
+        // Expected behavior: Should return successful response with empty array
+        assertTrue(responseBody.contains("\"statusCode\":200"));
+        assertTrue(responseBody.contains("\"status\":\"Success\""));
+        assertTrue(responseBody.contains("\"data\":[]"));
+    }
+
+    // Test 6: getInstitutesByLocation - Null Values (DISABLED due to known serialization bug)
+    @Test
+    @Disabled("Known serialization bug - BUG-2024-001: GSON fails to serialize dates due to Java module system restrictions with SimpleDateFormat")
+    void testGetInstitutesByLocation_NullValues_KnownBug() throws Exception {
         lenient().when(instituteService.getInstitutesByStateDistrictBranch(null, null, null))
                 .thenReturn(Collections.emptyList());
 
@@ -175,6 +247,28 @@ class InstituteControllerTest {
         assertTrue(responseBody.contains("\"statusCode\":5000"));
         assertTrue(responseBody.contains("\"status\":\"Failed with"));
         assertTrue(responseBody.contains("SimpleDateFormat"));
+    }
+
+    // Test 6a: getInstitutesByLocation - Null Values (Expected behavior after bug fix)
+    @Test
+    void testGetInstitutesByLocation_NullValues_ExpectedBehavior() throws Exception {
+        when(instituteService.getInstitutesByStateDistrictBranch(null, null, null))
+                .thenReturn(Collections.emptyList());
+
+        String requestBody = "{\"stateID\":null,\"districtID\":null,\"districtBranchMappingID\":null}";
+
+        MvcResult result = mockMvc.perform(post("/institute/getInstitutesByLocation")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String responseBody = result.getResponse().getContentAsString();
+        // Expected behavior: Should return successful response with empty array
+        assertTrue(responseBody.contains("\"statusCode\":200"));
+        assertTrue(responseBody.contains("\"status\":\"Success\""));
+        assertTrue(responseBody.contains("\"data\":[]"));
     }
 
     // Test 7: getInstituteByBranch - Success
@@ -499,9 +593,10 @@ class InstituteControllerTest {
                    responseBody.contains("\"statusCode\":5000"));
     }
 
-    // Test 25: Large JSON payload
+    // Test 25: Large JSON payload (DISABLED due to known serialization bug)
     @Test
-    void testGetInstitutesByLocation_LargePayload() throws Exception {
+    @Disabled("Known serialization bug - BUG-2024-001: GSON fails to serialize dates due to Java module system restrictions with SimpleDateFormat")
+    void testGetInstitutesByLocation_LargePayload_KnownBug() throws Exception {
         StringBuilder largePayload = new StringBuilder("{\"stateID\":1,\"districtID\":2,\"districtBranchMappingID\":3,\"extraData\":\"");
         for (int i = 0; i < 1000; i++) {
             largePayload.append("A");
@@ -524,9 +619,37 @@ class InstituteControllerTest {
         assertTrue(responseBody.contains("\"status\":\"Failed with"));
     }
 
-    // Test 26: Unicode characters in JSON
+    // Test 25a: Large JSON payload (Expected behavior after bug fix)
     @Test
-    void testGetInstitutesByLocation_UnicodeCharacters() throws Exception {
+    void testGetInstitutesByLocation_LargePayload_ExpectedBehavior() throws Exception {
+        StringBuilder largePayload = new StringBuilder("{\"stateID\":1,\"districtID\":2,\"districtBranchMappingID\":3,\"extraData\":\"");
+        for (int i = 0; i < 1000; i++) {
+            largePayload.append("A");
+        }
+        largePayload.append("\"}");
+
+        when(instituteService.getInstitutesByStateDistrictBranch(anyInt(), anyInt(), anyInt()))
+                .thenReturn(Collections.singletonList(sampleInstitute));
+
+        MvcResult result = mockMvc.perform(post("/institute/getInstitutesByLocation")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(largePayload.toString()))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String responseBody = result.getResponse().getContentAsString();
+        // Expected behavior: Should return successful response with institute data
+        assertTrue(responseBody.contains("\"statusCode\":200"));
+        assertTrue(responseBody.contains("\"status\":\"Success\""));
+        assertTrue(responseBody.contains("\"institutionID\":100"));
+        assertTrue(responseBody.contains("\"institutionName\":\"Test Institute\""));
+    }
+
+    // Test 26: Unicode characters in JSON (DISABLED due to known serialization bug)
+    @Test
+    @Disabled("Known serialization bug - BUG-2024-001: GSON fails to serialize dates due to Java module system restrictions with SimpleDateFormat")
+    void testGetInstitutesByLocation_UnicodeCharacters_KnownBug() throws Exception {
         String requestBody = "{\"stateID\":1,\"districtID\":2,\"districtBranchMappingID\":3,\"description\":\"测试数据\"}";
 
         lenient().when(instituteService.getInstitutesByStateDistrictBranch(anyInt(), anyInt(), anyInt()))
@@ -543,6 +666,29 @@ class InstituteControllerTest {
         // Will fail due to serialization issues
         assertTrue(responseBody.contains("\"statusCode\":5000"));
         assertTrue(responseBody.contains("\"status\":\"Failed with"));
+    }
+
+    // Test 26a: Unicode characters in JSON (Expected behavior after bug fix)
+    @Test
+    void testGetInstitutesByLocation_UnicodeCharacters_ExpectedBehavior() throws Exception {
+        String requestBody = "{\"stateID\":1,\"districtID\":2,\"districtBranchMappingID\":3,\"description\":\"测试数据\"}";
+
+        when(instituteService.getInstitutesByStateDistrictBranch(anyInt(), anyInt(), anyInt()))
+                .thenReturn(Collections.singletonList(sampleInstitute));
+
+        MvcResult result = mockMvc.perform(post("/institute/getInstitutesByLocation")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String responseBody = result.getResponse().getContentAsString();
+        // Expected behavior: Should return successful response with institute data
+        assertTrue(responseBody.contains("\"statusCode\":200"));
+        assertTrue(responseBody.contains("\"status\":\"Success\""));
+        assertTrue(responseBody.contains("\"institutionID\":100"));
+        assertTrue(responseBody.contains("\"institutionName\":\"Test Institute\""));
     }
 
     // Test 27: Empty JSON body
