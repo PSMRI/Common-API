@@ -5,49 +5,61 @@ import com.iemr.common.service.users.EmployeeSignatureServiceImpl;
 import com.iemr.common.utils.response.OutputResponse;
 import com.google.gson.Gson;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ContextConfiguration;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = EmployeeSignatureController.class, 
-            excludeAutoConfiguration = {SecurityAutoConfiguration.class, SecurityFilterAutoConfiguration.class})
-@ContextConfiguration(classes = {EmployeeSignatureController.class})
+@ExtendWith(MockitoExtension.class)
 class EmployeeSignatureControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Mock
     private EmployeeSignatureServiceImpl employeeSignatureServiceImpl;
 
-    // Although InputMapper is a dependency in the controller, it's not directly used in the test logic
-    // for these endpoints, but we include it as a MockBean if it were to be autowired.
-    // private InputMapper inputMapper; // Not autowired, so no @MockBean needed unless it was @Autowired
+    @InjectMocks
+    private EmployeeSignatureController controller;
 
-    private final Long TEST_USER_ID = 123L;
-    private final String TEST_FILE_NAME = "signature.png";
-    private final String TEST_FILE_TYPE = "image/png";
-    private final byte[] TEST_SIGNATURE_BYTES = "test_signature_data".getBytes();
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+    }
+
+    // Test constants for better maintainability
+    private static final Long TEST_USER_ID = 123L;
+    private static final String TEST_FILE_NAME = "signature.png";
+    private static final String TEST_FILE_TYPE = "image/png";
+    private static final byte[] TEST_SIGNATURE_BYTES = "test_signature_data".getBytes();
+    private static final String BEARER_TOKEN = "Bearer token";
+    
+    // API endpoints
+    private static final String FETCH_SIGNATURE_URL = "/signature1/{userID}";
+    private static final String FETCH_SIGNATURE_CLASS_URL = "/signature1/getSignClass/{userID}";
+    private static final String SIGNATURE_EXISTS_URL = "/signature1/signexist/{userID}";
+
+    // Helper method to create test signature
+    private EmployeeSignature createTestSignature() {
+        return new EmployeeSignature(TEST_USER_ID, TEST_SIGNATURE_BYTES, TEST_FILE_TYPE, TEST_FILE_NAME);
+    }
 
     @Test
     void fetchFile_shouldReturnSignature_whenSignatureExists() throws Exception {
-        EmployeeSignature mockSignature = new EmployeeSignature(TEST_USER_ID, TEST_SIGNATURE_BYTES, TEST_FILE_TYPE, TEST_FILE_NAME);
+        EmployeeSignature mockSignature = createTestSignature();
 
         when(employeeSignatureServiceImpl.fetchSignature(TEST_USER_ID)).thenReturn(mockSignature);
 
-        mockMvc.perform(get("/signature1/{userID}", TEST_USER_ID)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer token"))
+        mockMvc.perform(get(FETCH_SIGNATURE_URL, TEST_USER_ID)
+                .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.CONTENT_TYPE, TEST_FILE_TYPE))
                 .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + TEST_FILE_NAME + "\""))
@@ -58,23 +70,23 @@ class EmployeeSignatureControllerTest {
     void fetchFile_shouldReturnBadRequest_whenSignatureServiceThrowsException() throws Exception {
         when(employeeSignatureServiceImpl.fetchSignature(TEST_USER_ID)).thenThrow(new RuntimeException("Service error"));
 
-        mockMvc.perform(get("/signature1/{userID}", TEST_USER_ID)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer token"))
+        mockMvc.perform(get(FETCH_SIGNATURE_URL, TEST_USER_ID)
+                .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().bytes(new byte[] {})); // Expect empty byte array body
     }
 
     @Test
     void fetchFileFromCentral_shouldReturnSignatureJson_whenSignatureExists() throws Exception {
-        EmployeeSignature mockSignature = new EmployeeSignature(TEST_USER_ID, TEST_SIGNATURE_BYTES, TEST_FILE_TYPE, TEST_FILE_NAME);
+        EmployeeSignature mockSignature = createTestSignature();
 
         when(employeeSignatureServiceImpl.fetchSignature(TEST_USER_ID)).thenReturn(mockSignature);
 
         OutputResponse expectedResponse = new OutputResponse();
         expectedResponse.setResponse(new Gson().toJson(mockSignature));
 
-        mockMvc.perform(get("/signature1/getSignClass/{userID}", TEST_USER_ID)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer token"))
+        mockMvc.perform(get(FETCH_SIGNATURE_CLASS_URL, TEST_USER_ID)
+                .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedResponse.toString()));
     }
@@ -86,8 +98,8 @@ class EmployeeSignatureControllerTest {
         OutputResponse expectedResponse = new OutputResponse();
         expectedResponse.setError(5000, "No record found");
 
-        mockMvc.perform(get("/signature1/getSignClass/{userID}", TEST_USER_ID)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer token"))
+        mockMvc.perform(get(FETCH_SIGNATURE_CLASS_URL, TEST_USER_ID)
+                .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedResponse.toString()));
     }
@@ -100,8 +112,8 @@ class EmployeeSignatureControllerTest {
         OutputResponse expectedResponse = new OutputResponse();
         expectedResponse.setError(5000, errorMessage);
 
-        mockMvc.perform(get("/signature1/getSignClass/{userID}", TEST_USER_ID)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer token"))
+        mockMvc.perform(get(FETCH_SIGNATURE_CLASS_URL, TEST_USER_ID)
+                .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedResponse.toString()));
     }
@@ -113,8 +125,8 @@ class EmployeeSignatureControllerTest {
         OutputResponse expectedResponse = new OutputResponse();
         expectedResponse.setResponse("true");
 
-        mockMvc.perform(get("/signature1/signexist/{userID}", TEST_USER_ID)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer token"))
+        mockMvc.perform(get(SIGNATURE_EXISTS_URL, TEST_USER_ID)
+                .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedResponse.toString()));
     }
@@ -126,8 +138,8 @@ class EmployeeSignatureControllerTest {
         OutputResponse expectedResponse = new OutputResponse();
         expectedResponse.setResponse("false");
 
-        mockMvc.perform(get("/signature1/signexist/{userID}", TEST_USER_ID)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer token"))
+        mockMvc.perform(get(SIGNATURE_EXISTS_URL, TEST_USER_ID)
+                .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedResponse.toString()));
     }
@@ -141,8 +153,8 @@ class EmployeeSignatureControllerTest {
         OutputResponse expectedResponse = new OutputResponse();
         expectedResponse.setError(serviceException); // OutputResponse.setError(Exception e) sets message from e.getMessage()
 
-        mockMvc.perform(get("/signature1/signexist/{userID}", TEST_USER_ID)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer token"))
+        mockMvc.perform(get(SIGNATURE_EXISTS_URL, TEST_USER_ID)
+                .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedResponse.toString()));
     }

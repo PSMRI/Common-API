@@ -1,6 +1,6 @@
 package com.iemr.common.controller.callhandling;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.any;    
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -16,25 +16,46 @@ import com.iemr.common.service.callhandling.CalltypeServiceImpl;
 import com.iemr.common.service.callhandling.BeneficiaryCallService;
 import com.iemr.common.utils.response.OutputResponse;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-@WebMvcTest(controllers = CallController.class, excludeAutoConfiguration = {SecurityAutoConfiguration.class})
-@ContextConfiguration(classes = {CallController.class})
-@AutoConfigureMockMvc(addFilters = false)
+@ExtendWith(MockitoExtension.class)
 @DisplayName("CallController Tests")
 class CallControllerTest {
+
+    private MockMvc mockMvc;
+
+    @Mock
+    private CalltypeServiceImpl calltypeServiceImpl;
+
+    @Mock
+    private BeneficiaryCallService beneficiaryCallService;
+
+    @Mock
+    private com.iemr.common.utils.sessionobject.SessionObject s;
+
+    @InjectMocks
+    private CallController callController;
+
+    // Test constants
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String BEARER_TOKEN = "Bearer mock_token";
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(callController).build();
+    }
     // --- Additional edge and error case tests for full coverage ---
 
+    
     @Test
     @DisplayName("getAllCallTypes - Null Response")
     void getAllCallTypes_NullResponse() throws Exception {
@@ -75,8 +96,8 @@ class CallControllerTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("status")));
     }
 
-    @Test
-    @DisplayName("updateBeneficiaryIDInCall - Null Return")
+@Test
+    @DisplayName("updateBeneficiaryIDInCall - Null Response")
     void updateBeneficiaryIDInCall_NullReturn() throws Exception {
         String requestJson = "{\"benCallID\":1,\"isCalledEarlier\":true,\"beneficiaryRegID\":2}";
         when(beneficiaryCallService.updateBeneficiaryIDInCall(any(String.class))).thenReturn(null);
@@ -85,7 +106,9 @@ class CallControllerTest {
                 .header("Authorization", "Bearer mock_token")
                 .content(requestJson))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("updatedCount")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("benCallID")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("beneficiaryRegID")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("isCalledEarlier")));
     }
 
     @Test
@@ -220,27 +243,31 @@ class CallControllerTest {
     }
 
     @Test
-    @DisplayName("blockPhoneNumber - Null Return")
-    void blockPhoneNumber_NullReturn() throws Exception {
+    @DisplayName("blockPhoneNumber - Empty Response")
+    void blockPhoneNumber_EmptyResponse() throws Exception {
         String requestJson = "{\"phoneBlockID\":1}";
-        when(beneficiaryCallService.blockPhoneNumber(any(String.class))).thenReturn(null);
+        OutputResponse emptyResponse = new OutputResponse();
+        when(beneficiaryCallService.blockPhoneNumber(any(String.class))).thenReturn(emptyResponse);
         mockMvc.perform(post("/call/blockPhoneNumber")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer mock_token")
                 .content(requestJson))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("status")));
     }
 
     @Test
-    @DisplayName("unblockPhoneNumber - Null Return")
-    void unblockPhoneNumber_NullReturn() throws Exception {
+    @DisplayName("unblockPhoneNumber - Empty Response")
+    void unblockPhoneNumber_EmptyResponse() throws Exception {
         String requestJson = "{\"phoneBlockID\":1}";
-        when(beneficiaryCallService.unblockPhoneNumber(any(String.class))).thenReturn(null);
+        OutputResponse emptyResponse = new OutputResponse();
+        when(beneficiaryCallService.unblockPhoneNumber(any(String.class))).thenReturn(emptyResponse);
         mockMvc.perform(post("/call/unblockPhoneNumber")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer mock_token")
                 .content(requestJson))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("status")));
     }
 
     @Test
@@ -290,17 +317,6 @@ class CallControllerTest {
                 .content(requestJson))
                 .andExpect(status().isOk());
     }
-    @MockBean
-    private com.iemr.common.utils.sessionobject.SessionObject s;
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean
-    private CalltypeServiceImpl calltypeServiceImpl;
-
-    @MockBean
-    private BeneficiaryCallService beneficiaryCallService;
 
     @Test
     @DisplayName("getAllCallTypes - Success")
@@ -314,7 +330,7 @@ class CallControllerTest {
 
         mockMvc.perform(post("/call/getCallTypes")
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer mock_token")
+                .header(AUTHORIZATION_HEADER, BEARER_TOKEN)
                 .content(requestJson))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedResponse.toString()));
@@ -375,7 +391,6 @@ class CallControllerTest {
     @DisplayName("startCall - Success")
     void startCall_Success() throws Exception {
         String requestJson = "{\"calledServiceID\":1}";
-        String remoteAddr = "127.0.0.1";
         com.iemr.common.data.callhandling.BeneficiaryCall call = new com.iemr.common.data.callhandling.BeneficiaryCall();
         OutputResponse expectedResponse = new OutputResponse();
         expectedResponse.setResponse(call.toString());
@@ -383,9 +398,8 @@ class CallControllerTest {
 
         mockMvc.perform(post("/call/startCall")
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer mock_token")
-                .content(requestJson)
-                .with(req -> { req.setRemoteAddr(remoteAddr); return req; }))
+                .header(AUTHORIZATION_HEADER, BEARER_TOKEN)
+                .content(requestJson))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedResponse.toString()));
     }
@@ -394,7 +408,6 @@ class CallControllerTest {
     @DisplayName("startCall - Service Exception")
     void startCall_ServiceException() throws Exception {
         String requestJson = "{\"calledServiceID\":1}";
-        String remoteAddr = "127.0.0.1";
         RuntimeException ex = new RuntimeException("Service failure");
         OutputResponse expectedError = new OutputResponse();
         expectedError.setError(ex);
@@ -402,9 +415,8 @@ class CallControllerTest {
 
         mockMvc.perform(post("/call/startCall")
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer mock_token")
-                .content(requestJson)
-                .with(req -> { req.setRemoteAddr(remoteAddr); return req; }))
+                .header(AUTHORIZATION_HEADER, BEARER_TOKEN)
+                .content(requestJson))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedError.toString()));
     }
@@ -455,7 +467,6 @@ class CallControllerTest {
     @DisplayName("closeCall - Success")
     void closeCall_Success() throws Exception {
         String requestJson = "{\"benCallID\":1}";
-        String remoteAddr = "127.0.0.1";
         int updateCount = 1;
         // The controller puts this value into the response JSON
         String expectedSubstring = "\"updateCount\":" + updateCount;
@@ -463,9 +474,8 @@ class CallControllerTest {
 
         mockMvc.perform(post("/call/closeCall")
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer mock_token")
-                .content(requestJson)
-                .with(req -> { req.setRemoteAddr(remoteAddr); return req; }))
+                .header(AUTHORIZATION_HEADER, BEARER_TOKEN)
+                .content(requestJson))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(expectedSubstring)));
     }

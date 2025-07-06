@@ -1,13 +1,13 @@
 package com.iemr.common.controller.brd;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ContextConfiguration;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.http.MediaType;
 
 import com.iemr.common.service.brd.BRDIntegrationService;
@@ -19,16 +19,26 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.anyString;
 
-@WebMvcTest(controllers = BRDIntegrationController.class, 
-            excludeAutoConfiguration = {SecurityAutoConfiguration.class, SecurityFilterAutoConfiguration.class})
-@ContextConfiguration(classes = {BRDIntegrationController.class})
+@ExtendWith(MockitoExtension.class)
 class BRDIntegrationControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Mock
     private BRDIntegrationService integrationService;
+
+    @InjectMocks
+    private BRDIntegrationController brdIntegrationController;
+
+    // Test constants
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String BEARER_TOKEN = "Bearer dummy_token";
+    private static final String BRD_ENDPOINT = "/brd/getIntegrationData";
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(brdIntegrationController).build();
+    }
 
     @Test
     void shouldReturnIntegrationData_whenServiceReturnsData() throws Exception {
@@ -42,9 +52,9 @@ class BRDIntegrationControllerTest {
 
         when(integrationService.getData(startDate, endDate)).thenReturn(mockBrdDetails);
 
-        mockMvc.perform(post("/brd/getIntegrationData")
+        mockMvc.perform(post(BRD_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer dummy_token")
+                .header(AUTHORIZATION_HEADER, BEARER_TOKEN)
                 .content(requestBody))
                 .andExpect(status().isOk())
                 .andExpect(content().json(expectedResponse.toStringWithSerializeNulls()));
@@ -61,9 +71,9 @@ class BRDIntegrationControllerTest {
 
         when(integrationService.getData(anyString(), anyString())).thenThrow(new RuntimeException("Simulated service error"));
 
-        mockMvc.perform(post("/brd/getIntegrationData")
+        mockMvc.perform(post(BRD_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer dummy_token")
+                .header(AUTHORIZATION_HEADER, BEARER_TOKEN)
                 .content(requestBody))
                 .andExpect(status().isOk())
                 .andExpect(content().json(expectedErrorResponse.toStringWithSerializeNulls()));
@@ -76,9 +86,9 @@ class BRDIntegrationControllerTest {
         OutputResponse expectedErrorResponse = new OutputResponse();
         expectedErrorResponse.setError(5000, "Unable to get BRD data");
 
-        mockMvc.perform(post("/brd/getIntegrationData")
+        mockMvc.perform(post(BRD_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer dummy_token")
+                .header(AUTHORIZATION_HEADER, BEARER_TOKEN)
                 .content(invalidRequestBody))
                 .andExpect(status().isOk())
                 .andExpect(content().json(expectedErrorResponse.toStringWithSerializeNulls()));
@@ -91,9 +101,9 @@ class BRDIntegrationControllerTest {
         OutputResponse expectedErrorResponse = new OutputResponse();
         expectedErrorResponse.setError(5000, "Unable to get BRD data");
 
-        mockMvc.perform(post("/brd/getIntegrationData")
+        mockMvc.perform(post(BRD_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer dummy_token")
+                .header(AUTHORIZATION_HEADER, BEARER_TOKEN)
                 .content(nonJsonRequestBody))
                 .andExpect(status().isOk())
                 .andExpect(content().json(expectedErrorResponse.toStringWithSerializeNulls()));
@@ -104,9 +114,9 @@ class BRDIntegrationControllerTest {
         String emptyRequestBody = "";
 
         // Empty request body causes Spring to return 400 Bad Request before reaching the controller
-        mockMvc.perform(post("/brd/getIntegrationData")
+        mockMvc.perform(post(BRD_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer dummy_token")
+                .header(AUTHORIZATION_HEADER, BEARER_TOKEN)
                 .content(emptyRequestBody))
                 .andExpect(status().isBadRequest());
     }
@@ -119,9 +129,9 @@ class BRDIntegrationControllerTest {
         expectedErrorResponse.setError(5000, "Unable to get BRD data");
 
         // Empty JSON object will reach the controller but fail when trying to get startDate/endDate
-        mockMvc.perform(post("/brd/getIntegrationData")
+        mockMvc.perform(post(BRD_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer dummy_token")
+                .header(AUTHORIZATION_HEADER, BEARER_TOKEN)
                 .content(emptyJsonRequestBody))
                 .andExpect(status().isOk())
                 .andExpect(content().json(expectedErrorResponse.toStringWithSerializeNulls()));

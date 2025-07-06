@@ -9,39 +9,54 @@ import com.iemr.common.service.location.LocationService;
 import com.iemr.common.utils.response.OutputResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
 import java.util.List;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@ExtendWith(MockitoExtension.class)
+class LocationControllerTest {
 
-@WebMvcTest(controllers = LocationController.class, excludeAutoConfiguration = {SecurityAutoConfiguration.class})
-@ContextConfiguration(classes = {LocationController.class})
-@AutoConfigureMockMvc(addFilters = false)
-class LocationControllerWebTest {
-
-    @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Mock
     private LocationService locationService;
 
-    @MockBean
-    private Logger logger; // If you want to verify logging, otherwise remove
+    @InjectMocks
+    private LocationController controller;
 
     @BeforeEach
-    void setup() {
-        // No-op, but can be used for setup if needed
+    void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+    }
+
+    // Test constants for better maintainability
+    private static final String AUTH_HEADER = "Authorization";
+    private static final String BEARER_TOKEN = "Bearer test";
+    private static final String CONTENT_TYPE = "application/json";
+    
+    // API endpoints
+    private static final String STATES_URL = "/location/states/{countryId}";
+    private static final String DISTRICTS_URL = "/location/districts/{stateId}";
+    private static final String STATE_DISTRICTS_URL = "/location/statesDistricts/{countryId}";
+    private static final String TALUKS_URL = "/location/taluks/{districtId}";
+    private static final String CITY_URL = "/location/city/{districtId}";
+    private static final String VILLAGE_URL = "/location/village/{blockId}";
+    private static final String COUNTRIES_URL = "/location/getCountries";
+
+    // Helper method to create expected success output
+    private String createSuccessOutput(List<?> data) {
+        OutputResponse response = new OutputResponse();
+        response.setResponse(data.toString());
+        return response.toString();
     }
 
     @Test
@@ -50,20 +65,22 @@ class LocationControllerWebTest {
         List<States> states = List.of(state);
         when(locationService.getStates(1)).thenReturn(states);
 
-        String expectedJson = "{\"data\":[{}],\"statusCode\":200,\"errorMessage\":\"Success\",\"status\":\"Success\"}";
-        mockMvc.perform(get("/location/states/1")
-                .header("Authorization", "Bearer test")
+        mockMvc.perform(get(STATES_URL, 1)
+                .header(AUTH_HEADER, BEARER_TOKEN)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().json(expectedJson));
+                .andExpect(content().contentType(CONTENT_TYPE))
+                .andExpect(content().string(createSuccessOutput(states)));
     }
 
     @Test
     void getStates_exception() throws Exception {
         when(locationService.getStates(1)).thenThrow(new RuntimeException("fail"));
-        mockMvc.perform(get("/location/states/1")
-                .header("Authorization", "Bearer test"))
+        
+        mockMvc.perform(get(STATES_URL, 1)
+                .header(AUTH_HEADER, BEARER_TOKEN))
                 .andExpect(status().isOk())
+                .andExpect(content().contentType(CONTENT_TYPE))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("fail")));
     }
 
@@ -73,19 +90,21 @@ class LocationControllerWebTest {
         List<Districts> districts = List.of(d);
         when(locationService.getDistricts(2)).thenReturn(districts);
 
-        String expectedJson = "{\"data\":[{}],\"statusCode\":200,\"errorMessage\":\"Success\",\"status\":\"Success\"}";
-        mockMvc.perform(get("/location/districts/2")
-                .header("Authorization", "Bearer test"))
+        mockMvc.perform(get(DISTRICTS_URL, 2)
+                .header(AUTH_HEADER, BEARER_TOKEN))
                 .andExpect(status().isOk())
-                .andExpect(content().json(expectedJson));
+                .andExpect(content().contentType(CONTENT_TYPE))
+                .andExpect(content().string(createSuccessOutput(districts)));
     }
 
     @Test
     void getDistricts_exception() throws Exception {
         when(locationService.getDistricts(2)).thenThrow(new RuntimeException("fail"));
-        mockMvc.perform(get("/location/districts/2")
-                .header("Authorization", "Bearer test"))
+        
+        mockMvc.perform(get(DISTRICTS_URL, 2)
+                .header(AUTH_HEADER, BEARER_TOKEN))
                 .andExpect(status().isOk())
+                .andExpect(content().contentType(CONTENT_TYPE))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("fail")));
     }
 
@@ -95,19 +114,21 @@ class LocationControllerWebTest {
         List<Districts> districts = List.of(d);
         when(locationService.findStateDistrictBy(3)).thenReturn(districts);
 
-        String expectedJson = "{\"data\":[{}],\"statusCode\":200,\"errorMessage\":\"Success\",\"status\":\"Success\"}";
-        mockMvc.perform(get("/location/statesDistricts/3")
-                .header("Authorization", "Bearer test"))
+        
+        mockMvc.perform(get(STATE_DISTRICTS_URL, 3)
+                .header(AUTH_HEADER, BEARER_TOKEN))
                 .andExpect(status().isOk())
-                .andExpect(content().json(expectedJson));
+                .andExpect(content().contentType(CONTENT_TYPE))
+                .andExpect(content().string(createSuccessOutput(districts)));
     }
 
     @Test
     void getStatetDistricts_exception() throws Exception {
         when(locationService.findStateDistrictBy(3)).thenThrow(new RuntimeException("fail"));
-        mockMvc.perform(get("/location/statesDistricts/3")
-                .header("Authorization", "Bearer test"))
+        mockMvc.perform(get(STATE_DISTRICTS_URL, 3)
+                .header(AUTH_HEADER, BEARER_TOKEN))
                 .andExpect(status().isOk())
+                .andExpect(content().contentType(CONTENT_TYPE))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("fail")));
     }
 
@@ -117,19 +138,21 @@ class LocationControllerWebTest {
         List<DistrictBlock> blocks = List.of(block);
         when(locationService.getDistrictBlocks(4)).thenReturn(blocks);
 
-        String expectedJson = "{\"data\":[{}],\"statusCode\":200,\"errorMessage\":\"Success\",\"status\":\"Success\"}";
-        mockMvc.perform(get("/location/taluks/4")
-                .header("Authorization", "Bearer test"))
+        
+        mockMvc.perform(get(TALUKS_URL, 4)
+                .header(AUTH_HEADER, BEARER_TOKEN))
                 .andExpect(status().isOk())
-                .andExpect(content().json(expectedJson));
+                .andExpect(content().contentType(CONTENT_TYPE))
+                .andExpect(content().string(createSuccessOutput(blocks)));
     }
 
     @Test
     void getDistrictBlocks_exception() throws Exception {
         when(locationService.getDistrictBlocks(4)).thenThrow(new RuntimeException("fail"));
-        mockMvc.perform(get("/location/taluks/4")
-                .header("Authorization", "Bearer test"))
+        mockMvc.perform(get(TALUKS_URL, 4)
+                .header(AUTH_HEADER, BEARER_TOKEN))
                 .andExpect(status().isOk())
+                .andExpect(content().contentType(CONTENT_TYPE))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("fail")));
     }
 
@@ -139,19 +162,21 @@ class LocationControllerWebTest {
         List<DistrictBlock> blocks = List.of(block);
         when(locationService.getDistrictBlocks(5)).thenReturn(blocks);
 
-        String expectedJson = "{\"data\":[{}],\"statusCode\":200,\"errorMessage\":\"Success\",\"status\":\"Success\"}";
-        mockMvc.perform(get("/location/city/5")
-                .header("Authorization", "Bearer test"))
+        
+        mockMvc.perform(get(CITY_URL, 5)
+                .header(AUTH_HEADER, BEARER_TOKEN))
                 .andExpect(status().isOk())
-                .andExpect(content().json(expectedJson));
+                .andExpect(content().contentType(CONTENT_TYPE))
+                .andExpect(content().string(createSuccessOutput(blocks)));
     }
 
     @Test
     void getCity_exception() throws Exception {
         when(locationService.getDistrictBlocks(5)).thenThrow(new RuntimeException("fail"));
-        mockMvc.perform(get("/location/city/5")
-                .header("Authorization", "Bearer test"))
+        mockMvc.perform(get(CITY_URL, 5)
+                .header(AUTH_HEADER, BEARER_TOKEN))
                 .andExpect(status().isOk())
+                .andExpect(content().contentType(CONTENT_TYPE))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("fail")));
     }
 
@@ -161,19 +186,21 @@ class LocationControllerWebTest {
         List<DistrictBranchMapping> mappings = List.of(mapping);
         when(locationService.getDistrilctBranchs(6)).thenReturn(mappings);
 
-        String expectedJson = "{\"data\":[{}],\"statusCode\":200,\"errorMessage\":\"Success\",\"status\":\"Success\"}";
-        mockMvc.perform(get("/location/village/6")
-                .header("Authorization", "Bearer test"))
+        
+        mockMvc.perform(get(VILLAGE_URL, 6)
+                .header(AUTH_HEADER, BEARER_TOKEN))
                 .andExpect(status().isOk())
-                .andExpect(content().json(expectedJson));
+                .andExpect(content().contentType(CONTENT_TYPE))
+                .andExpect(content().string(createSuccessOutput(mappings)));
     }
 
     @Test
     void getVillages_exception() throws Exception {
         when(locationService.getDistrilctBranchs(6)).thenThrow(new RuntimeException("fail"));
-        mockMvc.perform(get("/location/village/6")
-                .header("Authorization", "Bearer test"))
+        mockMvc.perform(get(VILLAGE_URL, 6)
+                .header(AUTH_HEADER, BEARER_TOKEN))
                 .andExpect(status().isOk())
+                .andExpect(content().contentType(CONTENT_TYPE))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("fail")));
     }
 
@@ -183,19 +210,21 @@ class LocationControllerWebTest {
         List<Country> countries = List.of(c);
         when(locationService.getCountries()).thenReturn(countries);
 
-        String expectedJson = "{\"data\":[{}],\"statusCode\":200,\"errorMessage\":\"Success\",\"status\":\"Success\"}";
-        mockMvc.perform(get("/location/getCountries")
-                .header("Authorization", "Bearer test"))
+        
+        mockMvc.perform(get(COUNTRIES_URL)
+                .header(AUTH_HEADER, BEARER_TOKEN))
                 .andExpect(status().isOk())
-                .andExpect(content().json(expectedJson));
+                .andExpect(content().contentType(CONTENT_TYPE))
+                .andExpect(content().string(createSuccessOutput(countries)));
     }
 
     @Test
     void getCountries_exception() throws Exception {
         when(locationService.getCountries()).thenThrow(new RuntimeException("fail"));
-        mockMvc.perform(get("/location/getCountries")
-                .header("Authorization", "Bearer test"))
+        mockMvc.perform(get(COUNTRIES_URL)
+                .header(AUTH_HEADER, BEARER_TOKEN))
                 .andExpect(status().isOk())
+                .andExpect(content().contentType(CONTENT_TYPE))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("fail")));
     }
 }

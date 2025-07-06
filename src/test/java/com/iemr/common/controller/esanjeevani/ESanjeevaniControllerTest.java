@@ -1,13 +1,13 @@
 package com.iemr.common.controller.esanjeevani;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ContextConfiguration;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.http.MediaType;
 
 import com.iemr.common.service.esanjeevani.ESanjeevaniService;
@@ -19,16 +19,27 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.anyLong;
 
-@WebMvcTest(controllers = ESanjeevaniController.class, 
-            excludeAutoConfiguration = {SecurityAutoConfiguration.class, SecurityFilterAutoConfiguration.class})
-@ContextConfiguration(classes = {ESanjeevaniController.class})
+@ExtendWith(MockitoExtension.class)
 class ESanjeevaniControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @InjectMocks
+    private ESanjeevaniController eSanjeevaniController;
+
+    @Mock
     private ESanjeevaniService eSanjeevaniService;
+
+    // Test constants
+    private static final String GET_URL_ENDPOINT = "/esanjeevani/getESanjeevaniUrl/{beneficiaryReqId}";
+    private static final String AUTH_HEADER = "Authorization";
+    private static final String BEARER_TOKEN = "Bearer token";
+    private static final String CONTENT_TYPE = "application/json";
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(eSanjeevaniController).build();
+    }
 
     @Test
     void shouldReturnESanjeevaniURL_whenServiceReturnsValidURL() throws Exception {
@@ -42,7 +53,7 @@ class ESanjeevaniControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("text/plain;charset=UTF-8"))
+                .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.statusCode").value(200))
                 .andExpect(jsonPath("$.status").value("Success"))
                 .andExpect(jsonPath("$.errorMessage").value("Success"))
@@ -62,7 +73,7 @@ class ESanjeevaniControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("text/plain;charset=UTF-8"))
+                .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.statusCode").value(5000))
                 .andExpect(jsonPath("$.errorMessage").value("Error while fetching E-sanjeevani route URLjava.lang.RuntimeException: Connection timeout"));
     }
@@ -78,7 +89,7 @@ class ESanjeevaniControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("text/plain;charset=UTF-8"))
+                .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.statusCode").value(5000))
                 .andExpect(jsonPath("$.errorMessage").value("Error while fetching E-sanjeevani route URL"));
     }
@@ -95,7 +106,7 @@ class ESanjeevaniControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("text/plain;charset=UTF-8"))
+                .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.statusCode").value(200))
                 .andExpect(jsonPath("$.status").value("Success"))
                 .andExpect(jsonPath("$.errorMessage").value("Success"))
@@ -115,7 +126,7 @@ class ESanjeevaniControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("text/plain;charset=UTF-8"))
+                .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.statusCode").value(5000))
                 .andExpect(jsonPath("$.errorMessage").value("Error while fetching E-sanjeevani route URLjava.lang.RuntimeException"));
     }

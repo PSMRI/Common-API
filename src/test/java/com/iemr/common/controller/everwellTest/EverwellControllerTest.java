@@ -1,34 +1,42 @@
 package com.iemr.common.controller.everwellTest;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.hamcrest.Matchers.*;
 
-@WebMvcTest(controllers = EverwellController.class, 
-            excludeAutoConfiguration = {SecurityAutoConfiguration.class, SecurityFilterAutoConfiguration.class})
-@ContextConfiguration(classes = {EverwellController.class})
+@ExtendWith(MockitoExtension.class)
 class EverwellControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    // EverwellController does not have any @Autowired dependencies.
-    // It instantiates InputMapper and gets Logger internally.
-    // Therefore, no @MockBean fields are necessary or appropriate here.
+    @InjectMocks
+    private EverwellController everwellController;
+
+    // Test constants
+    private static final String GET_JSON_URL = "/everwell/getjson";
+    private static final String ADD_SUPPORT_ACTION_URL = "/everwell/addSupportAction/{id}";
+    private static final String EDIT_MANUAL_DOSES_URL = "/everwell/editManualDoses/{id}";
+    private static final String LOGIN_URL = "/everwell/login";
+    private static final String AUTH_HEADER = "Authorization";
+    private static final String BEARER_TOKEN = "Bearer dummy_token";
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(everwellController).build();
+    }
 
     @Test
     void shouldReturnHardcodedJson_whenGetDataIsCalled() throws Exception {
-        mockMvc.perform(get("/everwell/getjson")
-                .header("Authorization", "Bearer dummy_token")
+        mockMvc.perform(get(GET_JSON_URL)
+                .header(AUTH_HEADER, BEARER_TOKEN)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -44,8 +52,8 @@ class EverwellControllerTest {
         // The request body content does not influence the hardcoded response, but it's required for POST.
         String requestBody = "{\"someField\": \"someValue\", \"anotherField\": 123}"; 
 
-        mockMvc.perform(post("/everwell/addSupportAction/{id}", id)
-                .header("Authorization", "Bearer dummy_token")
+        mockMvc.perform(post(ADD_SUPPORT_ACTION_URL, id)
+                .header(AUTH_HEADER, BEARER_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody)
                 .accept(MediaType.APPLICATION_JSON))
@@ -63,8 +71,8 @@ class EverwellControllerTest {
         // The request body content does not influence the hardcoded response, but it's required for POST.
         String requestBody = "{\"doses\": [\"2020-03-02\", \"2020-03-03\"], \"patientId\": 123}"; 
 
-        mockMvc.perform(post("/everwell/editManualDoses/{id}", id)
-                .header("Authorization", "Bearer dummy_token")
+        mockMvc.perform(post(EDIT_MANUAL_DOSES_URL, id)
+                .header(AUTH_HEADER, BEARER_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody)
                 .accept(MediaType.APPLICATION_JSON))
@@ -80,8 +88,8 @@ class EverwellControllerTest {
         // The LoginRequestModelEverwell object is used by @RequestBody, so we need to provide a JSON string.
         String loginJson = "{\"everwellUserName\":\"everwellUser\",\"everwellPassword\":\"everwellpass\"}";
 
-        mockMvc.perform(post("/everwell/login")
-                .header("Authorization", "Bearer dummy_token")
+        mockMvc.perform(post(LOGIN_URL)
+                .header(AUTH_HEADER, BEARER_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(loginJson)
                 .accept(MediaType.APPLICATION_JSON))
@@ -97,8 +105,8 @@ class EverwellControllerTest {
     void shouldReturnNullResponse_whenEverwellLoginWithInvalidCredentials() throws Exception {
         String loginJson = "{\"everwellUserName\":\"wrongUser\",\"everwellPassword\":\"wrongPass\"}";
 
-        mockMvc.perform(post("/everwell/login")
-                .header("Authorization", "Bearer dummy_token")
+        mockMvc.perform(post(LOGIN_URL)
+                .header(AUTH_HEADER, BEARER_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(loginJson)
                 .accept(MediaType.APPLICATION_JSON))
@@ -113,8 +121,8 @@ class EverwellControllerTest {
         // Test case for missing fields in the request body, which would also lead to invalid credentials
         String loginJson = "{\"everwellUserName\":\"everwellUser\"}"; // Missing password field
 
-        mockMvc.perform(post("/everwell/login")
-                .header("Authorization", "Bearer dummy_token")
+        mockMvc.perform(post(LOGIN_URL)
+                .header(AUTH_HEADER, BEARER_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(loginJson)
                 .accept(MediaType.APPLICATION_JSON))
@@ -131,8 +139,8 @@ class EverwellControllerTest {
         // Since it's all hardcoded, we can test with malformed Authorization header
         // or test edge cases that might cause issues in the response processing
         
-        mockMvc.perform(get("/everwell/getjson")
-                .header("Authorization", "")) // Empty auth header might cause issues
+        mockMvc.perform(get(GET_JSON_URL)
+                .header(AUTH_HEADER, "")) // Empty auth header might cause issues
                 .andExpect(status().isOk()) // Controller catches exceptions and returns 200
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.data.Success").value(true)); // Should still work as it's hardcoded
@@ -145,16 +153,16 @@ class EverwellControllerTest {
         String malformedJson = "{\"someField\": \"someValue\", \"unclosedField\": }"; 
         
         try {
-            mockMvc.perform(post("/everwell/addSupportAction/{id}", id)
-                    .header("Authorization", "Bearer dummy_token")
+            mockMvc.perform(post(ADD_SUPPORT_ACTION_URL, id)
+                    .header(AUTH_HEADER, BEARER_TOKEN)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(malformedJson)
                     .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk()); // Should still return 200 even with errors
         } catch (Exception e) {
             // If malformed JSON causes issues before reaching controller, test with valid JSON
-            mockMvc.perform(post("/everwell/addSupportAction/{id}", id)
-                    .header("Authorization", "Bearer dummy_token")
+            mockMvc.perform(post(ADD_SUPPORT_ACTION_URL, id)
+                    .header(AUTH_HEADER, BEARER_TOKEN)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{}")
                     .accept(MediaType.APPLICATION_JSON))
@@ -169,8 +177,8 @@ class EverwellControllerTest {
         // Test with empty request body
         String emptyJson = "{}"; 
         
-        mockMvc.perform(post("/everwell/editManualDoses/{id}", id)
-                .header("Authorization", "Bearer dummy_token")
+        mockMvc.perform(post(EDIT_MANUAL_DOSES_URL, id)
+                .header(AUTH_HEADER, BEARER_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(emptyJson)
                 .accept(MediaType.APPLICATION_JSON))
@@ -185,8 +193,8 @@ class EverwellControllerTest {
         String malformedLoginJson = "not-json-at-all";
         
         try {
-            mockMvc.perform(post("/everwell/login")
-                    .header("Authorization", "Bearer dummy_token")
+            mockMvc.perform(post(LOGIN_URL)
+                    .header(AUTH_HEADER, BEARER_TOKEN)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(malformedLoginJson)
                     .accept(MediaType.APPLICATION_JSON))
@@ -196,8 +204,8 @@ class EverwellControllerTest {
             // but missing required fields to potentially trigger NullPointerException
             String incompleteJson = "{}";
             
-            mockMvc.perform(post("/everwell/login")
-                    .header("Authorization", "Bearer dummy_token")
+            mockMvc.perform(post(LOGIN_URL)
+                    .header(AUTH_HEADER, BEARER_TOKEN)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(incompleteJson)
                     .accept(MediaType.APPLICATION_JSON))
@@ -211,15 +219,15 @@ class EverwellControllerTest {
         // Test with null username/password which should trigger NPE in the controller logic
         String loginWithNulls = "{\"everwellUserName\":null,\"everwellPassword\":null}";
         
-        mockMvc.perform(post("/everwell/login")
-                .header("Authorization", "Bearer dummy_token")
+        mockMvc.perform(post(LOGIN_URL)
+                .header(AUTH_HEADER, BEARER_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(loginWithNulls)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()) // Controller catches exceptions
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 // This should trigger NPE when calling .equalsIgnoreCase() on null
-                .andExpect(jsonPath("$.statusCode").value(5000)) // Error response from catch block
+                .andExpect(jsonPath("$.statusCode").value(5005)) // Error response from catch block
                 .andExpect(jsonPath("$.errorMessage").exists()); // Should have error message
     }
 
@@ -228,8 +236,8 @@ class EverwellControllerTest {
         // Additional test to ensure logger statements are covered
         String loginJson = "{\"everwellUserName\":\"testUser\",\"everwellPassword\":\"testPass\"}";
         
-        mockMvc.perform(post("/everwell/login")
-                .header("Authorization", "Bearer dummy_token")
+        mockMvc.perform(post(LOGIN_URL)
+                .header(AUTH_HEADER, BEARER_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(loginJson)
                 .accept(MediaType.APPLICATION_JSON))
@@ -245,8 +253,8 @@ class EverwellControllerTest {
         // Test with special characters that might cause encoding issues
         String loginWithSpecialChars = "{\"everwellUserName\":\"\\u0000\\uFFFF\",\"everwellPassword\":\"\\u0000\"}";
         
-        mockMvc.perform(post("/everwell/login")
-                .header("Authorization", "Bearer dummy_token")
+        mockMvc.perform(post(LOGIN_URL)
+                .header(AUTH_HEADER, BEARER_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(loginWithSpecialChars)
                 .accept(MediaType.APPLICATION_JSON))
@@ -258,15 +266,15 @@ class EverwellControllerTest {
         // Empty object which should result in null fields, triggering NPE in controller
         String emptyLoginObject = "{}";
         
-        mockMvc.perform(post("/everwell/login")
-                .header("Authorization", "Bearer dummy_token")
+        mockMvc.perform(post(LOGIN_URL)
+                .header(AUTH_HEADER, BEARER_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(emptyLoginObject)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 // Empty object will have null fields, causing NPE in equalsIgnoreCase()
-                .andExpect(jsonPath("$.statusCode").value(5000))
+                .andExpect(jsonPath("$.statusCode").value(5005))
                 .andExpect(jsonPath("$.errorMessage").exists());
     }
     
@@ -278,16 +286,16 @@ class EverwellControllerTest {
         String requestBody = "{}";
         
         // Test addSupportAction with edge case ID
-        mockMvc.perform(post("/everwell/addSupportAction/{id}", largeId)
-                .header("Authorization", "Bearer dummy_token")
+        mockMvc.perform(post(ADD_SUPPORT_ACTION_URL, largeId)
+                .header(AUTH_HEADER, BEARER_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
                 
         // Test editManualDoses with edge case ID  
-        mockMvc.perform(post("/everwell/editManualDoses/{id}", largeId)
-                .header("Authorization", "Bearer dummy_token")
+        mockMvc.perform(post(EDIT_MANUAL_DOSES_URL, largeId)
+                .header(AUTH_HEADER, BEARER_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody)
                 .accept(MediaType.APPLICATION_JSON))

@@ -1,13 +1,13 @@
 package com.iemr.common.controller.abdmfacility;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ContextConfiguration;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.mockito.Mockito.*;
@@ -15,18 +15,26 @@ import static org.mockito.Mockito.*;
 import com.iemr.common.service.abdmfacility.AbdmFacilityService;
 import com.iemr.common.utils.response.OutputResponse;
 
-@WebMvcTest(controllers = AbdmFacilityController.class, 
-            excludeAutoConfiguration = {SecurityAutoConfiguration.class, SecurityFilterAutoConfiguration.class})
-@ContextConfiguration(classes = {AbdmFacilityController.class})
+@ExtendWith(MockitoExtension.class)
 class AbdmFacilityControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Mock
     private AbdmFacilityService abdmFacilityService;
 
-    private final String AUTH_HEADER_VALUE = "Bearer some_valid_token";
+    @InjectMocks
+    private AbdmFacilityController abdmFacilityController;
+
+    // Test constants
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String BEARER_TOKEN = "Bearer some_valid_token";
+    private static final String FACILITY_ENDPOINT = "/facility/getWorklocationMappedAbdmFacility/{workLocationId}";
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(abdmFacilityController).build();
+    }
 
     @Test
     void shouldReturnAbdmFacilityDetails_whenServiceReturnsData() throws Exception {
@@ -39,8 +47,8 @@ class AbdmFacilityControllerTest {
 
         when(abdmFacilityService.getMappedAbdmFacility(workLocationId)).thenReturn(mockServiceResponse);
 
-        mockMvc.perform(get("/facility/getWorklocationMappedAbdmFacility/{workLocationId}", workLocationId)
-                .header("Authorization", AUTH_HEADER_VALUE))
+        mockMvc.perform(get(FACILITY_ENDPOINT, workLocationId)
+                .header(AUTHORIZATION_HEADER, BEARER_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedResponseBody));
         
@@ -58,8 +66,8 @@ class AbdmFacilityControllerTest {
 
         when(abdmFacilityService.getMappedAbdmFacility(workLocationId)).thenThrow(new RuntimeException(errorMessage));
 
-        mockMvc.perform(get("/facility/getWorklocationMappedAbdmFacility/{workLocationId}", workLocationId)
-                .header("Authorization", AUTH_HEADER_VALUE))
+        mockMvc.perform(get(FACILITY_ENDPOINT, workLocationId)
+                .header(AUTHORIZATION_HEADER, BEARER_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(content().string(expectedResponseBody));
         
@@ -71,7 +79,7 @@ class AbdmFacilityControllerTest {
         int workLocationId = 789;
 
         // The controller method requires Authorization header, so missing header should return 400
-        mockMvc.perform(get("/facility/getWorklocationMappedAbdmFacility/{workLocationId}", workLocationId))
+        mockMvc.perform(get(FACILITY_ENDPOINT, workLocationId))
                 .andExpect(status().isBadRequest());
         
         // Service should not be called when required header is missing

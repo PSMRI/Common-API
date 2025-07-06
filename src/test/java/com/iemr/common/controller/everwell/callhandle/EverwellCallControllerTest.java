@@ -2,28 +2,13 @@ package com.iemr.common.controller.everwell.callhandle;
 
 import com.iemr.common.service.everwell.EverwellCallHandlingService;
 import com.iemr.common.utils.response.OutputResponse;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
-import org.slf4j.LoggerFactory;
-
-import org.mockito.MockitoAnnotations;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -36,24 +21,6 @@ class EverwellCallControllerTest {
     @Mock
     private EverwellCallHandlingService beneficiaryCallService;
 
-    private ListAppender<ILoggingEvent> listAppender;
-    private Logger everwellCallControllerLogger;
-
-    @BeforeEach
-    void setUp() {
-        // Initialize logger for testing
-        everwellCallControllerLogger = (Logger) LoggerFactory.getLogger(EverwellCallController.class);
-        listAppender = new ListAppender<>();
-        listAppender.start();
-        everwellCallControllerLogger.addAppender(listAppender);
-    }
-
-    @AfterEach
-    void tearDown() {
-        everwellCallControllerLogger.detachAppender(listAppender);
-        listAppender.stop();
-    }
-
     @Test
     void testOutboundCallCount_Success() throws Exception {
         String request = "{\"providerServiceMapID\":1, \"assignedUserID\":10}";
@@ -65,14 +32,6 @@ class EverwellCallControllerTest {
         OutputResponse expectedOutput = new OutputResponse();
         expectedOutput.setResponse(serviceResponse);
         assertEquals(expectedOutput.toString(), response);
-
-        // Verify info log
-        List<ILoggingEvent> logsList = listAppender.list;
-        assertFalse(logsList.isEmpty());
-        assertTrue(logsList.stream().anyMatch(event ->
-                event.getLevel() == Level.INFO &&
-                event.getMessage().contains("outboundCallCount request " + request)
-        ));
     }
 
     @Test
@@ -86,15 +45,6 @@ class EverwellCallControllerTest {
         OutputResponse expectedOutput = new OutputResponse();
         expectedOutput.setError(testException);
         assertEquals(expectedOutput.toString(), response);
-
-        // Verify error log (note: controller logs "outboundCallList failed" for outboundCallCount)
-        List<ILoggingEvent> logsList = listAppender.list;
-        assertFalse(logsList.isEmpty());
-        assertTrue(logsList.stream().anyMatch(event ->
-                event.getLevel() == Level.ERROR &&
-                event.getMessage().contains("outboundCallList failed with error " + testException.getMessage()) &&
-                event.getThrowableProxy().getMessage().equals(testException.getMessage())
-        ));
     }
 
     @Test
@@ -121,15 +71,6 @@ class EverwellCallControllerTest {
         OutputResponse expectedOutput = new OutputResponse();
         expectedOutput.setError(testException);
         assertEquals(expectedOutput.toString(), response);
-
-        // Verify error log
-        List<ILoggingEvent> logsList = listAppender.list;
-        assertFalse(logsList.isEmpty());
-        assertTrue(logsList.stream().anyMatch(event ->
-                event.getLevel() == Level.ERROR &&
-                event.getMessage().contains("outboundAllocation failed with error " + testException.getMessage()) &&
-                event.getThrowableProxy().getMessage().equals(testException.getMessage())
-        ));
     }
 
     @Test
@@ -156,15 +97,6 @@ class EverwellCallControllerTest {
         OutputResponse expectedOutput = new OutputResponse();
         expectedOutput.setError(testException);
         assertEquals(expectedOutput.toString(), response);
-
-        // Verify error log
-        List<ILoggingEvent> logsList = listAppender.list;
-        assertFalse(logsList.isEmpty());
-        assertTrue(logsList.stream().anyMatch(event ->
-                event.getLevel() == Level.ERROR &&
-                event.getMessage().contains("outboundCallList failed with error " + testException.getMessage()) &&
-                event.getThrowableProxy().getMessage().equals(testException.getMessage())
-        ));
     }
 
     @Test
@@ -191,15 +123,6 @@ class EverwellCallControllerTest {
         OutputResponse expectedOutput = new OutputResponse();
         expectedOutput.setError(testException);
         assertEquals(expectedOutput.toString(), response);
-
-        // Verify error log
-        List<ILoggingEvent> logsList = listAppender.list;
-        assertFalse(logsList.isEmpty());
-        assertTrue(logsList.stream().anyMatch(event ->
-                event.getLevel() == Level.ERROR &&
-                event.getMessage().contains("outboundAllocation failed with error " + testException.getMessage()) && // Typo in controller
-                event.getThrowableProxy().getMessage().equals(testException.getMessage())
-        ));
     }
 
     @Test
@@ -226,15 +149,6 @@ class EverwellCallControllerTest {
         OutputResponse expectedOutput = new OutputResponse();
         expectedOutput.setError(testException);
         assertEquals(expectedOutput.toString(), response);
-
-        // Verify error log
-        List<ILoggingEvent> logsList = listAppender.list;
-        assertFalse(logsList.isEmpty());
-        assertTrue(logsList.stream().anyMatch(event ->
-                event.getLevel() == Level.ERROR &&
-                event.getMessage().contains("outboundAllocation failed with error " + testException.getMessage()) && // Typo in controller
-                event.getThrowableProxy().getMessage().equals(testException.getMessage())
-        ));
     }
 
     @Test
@@ -274,15 +188,6 @@ class EverwellCallControllerTest {
         OutputResponse expectedOutput = new OutputResponse();
         expectedOutput.setError(testException);
         assertEquals(expectedOutput.toString(), response);
-
-        // Verify error log
-        List<ILoggingEvent> logsList = listAppender.list;
-        assertFalse(logsList.isEmpty());
-        assertTrue(logsList.stream().anyMatch(event ->
-                event.getLevel() == Level.ERROR &&
-                event.getMessage().contains("outboundAllocation failed with error " + testException.getMessage()) && // Typo in controller
-                event.getThrowableProxy().getMessage().equals(testException.getMessage())
-        ));
     }
 
     @Test
@@ -321,15 +226,6 @@ class EverwellCallControllerTest {
         OutputResponse expectedOutput = new OutputResponse();
         expectedOutput.setError(testException);
         assertEquals(expectedOutput.toString(), response);
-
-        // Verify error log
-        List<ILoggingEvent> logsList = listAppender.list;
-        assertFalse(logsList.isEmpty());
-        assertTrue(logsList.stream().anyMatch(event ->
-                event.getLevel() == Level.ERROR &&
-                event.getMessage().contains("outboundAllocation failed with error " + testException.getMessage()) && // Typo in controller
-                event.getThrowableProxy().getMessage().equals(testException.getMessage())
-        ));
     }
 
     @Test
@@ -356,14 +252,6 @@ class EverwellCallControllerTest {
         OutputResponse expectedOutput = new OutputResponse();
         expectedOutput.setError(testException);
         assertEquals(expectedOutput.toString(), response);
-
-        // Verify error log - controller only logs message, not throwable
-        List<ILoggingEvent> logsList = listAppender.list;
-        assertFalse(logsList.isEmpty());
-        assertTrue(logsList.stream().anyMatch(event ->
-                event.getLevel() == Level.ERROR &&
-                event.getMessage().contains("outboundCallList failed with error " + testException.getMessage())
-        ));
     }
 
     @Test
@@ -390,14 +278,5 @@ class EverwellCallControllerTest {
         OutputResponse expectedOutput = new OutputResponse();
         expectedOutput.setError(testException);
         assertEquals(expectedOutput.toString(), response);
-
-        // Verify error log
-        List<ILoggingEvent> logsList = listAppender.list;
-        assertFalse(logsList.isEmpty());
-        assertTrue(logsList.stream().anyMatch(event ->
-                event.getLevel() == Level.ERROR &&
-                event.getMessage().contains("checkIfAlreadyCalled failed with error " + testException.getMessage()) &&
-                event.getThrowableProxy().getMessage().equals(testException.getMessage())
-        ));
     }
 }

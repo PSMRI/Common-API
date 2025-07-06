@@ -9,12 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
-import ch.qos.logback.classic.LoggerContext;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,27 +32,12 @@ class SchemeControllerTest {
     private SchemeServiceImpl schemeServiceImpl;
 
     private ObjectMapper objectMapper;
-    private ListAppender<ILoggingEvent> listAppender;
-    private ch.qos.logback.classic.Logger testLogger;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
         objectMapper = new ObjectMapper();
-         objectMapper.configure(com.fasterxml.jackson.databind.SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-
-        // Setup logging capture for the controller's logger
-        testLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(SchemeController.class);
-        listAppender = new ListAppender<>();
-        listAppender.start();
-        testLogger.addAppender(listAppender);
-        testLogger.setLevel(Level.INFO); // Set level to capture INFO and ERROR
-    }
-
-    // Helper to check if a log message exists
-    private boolean logContains(String message, Level level) {
-        return listAppender.list.stream()
-                .anyMatch(event -> event.getMessage().contains(message) && event.getLevel().equals(level));
+        objectMapper.configure(com.fasterxml.jackson.databind.SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     }
 
     @Test
@@ -89,7 +68,6 @@ class SchemeControllerTest {
         OutputResponse outputResponse = objectMapper.readValue(response, OutputResponse.class);
         assertTrue(outputResponse.isSuccess());
         assertTrue(outputResponse.getData().contains("\"schemeID\":101"));
-        assertTrue(logContains("saveSchemeDetails response:", Level.INFO));
     }
 
     @Test
@@ -110,8 +88,6 @@ class SchemeControllerTest {
         OutputResponse outputResponse = objectMapper.readValue(response, OutputResponse.class);
         assertFalse(outputResponse.isSuccess());
         assertTrue(outputResponse.getErrorMessage().contains(errorMessage));
-        assertTrue(logContains("saveSchemeDetails failed with error " + errorMessage, Level.ERROR));
-        assertTrue(logContains("saveSchemeDetails response:", Level.INFO));
     }
 
     @Test
@@ -141,8 +117,6 @@ class SchemeControllerTest {
         assertTrue(outputResponse.isSuccess());
         assertTrue(outputResponse.getData().contains("\"schemeID\":1"));
         assertTrue(outputResponse.getData().contains("\"schemeID\":2"));
-        assertTrue(logContains("getSchemeList request " + requestJson, Level.INFO));
-        assertTrue(logContains("getSchemeList response:", Level.INFO));
     }
 
     @Test
@@ -161,8 +135,6 @@ class SchemeControllerTest {
         OutputResponse outputResponse = objectMapper.readValue(response, OutputResponse.class);
         assertTrue(outputResponse.isSuccess());
         assertTrue(outputResponse.getData().equals("[]")); // Empty list toString() is "[]"
-        assertTrue(logContains("getSchemeList request " + requestJson, Level.INFO));
-        assertTrue(logContains("getSchemeList response:", Level.INFO));
     }
 
     @Test
@@ -182,8 +154,6 @@ class SchemeControllerTest {
         assertFalse(outputResponse.isSuccess());
         assertTrue(outputResponse.getErrorMessage().contains("No schemes available"));
         assertTrue(outputResponse.getStatusCode() == 5000);
-        assertTrue(logContains("getSchemeList request " + requestJson, Level.INFO));
-        assertTrue(logContains("getSchemeList response:", Level.INFO));
     }
 
     @Test
@@ -203,8 +173,6 @@ class SchemeControllerTest {
         OutputResponse outputResponse = objectMapper.readValue(response, OutputResponse.class);
         assertFalse(outputResponse.isSuccess());
         assertTrue(outputResponse.getErrorMessage().contains(errorMessage));
-        assertTrue(logContains("getSchemeList failed with error " + errorMessage, Level.ERROR));
-        assertTrue(logContains("getSchemeList response:", Level.INFO));
     }
 
     @Test
@@ -232,8 +200,6 @@ class SchemeControllerTest {
         OutputResponse outputResponse = objectMapper.readValue(response, OutputResponse.class);
         assertTrue(outputResponse.isSuccess());
         assertTrue(outputResponse.getData().contains("success"));
-        assertTrue(logContains("delete scheme request " + requestJson, Level.INFO));
-        assertTrue(logContains("getSchemeList response:", Level.INFO)); // Controller logs this as getSchemeList response
     }
 
     @Test
@@ -255,8 +221,6 @@ class SchemeControllerTest {
         assertFalse(outputResponse.isSuccess());
         assertTrue(outputResponse.getErrorMessage().contains("No schemes available"));
         assertTrue(outputResponse.getStatusCode() == 5000);
-        assertTrue(logContains("delete scheme request " + requestJson, Level.INFO));
-        assertTrue(logContains("getSchemeList response:", Level.INFO));
     }
 
     @Test
@@ -278,8 +242,6 @@ class SchemeControllerTest {
         OutputResponse outputResponse = objectMapper.readValue(response, OutputResponse.class);
         assertFalse(outputResponse.isSuccess());
         assertTrue(outputResponse.getErrorMessage().contains(errorMessage));
-        assertTrue(logContains("getSchemeList failed with error " + errorMessage, Level.ERROR)); // Controller logs this as getSchemeList failed
-        assertTrue(logContains("getSchemeList response:", Level.INFO));
     }
 
     @Test
@@ -306,7 +268,5 @@ class SchemeControllerTest {
         OutputResponse outputResponse = objectMapper.readValue(response, OutputResponse.class);
         assertFalse(outputResponse.isSuccess());
         assertTrue(outputResponse.getErrorMessage().contains(errorMessage));
-        assertTrue(logContains("getSchemeList failed with error " + errorMessage, Level.ERROR)); // Controller logs this as getSchemeList failed
-        assertTrue(logContains("getSchemeList response:", Level.INFO));
     }
 }

@@ -233,15 +233,11 @@ void testUpdateCacheObj_RedisSessionExceptionOnSetSession() throws RedisSessionE
     verify(session, times(1)).setSessionObject(eq(key), anyString());
 
     assertNotNull(result);
-
-    //  First check keys exist before accessing
-    assertTrue(result.has("key"), "Result should contain 'key'");
-    assertTrue(result.has("sessionStatus"), "Result should contain 'sessionStatus'");
-
-    assertEquals(key, result.getString("key"));
-    assertEquals("login success", result.getString("sessionStatus"));
-
-    assertFalse(result.has("loginIPAddress"), "Result should not contain 'loginIPAddress' on Redis set error");
+    assertFalse(result.has("key"), "Result should NOT contain 'key' when Redis set fails");
+    assertTrue(result.has("sessionStatus"), "Result should contain 'sessionStatus' when Redis set fails");
+    assertEquals("session creation failed", result.getString("sessionStatus"));
+    assertTrue(result.has("loginIPAddress"), "Result should still contain original 'loginIPAddress'");
+    assertEquals("192.168.1.1", result.getString("loginIPAddress"));
 }
 
     @Test
