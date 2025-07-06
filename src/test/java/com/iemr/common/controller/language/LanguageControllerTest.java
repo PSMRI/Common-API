@@ -1,5 +1,7 @@
 package com.iemr.common.controller.language;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.common.data.userbeneficiarydata.Language;
 import com.iemr.common.service.userbeneficiarydata.LanguageService;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,9 +26,12 @@ class LanguageControllerTest {
     @InjectMocks
     private LanguageController languageController;
 
+    private ObjectMapper objectMapper;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        objectMapper = new ObjectMapper();
     }
 
     @Test
@@ -54,9 +59,20 @@ class LanguageControllerTest {
         // Assert
         verify(languageService, times(1)).getActiveLanguages();
         
-        // Verify the content of the returned JSON
-        String expectedJson = "{\"data\":[\"Language1\",\"Language2\"],\"statusCode\":200,\"errorMessage\":\"Success\",\"status\":\"Success\"}";
-        assertEquals(expectedJson, result);
+        // Parse the JSON response and verify the fields
+        JsonNode jsonNode = objectMapper.readTree(result);
+        
+        // Verify the structure and values
+        assertEquals(200, jsonNode.get("statusCode").asInt());
+        assertEquals("Success", jsonNode.get("status").asText());
+        assertEquals("Success", jsonNode.get("errorMessage").asText());
+        
+        // Verify the data array contains expected languages
+        JsonNode dataNode = jsonNode.get("data");
+        assertTrue(dataNode.isArray());
+        assertEquals(2, dataNode.size());
+        assertEquals("Language1", dataNode.get(0).asText());
+        assertEquals("Language2", dataNode.get(1).asText());
     }
 
     @Test
@@ -72,9 +88,16 @@ class LanguageControllerTest {
         // Assert
         verify(languageService, times(1)).getActiveLanguages();
         
-        // Verify the content of the returned JSON for error
-        assertTrue(result.contains("\"statusCode\":5000"));
-        assertTrue(result.contains("\"errorMessage\":\"" + errorMessage + "\""));
-        assertTrue(result.contains("\"status\":\"Failed with " + errorMessage + " at "));
+        // Parse the JSON response and verify the error fields
+        JsonNode jsonNode = objectMapper.readTree(result);
+        
+        // Verify the error structure and values
+        assertEquals(5000, jsonNode.get("statusCode").asInt());
+        assertEquals(errorMessage, jsonNode.get("errorMessage").asText());
+        
+        // Verify the status contains the expected error message and timestamp format
+        String statusText = jsonNode.get("status").asText();
+        assertTrue(statusText.startsWith("Failed with " + errorMessage + " at "));
+        assertTrue(statusText.contains("Please try after some time"));
     }
 }

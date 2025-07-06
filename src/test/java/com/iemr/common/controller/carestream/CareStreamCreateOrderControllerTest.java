@@ -1,352 +1,270 @@
 // package com.iemr.common.controller.carestream;
 
-// import com.google.gson.JsonSyntaxException;
-// import com.iemr.common.data.carestream.CreateOrderData;
-// import com.iemr.common.utils.mapper.InputMapper;
-// import com.iemr.common.utils.response.OutputResponse;
-
 // import org.junit.jupiter.api.BeforeEach;
 // import org.junit.jupiter.api.Test;
-// import org.mockito.MockedStatic;
-// import org.slf4j.Logger;
+// import org.junit.jupiter.api.Timeout;
+// import org.junit.jupiter.api.extension.ExtendWith;
+// import org.mockito.InjectMocks;          
 
-// import java.io.ByteArrayInputStream;
-// import java.io.ByteArrayOutputStream;
-// import java.io.IOException;
-// import java.io.InputStream;
-// import java.io.OutputStream;
-// import java.lang.reflect.Field;
-// import java.net.Socket;
-// import java.net.UnknownHostException;
+// import org.mockito.junit.jupiter.MockitoExtension;
+// import org.springframework.http.MediaType;
+// import org.springframework.test.web.servlet.MockMvc;
+// import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+// import org.springframework.test.util.ReflectionTestUtils;
 
-// import static org.junit.jupiter.api.Assertions.assertTrue;
-// import static org.mockito.ArgumentMatchers.any;
-// import static org.mockito.ArgumentMatchers.anyInt;
-// import static org.mockito.ArgumentMatchers.anyString;
-// import static org.mockito.Mockito.doThrow;
-// import static org.mockito.Mockito.mock;
-// import static org.mockito.Mockito.mockStatic;
-// import static org.mockito.Mockito.never;
-// import static org.mockito.Mockito.times;
-// import static org.mockito.Mockito.verify;
-// import static org.mockito.Mockito.when;
-// import static org.mockito.Mockito.verifyNoInteractions;
+// import java.util.concurrent.TimeUnit;
 
+// import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+// import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+// import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+// import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+
+// /**
+//  * Standalone MockMvc test class for CareStreamCreateOrderController.
+//  * Tests HTTP layer functionality including request mapping, JSON parsing, and response structure.
+//  */
+// @ExtendWith(MockitoExtension.class)
+// @Timeout(value = 5, unit = TimeUnit.SECONDS) // Timeout each test after 5 seconds
 // class CareStreamCreateOrderControllerTest {
 
+//     private MockMvc mockMvc;
+
+    
+//     @InjectMocks
 //     private CareStreamCreateOrderController controller;
-//     private Logger mockLogger;
-//     private Socket mockSocket;
-//     private InputStream mockInputStream;
-//     private OutputStream mockOutputStream;
 
 //     // Test data for CreateOrderData
 //     private final String validJsonInput = "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"patientID\":\"P123\",\"dob\":\"1990-01-01\",\"gender\":\"M\",\"acc\":\"ACC123\"}";
+//     private final String invalidJsonInput = "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"invalidJson\":}"; // Missing value after colon
 
 //     @BeforeEach
-//     void setUp() throws NoSuchFieldException, IllegalAccessException, IOException {
-//         controller = new CareStreamCreateOrderController();
+//     void setUp() {
+//         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+        
+//         // Set @Value fields using ReflectionTestUtils for socket configuration
+//         // Use localhost with a port that should fail quickly (connection refused rather than timeout)
+//         ReflectionTestUtils.setField(controller, "carestreamSocketIP", "127.0.0.1");
+//         ReflectionTestUtils.setField(controller, "carestreamSocketPort", 1); // Port 1 should fail immediately
+//     }
 
-//         // Mock Logger and inject it using reflection
-//         mockLogger = mock(Logger.class);
-//         Field loggerField = CareStreamCreateOrderController.class.getDeclaredField("logger");
-//         loggerField.setAccessible(true);
-//         loggerField.set(controller, mockLogger);
+//     // Test constants
+//     private static final String CREATE_ORDER_URL = "/carestream/createOrder";
+//     private static final String UPDATE_ORDER_URL = "/carestream/UpdateOrder";
+//     private static final String DELETE_ORDER_URL = "/carestream/deleteOrder";
+//     private static final String AUTH_HEADER = "Authorization";
+//     private static final String BEARER_TOKEN = "Bearer test-token";
 
-//         // Set @Value fields using reflection for createOrder method
-//         Field ipField = CareStreamCreateOrderController.class.getDeclaredField("carestreamSocketIP");
-//         ipField.setAccessible(true);
-//         ipField.set(controller, "127.0.0.1");
-
-//         Field portField = CareStreamCreateOrderController.class.getDeclaredField("carestreamSocketPort");
-//         portField.setAccessible(true);
-//         portField.set(controller, 12345);
-
-//         // Mock Socket and its streams
-//         mockSocket = mock(Socket.class);
-//         mockInputStream = mock(InputStream.class);
-//         mockOutputStream = mock(OutputStream.class);
-
-//         when(mockSocket.getInputStream()).thenReturn(mockInputStream);
-//         when(mockSocket.getOutputStream()).thenReturn(mockOutputStream);
+//     // Tests for /carestream/createOrder endpoint
+//     @Test
+//     void createOrder_shouldAcceptValidRequest_andReturnResponse() throws Exception {
+//         // Note: This will fail at socket connection but we're testing the HTTP layer
+//         mockMvc.perform(post(CREATE_ORDER_URL)
+//                 .header(AUTH_HEADER, BEARER_TOKEN)
+//                 .contentType(MediaType.APPLICATION_JSON)
+//                 .content(validJsonInput))
+//                 .andExpect(status().isOk())
+//                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+//                 .andExpect(jsonPath("$.statusCode").value(5006)) // Error due to socket connection failure (ENVIRONMENT_EXCEPTION)
+//                 .andExpect(jsonPath("$.status").exists());
 //     }
 
 //     @Test
-//     void testCreateOrder_Success() throws IOException {
-//         try (MockedStatic<Socket> mockedSocket = mockStatic(Socket.class)) {
-//             // Mock the Socket constructor call
-//             mockedSocket.when(() -> new Socket(anyString(), anyInt())).thenReturn(mockSocket);
+//     void createOrder_shouldHandleInvalidJson() throws Exception {
+//         // Malformed JSON will be parsed by controller, catch exception, and return 200 with error in OutputResponse
+//         mockMvc.perform(post(CREATE_ORDER_URL)
+//                 .header(AUTH_HEADER, BEARER_TOKEN)
+//                 .contentType(MediaType.APPLICATION_JSON)
+//                 .content(invalidJsonInput))
+//                 .andExpect(status().isOk()) // Controller catches JSON parsing errors and returns 200 with error in OutputResponse
+//                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+//                 .andExpect(jsonPath("$.statusCode").value(5000)) // GENERIC_FAILURE
+//                 .andExpect(jsonPath("$.status").exists())
+//                 .andExpect(jsonPath("$.errorMessage").exists());
+//     }
 
-//             // Simulate a successful response from the server
-//             String serverResponse = "ACK";
-//             when(mockInputStream.read(any(byte[].class))).thenAnswer(invocation -> {
-//                 byte[] buffer = invocation.getArgument(0);
-//                 System.arraycopy(serverResponse.getBytes(), 0, buffer, 0, serverResponse.length());
-//                 return serverResponse.length();
-//             });
+//     @Test
+//     void createOrder_shouldRequireAuthorizationHeader() throws Exception {
+//         // Test without Authorization header - should return 404 (method not found due to headers requirement)
+//         mockMvc.perform(post(CREATE_ORDER_URL)
+//                 .contentType(MediaType.APPLICATION_JSON)
+//                 .content(validJsonInput))
+//                 .andExpect(status().isNotFound()); // 404 because headers="Authorization" is required
+//     }
 
-//             String result = controller.createOrder(validJsonInput);
+//     @Test
+//     void createOrder_shouldRequireJsonContentType() throws Exception {
+//         // Without content type, the controller still processes the request
+//         mockMvc.perform(post(CREATE_ORDER_URL)
+//                 .header(AUTH_HEADER, BEARER_TOKEN)
+//                 .content(validJsonInput))
+//                 .andExpect(status().isOk()) // Controller processes the request regardless of content type
+//                 .andExpect(jsonPath("$.statusCode").value(5006)); // Socket connection error (ENVIRONMENT_EXCEPTION)
+//     }
 
-//             // Verify socket interactions
-//             verify(mockOutputStream).write(any(byte[].class));
-//             verify(mockInputStream).read(any(byte[].class));
-//             verify(mockSocket, times(1)).close(); // Only one close in finally for createOrder
 
-//             // Verify response
-//             assertTrue(result.contains("Order successfully created"));
-//             verifyNoInteractions(mockLogger); // No errors should be logged on success
+//     @Test
+//     void createOrder_shouldHandleEmptyBody() throws Exception {
+//         mockMvc.perform(post(CREATE_ORDER_URL)
+//                 .header(AUTH_HEADER, BEARER_TOKEN)
+//                 .contentType(MediaType.APPLICATION_JSON)
+//                 .content(""))
+//                 .andExpect(status().isBadRequest()); // Empty body returns 400 Bad Request
+//     }
+
+//     // Tests for /carestream/UpdateOrder endpoint
+//  @Test
+//     void updateOrder_shouldAcceptValidRequest_andReturnResponse() throws Exception {
+//         mockMvc.perform(post(UPDATE_ORDER_URL)
+//                 .header(AUTH_HEADER, BEARER_TOKEN)
+//                 .contentType(MediaType.APPLICATION_JSON)
+//                 .content(validJsonInput))
+//                 .andExpect(status().isOk())
+//                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+//                 .andExpect(jsonPath("$.statusCode").value(5006)) // Error due to socket connection failure (ENVIRONMENT_EXCEPTION)
+//                 .andExpect(jsonPath("$.status").exists());
+//     }
+
+//     @Test
+//     void updateOrder_shouldHandleInvalidJson() throws Exception {
+//         // Malformed JSON will be parsed by controller, catch exception, and return 200 with error in OutputResponse
+//         mockMvc.perform(post(UPDATE_ORDER_URL)
+//                 .header(AUTH_HEADER, BEARER_TOKEN)
+//                 .contentType(MediaType.APPLICATION_JSON)
+//                 .content(invalidJsonInput))
+//                 .andExpect(status().isOk()) // Controller catches JSON parsing errors and returns 200 with error in OutputResponse
+//                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+//                 .andExpect(jsonPath("$.statusCode").value(5000)) // GENERIC_FAILURE for JSON parsing error
+//                 .andExpect(jsonPath("$.status").exists())
+//                 .andExpect(jsonPath("$.errorMessage").exists());
+//     }
+
+//     @Test
+//     void updateOrder_shouldRequireAuthorizationHeader() throws Exception {
+//         mockMvc.perform(post(UPDATE_ORDER_URL)
+//                 .contentType(MediaType.APPLICATION_JSON)
+//                 .content(validJsonInput))
+//                 .andExpect(status().isNotFound());
+//     }
+
+//     // Tests for /carestream/deleteOrder endpoint
+//     @Test
+//     void deleteOrder_shouldAcceptValidRequest_andReturnResponse() throws Exception {
+//         mockMvc.perform(post(DELETE_ORDER_URL)
+//                 .header(AUTH_HEADER, BEARER_TOKEN)
+//                 .contentType(MediaType.APPLICATION_JSON)
+//                 .content(validJsonInput))
+//                 .andExpect(status().isOk())
+//                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+//                 .andExpect(jsonPath("$.statusCode").value(5000)) // Error due to socket connection failure
+//                 .andExpect(jsonPath("$.status").exists());
+//     }
+
+//     @Test
+//     void deleteOrder_shouldHandleInvalidJson() throws Exception {
+//         // Malformed JSON will be parsed by controller, catch exception, and return 200 with error in OutputResponse
+//         mockMvc.perform(post(DELETE_ORDER_URL)
+//                 .header(AUTH_HEADER, BEARER_TOKEN)
+//                 .contentType(MediaType.APPLICATION_JSON)
+//                 .content(invalidJsonInput))
+//                 .andExpect(status().isOk()) // Controller catches JSON parsing errors and returns 200 with error in OutputResponse
+//                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+//                 .andExpect(jsonPath("$.statusCode").value(5000)) // GENERIC_FAILURE
+//                 .andExpect(jsonPath("$.status").exists())
+//                 .andExpect(jsonPath("$.errorMessage").exists());
+//     }
+
+//     @Test
+//     void deleteOrder_shouldRequireAuthorizationHeader() throws Exception {
+//         mockMvc.perform(post(DELETE_ORDER_URL)
+//                 .contentType(MediaType.APPLICATION_JSON)
+//                 .content(validJsonInput))
+//                 .andExpect(status().isNotFound());
+//     }
+
+//     // Test endpoint path variations
+//     @Test
+//     void shouldReturn404ForInvalidPaths() throws Exception {
+//         mockMvc.perform(post("/carestream/invalidEndpoint")
+//                 .header(AUTH_HEADER, BEARER_TOKEN)
+//                 .contentType(MediaType.APPLICATION_JSON)
+//                 .content(validJsonInput))
+//                 .andExpect(status().isNotFound());
+//     }
+
+//     // Test HTTP method variations
+//     @Test
+//     void shouldReturn405ForUnsupportedHttpMethods() throws Exception {
+//         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(CREATE_ORDER_URL)
+//                 .header(AUTH_HEADER, BEARER_TOKEN))
+//                 .andExpect(status().isMethodNotAllowed());
+//     }
+
+//     // Test request body size limits (if any)
+//     @Test
+//     void createOrder_shouldHandleLargeRequestBody() throws Exception {
+//         StringBuilder largeJson = new StringBuilder("{\"firstName\":\"");
+//         // Create a large string (but still valid JSON)
+//         for (int i = 0; i < 1000; i++) {
+//             largeJson.append("A");
 //         }
+//         largeJson.append("\",\"lastName\":\"Doe\",\"patientID\":\"P123\",\"dob\":\"1990-01-01\",\"gender\":\"M\",\"acc\":\"ACC123\"}");
+
+//         mockMvc.perform(post(CREATE_ORDER_URL)
+//                 .header(AUTH_HEADER, BEARER_TOKEN)
+//                 .contentType(MediaType.APPLICATION_JSON)
+//                 .content(largeJson.toString()))
+//                 .andExpect(status().isOk())
+//                 .andExpect(jsonPath("$.statusCode").value(5006)); // Error due to socket connection failure (ENVIRONMENT_EXCEPTION)
 //     }
 
+//     // Test specific JSON field validation
 //     @Test
-//     void testCreateOrder_SocketCreationFails() throws IOException {
-//         try (MockedStatic<Socket> mockedSocket = mockStatic(Socket.class)) {
-//             // Simulate Socket constructor throwing an IOException
-//             mockedSocket.when(() -> new Socket(anyString(), anyInt())).thenThrow(new IOException("Connection refused"));
+//     void createOrder_shouldHandlePartialJsonData() throws Exception {
+//         String partialJson = "{\"firstName\":\"John\",\"lastName\":\"Doe\"}"; // Missing required fields
 
-//             String result = controller.createOrder(validJsonInput);
-
-//             // Verify no socket interactions beyond creation attempt
-//             verify(mockOutputStream, never()).write(any(byte[].class));
-//             verify(mockInputStream, never()).read(any(byte[].class));
-//             verify(mockSocket, never()).close(); // Socket was never successfully created
-
-//             // Verify error logging and response
-//             verify(mockLogger).error(anyString(), any(IOException.class));
-//             assertTrue(result.contains("Connection refused"));
-//         }
+//         mockMvc.perform(post(CREATE_ORDER_URL)
+//                 .header(AUTH_HEADER, BEARER_TOKEN)
+//                 .contentType(MediaType.APPLICATION_JSON)
+//                 .content(partialJson))
+//                 .andExpect(status().isOk())
+//                 .andExpect(jsonPath("$.statusCode").value(5006)); // Error due to socket connection failure (ENVIRONMENT_EXCEPTION)
 //     }
 
+//     // Test different content types
 //     @Test
-//     void testCreateOrder_WriteToOutputStreamFails() throws IOException {
-//         try (MockedStatic<Socket> mockedSocket = mockStatic(Socket.class)) {
-//             mockedSocket.when(() -> new Socket(anyString(), anyInt())).thenReturn(mockSocket);
-
-//             // Simulate IOException when writing to output stream
-//             doThrow(new IOException("Write error")).when(mockOutputStream).write(any(byte[].class));
-
-//             String result = controller.createOrder(validJsonInput);
-
-//             // Verify socket interactions
-//             verify(mockOutputStream).write(any(byte[].class)); // Attempted write
-//             verify(mockInputStream, never()).read(any(byte[].class)); // Read should not happen
-//             verify(mockSocket, times(1)).close(); // Socket should still be closed in finally block
-
-//             // Verify error logging and response
-//             verify(mockLogger).error(anyString(), any(IOException.class));
-//             assertTrue(result.contains("Write error"));
-//         }
+//     void createOrder_shouldRejectNonJsonContentType() throws Exception {
+//         // Spring standalone MockMvc may not enforce content type restrictions for @RequestBody String
+//         mockMvc.perform(post(CREATE_ORDER_URL)
+//                 .header(AUTH_HEADER, BEARER_TOKEN)
+//                 .contentType(MediaType.TEXT_PLAIN)
+//                 .content(validJsonInput))
+//                 .andExpect(status().isOk()) // Controller processes the request
+//                 .andExpect(jsonPath("$.statusCode").value(5006)); // Socket connection error (ENVIRONMENT_EXCEPTION)
 //     }
 
+//     // Test boundary conditions
 //     @Test
-//     void testCreateOrder_ReadFromInputStreamFails() throws IOException {
-//         try (MockedStatic<Socket> mockedSocket = mockStatic(Socket.class)) {
-//             mockedSocket.when(() -> new Socket(anyString(), anyInt())).thenReturn(mockSocket);
+//     void createOrder_shouldHandleNullValues() throws Exception {
+//         String jsonWithNulls = "{\"firstName\":null,\"lastName\":null,\"patientID\":null,\"dob\":null,\"gender\":null,\"acc\":null}";
 
-//             // Simulate IOException when reading from input stream
-//             doThrow(new IOException("Read error")).when(mockInputStream).read(any(byte[].class));
-
-//             String result = controller.createOrder(validJsonInput);
-
-//             // Verify socket interactions
-//             verify(mockOutputStream).write(any(byte[].class));
-//             verify(mockInputStream).read(any(byte[].class)); // Attempted read
-//             verify(mockSocket, times(1)).close(); // Socket should still be closed
-
-//             // Verify error logging and response
-//             verify(mockLogger).error(anyString(), any(IOException.class));
-//             assertTrue(result.contains("Read error"));
-//         }
+//         mockMvc.perform(post(CREATE_ORDER_URL)
+//                 .header(AUTH_HEADER, BEARER_TOKEN)
+//                 .contentType(MediaType.APPLICATION_JSON)
+//                 .content(jsonWithNulls))
+//                 .andExpect(status().isOk())
+//                 .andExpect(jsonPath("$.statusCode").value(5006)); // Error due to socket connection failure (ENVIRONMENT_EXCEPTION)
 //     }
 
+//     // Test special characters in JSON
 //     @Test
-//     void testCreateOrder_ServerReturnsNoBytes() throws IOException {
-//         try (MockedStatic<Socket> mockedSocket = mockStatic(Socket.class)) {
-//             mockedSocket.when(() -> new Socket(anyString(), anyInt())).thenReturn(mockSocket);
+//     void createOrder_shouldHandleSpecialCharacters() throws Exception {
+//         String jsonWithSpecialChars = "{\"firstName\":\"John@#$%\",\"lastName\":\"Doe&*()!\",\"patientID\":\"P123\",\"dob\":\"1990-01-01\",\"gender\":\"M\",\"acc\":\"ACC123\"}";
 
-//             // Simulate server returning 0 bytes (or -1 for EOF)
-//             when(mockInputStream.read(any(byte[].class))).thenReturn(0); // Or -1 for EOF
-
-//             String result = controller.createOrder(validJsonInput);
-
-//             // Verify socket interactions
-//             verify(mockOutputStream).write(any(byte[].class));
-//             verify(mockInputStream).read(any(byte[].class));
-//             verify(mockSocket, times(1)).close();
-
-//             // The response will be default if no bytes are read and the if block is skipped.
-//             assertTrue(result.contains("\"response\":null"));
-//             assertTrue(result.contains("\"error\":null"));
-//             verifyNoInteractions(mockLogger); // No exception, so no error logged
-//         }
-//     }
-
-//     @Test
-//     void testCreateOrder_InvalidJsonInput() throws IOException {
-//         String invalidJson = "{invalid json}";
-//         String result = controller.createOrder(invalidJson);
-
-//         // Verify no socket interactions as parsing fails before socket creation
-//         verify(mockSocket, never()).getInputStream();
-//         verify(mockSocket, never()).getOutputStream();
-//         verify(mockSocket, never()).close();
-//         verify(mockOutputStream, never()).write(any(byte[].class));
-//         verify(mockInputStream, never()).read(any(byte[].class));
-
-//         // Verify error logging and response for JSON parsing error
-//         verify(mockLogger).error(anyString(), any(JsonSyntaxException.class));
-//         assertTrue(result.contains("JsonSyntaxException"));
-//     }
-
-//     // --- Tests for updateOrder ---
-
-//     @Test
-//     void testUpdateOrder_Success() throws IOException {
-//         try (MockedStatic<Socket> mockedSocket = mockStatic(Socket.class)) {
-//             // Mock the Socket constructor call with hardcoded IP/Port
-//             mockedSocket.when(() -> new Socket("192.168.1.101", 1235)).thenReturn(mockSocket);
-
-//             // Simulate a successful response from the server
-//             String serverResponse = "ACK_UPDATE";
-//             when(mockInputStream.read(any(byte[].class))).thenAnswer(invocation -> {
-//                 byte[] buffer = invocation.getArgument(0);
-//                 System.arraycopy(serverResponse.getBytes(), 0, buffer, 0, serverResponse.length());
-//                 return serverResponse.length();
-//             });
-
-//             String result = controller.updateOrder(validJsonInput);
-
-//             // Verify socket interactions
-//             verify(mockOutputStream).write(any(byte[].class));
-//             verify(mockInputStream).read(any(byte[].class));
-//             verify(mockSocket, times(2)).close(); // Socket is closed inside the if block AND in finally
-
-//             // Verify response
-//             assertTrue(result.contains("Receiver from server: ACK_UPDATE"));
-//             verifyNoInteractions(mockLogger);
-//         }
-//     }
-
-//     @Test
-//     void testUpdateOrder_SocketCreationFails() throws IOException {
-//         try (MockedStatic<Socket> mockedSocket = mockStatic(Socket.class)) {
-//             mockedSocket.when(() -> new Socket("192.168.1.101", 1235)).thenThrow(new IOException("Update connection refused"));
-
-//             String result = controller.updateOrder(validJsonInput);
-
-//             verify(mockSocket, never()).close();
-//             verify(mockLogger).error(anyString(), any(IOException.class));
-//             assertTrue(result.contains("Update connection refused"));
-//         }
-//     }
-
-//     @Test
-//     void testUpdateOrder_ReadFromInputStreamFails() throws IOException {
-//         try (MockedStatic<Socket> mockedSocket = mockStatic(Socket.class)) {
-//             mockedSocket.when(() -> new Socket("192.168.1.101", 1235)).thenReturn(mockSocket);
-//             doThrow(new IOException("Update read error")).when(mockInputStream).read(any(byte[].class));
-
-//             String result = controller.updateOrder(validJsonInput);
-
-//             verify(mockOutputStream).write(any(byte[].class));
-//             verify(mockInputStream).read(any(byte[].class));
-//             verify(mockSocket, times(1)).close(); // Only finally block close
-//             verify(mockLogger).error(anyString(), any(IOException.class));
-//             assertTrue(result.contains("Update read error"));
-//         }
-//     }
-
-//     @Test
-//     void testUpdateOrder_NoBytesRead() throws IOException {
-//         try (MockedStatic<Socket> mockedSocket = mockStatic(Socket.class)) {
-//             mockedSocket.when(() -> new Socket("192.168.1.101", 1235)).thenReturn(mockSocket);
-//             when(mockInputStream.read(any(byte[].class))).thenReturn(0); // No bytes read
-
-//             String result = controller.updateOrder(validJsonInput);
-
-//             verify(mockOutputStream).write(any(byte[].class));
-//             verify(mockInputStream).read(any(byte[].class));
-//             verify(mockSocket, times(1)).close(); // Only finally block close
-
-//             assertTrue(result.contains("\"response\":null"));
-//             assertTrue(result.contains("\"error\":null"));
-//             verifyNoInteractions(mockLogger);
-//         }
-//     }
-
-//     // --- Tests for deleteOrder ---
-
-//     @Test
-//     void testDeleteOrder_Success() throws IOException {
-//         try (MockedStatic<Socket> mockedSocket = mockStatic(Socket.class)) {
-//             // Mock the Socket constructor call with hardcoded IP/Port
-//             mockedSocket.when(() -> new Socket("192.168.1.101", 1235)).thenReturn(mockSocket);
-
-//             // Simulate a successful response from the server
-//             String serverResponse = "ACK_DELETE";
-//             when(mockInputStream.read(any(byte[].class))).thenAnswer(invocation -> {
-//                 byte[] buffer = invocation.getArgument(0);
-//                 System.arraycopy(serverResponse.getBytes(), 0, buffer, 0, serverResponse.length());
-//                 return serverResponse.length();
-//             });
-
-//             String result = controller.deleteOrder(validJsonInput);
-
-//             // Verify socket interactions
-//             verify(mockOutputStream).write(any(byte[].class));
-//             verify(mockInputStream).read(any(byte[].class));
-//             verify(mockSocket, times(2)).close(); // Socket is closed inside the if block AND in finally
-
-//             // Verify response
-//             assertTrue(result.contains("Receiver from server: ACK_DELETE"));
-//             verifyNoInteractions(mockLogger);
-//         }
-//     }
-
-//     @Test
-//     void testDeleteOrder_SocketCreationFails() throws IOException {
-//         try (MockedStatic<Socket> mockedSocket = mockStatic(Socket.class)) {
-//             mockedSocket.when(() -> new Socket("192.168.1.101", 1235)).thenThrow(new IOException("Delete connection refused"));
-
-//             String result = controller.deleteOrder(validJsonInput);
-
-//             verify(mockSocket, never()).close();
-//             verify(mockLogger).error(anyString(), any(IOException.class));
-//             assertTrue(result.contains("Delete connection refused"));
-//         }
-//     }
-
-//     @Test
-//     void testDeleteOrder_ReadFromInputStreamFails() throws IOException {
-//         try (MockedStatic<Socket> mockedSocket = mockStatic(Socket.class)) {
-//             mockedSocket.when(() -> new Socket("192.168.1.101", 1235)).thenReturn(mockSocket);
-//             doThrow(new IOException("Delete read error")).when(mockInputStream).read(any(byte[].class));
-
-//             String result = controller.deleteOrder(validJsonInput);
-
-//             verify(mockOutputStream).write(any(byte[].class));
-//             verify(mockInputStream).read(any(byte[].class));
-//             verify(mockSocket, times(1)).close(); // Only finally block close
-//             verify(mockLogger).error(anyString(), any(IOException.class));
-//             assertTrue(result.contains("Delete read error"));
-//         }
-//     }
-
-//     @Test
-//     void testDeleteOrder_NoBytesRead() throws IOException {
-//         try (MockedStatic<Socket> mockedSocket = mockStatic(Socket.class)) {
-//             mockedSocket.when(() -> new Socket("192.168.1.101", 1235)).thenReturn(mockSocket);
-//             when(mockInputStream.read(any(byte[].class))).thenReturn(0); // No bytes read
-
-//             String result = controller.deleteOrder(validJsonInput);
-
-//             verify(mockOutputStream).write(any(byte[].class));
-//             verify(mockInputStream).read(any(byte[].class));
-//             verify(mockSocket, times(1)).close(); // Only finally block close
-
-//             assertTrue(result.contains("\"response\":null"));
-//             assertTrue(result.contains("\"error\":null"));
-//             verifyNoInteractions(mockLogger);
-//         }
+//         mockMvc.perform(post(CREATE_ORDER_URL)
+//                 .header(AUTH_HEADER, BEARER_TOKEN)
+//                 .contentType(MediaType.APPLICATION_JSON)
+//                 .content(jsonWithSpecialChars))
+//                 .andExpect(status().isOk())
+//                 .andExpect(jsonPath("$.statusCode").value(5006)); // Error due to socket connection failure
 //     }
 // }

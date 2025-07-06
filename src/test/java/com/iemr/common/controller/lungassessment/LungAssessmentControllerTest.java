@@ -64,31 +64,6 @@ class LungAssessmentControllerTest {
         );
     }
     
-    // Helper method to verify success response structure
-    private void verifySuccessResponse(String expectedData) throws Exception {
-        mockMvc.perform(multipart(START_ASSESSMENT_URL)
-                .file(createTestFile())
-                .param("request", VALID_REQUEST_JSON)
-                .header(AUTH_HEADER, BEARER_TOKEN))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(CONTENT_TYPE))
-                .andExpect(jsonPath("$.data.response").value(expectedData))
-                .andExpect(jsonPath("$.statusCode").value(200))
-                .andExpect(jsonPath("$.status").value("Success"));
-    }
-    
-    // Helper method to verify error response structure
-    private void verifyErrorResponse(String expectedError) throws Exception {
-        mockMvc.perform(multipart(START_ASSESSMENT_URL)
-                .file(createTestFile())
-                .param("request", VALID_REQUEST_JSON)
-                .header(AUTH_HEADER, BEARER_TOKEN))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(CONTENT_TYPE))
-                .andExpect(jsonPath("$.statusCode").value(5000))
-                .andExpect(jsonPath("$.errorMessage").value(expectedError))
-                .andExpect(jsonPath("$.status").value(containsString("Failed with")));
-    }
 
     @Test
     void shouldStartAssessment_whenValidFileAndRequestProvided() throws Exception {

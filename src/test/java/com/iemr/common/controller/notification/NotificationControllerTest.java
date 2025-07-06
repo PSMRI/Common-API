@@ -1,179 +1,391 @@
-// package com.iemr.common.controller.notification;
+package com.iemr.common.controller.notification;
 
-// import com.iemr.common.service.notification.NotificationService;
-// import org.junit.jupiter.api.BeforeEach;
-// import org.junit.jupiter.api.Test;
-// import org.mockito.InjectMocks;
-// import org.mockito.Mock;
-// import org.mockito.MockitoAnnotations;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iemr.common.service.notification.NotificationService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-// import static org.junit.jupiter.api.Assertions.assertEquals;
-// import static org.mockito.ArgumentMatchers.anyString;
-// import static org.mockito.Mockito.verify;
-// import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-// class NotificationControllerTest {
+@ExtendWith(MockitoExtension.class)
+class NotificationControllerTest {
 
-//     @Mock
-//     private NotificationService notificationService;
+    private MockMvc mockMvc;
+    private ObjectMapper objectMapper;
 
-//     @InjectMocks
-//     private NotificationController notificationController;
+    @Mock
+    private NotificationService notificationService;
 
-//     @BeforeEach
-//     void setUp() {
-//         MockitoAnnotations.openMocks(this);
-//     }
+    @InjectMocks
+    private NotificationController notificationController;
 
-//     @Test
-//     void testSetNotificationService() {
-//         NotificationService mockService = notificationService; // Already mocked by @Mock
-//         notificationController.setNotificationService(mockService);
-//         // No direct way to assert the private field, but we can assume it works
-//         // if @InjectMocks is used correctly or if we were testing a different method
-//         // that uses the service after setting it. For a simple setter, this is sufficient.
-//     }
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(notificationController).build();
+        objectMapper = new ObjectMapper();
+    }
 
-//     @Test
-//     void testGetNotification() {
-//         String requestBody = "{\"providerServiceMapID\": 1, \"notificationTypeID\": 101, \"userIDs\": [1, 2], \"workingLocationIDs\": [10, 20], \"languageIDs\": [1, 2], \"roleIDs\":[1,2], \"validFrom\": \"1678886400000\", \"validTill\": \"1709424000000\"}";
-//         String expectedResponse = "{\"status\":\"success\", \"data\":[{\"id\":1,\"message\":\"Test Notification\"}]}";
+    @Test
+    void testGetNotification_Success() throws Exception {
+        String requestBody = "{\"providerServiceMapID\": 1, \"notificationTypeID\": 101, \"userIDs\": [1, 2], \"workingLocationIDs\": [10, 20], \"languageIDs\": [1, 2], \"roleIDs\":[1,2], \"validFrom\": \"1678886400000\", \"validTill\": \"1709424000000\"}";
+        String serviceResponse = "[{\"id\":1,\"message\":\"Test Notification\"}]";
+        
+        when(notificationService.getNotification(anyString())).thenReturn(serviceResponse);
 
-//         when(notificationService.getNotification(anyString())).thenReturn(expectedResponse);
+        MvcResult result = mockMvc.perform(post("/notification/getNotification")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
 
-//         String actualResponse = notificationController.getNotification(requestBody);
+        String responseBody = result.getResponse().getContentAsString();
+        JsonNode jsonResponse = objectMapper.readTree(responseBody);
+        
+        assertEquals(200, jsonResponse.get("statusCode").asInt());
+        assertEquals("Success", jsonResponse.get("status").asText());
+        assertNotNull(jsonResponse.get("data"));
+        
+        verify(notificationService).getNotification(requestBody);
+    }
 
-//         assertEquals(expectedResponse, actualResponse);
-//         verify(notificationService).getNotification(requestBody);
-//     }
+    @Test
+    void testGetNotification_Exception() throws Exception {
+        String requestBody = "{\"providerServiceMapID\": 1, \"notificationTypeID\": 101}";
+        
+        when(notificationService.getNotification(anyString())).thenThrow(new RuntimeException("Service error"));
 
-//     @Test
-//     void testGetSupervisorNotification() {
-//         String requestBody = "{\"providerServiceMapID\": 1, \"notificationTypeID\": 101, \"userIDs\": [1, 2], \"workingLocationIDs\": [10, 20], \"languageIDs\": [1, 2], \"validStartDate\":\"1678886400000\", \"validEndDate\":\"1709424000000\", \"roleIDs\":[1,2]}";
-//         String expectedResponse = "{\"status\":\"success\", \"data\":[{\"id\":2,\"message\":\"Supervisor Notification\"}]}";
+        MvcResult result = mockMvc.perform(post("/notification/getNotification")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andReturn();
 
-//         when(notificationService.getSupervisorNotification(anyString())).thenReturn(expectedResponse);
+        String responseBody = result.getResponse().getContentAsString();
+        JsonNode jsonResponse = objectMapper.readTree(responseBody);
+        
+        assertEquals(5000, jsonResponse.get("statusCode").asInt());
+        assertTrue(jsonResponse.get("status").asText().startsWith("Failed with"));
+        assertTrue(jsonResponse.get("errorMessage").asText().contains("Service error"));
+        
+        verify(notificationService).getNotification(requestBody);
+    }
 
-//         String actualResponse = notificationController.getSupervisorNotification(requestBody);
+    @Test
+    void testGetSupervisorNotification_Success() throws Exception {
+        String requestBody = "{\"providerServiceMapID\": 1, \"notificationTypeID\": 101, \"userIDs\": [1, 2], \"workingLocationIDs\": [10, 20], \"languageIDs\": [1, 2], \"validStartDate\":\"1678886400000\", \"validEndDate\":\"1709424000000\", \"roleIDs\":[1,2]}";
+        String serviceResponse = "[{\"id\":2,\"message\":\"Supervisor Notification\"}]";
+        
+        when(notificationService.getSupervisorNotification(anyString())).thenReturn(serviceResponse);
 
-//         assertEquals(expectedResponse, actualResponse);
-//         verify(notificationService).getSupervisorNotification(requestBody);
-//     }
+        MvcResult result = mockMvc.perform(post("/notification/getSupervisorNotification")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
 
-//     @Test
-//     void testCreateNotification() {
-//         String requestBody = "[{\"providerServiceMapID\": 1, \"notificationTypeID\": 101, \"roleID\": 5, \"userID\":10, \"workingLocationID\":100, \"languageID\":1, \"createdBy\": \"testuser\", \"notification\":\"Test Subject\", \"notificationDesc\":\"Test Description\", \"validFrom\": \"1678886400000\", \"validTill\":\"1709424000000\", \"kmFileManager\":{\"fileName\":\"doc.pdf\", \"fileExtension\":\"pdf\", \"providerServiceMapID\":1, \"validFrom\":\"1678886400000\", \"validUpto\":\"1709424000000\", \"fileContent\":\"base64content\", \"createdBy\":\"testuser\", \"categoryID\":1, \"subCategoryID\":10}}]";
-//         String expectedResponse = "{\"status\":\"success\", \"message\":\"Notification created successfully\"}";
+        String responseBody = result.getResponse().getContentAsString();
+        JsonNode jsonResponse = objectMapper.readTree(responseBody);
+        
+        assertEquals(200, jsonResponse.get("statusCode").asInt());
+        assertEquals("Success", jsonResponse.get("status").asText());
+        assertNotNull(jsonResponse.get("data"));
+        
+        verify(notificationService).getSupervisorNotification(requestBody);
+    }
 
-//         when(notificationService.createNotification(anyString())).thenReturn(expectedResponse);
+    @Test
+    void testCreateNotification_Success() throws Exception {
+        String requestBody = "[{\"providerServiceMapID\": 1, \"notificationTypeID\": 101, \"roleID\": 5, \"userID\":10, \"workingLocationID\":100, \"languageID\":1, \"createdBy\": \"testuser\", \"notification\":\"Test Subject\", \"notificationDesc\":\"Test Description\", \"validFrom\": \"1678886400000\", \"validTill\":\"1709424000000\", \"kmFileManager\":{\"fileName\":\"doc.pdf\", \"fileExtension\":\"pdf\", \"providerServiceMapID\":1, \"validFrom\":\"1678886400000\", \"validUpto\":\"1709424000000\", \"fileContent\":\"base64content\", \"createdBy\":\"testuser\", \"categoryID\":1, \"subCategoryID\":10}}]";
+        String serviceResponse = "{\"message\":\"Notification created successfully\"}";
+        
+        when(notificationService.createNotification(anyString())).thenReturn(serviceResponse);
 
-//         String actualResponse = notificationController.createNotification(requestBody);
+        MvcResult result = mockMvc.perform(post("/notification/createNotification")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
 
-//         assertEquals(expectedResponse, actualResponse);
-//         verify(notificationService).createNotification(requestBody);
-//     }
+        String responseBody = result.getResponse().getContentAsString();
+        JsonNode jsonResponse = objectMapper.readTree(responseBody);
+        
+        assertEquals(200, jsonResponse.get("statusCode").asInt());
+        assertEquals("Success", jsonResponse.get("status").asText());
+        assertNotNull(jsonResponse.get("data"));
+        
+        verify(notificationService).createNotification(requestBody);
+    }
 
-//     @Test
-//     void testUpdateNotification() {
-//         String requestBody = "{\"notificationID\" : 1, \"notification\":\"Updated Subject\", \"notificationDesc\":\"Updated Description\", \"notificationTypeID\":101, \"roleID\":5, \"validFrom\":\"1678886400000\", \"validTill\":\"1709424000000\", \"deleted\":false, \"modifiedBy\":\"modifier\", \"kmFileManager\":{\"fileName\":\"newdoc.pdf\", \"fileExtension\":\"pdf\", \"providerServiceMapID\":1, \"userID\":10, \"validFrom\":\"1678886400000\", \"validUpto\":\"1709424000000\", \"fileContent\":\"newbase64content\", \"createdBy\":\"modifier\", \"categoryID\":1, \"subCategoryID\":10}}";
-//         String expectedResponse = "{\"status\":\"success\", \"message\":\"Notification updated successfully\"}";
+    @Test
+    void testUpdateNotification_Success() throws Exception {
+        String requestBody = "{\"notificationID\" : 1, \"notification\":\"Updated Subject\", \"notificationDesc\":\"Updated Description\", \"notificationTypeID\":101, \"roleID\":5, \"validFrom\":\"1678886400000\", \"validTill\":\"1709424000000\", \"deleted\":false, \"modifiedBy\":\"modifier\", \"kmFileManager\":{\"fileName\":\"newdoc.pdf\", \"fileExtension\":\"pdf\", \"providerServiceMapID\":1, \"userID\":10, \"validFrom\":\"1678886400000\", \"validUpto\":\"1709424000000\", \"fileContent\":\"newbase64content\", \"createdBy\":\"modifier\", \"categoryID\":1, \"subCategoryID\":10}}";
+        String serviceResponse = "{\"message\":\"Notification updated successfully\"}";
+        
+        when(notificationService.updateNotification(anyString())).thenReturn(serviceResponse);
 
-//         when(notificationService.updateNotification(anyString())).thenReturn(expectedResponse);
+        MvcResult result = mockMvc.perform(post("/notification/updateNotification")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
 
-//         String actualResponse = notificationController.updateNotification(requestBody);
+        String responseBody = result.getResponse().getContentAsString();
+        JsonNode jsonResponse = objectMapper.readTree(responseBody);
+        
+        assertEquals(200, jsonResponse.get("statusCode").asInt());
+        assertEquals("Success", jsonResponse.get("status").asText());
+        assertNotNull(jsonResponse.get("data"));
+        
+        verify(notificationService).updateNotification(requestBody);
+    }
 
-//         assertEquals(expectedResponse, actualResponse);
-//         verify(notificationService).updateNotification(requestBody);
-//     }
+    @Test
+    void testGetNotificationType_Success() throws Exception {
+        String requestBody = "{\"providerServiceMapID\" : 1}";
+        String serviceResponse = "[{\"id\":1,\"type\":\"General\"}]";
+        
+        when(notificationService.getNotificationType(anyString())).thenReturn(serviceResponse);
 
-//     @Test
-//     void testGetNotificationType() {
-//         String requestBody = "{\"providerServiceMapID\" : 1}";
-//         String expectedResponse = "{\"status\":\"success\", \"data\":[{\"id\":1,\"type\":\"General\"}]}";
+        MvcResult result = mockMvc.perform(post("/notification/getNotificationType")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
 
-//         when(notificationService.getNotificationType(anyString())).thenReturn(expectedResponse);
+        String responseBody = result.getResponse().getContentAsString();
+        JsonNode jsonResponse = objectMapper.readTree(responseBody);
+        
+        assertEquals(200, jsonResponse.get("statusCode").asInt());
+        assertEquals("Success", jsonResponse.get("status").asText());
+        assertNotNull(jsonResponse.get("data"));
+        
+        verify(notificationService).getNotificationType(requestBody);
+    }
 
-//         String actualResponse = notificationController.getNotificationType(requestBody);
+    @Test
+    void testCreateNotificationType_Success() throws Exception {
+        String requestBody = "{\"providerServiceMapID\" : 1, \"notificationType\":\"New Type\", \"notificationTypeDesc\":\"Description for new type\", \"createdBy\":\"admin\"}";
+        String serviceResponse = "{\"message\":\"Notification type created successfully\"}";
+        
+        when(notificationService.createNotificationType(anyString())).thenReturn(serviceResponse);
 
-//         assertEquals(expectedResponse, actualResponse);
-//         verify(notificationService).getNotificationType(requestBody);
-//     }
+        MvcResult result = mockMvc.perform(post("/notification/createNotificationType")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
 
-//     @Test
-//     void testCreateNotificationType() {
-//         String requestBody = "{\"providerServiceMapID\" : 1, \"notificationType\":\"New Type\", \"notificationTypeDesc\":\"Description for new type\", \"createdBy\":\"admin\"}";
-//         String expectedResponse = "{\"status\":\"success\", \"message\":\"Notification type created successfully\"}";
+        String responseBody = result.getResponse().getContentAsString();
+        JsonNode jsonResponse = objectMapper.readTree(responseBody);
+        
+        assertEquals(200, jsonResponse.get("statusCode").asInt());
+        assertEquals("Success", jsonResponse.get("status").asText());
+        assertNotNull(jsonResponse.get("data"));
+        
+        verify(notificationService).createNotificationType(requestBody);
+    }
 
-//         when(notificationService.createNotificationType(anyString())).thenReturn(expectedResponse);
+    @Test
+    void testUpdateNotificationType_Success() throws Exception {
+        String requestBody = "{\"notificationTypeID\" : 1, \"notificationType\":\"Updated Type\", \"notificationTypeDesc\":\"Updated description\", \"deleted\":false, \"modifiedBy\":\"admin\"}";
+        String serviceResponse = "{\"message\":\"Notification type updated successfully\"}";
+        
+        when(notificationService.updateNotificationType(anyString())).thenReturn(serviceResponse);
 
-//         String actualResponse = notificationController.createNotificationType(requestBody);
+        MvcResult result = mockMvc.perform(post("/notification/updateNotificationType")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
 
-//         assertEquals(expectedResponse, actualResponse);
-//         verify(notificationService).createNotificationType(requestBody);
-//     }
+        String responseBody = result.getResponse().getContentAsString();
+        JsonNode jsonResponse = objectMapper.readTree(responseBody);
+        
+        assertEquals(200, jsonResponse.get("statusCode").asInt());
+        assertEquals("Success", jsonResponse.get("status").asText());
+        assertNotNull(jsonResponse.get("data"));
+        
+        verify(notificationService).updateNotificationType(requestBody);
+    }
 
-//     @Test
-//     void testUpdateNotificationType() {
-//         String requestBody = "{\"notificationTypeID\" : 1, \"notificationType\":\"Updated Type\", \"notificationTypeDesc\":\"Updated description\", \"deleted\":false, \"modifiedBy\":\"admin\"}";
-//         String expectedResponse = "{\"status\":\"success\", \"message\":\"Notification type updated successfully\"}";
+    @Test
+    void testGetEmergencyContacts_Success() throws Exception {
+        String requestBody = "{\"providerServiceMapID\": 1, \"notificationTypeID\": 101}";
+        String serviceResponse = "[{\"id\":1,\"name\":\"John Doe\",\"contactNo\":\"1234567890\"}]";
+        
+        when(notificationService.getEmergencyContacts(anyString())).thenReturn(serviceResponse);
 
-//         when(notificationService.updateNotificationType(anyString())).thenReturn(expectedResponse);
+        MvcResult result = mockMvc.perform(post("/notification/getEmergencyContacts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
 
-//         String actualResponse = notificationController.updateNotificationType(requestBody);
+        String responseBody = result.getResponse().getContentAsString();
+        JsonNode jsonResponse = objectMapper.readTree(responseBody);
+        
+        assertEquals(200, jsonResponse.get("statusCode").asInt());
+        assertEquals("Success", jsonResponse.get("status").asText());
+        assertNotNull(jsonResponse.get("data"));
+        
+        verify(notificationService).getEmergencyContacts(requestBody);
+    }
 
-//         assertEquals(expectedResponse, actualResponse);
-//         verify(notificationService).updateNotificationType(requestBody);
-//     }
+    @Test
+    void testGetSupervisorEmergencyContacts_Success() throws Exception {
+        String requestBody = "{\"providerServiceMapID\": 1, \"notificationTypeID\": 101}";
+        String serviceResponse = "[{\"id\":2,\"name\":\"Jane Smith\",\"contactNo\":\"0987654321\"}]";
+        
+        when(notificationService.getSupervisorEmergencyContacts(anyString())).thenReturn(serviceResponse);
 
-//     @Test
-//     void testGetEmergencyContacts() {
-//         String requestBody = "{\"providerServiceMapID\": 1, \"notificationTypeID\": 101}";
-//         String expectedResponse = "{\"status\":\"success\", \"data\":[{\"id\":1,\"name\":\"John Doe\"}]}";
+        MvcResult result = mockMvc.perform(post("/notification/getSupervisorEmergencyContacts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
 
-//         when(notificationService.getEmergencyContacts(anyString())).thenReturn(expectedResponse);
+        String responseBody = result.getResponse().getContentAsString();
+        JsonNode jsonResponse = objectMapper.readTree(responseBody);
+        
+        assertEquals(200, jsonResponse.get("statusCode").asInt());
+        assertEquals("Success", jsonResponse.get("status").asText());
+        assertNotNull(jsonResponse.get("data"));
+        
+        verify(notificationService).getSupervisorEmergencyContacts(requestBody);
+    }
 
-//         String actualResponse = notificationController.getEmergencyContacts(requestBody);
+    @Test
+    void testCreateEmergencyContacts_Success() throws Exception {
+        String requestBody = "[{\"providerServiceMapID\": 1, \"notificationTypeID\": 101, \"createdBy\": \"testuser\", \"designationID\":1, \"emergContactName\":\"Contact 1\", \"location\":\"Office A\", \"emergContactNo\":\"1234567890\", \"emergContactDesc\": \"Emergency contact 1\", \"notificationTypeID\":101, \"createdBy\":\"testuser\"}]";
+        String serviceResponse = "{\"message\":\"Emergency contacts created successfully\"}";
+        
+        when(notificationService.createEmergencyContacts(anyString())).thenReturn(serviceResponse);
 
-//         assertEquals(expectedResponse, actualResponse);
-//         verify(notificationService).getEmergencyContacts(requestBody);
-//     }
+        MvcResult result = mockMvc.perform(post("/notification/createEmergencyContacts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
 
-//     @Test
-//     void testGetSupervisorEmergencyContacts() {
-//         String requestBody = "{\"providerServiceMapID\": 1, \"notificationTypeID\": 101}";
-//         String expectedResponse = "{\"status\":\"success\", \"data\":[{\"id\":2,\"name\":\"Jane Smith\"}]}";
+        String responseBody = result.getResponse().getContentAsString();
+        JsonNode jsonResponse = objectMapper.readTree(responseBody);
+        
+        assertEquals(200, jsonResponse.get("statusCode").asInt());
+        assertEquals("Success", jsonResponse.get("status").asText());
+        assertNotNull(jsonResponse.get("data"));
+        
+        verify(notificationService).createEmergencyContacts(requestBody);
+    }
 
-//         when(notificationService.getSupervisorEmergencyContacts(anyString())).thenReturn(expectedResponse);
+    @Test
+    void testUpdateEmergencyContacts_Success() throws Exception {
+        String requestBody = "{\"providerServiceMapID\": 1, \"notificationTypeID\": 101, \"createdBy\": \"testuser\", \"designationID\":1, \"emergContactName\":\"Updated Contact\", \"location\":\"Office B\", \"emergContactNo\":\"0987654321\", \"emergContactDesc\": \"Updated emergency contact\", \"notificationTypeID\":101, \"createdBy\":\"testuser\"}";
+        String serviceResponse = "{\"message\":\"Emergency contacts updated successfully\"}";
+        
+        when(notificationService.updateEmergencyContacts(anyString())).thenReturn(serviceResponse);
 
-//         String actualResponse = notificationController.getSupervisorEmergencyContacts(requestBody);
+        MvcResult result = mockMvc.perform(post("/notification/updateEmergencyContacts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andReturn();
 
-//         assertEquals(expectedResponse, actualResponse);
-//         verify(notificationService).getSupervisorEmergencyContacts(requestBody);
-//     }
+        String responseBody = result.getResponse().getContentAsString();
+        JsonNode jsonResponse = objectMapper.readTree(responseBody);
+        
+        assertEquals(200, jsonResponse.get("statusCode").asInt());
+        assertEquals("Success", jsonResponse.get("status").asText());
+        assertNotNull(jsonResponse.get("data"));
+        
+        verify(notificationService).updateEmergencyContacts(requestBody);
+    }
 
-//     @Test
-//     void testCreateEmergencyContacts() {
-//         String requestBody = "[{\"providerServiceMapID\": 1, \"notificationTypeID\": 101, \"createdBy\": \"testuser\", \"designationID\":1, \"emergContactName\":\"Contact 1\", \"location\":\"Office A\", \"emergContactNo\":\"1234567890\", \"emergContactDesc\": \"Emergency contact 1\", \"notificationTypeID\":101, \"createdBy\":\"testuser\"}]";
-//         String expectedResponse = "{\"status\":\"success\", \"message\":\"Emergency contacts created successfully\"}";
+    @Test
+    void testGetNotification_MissingAuthHeader() throws Exception {
+        String requestBody = "{\"providerServiceMapID\": 1, \"notificationTypeID\": 101}";
 
-//         when(notificationService.createEmergencyContacts(anyString())).thenReturn(expectedResponse);
+        mockMvc.perform(post("/notification/getNotification")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+                .andExpect(status().isNotFound()); // Expecting 404 due to missing Authorization header
+    }
 
-//         String actualResponse = notificationController.createEmergencyContacts(requestBody);
+    @Test
+    void testGetNotification_InvalidJson() throws Exception {
+        String invalidJson = "{\"providerServiceMapID\": 1, \"notificationTypeID\":";
 
-//         assertEquals(expectedResponse, actualResponse);
-//         verify(notificationService).createEmergencyContacts(requestBody);
-//     }
+        MvcResult result = mockMvc.perform(post("/notification/getNotification")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(invalidJson))
+                .andExpect(status().isOk()) // Controller handles invalid JSON gracefully
+                .andReturn();
 
-//     @Test
-//     void testUpdateEmergencyContacts() {
-//         String requestBody = "{\"providerServiceMapID\": 1, \"notificationTypeID\": 101, \"createdBy\": \"testuser\", \"designationID\":1, \"emergContactName\":\"Updated Contact\", \"location\":\"Office B\", \"emergContactNo\":\"0987654321\", \"emergContactDesc\": \"Updated emergency contact\", \"notificationTypeID\":101, \"createdBy\":\"testuser\"}";
-//         String expectedResponse = "{\"status\":\"success\", \"message\":\"Emergency contacts updated successfully\"}";
+        String responseBody = result.getResponse().getContentAsString();
+        JsonNode jsonResponse = objectMapper.readTree(responseBody);
+        
+        // The controller handles invalid JSON gracefully and returns success with null data
+        assertEquals(200, jsonResponse.get("statusCode").asInt());
+        assertEquals("Success", jsonResponse.get("status").asText());
+        
+        // Check if data field exists and is null, or if it doesn't exist at all
+        JsonNode dataNode = jsonResponse.get("data");
+        assertTrue(dataNode == null || dataNode.isNull());
+    }
 
-//         when(notificationService.updateEmergencyContacts(anyString())).thenReturn(expectedResponse);
+    @Test
+    void testGetNotification_EmptyBody() throws Exception {
+        mockMvc.perform(post("/notification/getNotification")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer token")
+                .content(""))
+                .andExpect(status().isBadRequest()); // Expecting 400 due to empty body
+    }
 
-//         String actualResponse = notificationController.updateEmergencyContacts(requestBody);
-
-//         assertEquals(expectedResponse, actualResponse);
-//         verify(notificationService).updateEmergencyContacts(requestBody);
-//     }
-// }
+    @Test
+    void testSetNotificationService() {
+        // Test the setter method directly
+        NotificationService mockService = notificationService;
+        notificationController.setNotificationService(mockService);
+        
+        // The setter doesn't return anything, so we just verify it doesn't throw an exception
+        assertNotNull(notificationController);
+    }
+}

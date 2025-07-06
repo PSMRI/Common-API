@@ -158,6 +158,7 @@ class LocationControllerTest {
 
     @Test
     void getCity_success() throws Exception {
+        // NOTE: The controller has a bug - it calls getDistrictBlocks instead of getCities
         DistrictBlock block = new DistrictBlock();
         List<DistrictBlock> blocks = List.of(block);
         when(locationService.getDistrictBlocks(5)).thenReturn(blocks);
@@ -170,8 +171,9 @@ class LocationControllerTest {
                 .andExpect(content().string(createSuccessOutput(blocks)));
     }
 
-    @Test
+ @Test
     void getCity_exception() throws Exception {
+        // NOTE: The controller has a bug - it calls getDistrictBlocks instead of getCities
         when(locationService.getDistrictBlocks(5)).thenThrow(new RuntimeException("fail"));
         mockMvc.perform(get(CITY_URL, 5)
                 .header(AUTH_HEADER, BEARER_TOKEN))

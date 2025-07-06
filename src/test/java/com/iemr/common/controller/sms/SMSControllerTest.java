@@ -254,7 +254,7 @@ class SMSControllerTest {
         OutputResponse outputResponse = parseResponseString(responseString);
         // Using literal value 5000 for GENERIC_FAILURE as per instructions.
         assertEquals(5000, outputResponse.getStatusCode());
-        assertNotEquals("Failed with Get SMS parameters failed at ", outputResponse.getStatus().substring(0, 40));
+        assertEquals("Failed with Get SMS parameters failed at", outputResponse.getStatus().substring(0, 40));
         assertEquals("Get SMS parameters failed", outputResponse.getErrorMessage());
         // Verify that logger.error was called
     }

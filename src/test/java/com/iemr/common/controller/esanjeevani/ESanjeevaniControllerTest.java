@@ -75,7 +75,7 @@ class ESanjeevaniControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.statusCode").value(5000))
-                .andExpect(jsonPath("$.errorMessage").value("Error while fetching E-sanjeevani route URLjava.lang.RuntimeException: Connection timeout"));
+                .andExpect(jsonPath("$.errorMessage").value("Error while fetching E-sanjeevani route URL java.lang.RuntimeException: Connection timeout"));
     }
 
     @Test
@@ -128,6 +128,6 @@ class ESanjeevaniControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
                 .andExpect(jsonPath("$.statusCode").value(5000))
-                .andExpect(jsonPath("$.errorMessage").value("Error while fetching E-sanjeevani route URLjava.lang.RuntimeException"));
+                .andExpect(jsonPath("$.errorMessage").value("Error while fetching E-sanjeevani route URL java.lang.RuntimeException"));
     }
 }

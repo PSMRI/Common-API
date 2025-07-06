@@ -1,6 +1,8 @@
 package com.iemr.common.controller.mctshistory;
 import com.iemr.common.service.mctshistory.OutboundHistoryService;
 import com.iemr.common.utils.response.OutputResponse;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -8,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
@@ -20,9 +23,12 @@ class OutboundHistoryControllerTest {
     @InjectMocks
     private OutboundHistoryController outboundHistoryController;
 
+    private ObjectMapper objectMapper;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        objectMapper = new ObjectMapper();
         // The @InjectMocks annotation handles the injection via the setter
         // but we can explicitly call it to ensure it works as expected for the test method.
         outboundHistoryController.setOutboundHistoryService(outboundHistoryService);
@@ -49,10 +55,20 @@ class OutboundHistoryControllerTest {
         String result = outboundHistoryController.getCallHistory(request);
 
         assertNotNull(result);
-        assertTrue(result.contains("\"statusCode\":200"));
-        assertTrue(result.contains("\"status\":\"Success\""));
-        assertTrue(result.contains("\"errorMessage\":\"Success\""));
-        assertTrue(result.contains("\"data\":" + mockResponseData)); // Check if data is correctly embedded
+        
+        // Parse the JSON response for reliable validation
+        JsonNode jsonResponse = objectMapper.readTree(result);
+        
+        assertEquals(200, jsonResponse.get("statusCode").asInt());
+        assertEquals("Success", jsonResponse.get("status").asText());
+        assertEquals("Success", jsonResponse.get("errorMessage").asText());
+        
+        // Verify the data field contains the expected response
+        JsonNode dataNode = jsonResponse.get("data");
+        assertNotNull(dataNode);
+        JsonNode expectedData = objectMapper.readTree(mockResponseData);
+        assertEquals(expectedData, dataNode);
+        
         verify(outboundHistoryService).getCallHistory(request);
     }
 
@@ -65,9 +81,14 @@ class OutboundHistoryControllerTest {
         String result = outboundHistoryController.getCallHistory(request);
 
         assertNotNull(result);
-        assertTrue(result.contains("\"statusCode\":5000")); // GENERIC_FAILURE
-        assertTrue(result.contains("\"status\":\"Failed with " + errorMessage)); // Status message from OutputResponse.setError
-        assertTrue(result.contains("\"errorMessage\":\"" + errorMessage + "\""));
+        
+        // Parse the JSON response for reliable validation
+        JsonNode jsonResponse = objectMapper.readTree(result);
+        
+        assertEquals(5000, jsonResponse.get("statusCode").asInt());
+        assertTrue(jsonResponse.get("status").asText().contains("Failed with " + errorMessage));
+        assertEquals(errorMessage, jsonResponse.get("errorMessage").asText());
+        
         verify(outboundHistoryService).getCallHistory(request);
     }
 
@@ -80,10 +101,20 @@ class OutboundHistoryControllerTest {
         String result = outboundHistoryController.getMctsCallResponse(request);
 
         assertNotNull(result);
-        assertTrue(result.contains("\"statusCode\":200"));
-        assertTrue(result.contains("\"status\":\"Success\""));
-        assertTrue(result.contains("\"errorMessage\":\"Success\""));
-        assertTrue(result.contains("\"data\":" + mockResponseData)); // Check if data is correctly embedded
+        
+        // Parse the JSON response for reliable validation
+        JsonNode jsonResponse = objectMapper.readTree(result);
+        
+        assertEquals(200, jsonResponse.get("statusCode").asInt());
+        assertEquals("Success", jsonResponse.get("status").asText());
+        assertEquals("Success", jsonResponse.get("errorMessage").asText());
+        
+        // Verify the data field contains the expected response
+        JsonNode dataNode = jsonResponse.get("data");
+        assertNotNull(dataNode);
+        JsonNode expectedData = objectMapper.readTree(mockResponseData);
+        assertEquals(expectedData, dataNode);
+        
         verify(outboundHistoryService).getMctsCallResponse(request);
     }
 
@@ -96,9 +127,14 @@ class OutboundHistoryControllerTest {
         String result = outboundHistoryController.getMctsCallResponse(request);
 
         assertNotNull(result);
-        assertTrue(result.contains("\"statusCode\":5000")); // GENERIC_FAILURE
-        assertTrue(result.contains("\"status\":\"Failed with " + errorMessage)); // Status message from OutputResponse.setError
-        assertTrue(result.contains("\"errorMessage\":\"" + errorMessage + "\""));
+        
+        // Parse the JSON response for reliable validation
+        JsonNode jsonResponse = objectMapper.readTree(result);
+        
+        assertEquals(5000, jsonResponse.get("statusCode").asInt());
+        assertTrue(jsonResponse.get("status").asText().contains("Failed with " + errorMessage));
+        assertEquals(errorMessage, jsonResponse.get("errorMessage").asText());
+        
         verify(outboundHistoryService).getMctsCallResponse(request);
     }
 }

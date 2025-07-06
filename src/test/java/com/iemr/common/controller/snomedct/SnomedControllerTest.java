@@ -100,7 +100,7 @@ class SnomedControllerTest {
         // Then
         assertEquals(expectedOutput.toString(), result);
         verify(logger, times(1)).info("getSnomedCTRecord request " + inputSCTDescription.toString());
-        verify(logger, times(1)).info("ggetSnomedCTRecord response: " + expectedOutput);
+        verify(logger, times(1)).info("getSnomedCTRecord response: " + expectedOutput);
     }
 
     @Test
@@ -126,7 +126,7 @@ class SnomedControllerTest {
         // Then
         assertEquals(expectedOutput.toString(), result);
         verify(logger, times(1)).info("getSnomedCTRecord request " + inputSCTDescription.toString());
-        verify(logger, times(1)).info("ggetSnomedCTRecord response: " + expectedOutput);
+        verify(logger, times(1)).info("getSnomedCTRecord response: " + expectedOutput);
     }
 
     @Test
@@ -155,7 +155,7 @@ class SnomedControllerTest {
         // Then
         assertEquals(expectedOutput.toString(), result);
         verify(logger, times(1)).info("getSnomedCTRecord request " + inputSCTDescription.toString());
-        verify(logger, times(1)).info("ggetSnomedCTRecord response: " + expectedOutput);
+        verify(logger, times(1)).info("getSnomedCTRecord response: " + expectedOutput);
     }
 
     @Test
@@ -177,7 +177,7 @@ class SnomedControllerTest {
         // Then
         assertEquals(expectedOutput.toString(), result);
         // Verify logger.error is called
-        verify(logger, times(1)).error("ggetSnomedCTRecord failed with error " + testException.getMessage(), testException);
+        verify(logger, times(1)).error("getSnomedCTRecord failed with error " + testException.getMessage(), testException);
     }
 
     @Test
@@ -205,7 +205,7 @@ class SnomedControllerTest {
         // Then
         assertEquals(expectedOutput.toString(), result);
         verify(logger, times(1)).info("getSnomedCTRecord request " + inputSCTDescription.toString());
-        verify(logger, times(1)).info("ggetSnomedCTRecord response: " + expectedOutput);
+        verify(logger, times(1)).info("getSnomedCTRecord response: " + expectedOutput);
     }
 
     @Test
@@ -231,7 +231,7 @@ class SnomedControllerTest {
         // Then
         assertEquals(expectedOutput.toString(), result);
         verify(logger, times(1)).info("getSnomedCTRecord request " + inputSCTDescription.toString());
-        verify(logger, times(1)).info("ggetSnomedCTRecord response: " + expectedOutput);
+        verify(logger, times(1)).info("getSnomedCTRecord response: " + expectedOutput);
     }
 
     @Test
@@ -253,6 +253,6 @@ class SnomedControllerTest {
         // Then
         assertEquals(expectedOutput.toString(), result);
         // Verify logger.error is called
-        verify(logger, times(1)).error("ggetSnomedCTRecord failed with error " + testException.getMessage(), testException);
+        verify(logger, times(1)).error("getSnomedCTRecord failed with error " + testException.getMessage(), testException);
     }
 }
