@@ -294,8 +294,7 @@ class InstituteControllerTest {
     // Test 7: getInstituteByBranch - Success
     @Test
     void testGetInstituteByBranch_Success() throws Exception {
-        // Note: Not stubbing the service method because the controller has a bug
-        // It returns responseObj.toString() instead of response.toString()
+
         // The service method is not actually called due to the bug in the controller
         String requestBody = "{\"districtBranchMappingID\":3}";
 
@@ -308,8 +307,7 @@ class InstituteControllerTest {
                 .andReturn();
 
         String responseBody = result.getResponse().getContentAsString();
-        // Note: This endpoint has a bug - it returns responseObj.toString() instead of response.toString()
-        // So it returns the JSONObject directly, not the OutputResponse wrapper
+
         // However, it will still fail due to serialization issues and return "{}"
         assertTrue(responseBody.equals("{}"));
     }
