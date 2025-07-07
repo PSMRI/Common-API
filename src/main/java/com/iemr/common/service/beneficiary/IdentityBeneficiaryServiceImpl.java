@@ -53,7 +53,6 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 	private InputMapper inputMapper = new InputMapper();
 	@Value("${identity-api-url}")
 	private String identityBaseURL;
-
 	@Value("${identity-1097-api-url}")
 	private String identity1097BaseURL;
 
