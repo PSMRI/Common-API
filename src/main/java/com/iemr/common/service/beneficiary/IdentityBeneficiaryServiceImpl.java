@@ -29,6 +29,7 @@ import java.util.List;
 import com.google.gson.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.iemr.common.dto.identity.BeneficiariesDTO;
@@ -50,8 +51,12 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 	Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	private static HttpUtils httpUtils = new HttpUtils();
 	private InputMapper inputMapper = new InputMapper();
-	private String identityBaseURL = ConfigProperties.getPropertyByName("identity-api-url");
-	private String identity1097BaseURL = ConfigProperties.getPropertyByName("identity-1097-api-url");
+	@Value("${identity-api-ur}")
+	private String identityBaseURL;
+
+	@Value("${identity-1097-api-url}")
+	private String identity1097BaseURL;
+
 	private static final String IDENTITY_BASE_URL = "IDENTITY_BASE_URL";
 
 	private static final String BEN_GEN = ConfigProperties.getPropertyByName("genben-api");
