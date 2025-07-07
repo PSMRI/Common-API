@@ -58,16 +58,13 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 
 	private static final String IDENTITY_BASE_URL = "IDENTITY_BASE_URL";
 
-	private static final String BEN_GEN = ConfigProperties.getPropertyByName("genben-api");
-	private static final String BEN_GEN_API_URL = ConfigProperties.getPropertyByName("generateBeneficiaryIDs-api-url");
-	// public IdentityBeneficiaryServiceImpl()
-	// {
-	//
-	//// if (urlRequest == null)
-	//// {
-	//// urlRequest = ConfigProperties.getPropertyByName("identity-api-url");
-	//// }
-	// }
+	@Value("${genben-api}")
+	private static  String BEN_GEN ;
+
+
+	@Value("${generateBeneficiaryIDs-api-url}")
+	private static  String BEN_GEN_API_URL ;
+
 
 	@Override
 	// public List<Beneficiary> getBeneficiaryListByIDs() {// search by regID
