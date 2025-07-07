@@ -51,7 +51,7 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 	Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	private static HttpUtils httpUtils = new HttpUtils();
 	private InputMapper inputMapper = new InputMapper();
-	@Value("${identity-api-ur}")
+	@Value("${identity-api-url}")
 	private String identityBaseURL;
 
 	@Value("${identity-1097-api-url}")
