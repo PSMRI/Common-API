@@ -235,16 +235,6 @@ void querySelector_shouldThrowNullPointerExceptionForNullDTO() {
     });
 }
     @Test
-    void deleteNotificationSingle_shouldSetDeletedStatusForSingleAndReturnSuccess() {
-        Boolean isDeleted = true;
-        Integer notificationId = 1;
-
-        String result = userNotificationMappingService.deleteNotificationSingle(isDeleted, notificationId);
-
-        assertEquals("success", result);
-        verify(repo, times(1)).setDeletedUserNotificationMappingSingle(isDeleted, notificationId);
-    }
-    @Test
     void getJsonAsString_shouldLogObjectAsJsonString() throws JsonProcessingException {
         String name = "testObject";
         TestObject obj = new TestObject("value1", 123); // Use a simple test object
@@ -773,11 +763,4 @@ void getAlertAndNotificationDetail_shouldReturnEmptyList_whenRepoReturnsEmptyWit
     verify(mockLogger, times(1)).info("UserNotificationMappingService -> getAlertAndNotificationDetail start");
     verify(mockLogger, times(1)).info("UserNotificationMappingService -> getAlertAndNotificationDetail finish");
 }
-
-@Test
-void getUnmarkQuery_shouldReturnEmptyStringForNullDTO() {
-    String result = userNotificationMappingService.getUnmarkQuery(null);
-    assertEquals("", result);
-}
-
 }

@@ -4,7 +4,9 @@ import com.iemr.common.utils.response.OutputResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -20,16 +22,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 class UPTechnicalSupportControllerTest {
     private MockMvc mockMvc;
+
+    @Mock
     private UptsuService uptsuService;
 
+    @InjectMocks
+    private UPTechnicalSupportController controller;
+
     @BeforeEach
-    void setUp() throws Exception {
-        uptsuService = Mockito.mock(UptsuService.class);
-        UPTechnicalSupportController controller = new UPTechnicalSupportController();
-        // Use reflection to inject the mock into the private field
-        java.lang.reflect.Field serviceField = UPTechnicalSupportController.class.getDeclaredField("uptsuService");
-        serviceField.setAccessible(true);
-        serviceField.set(controller, uptsuService);
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
