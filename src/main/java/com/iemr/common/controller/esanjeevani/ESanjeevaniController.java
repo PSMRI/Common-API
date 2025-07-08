@@ -37,7 +37,7 @@ public class ESanjeevaniController {
 			else 
 				response.setError(5000, "Error while fetching E-sanjeevani route URL");
 		} catch (Exception e) {
-			response.setError(5000, "Error while fetching E-sanjeevani route URL " + e.toString());
+			response.setError(5000, "Error while fetching E-sanjeevani route URL" + e.toString());
 		}
 
 		return response.toString();
