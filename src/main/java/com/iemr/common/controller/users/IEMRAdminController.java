@@ -620,10 +620,10 @@ public class IEMRAdminController {
 
 			if (mUsers == null || mUsers.size() <= 0) {
 				logger.error("User not found");
-				throw new IEMRException("If the username is valid, you will be asked a security question");
+				throw new IEMRException("If the username is registered, you will be asked a security question");
 			} else if (mUsers.size() > 1) {
 				logger.error("More than 1 user found");
-				throw new IEMRException("If the username is valid, you will be asked a security question");
+				throw new IEMRException("If the username is registered, you will be asked a security question");
 
 			} else if (mUsers.size() == 1) {
 				List<Map<String, String>> quesAnsList = new ArrayList<>();
