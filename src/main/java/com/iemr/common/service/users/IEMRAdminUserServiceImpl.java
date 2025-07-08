@@ -225,11 +225,6 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 		List<User> users = iEMRUserRepositoryCustom.findByUserNameNew(userName);
 		if (users.size() != 1) {
 			throw new IEMRException("Invalid username or password");
-		} else {
-			if (users.get(0).getDeleted())
-				throw new IEMRException("Your account is locked or de-activated. Please contact administrator");
-			else if (users.get(0).getStatusID() > 2)
-				throw new IEMRException("Your account is not active. Please contact administrator");
 		}
 		int failedAttempt = 0;
 		if (failedLoginAttempt != null)
@@ -241,6 +236,11 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 			int validatePassword;
 			validatePassword = securePassword.validatePassword(password, user.getPassword());
 			if (validatePassword == 1) {
+				if (users.get(0).getDeleted())
+					throw new IEMRException("Your account is locked or de-activated. Please contact administrator");
+				else if (users.get(0).getStatusID() > 2)
+					throw new IEMRException("Your account is not active. Please contact administrator");
+
 				int iterations = 1001;
 				char[] chars = password.toCharArray();
 				byte[] salt = getSalt();
@@ -254,12 +254,27 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 				iEMRUserRepositoryCustom.save(user);
 
 			} else if (validatePassword == 2) {
+				if (users.get(0).getDeleted())
+					throw new IEMRException("Your account is locked or de-activated. Please contact administrator");
+				else if (users.get(0).getStatusID() > 2)
+					throw new IEMRException("Your account is not active. Please contact administrator");
+
 				iEMRUserRepositoryCustom.save(user);
 
 			} else if (validatePassword == 3) {
+				if (users.get(0).getDeleted())
+					throw new IEMRException("Your account is locked or de-activated. Please contact administrator");
+				else if (users.get(0).getStatusID() > 2)
+					throw new IEMRException("Your account is not active. Please contact administrator");
+
 				iEMRUserRepositoryCustom.save(user);
 			} else if (validatePassword == 0) {
-				if (user.getFailedAttempt() + 1 >= failedAttempt) {
+				if (user.getFailedAttempt() + 1 < failedAttempt) {
+					user.setFailedAttempt(user.getFailedAttempt() + 1);
+					user = iEMRUserRepositoryCustom.save(user);
+					logger.warn("User Password Wrong");
+					throw new IEMRException("Invalid username or password");
+				} else if (user.getFailedAttempt() + 1 >= failedAttempt) {
 					user.setFailedAttempt(user.getFailedAttempt() + 1);
 					user.setDeleted(true);
 					user = iEMRUserRepositoryCustom.save(user);
@@ -277,6 +292,11 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 							"Your account has been locked due to multiple failed login attempts. Please contact administrator.");
 				}
 			} else {
+				if (users.get(0).getDeleted())
+					throw new IEMRException("Your account is locked or de-activated. Please contact administrator");
+				else if (users.get(0).getStatusID() > 2)
+					throw new IEMRException("Your account is not active. Please contact administrator");
+
 				if (user.getFailedAttempt() != 0) {
 					user.setFailedAttempt(0);
 					user = iEMRUserRepositoryCustom.save(user);
@@ -310,11 +330,6 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 
 		if (users.size() != 1) {
 			throw new IEMRException("Invalid username or password");
-		} else {
-			if (users.get(0).getDeleted())
-				throw new IEMRException("Your account is locked or de-activated. Please contact administrator");
-			else if (users.get(0).getStatusID() > 2)
-				throw new IEMRException("Your account is not active. Please contact administrator");
 		}
 		int failedAttempt = 0;
 		if (failedLoginAttempt != null)
@@ -326,6 +341,11 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 			int validatePassword;
 			validatePassword = securePassword.validatePassword(password, user.getPassword());
 			if (validatePassword == 1) {
+				if (users.get(0).getDeleted())
+					throw new IEMRException("Your account is locked or de-activated. Please contact administrator");
+				else if (users.get(0).getStatusID() > 2)
+					throw new IEMRException("Your account is not active. Please contact administrator");
+
 				int iterations = 1001;
 				char[] chars = password.toCharArray();
 				byte[] salt = getSalt();
@@ -339,10 +359,20 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 				iEMRUserRepositoryCustom.save(user);
 
 			} else if (validatePassword == 2) {
+				if (users.get(0).getDeleted())
+					throw new IEMRException("Your account is locked or de-activated. Please contact administrator");
+				else if (users.get(0).getStatusID() > 2)
+					throw new IEMRException("Your account is not active. Please contact administrator");
+
 				iEMRUserRepositoryCustom.save(user);
 
 			} else if (validatePassword == 0) {
-				if (user.getFailedAttempt() + 1 >= failedAttempt) {
+				if (user.getFailedAttempt() + 1 < failedAttempt) {
+					user.setFailedAttempt(user.getFailedAttempt() + 1);
+					user = iEMRUserRepositoryCustom.save(user);
+					logger.warn("User Password Wrong");
+					throw new IEMRException("Invalid username or password");
+				} else if (user.getFailedAttempt() + 1 >= failedAttempt) {
 					user.setFailedAttempt(user.getFailedAttempt() + 1);
 					user.setDeleted(true);
 					user = iEMRUserRepositoryCustom.save(user);
@@ -360,6 +390,11 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 							"Your account has been locked due to multiple failed login attempts. Please contact administrator.");
 				}
 			} else {
+				if (users.get(0).getDeleted())
+					throw new IEMRException("Your account is locked or de-activated. Please contact administrator");
+				else if (users.get(0).getStatusID() > 2)
+					throw new IEMRException("Your account is not active. Please contact administrator");
+
 				if (user.getFailedAttempt() != 0) {
 					user.setFailedAttempt(0);
 					user = iEMRUserRepositoryCustom.save(user);
