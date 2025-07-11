@@ -81,8 +81,8 @@ class DoorToDoorAppControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().json(expectedOutputResponse.toString()));
 
-        // Verify service called with correct userId
-        verify(doorToDoorService).getUserDetails("testUser");
+        // Verify service called with correct argument (full JSON string)
+        verify(doorToDoorService).getUserDetails(requestJson);
     }
 
     @Test
@@ -100,8 +100,8 @@ class DoorToDoorAppControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().json(expectedOutputResponse.toString()));
 
-        // Verify service called with correct userId
-        verify(doorToDoorService).getUserDetails("testUser");
+        // Verify service called with correct argument (full JSON string)
+        verify(doorToDoorService).getUserDetails(requestJson);
     }
 
     @Test
@@ -120,8 +120,8 @@ class DoorToDoorAppControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().json(expectedOutputResponse.toString()));
 
-        // Verify service called with correct userId
-        verify(doorToDoorService).getUserDetails("testUser");
+        // Verify service called with correct argument (full JSON string)
+        verify(doorToDoorService).getUserDetails(requestJson);
     }
 
     @Test
