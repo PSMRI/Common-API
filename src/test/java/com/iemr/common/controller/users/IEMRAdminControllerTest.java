@@ -1,74 +1,3 @@
-    // --- Helpers for common mock setups ---
-    private User createMockUser(long id, String name, String status) {
-        User user = new User();
-        user.setUserID(id);
-        user.setUserName(name);
-        Status activeStatus = new Status();
-        activeStatus.setStatus(status);
-        user.setM_status(activeStatus);
-        user.setM_UserLangMappings(new java.util.HashSet<>());
-        user.setDesignation(null);
-        user.setM_UserServiceRoleMapping(new ArrayList<>());
-        return user;
-    }
-
-    private void setupCommonMocksForJwtRedisPrivilege(User user, String jwtToken, String refreshToken) {
-        when(aesUtil.decrypt(anyString(), anyString())).thenReturn("decryptedPwd");
-        when(jwtUtil.generateToken(anyString(), anyString())).thenReturn(jwtToken);
-        when(jwtUtil.generateRefreshToken(anyString(), anyString())).thenReturn(refreshToken);
-        when(jwtUtil.getJtiFromToken(anyString())).thenReturn("jti" + user.getUserID());
-        when(jwtUtil.getRefreshTokenExpiration()).thenReturn(1800000L);
-        ValueOperations<String, String> valueOps = mock(ValueOperations.class);
-        when(redisTemplate.opsForValue()).thenReturn(valueOps);
-        doNothing().when(valueOps).set(anyString(), any(), anyLong(), any(TimeUnit.class));
-        org.json.JSONObject validatedObj = new org.json.JSONObject();
-        validatedObj.put("jwtToken", jwtToken);
-        validatedObj.put("refreshToken", refreshToken);
-        validatedObj.put("previlegeObj", new org.json.JSONArray());
-        when(iemrAdminUserServiceImpl.generateKeyAndValidateIP(any(org.json.JSONObject.class), anyString(), anyString())).thenReturn(validatedObj);
-    }
-
-    // --- Parameterized test for mobile/non-mobile branches ---
-    @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(strings = {"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3 like Mac OS X)", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
-    void userAuthenticate_mobileAndNonMobileBranches_shouldReturnExpectedTokens(String userAgent) throws Exception {
-        LoginRequestModel loginRequest = new LoginRequestModel();
-        loginRequest.setUserName("testUser");
-        loginRequest.setPassword("testPwd");
-        loginRequest.setWithCredentials(true);
-        User mockUser = createMockUser(42L, "testUser", "Active");
-        when(iemrAdminUserServiceImpl.userAuthenticate(anyString(), anyString())).thenReturn(Collections.singletonList(mockUser));
-        setupCommonMocksForJwtRedisPrivilege(mockUser, "jwtTokenValue", "refreshTokenValue");
-
-        mockMvc.perform(post("/user/userAuthenticate")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("User-Agent", userAgent)
-                .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.jwtToken").value("jwtTokenValue"))
-                .andExpect(jsonPath("$.refreshToken").value("refreshTokenValue"));
-    }
-
-    @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(strings = {"Mozilla/5.0 (iPhone; CPU iPhone OS 10_3 like Mac OS X)", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
-    void superUserAuthenticate_mobileAndNonMobileBranches_shouldReturnExpectedTokens(String userAgent) throws Exception {
-        LoginRequestModel request = new LoginRequestModel();
-        request.setUserName("SuperAdmin");
-        request.setPassword("superPwd");
-        User mockUser = createMockUser(99L, "SuperAdmin", "Active");
-        when(iemrAdminUserServiceImpl.superUserAuthenticate(anyString(), anyString())).thenReturn(mockUser);
-        setupCommonMocksForJwtRedisPrivilege(mockUser, "jwtTokenSuper", "refreshTokenSuper");
-        doNothing().when(cookieUtil).addJwtTokenToCookie(anyString(), any(), any());
-
-        mockMvc.perform(post("/user/superUserAuthenticate")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("User-Agent", userAgent)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.jwtToken").value("jwtTokenSuper"))
-                .andExpect(jsonPath("$.refreshToken").value("refreshTokenSuper"))
-                .andExpect(jsonPath("$.previlegeObj").isArray());
-    }
 package com.iemr.common.controller.users;
 
 import com.iemr.common.data.users.UserServiceRoleMapping;
@@ -1832,14 +1761,96 @@ class IEMRAdminControllerTest {
 
         @Test
     void userAuthenticate_mobileDevice_branch_shouldReturnTokensAndStoreInRedis() throws Exception {
-        // Deprecated: replaced by parameterized test userAuthenticate_mobileAndNonMobileBranches_shouldReturnExpectedTokens
-        // ...existing code...
+        LoginRequestModel loginRequest = new LoginRequestModel();
+        loginRequest.setUserName("testUser");
+        loginRequest.setPassword("testPwd");
+        loginRequest.setWithCredentials(true);
+        User mockUser = new User();
+        mockUser.setUserID(42L);
+        mockUser.setUserName("testUser");
+        Status activeStatus = new Status();
+        activeStatus.setStatus("Active");
+        mockUser.setM_status(activeStatus);
+        mockUser.setM_UserLangMappings(new java.util.HashSet<>());
+        mockUser.setDesignation(null);
+        mockUser.setM_UserServiceRoleMapping(new ArrayList<>());
+
+        // Mock decryption and authentication
+        when(aesUtil.decrypt(anyString(), anyString())).thenReturn("decryptedPwd");
+        when(iemrAdminUserServiceImpl.userAuthenticate(anyString(), anyString())).thenReturn(Collections.singletonList(mockUser));
+
+        // Removed unnecessary stubbings for jwtUtil methods
+
+        // Mock Redis operations
+        ValueOperations<String, String> valueOps = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        // Use argument matchers to avoid strict stubbing errors
+        doNothing().when(valueOps).set(anyString(), any(), anyLong(), any(TimeUnit.class));
+
+        // Mock privilege mapping and IP validation
+        org.json.JSONObject validatedObj = new org.json.JSONObject();
+        validatedObj.put("jwtToken", "jwtTokenValue");
+        validatedObj.put("refreshToken", "refreshTokenValue");
+        when(iemrAdminUserServiceImpl.generateKeyAndValidateIP(any(org.json.JSONObject.class), anyString(), anyString())).thenReturn(validatedObj);
+
+        // Simulate mobile device User-Agent
+        mockMvc.perform(post("/user/userAuthenticate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3 like Mac OS X)")
+                .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("jwtTokenValue")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("refreshTokenValue")));
     }
 
         @Test
     void superUserAuthenticate_mobileAndNonMobileBranches_shouldCoverJwtRefreshRedisCookieLogic() throws Exception {
-        // Deprecated: replaced by parameterized test superUserAuthenticate_mobileAndNonMobileBranches_shouldReturnExpectedTokens
-        // ...existing code...
+        LoginRequestModel request = new LoginRequestModel();
+        request.setUserName("SuperAdmin");
+        request.setPassword("superPwd");
+        User mockUser = new User();
+        mockUser.setUserID(99L);
+        mockUser.setUserName("SuperAdmin");
+        Status activeStatus = new Status();
+        activeStatus.setStatus("Active");
+        mockUser.setM_status(activeStatus);
+        when(aesUtil.decrypt(anyString(), anyString())).thenReturn("decryptedPwd");
+        when(iemrAdminUserServiceImpl.superUserAuthenticate(anyString(), anyString())).thenReturn(mockUser);
+
+        // Removed unnecessary stubbings for jwtUtil methods
+
+        // Mock Redis operations
+        ValueOperations<String, String> valueOps = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+        doNothing().when(valueOps).set(anyString(), any(), anyLong(), any(TimeUnit.class));
+
+        // Mock cookie logic
+        doNothing().when(cookieUtil).addJwtTokenToCookie(anyString(), any(), any());
+
+        // Mock privilege mapping and IP validation
+        org.json.JSONObject validatedObj = new org.json.JSONObject();
+        validatedObj.put("jwtToken", "jwtTokenSuper");
+        validatedObj.put("refreshToken", "refreshTokenSuper");
+        validatedObj.put("previlegeObj", new org.json.JSONArray());
+        when(iemrAdminUserServiceImpl.generateKeyAndValidateIP(any(org.json.JSONObject.class), anyString(), anyString())).thenReturn(validatedObj);
+
+        // Mobile device branch
+        mockMvc.perform(post("/user/superUserAuthenticate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3 like Mac OS X)")
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("jwtTokenSuper")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("refreshTokenSuper")));
+
+        // Non-mobile device branch
+        mockMvc.perform(post("/user/superUserAuthenticate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("jwtTokenSuper")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("previlegeObj")));
     }
 
 
