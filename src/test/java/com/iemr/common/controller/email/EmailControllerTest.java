@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.iemr.common.service.email.EmailService;
 import com.iemr.common.utils.response.OutputResponse;
-import javax.ws.rs.core.MediaType;
+import org.springframework.http.MediaType;
 import java.lang.reflect.Field;
 
 @ExtendWith(MockitoExtension.class)

@@ -1,3 +1,25 @@
+/*
+* AMRIT – Accessible Medical Records via Integrated Technology 
+* Integrated EHR (Electronic Health Records) Solution 
+*
+* Copyright (C) "Piramal Swasthya Management and Research Institute" 
+*
+* This file is part of AMRIT.
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see https://www.gnu.org/licenses/.
+*/
+
 package com.iemr.common.controller.users;
 
 import com.iemr.common.data.users.UserServiceRoleMapping;
@@ -605,10 +627,12 @@ class IEMRAdminControllerTest {
     void userAuthenticateNew_Exception() throws Exception {
         String jsonRequest = "{\"userName\":\"testUser\",\"password\":\"testPwd\"}";
 
+        String expectedErrorJson = "{\"statusCode\":5000,\"errorMessage\":\"Error\",\"status\":\"Error\"}";
         mockMvc.perform(post("/user/userAuthenticateNew")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonRequest))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("error")));
     }
 
     @Test
@@ -1087,7 +1111,8 @@ class IEMRAdminControllerTest {
         mockMvc.perform(post("/user/userAuthenticate")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(""))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("error")));
     }
 
     @Test
@@ -1100,7 +1125,8 @@ class IEMRAdminControllerTest {
         mockMvc.perform(post("/user/userAuthenticate")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("AES error")));
     }
 
     @Test
