@@ -28,7 +28,6 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -63,7 +62,6 @@ public class SMSController {
 
 	InputMapper inputMapper = new InputMapper();
 
-	@CrossOrigin()
 	@Operation(summary = "Get SMS templates")
 	@PostMapping(value = "/getSMSTemplates", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getSMSTemplates(
@@ -82,7 +80,6 @@ public class SMSController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get full SMS template")
 	@PostMapping(value = "/getFullSMSTemplate", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getFullSMSTemplate(
@@ -101,7 +98,6 @@ public class SMSController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Save SMS template")
 	@PostMapping(value = "/saveSMSTemplate", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String saveSMSTemplate(
@@ -120,7 +116,6 @@ public class SMSController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Update SMS template")
 	@PostMapping(value = "/updateSMSTemplate", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String updateSMSTemplate(
@@ -144,7 +139,6 @@ public class SMSController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get SMS types")
 	@PostMapping(value = "/getSMSTypes", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getSMSTypes(
@@ -164,7 +158,6 @@ public class SMSController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get SMS parameters")
 	@PostMapping(value = "/getSMSParameters", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getSMSParameters(
@@ -184,7 +177,6 @@ public class SMSController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Send SMS")
 	@PostMapping(value = "/sendSMS", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String sendSMS(
@@ -215,7 +207,13 @@ public class SMSController {
 		}
 		logger.debug("sendSMS sending response " + response);
 		logger.info("sendSMS sending response");
-		return response.toString();
+		String respStr = response.toString();
+		respStr = respStr.replace("\\u003d", "=")
+                 .replace("\\u003c", "<")
+                 .replace("\\u003e", ">")
+                 .replace("\\u0026", "&");
+		return respStr;
+
 	}
 
 }

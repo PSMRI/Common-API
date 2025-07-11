@@ -26,7 +26,6 @@ import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -60,7 +59,6 @@ public class QuestionTypeController {
 		this.questionTypeService = questionTypeService;
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Create question type")
 	@RequestMapping(value = "/put/questionType", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String createQuestionType(
@@ -76,7 +74,6 @@ public class QuestionTypeController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get question type list")
 	@RequestMapping(value = "/get/questionTypeList", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String questionTypeList() {

@@ -55,6 +55,7 @@ import com.iemr.common.data.users.UserServiceRoleMapping;
 import com.iemr.common.model.user.ChangePasswordModel;
 import com.iemr.common.model.user.ForceLogoutRequestModel;
 import com.iemr.common.model.user.LoginRequestModel;
+import com.iemr.common.service.recaptcha.CaptchaValidationService;
 import com.iemr.common.service.users.IEMRAdminUserService;
 import com.iemr.common.utils.CookieUtil;
 import com.iemr.common.utils.JwtUtil;
@@ -79,6 +80,11 @@ public class IEMRAdminController {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	private InputMapper inputMapper = new InputMapper();
 
+	@Value("${captcha.enable-captcha}")
+	private boolean enableCaptcha;
+
+	@Autowired
+	private CaptchaValidationService captchaValidatorService;
 	private IEMRAdminUserService iemrAdminUserServiceImpl;
 	@Autowired
 	private JwtUtil jwtUtil;
@@ -111,7 +117,6 @@ public class IEMRAdminController {
 	@Autowired
 	SecurePassword securePassword;
 
-	@CrossOrigin()
 	@Operation(summary = "New user authentication")
 	@RequestMapping(value = "/userAuthenticateNew", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String userAuthenticateNew(
@@ -126,7 +131,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "User authentication")
 	@RequestMapping(value = "/userAuthenticate", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String userAuthenticate(
@@ -135,6 +139,30 @@ public class IEMRAdminController {
 		OutputResponse response = new OutputResponse();
 		logger.info("userAuthenticate request - " + m_User + " " + m_User.getUserName() + " " + m_User.getPassword());
 		try {
+
+			boolean isMobile = false;
+			String userAgent = request.getHeader("User-Agent");
+			isMobile = UserAgentUtil.isMobileDevice(userAgent);
+			logger.info("UserAgentUtil isMobile : " + isMobile);
+
+			String captchaToken = m_User.getCaptchaToken();
+			if (enableCaptcha && !isMobile) {
+				if (captchaToken != null && !captchaToken.trim().isEmpty()) {
+					if (!captchaValidatorService.validateCaptcha(captchaToken)) {
+						logger.warn("CAPTCHA validation failed for user: {}", m_User.getUserName());
+						response.setError(new IEMRException("CAPTCHA validation failed"));
+						return response.toString();
+					}
+					logger.info("CAPTCHA validated successfully for user: {}", m_User.getUserName());
+				} else {
+					logger.warn("CAPTCHA token missing for user: {}", m_User.getUserName());
+					response.setError(new IEMRException("CAPTCHA validation failed. Please try again."));
+					return response.toString();
+				}
+			} else {
+				logger.info("CAPTCHA validation skipped");
+			}
+
 			String decryptPassword = aesUtil.decrypt("Piramal12Piramal", m_User.getPassword());
 			List<User> mUser = iemrAdminUserServiceImpl.userAuthenticate(m_User.getUserName(), decryptPassword);
 			JSONObject resMap = new JSONObject();
@@ -157,16 +185,12 @@ public class IEMRAdminController {
 
 			String jwtToken = null;
 			String refreshToken = null;
-			boolean isMobile = false;
 			if (mUser.size() == 1) {
 				jwtToken = jwtUtil.generateToken(m_User.getUserName(), mUser.get(0).getUserID().toString());
 				
 				User user = new User(); // Assuming the Users class exists
-	            user.setUserID(mUser.get(0).getUserID());
-	            user.setUserName(mUser.get(0).getUserName());
-
-				String userAgent = request.getHeader("User-Agent");
-				isMobile = UserAgentUtil.isMobileDevice(userAgent);
+				user.setUserID(mUser.get(0).getUserID());
+				user.setUserName(mUser.get(0).getUserName());
 				logger.info("UserAgentUtil isMobile : " + isMobile);
 
 				if (isMobile) {
@@ -230,20 +254,24 @@ public class IEMRAdminController {
 
 		try {
 			if (jwtUtil.validateToken(refreshToken) == null) {
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+				logger.warn("Token validation failed: invalid token provided.");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
 			}
 
 			Claims claims = jwtUtil.getAllClaimsFromToken(refreshToken);
 
 			// Verify token type
 			if (!"refresh".equals(claims.get("token_type", String.class))) {
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token type");
+				logger.warn("Token validation failed: incorrect token type in refresh request.");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
+
 			}
 
 			// Check revocation using JTI
 			String jti = claims.getId();
 			if (!redisTemplate.hasKey("refresh:" + jti)) {
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token revoked");
+				logger.warn("Token validation failed: refresh token is revoked or not found in store.");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
 			}
 
 			// Get user details
@@ -253,11 +281,13 @@ public class IEMRAdminController {
 			
 			// Validate that the user still exists and is active
 			if (user == null) {
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+				logger.warn("Token validation failed: user not found for userId in token.");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
 			}
 			
 			if (user.getM_status() == null || !"Active".equalsIgnoreCase(user.getM_status().getStatus())) {
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User account is inactive");
+				logger.warn("Token validation failed: user account is inactive or not in 'Active' status.");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
 			}
 			// Generate new tokens
 			String newJwt = jwtUtil.generateToken(user.getUserName(), userId);
@@ -278,14 +308,17 @@ public class IEMRAdminController {
 
 			return ResponseEntity.ok(tokens);
 		} catch (ExpiredJwtException ex) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token expired");
+			logger.warn("Token validation failed: token has expired.");
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+					.body("Authentication failed. Please log in again.");
 		} catch (Exception e) {
 			logger.error("Refresh failed: ", e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Token refresh failed");
+			logger.error("Token refresh failed due to unexpected server error.");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("An unexpected error occurred. Please try again later.");
 		}
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Log out user from concurrent session")
 	@RequestMapping(value = "/logOutUserFromConcurrentSession", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String logOutUserFromConcurrentSession(
@@ -298,10 +331,12 @@ public class IEMRAdminController {
 				List<User> mUsers = iemrAdminUserServiceImpl.userExitsCheck(m_User.getUserName());
 
 				if (mUsers == null || mUsers.size() <= 0) {
-					throw new IEMRException("User not found, please contact administrator");
-				} else if (mUsers.size() > 1)
-					throw new IEMRException("More than 1 user found, please contact administrator");
-				else if (mUsers.size() == 1) {
+					logger.error("User not found");
+					throw new IEMRException("Logout request failed, please try again later");
+				} else if (mUsers.size() > 1) {
+					logger.error("More than 1 user found");
+					throw new IEMRException("Logout failed. Please retry or contact administrator");
+				} else if (mUsers.size() == 1) {
 					String previousTokenFromRedis = sessionObject
 							.getSessionObject((mUsers.get(0).getUserName().toString().trim().toLowerCase()));
 					if (previousTokenFromRedis != null) {
@@ -309,7 +344,8 @@ public class IEMRAdminController {
 						sessionObject.deleteSessionObject(previousTokenFromRedis);
 						response.setResponse("User successfully logged out");
 					} else
-						throw new IEMRException("Unable to fetch session from redis");
+						logger.error("Unable to fetch session from redis");
+					throw new IEMRException("Session error. Please try again later");
 				}
 			} else {
 				throw new IEMRException("Invalid request object");
@@ -381,9 +417,9 @@ public class IEMRAdminController {
 					previlegeObj.getJSONObject(serv).put("agentPassword", m_UserServiceRoleMapping.getAgentPassword());
 				}
 				JSONArray roles = previlegeObj.getJSONObject(serv).getJSONArray("roles");
-//            roles.put(new JSONObject(m_UserServiceRoleMapping.getM_Role().toString()));
+				// roles.put(new JSONObject(m_UserServiceRoleMapping.getM_Role().toString()));
 				JSONObject roleObject = new JSONObject(m_UserServiceRoleMapping.getM_Role().toString());
-				roleObject.put("isSanjeevani", m_UserServiceRoleMapping.getIsSanjeevani());
+				roleObject.put("teleConsultation", m_UserServiceRoleMapping.getTeleConsultation());
 				roles.put(roleObject);
 			}
 		}
@@ -397,10 +433,6 @@ public class IEMRAdminController {
 		resMap.put("Previlege", serviceRoleList);
 	}
 
-	@CrossOrigin(/*
-					 * allowedHeaders = "Authorization", exposedHeaders = "Authorization", methods =
-					 * RequestMethod.POST
-					 */)
 	@RequestMapping(value = "/superUserAuthenticate", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String superUserAuthenticate(
 			@Param(value = "\"{\\\"userName\\\":\\\"String\\\",\\\"doLogout\\\":\\\"Boolean\\\"}\"") @RequestBody LoginRequestModel m_User,
@@ -493,7 +525,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-//	@CrossOrigin()
 //	@Operation(summary = "User authentication V1")
 //	@RequestMapping(value = "/userAuthenticateV1", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 //	public String userAuthenticateV1(
@@ -521,7 +552,6 @@ public class IEMRAdminController {
 //		return response.toString();
 //	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get login response")
 	@RequestMapping(value = "/getLoginResponse", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getLoginResponse(HttpServletRequest request) {
@@ -546,7 +576,8 @@ public class IEMRAdminController {
 				}
 				
 				if (jwtToken == null) {
-					throw new IEMRException("No authentication token found in header or cookie");
+					logger.warn("Authentication failed: no token found in header or cookies.");
+					throw new IEMRException("Authentication failed. Please log in again.");
 				}
 				
 				// Extract user ID from the JWT token
@@ -555,7 +586,9 @@ public class IEMRAdminController {
 				// Get user details and prepare response
 				User user = iemrAdminUserServiceImpl.getUserById(Long.parseLong(userId));
 				if (user == null) {
-					throw new IEMRException("User not found");
+					logger.warn("User lookup failed for provided userId.");
+					throw new IEMRException("Authentication failed. Please try again.");
+
 				}
 
 				String remoteAddress = request.getHeader("X-FORWARDED-FOR");
@@ -576,10 +609,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin(/*
-					 * allowedHeaders = "Authorization", exposedHeaders = "Authorization", methods =
-					 * RequestMethod.POST
-					 */)
 	@Operation(summary = "Forget password")
 	@RequestMapping(value = "/forgetPassword", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String forgetPassword(
@@ -590,10 +619,13 @@ public class IEMRAdminController {
 			List<User> mUsers = iemrAdminUserServiceImpl.userExitsCheck(m_User.getUserName());
 
 			if (mUsers == null || mUsers.size() <= 0) {
-				throw new IEMRException("user not found, please contact administrator");
-			} else if (mUsers.size() > 1)
-				throw new IEMRException("more than 1 user found, please contact administrator");
-			else if (mUsers.size() == 1) {
+				logger.error("User not found");
+				throw new IEMRException("If the username is registered, you will be asked a security question");
+			} else if (mUsers.size() > 1) {
+				logger.error("More than 1 user found");
+				throw new IEMRException("If the username is registered, you will be asked a security question");
+
+			} else if (mUsers.size() == 1) {
 				List<Map<String, String>> quesAnsList = new ArrayList<>();
 				Map<String, String> quesAnsMap;
 				Map<Object, Object> resMap = new HashMap<>();
@@ -619,7 +651,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Set forget password")
 	@RequestMapping(value = "/setForgetPassword", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String setPassword(
@@ -630,8 +661,11 @@ public class IEMRAdminController {
 			int noOfRowModified = 0;
 			List<User> mUsers = iemrAdminUserServiceImpl.userExitsCheck(m_user.getUserName());
 			if (mUsers.size() != 1) {
-				throw new IEMRException(
-						"Set forgot password failed as the user does not exist or is not active or multiple user found.Please contact with administrator");
+				logger.warn(
+						"Password reset failed for username '{}'. Reason: user not found, inactive, or multiple matches.",
+						m_user.getUserName());
+
+				throw new IEMRException("Unable to process your request. Please try again or contact support.");
 			}
 			User mUser = mUsers.get(0);
 			String setStatus;
@@ -648,7 +682,7 @@ public class IEMRAdminController {
 		} catch (Exception e) {
 			logger.error("setForgetPassword failed with error " + e.getMessage(), e);
 			if (e.getMessage().equals(
-					"Set forgot password failed as the user does not exist or is not active or multiple user found.Please contact with administrator"))
+					"Unable to process your request. Please try again or contact support."))
 				response.setError(e);
 			else
 				response.setError(5000, e.getMessage());
@@ -658,7 +692,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Change password")
 	@RequestMapping(value = "/changePassword", method = RequestMethod.POST, produces = "application/json")
 	public String changePassword(
@@ -670,7 +703,9 @@ public class IEMRAdminController {
 			List<User> mUsers = iemrAdminUserServiceImpl.userExitsCheck(changePassword.getUserName());
 			String changeReqResult;
 			if (mUsers.size() != 1) {
-				throw new IEMRException("Change password failed with error as user is not available");
+				logger.warn("Change password attempt failed. User not found or not available.");
+
+				throw new IEMRException("Unable to change password. Please try again later");
 			}
 			try {
 				int validatePassword;
@@ -705,7 +740,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Save user security questions & answers")
 	@RequestMapping(value = "/saveUserSecurityQuesAns", method = RequestMethod.POST, produces = "application/json")
 	public String saveUserSecurityQuesAns(
@@ -728,10 +762,6 @@ public class IEMRAdminController {
 	 * 
 	 * @return security qtns
 	 */
-	@CrossOrigin(/*
-					 * allowedHeaders = "Authorization", exposedHeaders = "Authorization", methods =
-					 * RequestMethod.GET
-					 */)
 	@Operation(summary = "Get security quetions")
 	@RequestMapping(value = "/getsecurityquetions", method = RequestMethod.GET)
 	public String getSecurityts() {
@@ -742,16 +772,12 @@ public class IEMRAdminController {
 			response.setResponse(test.toString());
 		} catch (Exception e) {
 			logger.error("getsecurityquetions failed with error " + e.getMessage(), e);
-			response.setError(e);
+			response.setError(5000, "Unable to fetch security questions");
 		}
 		logger.info("getsecurityquetions response " + response.toString());
 		return response.toString();
 	}
 
-	@CrossOrigin(/*
-					 * allowedHeaders = "Authorization", exposedHeaders = "Authorization", methods =
-					 * RequestMethod.POST
-					 */)
 	@Operation(summary = "Get roles by provider id")
 	@RequestMapping(value = "/getRolesByProviderID", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getRolesByProviderID(
@@ -768,10 +794,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin(/*
-					 * allowedHeaders = "Authorization", exposedHeaders = "Authorization", methods =
-					 * RequestMethod.POST
-					 */)
 	@Operation(summary = "Get role screen mapping by provider id")
 	@RequestMapping(value = "/getRoleScreenMappingByProviderID", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getRoleScreenMappingByProviderID(
@@ -796,10 +818,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin(/*
-					 * allowedHeaders = "Authorization", exposedHeaders = "Authorization", methods =
-					 * RequestMethod.POST
-					 */)
 	@Operation(summary = "Get users by provider id")
 	@RequestMapping(value = "/getUsersByProviderID", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getUsersByProviderID(@Param(value = "{\"providerServiceMapID\":\"Integer - providerServiceMapID\", "
@@ -817,10 +835,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin(/*
-					 * allowedHeaders = "Authorization", exposedHeaders = "Authorization", methods =
-					 * RequestMethod.POST
-					 */)
 	@Operation(summary = "Get user service point van details")
 	@RequestMapping(value = "/getUserServicePointVanDetails", method = RequestMethod.POST, produces = "application/json", headers = "Authorization")
 	public String getUserServicePointVanDetails(
@@ -841,7 +855,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get service point villages")
 	@RequestMapping(value = "/getServicepointVillages", method = RequestMethod.POST, produces = "application/json", headers = "Authorization")
 	public String getServicepointVillages(
@@ -862,7 +875,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get locations by provider id")
 	@RequestMapping(value = "/getLocationsByProviderID", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getLocationsByProviderID(
@@ -880,7 +892,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "User log out")
 	@RequestMapping(value = "/userLogout", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String userLogout(HttpServletRequest request) {
@@ -928,7 +939,6 @@ public class IEMRAdminController {
 		}
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Force log out")
 	@RequestMapping(value = "/forceLogout", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String forceLogout(@RequestBody ForceLogoutRequestModel request, HttpServletRequest httpRequest, HttpServletResponse response) {
@@ -980,7 +990,6 @@ public class IEMRAdminController {
 	}
 
 	
-	@CrossOrigin()
 	@Operation(summary = "User force log out")
 	@RequestMapping(value = "/userForceLogout", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String userForceLogout(
@@ -995,7 +1004,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get agent by role id")
 	@RequestMapping(value = "/getAgentByRoleID", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getAgentByRoleID(@Param(value = "{\"providerServiceMapID\":\"Integer - providerServiceMapID\", "
@@ -1012,7 +1020,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "User authenticate by encryption")
 	@RequestMapping(value = "/userAuthenticateByEncryption", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String userAuthenticateByEncryption(
@@ -1057,7 +1064,6 @@ public class IEMRAdminController {
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "Get role wrap up time")
 	@RequestMapping(value = "/role/{roleID}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getrolewrapuptime(@PathVariable("roleID") Integer roleID) {
@@ -1079,7 +1085,6 @@ public class IEMRAdminController {
 	 * @param request
 	 * @return transaction Id for password change
 	 */
-	@CrossOrigin
 	@Operation(summary = "Validating security question and answers for password change")
 	@RequestMapping(value = { "/validateSecurityQuestionAndAnswer" }, method = { RequestMethod.POST })
 	public String validateSecurityQuestionAndAnswer(
@@ -1098,14 +1103,13 @@ public class IEMRAdminController {
 			} else
 				throw new IEMRException("Invalid Request");
 		} catch (Exception e) {
+			logger.error("validateSecurityQuestionAndAnswer failed: {}", e.toString());
 			response.setError(5000, e.getMessage());
-			logger.error(e.toString());
 		}
 		logger.info("validateSecurityQuestionAndAnswer API response" + response.toString());
 		return response.toString();
 	}
 
-	@CrossOrigin()
 	@Operation(summary = "User authentication")
 	@RequestMapping(value = "/bhavya/userAuthenticate", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
 	public String userAuthenticateBhavya(

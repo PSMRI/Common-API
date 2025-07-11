@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -51,7 +50,6 @@ import io.lettuce.core.dynamic.annotation.Param;
 
 
 
-@CrossOrigin()
 @RequestMapping(value = "/notification")
 @RestController
 public class UserNotificationMappingController
@@ -63,7 +61,6 @@ public class UserNotificationMappingController
 	@Autowired
 	UserNotificationMappingService notificationService;
 
-	@CrossOrigin()
 	@RequestMapping(value = "/getAlertsAndNotificationCount", method = RequestMethod.POST,
 			produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE,
 			headers = "Authorization")
@@ -103,7 +100,6 @@ public class UserNotificationMappingController
 		}
 	}
 
-	@CrossOrigin()
 	@RequestMapping(value = "/getAlertsAndNotificationDetail", method = RequestMethod.POST,
 			produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE,
 			headers = "Authorization")
@@ -149,7 +145,6 @@ public class UserNotificationMappingController
 		return output.toString();
 	}
 
-	@CrossOrigin()
 	@RequestMapping(value = "/changeNotificationStatus", method = RequestMethod.POST,
 			produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE,
 			headers = "Authorization")
@@ -203,7 +198,6 @@ public class UserNotificationMappingController
 		}
 	}
 
-	@CrossOrigin()
 	@RequestMapping(value = "/markDelete", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE,
 			consumes = MediaType.APPLICATION_JSON_VALUE, headers = "Authorization")
 	public @ResponseBody String markDelete(@Param(value = "{" + "\"isDeleted\":\"Boolean\"\n"
@@ -255,7 +249,6 @@ public class UserNotificationMappingController
 		}
 	}
 
-	// @CrossOrigin()
 	// @ApiOperation(value = "stores scheme data", consumes = "application/json", produces = "application/json")
 	// @RequestMapping(
 	// value = "/createDetailForUsers", method = RequestMethod.POST,
@@ -353,7 +346,6 @@ public class UserNotificationMappingController
 	//
 	//
 	// ------------------------------------- //
-	// @CrossOrigin()
 	// @RequestMapping(
 	// value = "/getAlertsAndNotificationCountAPI", method = RequestMethod.POST,
 	// produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE,
