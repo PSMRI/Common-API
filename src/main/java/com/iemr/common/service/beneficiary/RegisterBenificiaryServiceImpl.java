@@ -120,9 +120,6 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 					benificiaryDetails.getCreatedBy()));
 		}
 		identityEditDTO.setDob(benificiaryDetails.getDOB());
-		// identityEditDTO.setOtherFedields(benificiaryDetails.getOtherFields());
-		// String jsoninput=new Gson().toJson(identityEditDTO);
-
 		updatedRows = identityBeneficiaryService.editIdentityEditDTO(identityEditDTO, auth,
 				benificiaryDetails.getIs1097());
 			
