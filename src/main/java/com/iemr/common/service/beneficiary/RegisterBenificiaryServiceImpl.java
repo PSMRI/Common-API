@@ -37,7 +37,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.iemr.common.data.beneficiary.Beneficiary;
 import com.iemr.common.data.mctshistory.MctsOutboundCallDetail;
@@ -76,6 +75,8 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 
 	@Autowired
 	Validator validator;
+
+
 
 	@Autowired
 	OutboundHistoryRepository outboundHistoryRepository;
@@ -163,13 +164,15 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 	@Override
 	public String save(BeneficiaryModel beneficiaryModel, HttpServletRequest servletRequest) throws Exception {
 
-		// logger.info("benificiaryDetails: " + beneficiaryModel);
+		 logger.info("benificiaryDetails: " + beneficiaryModel);
 
 		CommonIdentityDTO identityDTO = identityMapper.beneficiaryModelCommonIdentityDTO(beneficiaryModel);
 		setSaveDemographicDetails(identityDTO,beneficiaryModel);
 		// identityDTO.setOtherFields(beneficiaryModel.getOtherFields());
+		identityDTO.setIsConsent(beneficiaryModel.getIsConsent());
 		identityDTO.setFaceEmbedding(beneficiaryModel.getFaceEmbedding());
 		identityDTO.setEmergencyRegistration(beneficiaryModel.isEmergencyRegistration());
+		identityDTO.setIsConsent(beneficiaryModel.getIsConsent());
 		identityDTO
 				.setBenFamilyDTOs(identityMapper.benPhoneMapListToBenFamilyDTOList(beneficiaryModel.getBenPhoneMaps()));
 		String request = new Gson().toJson(identityDTO);
