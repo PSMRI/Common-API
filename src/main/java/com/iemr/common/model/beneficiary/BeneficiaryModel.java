@@ -35,6 +35,7 @@ import org.json.JSONObject;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.Expose;
 import com.iemr.common.model.user.TitleModel;
@@ -211,16 +212,19 @@ public class BeneficiaryModel implements Comparable<BeneficiaryModel> {
 	@Expose
 	private Integer occupationId;
 	@Expose
+	@JsonProperty("occupationOther")
 	private String occupationName;
 	@Expose
 	private String occupation;
 	@Expose
+	@JsonProperty("incomeName")
 	private String incomeStatus;
 	@Expose
 	private BigInteger religionId;
 	@Expose
 	private String religion;
 	@Expose
+	@JsonProperty("educationQualificationName")
 	private String education;
 	@Expose
 	private Integer providerServiceMapID;
