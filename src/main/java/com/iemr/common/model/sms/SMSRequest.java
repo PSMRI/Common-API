@@ -23,7 +23,7 @@ package com.iemr.common.model.sms;
 
 import java.sql.Timestamp;
 import java.util.List;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.iemr.common.data.telemedicine.PrescribedDrugDetail;
 
 import lombok.Data;
@@ -78,4 +78,6 @@ public class SMSRequest {
 	private Long beneficiaryId;
 	private String appointmentDate;
 	private String appointmentTime;
+	@JsonProperty("sms_Advice")
+	private String smsAdvice;  
 }

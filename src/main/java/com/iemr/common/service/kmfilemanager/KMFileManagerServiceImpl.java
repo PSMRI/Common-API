@@ -125,6 +125,7 @@ public class KMFileManagerServiceImpl implements KMFileManagerService {
 		return kmFileManagers.toString();
 	}
 
+	
 	private ArrayList<KMFileManager> addKMFile(Iterable<KMFileManager> kmFileManagers)
 			throws IOException, NoSuchAlgorithmException {
 		ArrayList<KMFileManager> savedFileManagers = new ArrayList<KMFileManager>();
@@ -175,6 +176,9 @@ public class KMFileManagerServiceImpl implements KMFileManagerService {
 				if (uuid != null) {
 					kmFileManager.setKmUploadStatus(KM_UPLOADSTATUS_COMPLETED);
 					kmFileManager.setFileUID(uuid);
+					
+					kmFileManager.setSubCategoryID(kmFileManager.getSubCategoryID());
+					
 					savedFileManagers.add(kmFileManagerRepository.save(kmFileManager));
 					if (kmFileManager.getSubCategoryID() != null) {
 						updateSubcategoryFilePath(kmFileManager);
@@ -196,6 +200,7 @@ public class KMFileManagerServiceImpl implements KMFileManagerService {
 		}
 		return savedFileManagers;
 	}
+
 
 	private void updateSubcategoryFilePath(KMFileManager kmFileManager) {
 		subCategoryRepository.updateFilePath(kmFileManager.getSubCategoryID(), kmFileManager.getFileUID());

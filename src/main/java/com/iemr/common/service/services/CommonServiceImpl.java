@@ -57,6 +57,7 @@ import com.iemr.common.utils.config.ConfigProperties;
 import com.iemr.common.utils.exception.IEMRException;
 import com.iemr.common.utils.mapper.InputMapper;
 import com.iemr.common.data.common.DocFileManager;
+import com.iemr.common.data.kmfilemanager.KMFileManager;
 
 @Service
 @PropertySource("classpath:/application.properties")
@@ -133,28 +134,44 @@ public class CommonServiceImpl implements CommonService {
 		return categoriesList;
 	}
 
+	
+	//newChange
 	@Override
 	public Iterable<SubCategoryDetails> getSubCategories(String request) throws IEMRException, JsonMappingException, JsonProcessingException {
-		ObjectMapper objectMapper = new ObjectMapper();
-		SubCategoryDetails subCategoryDetails = objectMapper.readValue(request, SubCategoryDetails.class);
-		List<SubCategoryDetails> subCategoriesList = new ArrayList<SubCategoryDetails>();
-		ArrayList<Object[]> lists = subCategoryRepository.findByCategoryID(subCategoryDetails.getCategoryID());
-		for (Object[] objects : lists) {
-			if (objects != null && objects.length > 1) {
-				String SubCatFilePath = (String) objects[2];
-				String fileUIDAsURI = null;
-				String fileNameWithExtension = null;
-				if(SubCatFilePath!=null) {
-				fileUIDAsURI=getFilePath(SubCatFilePath);
-				List<Object[]> fileNameList = kmFileManagerRepository.getFileNameByUID(SubCatFilePath);
-				Object[] fileobjects = fileNameList.get(0);
-				fileNameWithExtension= (String)fileobjects[0]+ (String) fileobjects[1];
-				}
-				subCategoriesList.add(new SubCategoryDetails((Integer) objects[0], (String) objects[1], SubCatFilePath, fileUIDAsURI, fileNameWithExtension));
-			}
-		}
-		return subCategoriesList;
+	    ObjectMapper objectMapper = new ObjectMapper();
+	    SubCategoryDetails subCategoryDetails = objectMapper.readValue(request, SubCategoryDetails.class);
+	    List<SubCategoryDetails> subCategoriesList = new ArrayList<>();
+	    ArrayList<Object[]> lists = subCategoryRepository.findByCategoryID(subCategoryDetails.getCategoryID());
+
+	    for (Object[] objects : lists) {
+	        if (objects != null && objects.length > 1) {
+	            Integer subCatId = (Integer) objects[0];
+	            String subCatName = (String) objects[1];
+
+	            // Fetch all files under this subcategory from KMFileManager
+	            List<KMFileManager> files = kmFileManagerRepository.getFilesBySubCategoryID(subCatId);
+	            ArrayList<KMFileManager> fileList = new ArrayList<>(files);
+
+	            String fileURL = null;
+	            String fileNameWithExtension = null;
+
+	            if (!fileList.isEmpty()) {
+	                KMFileManager firstFile = fileList.get(0); // Just for representative file URL and name
+	                fileURL = getFilePath(firstFile.getFileUID());
+	                fileNameWithExtension = firstFile.getFileName() + firstFile.getFileExtension();
+	            }
+
+	            SubCategoryDetails subCategory = new SubCategoryDetails(subCatId, subCatName);
+	            subCategory.setFileManger(fileList);  // Attach all files here
+	            subCategory.setFileURL(fileURL);      // Representative file URL
+	            subCategory.setFileNameWithExtension(fileNameWithExtension); // Representative file name+ext
+
+	            subCategoriesList.add(subCategory);
+	        }
+	    }
+	    return subCategoriesList;
 	}
+	
 	
 	private String getFilePath(String fileUID)
 	{
