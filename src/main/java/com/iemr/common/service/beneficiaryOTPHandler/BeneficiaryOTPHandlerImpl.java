@@ -181,7 +181,7 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
         logger.info("sms template"+template);
 
         try {
-            String message = "Hello! Your OTP for providing consent for registration on AMRIT is "+otp+". This OTP is valid for 10 minutes. Kindly share it only with Asha ,Asha to complete the process. PSMRI";
+                        String  message ="Hello! Your OTP for providing consent for registration on AMRIT is "+otp+". This OTP is valid for 10 minutes. Kindly share it only with Asha to complete the process. Regards PSMRI";
 //            String message = template.getSmsTemplate()
 //                    .replace("$$OTP$$",String.valueOf(otp))
 //                    .replace("$$UserName$$", obj.getUserName())
