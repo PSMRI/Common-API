@@ -39,6 +39,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -67,8 +68,21 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
     @Autowired
     SMSTypeRepository smsTypeRepository;
 
+    @Value("${sms-username}")
+    private String smsUserName;
+
+    @Value("${sms-password}")
+    private String smsPassword;
+
+    @Value("${sms-entityid}")
+    private String smsEntityId;
+
+    @Value("${source-address}")
+    private String smsSourceAddress;
+    @Value("${send-message-url}")
+    private  String SMS_GATEWAY_URL;
+
     private static final Integer EXPIRE_MIN = 5;
-    private static final String SMS_GATEWAY_URL = ConfigProperties.getPropertyByName("sms-gateway-url");
 
     // Constructor for new object creation
     public BeneficiaryOTPHandlerImpl() {
@@ -163,32 +177,34 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
         String dltTemplateId = smsTemplateRepository.findDLTTemplateID(28);
         SMSTemplate template = smsTemplateRepository.findBySmsTemplateID(28);
 
-        String sendSMSAPI = BeneficiaryOTPHandlerImpl.SMS_GATEWAY_URL;
+        String sendSMSAPI = SMS_GATEWAY_URL;
+        logger.info("sms template"+template);
 
         try {
-            String message = template.getSmsTemplate()
-                    .replace("$$OTP$$",String.valueOf(otp))
-                    .replace("$$UserName$$", obj.getUserName())
-                    .replace("$$Designation$$", obj.getDesignation());
+            String message = "Hello! Your OTP for providing consent for registration on AMRIT is "+otp+". This OTP is valid for 10 minutes. Kindly share it only with Asha ,Asha to complete the process. PSMRI";
+//            String message = template.getSmsTemplate()
+//                    .replace("$$OTP$$",String.valueOf(otp))
+//                    .replace("$$UserName$$", obj.getUserName())
+//                    .replace("$$Designation$$", obj.getDesignation());
 
             // Build payload
             Map<String, Object> payload = new HashMap<>();
-            payload.put("customerId", ConfigProperties.getPropertyByName("sms-username"));
+            payload.put("customerId",smsUserName);
             payload.put("destinationAddress", obj.getMobNo());
             payload.put("message", message);
-            payload.put("sourceAddress", ConfigProperties.getPropertyByName("source-address"));
+            payload.put("sourceAddress", smsSourceAddress);
             payload.put("messageType", "SERVICE_IMPLICIT");
             payload.put("dltTemplateId", dltTemplateId);
-            payload.put("entityId",ConfigProperties.getPropertyByName("sms-entityid") );
+            payload.put("entityId",smsEntityId );
             payload.put("otp", true);
             // Set headers
             HttpHeaders headers = new HttpHeaders();
-            String auth = ConfigProperties.getPropertyByName("sms-username") + ":" + ConfigProperties.getPropertyByName("sms-password");
+            String auth = smsUserName + ":" + smsPassword;
             headers.add("Authorization",
                     "Basic " + Base64.getEncoder().encodeToString(auth.getBytes()));
 
             headers.setContentType(MediaType.APPLICATION_JSON);
-
+             logger.info("payload: "+payload);
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
 
             // Call API
