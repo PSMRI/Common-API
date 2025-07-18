@@ -194,15 +194,15 @@ public class SMSServiceImpl implements SMSService {
 
 	@Override
 	public String updateSMSTemplate(UpdateSMSRequest smsRequest) throws Exception {
-		SMSTemplate smsTemplate = null;
-		SMSTemplate request = smsMapper.updateRequestToSMSTemplate(smsRequest);
-		int updateCount = smsTemplateRepository.updateSMSTemplate(request.getSmsTemplateID(), request.getDeleted());
-		if (updateCount > 0) {
-			smsTemplate = smsTemplateRepository.findBySmsTemplateID(request.getSmsTemplateID());
-		} else {
-			throw new Exception("Failed to update the result");
-		}
-		return OutputMapper.gsonWithoutExposeRestriction().toJson(smsMapper.smsTemplateToResponse(smsTemplate));
+    	SMSTemplate smsTemplate = null;
+    	SMSTemplate request = smsMapper.updateRequestToSMSTemplate(smsRequest);
+    	int updateCount = smsTemplateRepository.updateSMSTemplate(request.getSmsTemplateID(), request.getDeleted());
+    	if (updateCount > 0) {
+      	  smsTemplate = smsTemplateRepository.findBySmsTemplateID(request.getSmsTemplateID());
+    	} else {
+        throw new Exception("Failed to update the result");
+    	}
+    	return OutputMapper.gsonWithoutExposeRestriction().toJson(smsMapper.smsTemplateToResponse(smsTemplate));
 	}
 
 	@Override
@@ -347,9 +347,8 @@ public class SMSServiceImpl implements SMSService {
             sms.setPhoneNo(request.getFacilityPhoneNo());
         }
     }
-
     sms.setSms(smsToSend);
-    return smsNotification.save(sms);  
+	return smsNotification.save(sms);  
 }
 
 	
@@ -357,8 +356,8 @@ public class SMSServiceImpl implements SMSService {
 	    String variableValue = "";
 	    switch (methodName.toLowerCase()) {
 	        case "videoconsultationlink":
-	            variableValue = videoCall.getMeetingLink() != null ? videoCall.getMeetingLink() : "";
-	            break;
+				variableValue = videoCall.getMeetingLink() != null ? videoCall.getMeetingLink() : "";
+				break;
 	        case "consultationdate":
 				if (videoCall.getDateOfCall() != null) {
         			SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -377,7 +376,6 @@ public class SMSServiceImpl implements SMSService {
 	            variableValue = result != null ? result.toString() : "";
 	            break;
 	    }
-
 	    return variableValue.trim();
 	}
 
