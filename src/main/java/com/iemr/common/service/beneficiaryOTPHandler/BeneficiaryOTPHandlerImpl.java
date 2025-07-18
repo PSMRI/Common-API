@@ -194,7 +194,7 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
             payload.put("message", message);
             payload.put("sourceAddress", smsSourceAddress);
             payload.put("messageType", "SERVICE_IMPLICIT");
-            payload.put("dltTemplateId", dltTemplateId);
+            payload.put("dltTemplateId", "1007730329175402034");
             payload.put("entityId",smsEntityId );
             payload.put("otp", true);
             // Set headers
