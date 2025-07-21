@@ -155,12 +155,15 @@ public class JwtUserIdValidationFilter implements Filter {
 	}
 
 	private boolean shouldSkipAuthentication(String path, String contextPath) {
-		return path.equals(contextPath + "/user/userAuthenticate")
+		return path.equals(contextPath + "/user/userAuthenticate") 
 				|| path.equalsIgnoreCase(contextPath + "/user/logOutUserFromConcurrentSession")
 				|| path.startsWith(contextPath + "/swagger-ui") || path.startsWith(contextPath + "/v3/api-docs")
 				|| path.startsWith(contextPath + "/public") || path.equals(contextPath + "/user/refreshToken")
 				|| path.startsWith(contextPath + "/user/superUserAuthenticate")
 				|| path.startsWith(contextPath + "/user/user/userAuthenticateNew")
+                                || path.startsWith(contextPath + "/beneficiaryConsent/sendConsent")
+                                || path.startsWith(contextPath + "/beneficiaryConsent/validateConsent")
+                                || path.startsWith(contextPath + "/beneficiaryConsent/resendConsent")
 				|| path.startsWith(contextPath + "/user/userAuthenticateV1")
 				|| path.startsWith(contextPath + "/user/forgetPassword")
 				|| path.startsWith(contextPath + "/user/setForgetPassword")
