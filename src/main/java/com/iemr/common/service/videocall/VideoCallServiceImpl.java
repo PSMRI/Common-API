@@ -58,14 +58,14 @@ public class VideoCallServiceImpl implements VideoCallService {
     private String meetingLink;
 
     private boolean isLinkSent = false;
-    private String consultationStatus = "Not Initiated";
 
-    @Value("${video-call-url}")
+    @Value("${videocall.url}")
     private String jitsiLink;
 
     public VideoCallServiceImpl() {
-        // this.jitsiLink = ConfigProperties.getPropertyByName("video-call-url");
-        // logger.info("Jitsi Link fetched: " + this.jitsiLink);
+        // Default constructor
+        this.meetingLink = null;
+        this.isLinkSent = false;
     }
 
     @Override
@@ -121,38 +121,13 @@ public String updateCallStatus(UpdateCallRequest callRequest) throws Exception {
     if (updateCount > 0) {
         videoCall.setLinkUsed(true);
         videoCallRepository.save(videoCall); 
-        
-        //  if ("Completed".equalsIgnoreCase(requestEntity.getCallStatus())) {
-        //     saveRecordingFile(videoCall.getMeetingLink());
-        //  }
+      
     } else {
         throw new Exception("Failed to update the call status");
     }
 
     return OutputMapper.gsonWithoutExposeRestriction()
         .toJson(videoCallMapper.videoCallToResponse(videoCall));
-}
-private void saveRecordingFile(String meetingLink) {
-    try {
-        // Configurable Jibri recording location
-        String jibriOutputDir = ConfigProperties.getPropertyByName("jibri.output.path"); // e.g., /srv/jibri/recordings
-        String saveDir = ConfigProperties.getPropertyByName("video.recording.path"); // e.g., /srv/recordings
-
-        File jibriDir = new File(jibriOutputDir);
-        File[] matchingFiles = jibriDir.listFiles((dir, name) -> name.contains(meetingLink) && name.endsWith(".mp4"));
-
-        if (matchingFiles != null && matchingFiles.length > 0) {
-            File recording = matchingFiles[0];
-            Path targetPath = Paths.get(saveDir, meetingLink + ".mp4");
-
-            Files.copy(recording.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-            logger.info("Recording file saved: " + targetPath);
-        } else {
-            logger.warn("No matching recording file found for meeting: " + meetingLink);
-        }
-    } catch (IOException e) {
-        logger.error("Error saving recording file: ", e);
-    }
 }
 
 }
