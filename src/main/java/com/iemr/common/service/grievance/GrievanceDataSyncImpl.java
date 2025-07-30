@@ -579,41 +579,48 @@ public class GrievanceDataSyncImpl implements GrievanceDataSync {
 
 			// Logic for reattempt based on call group type and call type
 			boolean isRetryNeeded = grievanceCallStatus.getRetryNeeded();
-			if ((null != grievanceCallStatus.getComplaintResolution()
-					&& grievanceCallStatus.getComplaintResolution().equalsIgnoreCase("Resolved")) || (callGroupType.equalsIgnoreCase("Valid") && (callType.equalsIgnoreCase("Valid") || callType.equals("Test Call")))) {
+			boolean isResolved = grievanceCallStatus.getComplaintResolution() != null
+									&& grievanceCallStatus.getComplaintResolution().equalsIgnoreCase("Resolved");
+			boolean isValidGroup = callGroupType.equalsIgnoreCase("Valid")
+									&& (callType.equalsIgnoreCase("Valid") || callType.equals("Test Call"));
+			boolean isInvalidGroup = callGroupType.equalsIgnoreCase("Invalid")
+									&& (callType.equalsIgnoreCase("Wrong Number") || callType.equalsIgnoreCase("Invalid Call"));
+
+			if (isResolved) {
+				// 1) Any resolved call → complete, no retry
 				isRetryNeeded = false;
 				updateCount = grievanceDataRepo.updateCompletedStatusInCall(true, false, complaintID, userID, beneficiaryRegID);
-			}
-			else if (callGroupType.equalsIgnoreCase("Invalid") && (callType.equalsIgnoreCase("Wrong Number") || callType.equalsIgnoreCase("Invalid Call"))) {
-				isRetryNeeded = false;
-				updateCount = grievanceDataRepo.updateCompletedStatusInCall(true, isRetryNeeded, complaintID, userID,
-						beneficiaryRegID);
-			}else {
+
+			} else if (isValidGroup) {
+				// 2) Valid but not resolved → leave open, retry allowed
 				isRetryNeeded = true;
-				updateCount = grievanceDataRepo.updateCompletedStatusInCall(false, isRetryNeeded, complaintID,
-						userID, beneficiaryRegID);
+				updateCount = grievanceDataRepo.updateCompletedStatusInCall(false, true, complaintID, userID, beneficiaryRegID);
+
+			} else if (isInvalidGroup) {
+				// 3) Invalid calls → complete, no retry
+				isRetryNeeded = false;
+				updateCount = grievanceDataRepo.updateCompletedStatusInCall(true, false, complaintID, userID, beneficiaryRegID);
+
+			} else {
+				// 4) All other cases (e.g. unreachable) → leave open, retry allowed
+				isRetryNeeded = true;
+				updateCount = grievanceDataRepo.updateCompletedStatusInCall(false, true, complaintID, userID, beneficiaryRegID);
 			}
-			// Check if max attempts (3) are reached
+
+			//Call counter update
 			if (isRetryNeeded && grievanceCallStatus.getCallCounter() < grievanceAllocationRetryConfiguration) {
 				grievanceCallStatus.setCallCounter(grievanceCallStatus.getCallCounter() + 1);
-				updateCallCounter = grievanceDataRepo.updateCallCounter(grievanceCallStatus.getCallCounter(),
-						isRetryNeeded, grievanceCallRequest.getComplaintID(),
-						grievanceCallRequest.getBeneficiaryRegID(),
-						grievanceCallRequest.getUserID());
-				if (updateCallCounter > 0)
-					response = "Successfully closing call";
-				else {
-					response = "failure in closing call";
-				}
-			} else if (grievanceCallStatus.getCallCounter() == grievanceAllocationRetryConfiguration) {
-				// Max attempts reached, no further reattempt
-				isRetryNeeded = false;
-				// isCompleted = true;
-				updateCount = grievanceDataRepo.updateCompletedStatusInCall(isCompleted, isRetryNeeded, complaintID,
-						userID, beneficiaryRegID);
-				response = "max_attempts_reached"; // Indicate that max attempts are reached
+				updateCallCounter = grievanceDataRepo.updateCallCounter(
+				grievanceCallStatus.getCallCounter(), true, complaintID, beneficiaryRegID, userID);
+				response = (updateCallCounter > 0) ? "Successfully closing call" : "failure in closing call";
 
-			}else if(updateCount > 0) {
+			} else if (grievanceCallStatus.getCallCounter() >= grievanceAllocationRetryConfiguration) {
+				// Max attempts reached → treated as “complete”
+				isRetryNeeded = false;
+				updateCount = grievanceDataRepo.updateCompletedStatusInCall(true, false, complaintID, userID, beneficiaryRegID);
+				response = "max_attempts_reached";
+
+			} else if (updateCount > 0) {
 				response = "Successfully closing call";
 			}
 

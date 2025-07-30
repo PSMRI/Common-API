@@ -110,7 +110,8 @@ import com.google.gson.LongSerializationPolicy;
 		@Transient
 		@Expose
 		private Integer categoryID;
-		@Transient
+		
+		@Column(name = "SubCategoryID")
 		@Expose
 		private Integer subCategoryID;
 		@Transient
