@@ -210,7 +210,8 @@ public class IEMRAdminController {
 				String redisKey = "user_" + mUser.get(0).getUserID(); // Use user ID to create a unique key
 
 				// Store the user in Redis (set a TTL of 30 minutes)
-				redisTemplate.opsForValue().set(redisKey, user, 30, TimeUnit.MINUTES);
+				logger.debug("Store the user in Redis (set a TTL of 30 minutes)");
+				redisTemplate.opsForValue().set(redisKey, user, 10, TimeUnit.MINUTES);
 
 				createUserMapping(mUser.get(0), resMap, serviceRoleMultiMap, serviceRoleMap, serviceRoleList,
 						previlegeObj);
