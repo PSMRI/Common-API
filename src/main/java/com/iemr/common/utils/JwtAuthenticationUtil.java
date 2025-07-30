@@ -97,8 +97,11 @@ public class JwtAuthenticationUtil {
 
 	private User getUserFromCache(String userId) {
 		String redisKey = "user_" + userId; // The Redis key format
+		Object value = redisTemplate.opsForValue().get(redisKey);
+		logger.info("Value stored in Redis key '{}': {}", redisKey, value);
+		Long ttlInMinutes = redisTemplate.getExpire(redisKey, TimeUnit.MINUTES);
+		logger.info("Redis Key TTL (in minutes): {}", ttlInMinutes);
 		User user = (User) redisTemplate.opsForValue().get(redisKey);
-
 		if (user == null) {
 			logger.warn("User not found in Redis. Will try to fetch from DB.");
 		} else {
