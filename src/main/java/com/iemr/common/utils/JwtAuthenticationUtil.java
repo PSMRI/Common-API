@@ -112,8 +112,12 @@ public class JwtAuthenticationUtil {
 		// This method will only be called if the user is not found in Redis.
 		String redisKey = "user_" + userId; // Redis key format
 
+		logger.info("User stored in Redis with key before: " + redisKey);
+
 		// Fetch user from DB
 		User user = iEMRUserRepositoryCustom.findByUserID(Long.parseLong(userId));
+
+		logger.info("User stored in Redis with key User: " + user);
 
 		if (user != null) {
 			// Create minimal user hash with essential information
