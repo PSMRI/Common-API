@@ -211,6 +211,8 @@ public class IEMRAdminController {
 
 				// Store the user in Redis (set a TTL of 30 minutes)
 				logger.debug("Store the user in Redis (set a TTL of 30 minutes)");
+				logger.info("User stored in Redis with key: " + redisKey);
+				logger.info("User object to be stored in Redis: {}", user);
 				redisTemplate.opsForValue().set(redisKey, user, 10, TimeUnit.MINUTES);
 
 				createUserMapping(mUser.get(0), resMap, serviceRoleMultiMap, serviceRoleMap, serviceRoleList,

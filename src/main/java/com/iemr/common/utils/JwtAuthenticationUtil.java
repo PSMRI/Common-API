@@ -77,9 +77,11 @@ public class JwtAuthenticationUtil {
 			}
 
 			String userId = claims.get("userId", String.class);
+			logger.info("User ID from JWT token: {}", userId);
 
 			// Check if user data is present in Redis
 			User user = getUserFromCache(userId);
+			logger.info("User fetched from cache: {}", user);
 			if (user == null) {
 				// If not in Redis, fetch from DB and cache the result
 				user = fetchUserFromDB(userId);
