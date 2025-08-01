@@ -56,6 +56,7 @@ public class Language
 	private Set<BenDemographics> i_bendemographics;
 
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "m_language")
+	@Transient
 	private Set<UserLangMapping> m_UserLangMappings;
 
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "language")
