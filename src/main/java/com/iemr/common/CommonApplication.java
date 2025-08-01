@@ -33,6 +33,9 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.iemr.common.data.users.User;
 import com.iemr.common.utils.IEMRApplBeans;
 
@@ -58,16 +61,33 @@ public class CommonApplication extends SpringBootServletInitializer {
 		return application.sources(new Class[] { CommonApplication.class });
 	}
 
+	// @Bean
+	// public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory
+	// factory) {
+	// RedisTemplate<String, Object> template = new RedisTemplate<>();
+	// template.setConnectionFactory(factory);
+
+	// // Use StringRedisSerializer for keys (userId)
+	// template.setKeySerializer(new StringRedisSerializer());
+
+	// // Use Jackson2JsonRedisSerializer for values (Users objects)
+	// Jackson2JsonRedisSerializer<User> serializer = new
+	// Jackson2JsonRedisSerializer<>(User.class);
+	// template.setValueSerializer(serializer);
+
+	// return template;
+	// }
+
 	@Bean
 	public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
 		RedisTemplate<String, Object> template = new RedisTemplate<>();
 		template.setConnectionFactory(factory);
 
-		// Use StringRedisSerializer for keys (userId)
-		template.setKeySerializer(new StringRedisSerializer());
-
-		// Use Jackson2JsonRedisSerializer for values (Users objects)
 		Jackson2JsonRedisSerializer<User> serializer = new Jackson2JsonRedisSerializer<>(User.class);
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.registerModule(new JavaTimeModule());
+		mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+		serializer.setObjectMapper(mapper);
 		template.setValueSerializer(serializer);
 
 		return template;
