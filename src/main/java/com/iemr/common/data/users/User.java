@@ -28,7 +28,6 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.Expose;
 import com.iemr.common.data.callhandling.OutboundCallRequest;
 import com.iemr.common.data.feedback.FeedbackDetails;
@@ -135,15 +134,14 @@ public class User implements Serializable  {
 	@Column(name = "AadhaarNo")
 	private String aadhaarNo;
 	@Expose
-	@JsonProperty("pan")
 	@Column(name = "PAN")
 	private String pAN;
 	@Expose
-	@JsonProperty("dob")
+
 	@Column(name = "DOB")
 	private Timestamp dOB;
 	@Expose
-	@JsonProperty("doj")
+
 	@Column(name = "DOJ")
 	private Timestamp dOJ;
 	@Expose
