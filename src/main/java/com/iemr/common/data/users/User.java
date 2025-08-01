@@ -135,15 +135,12 @@ public class User implements Serializable  {
 	@Column(name = "AadhaarNo")
 	private String aadhaarNo;
 	@Expose
-	@JsonProperty("pan")
 	@Column(name = "PAN")
 	private String pAN;
 	@Expose
-	@JsonProperty("dob")
 	@Column(name = "DOB")
 	private Timestamp dOB;
 	@Expose
-	@JsonProperty("doj")
 	@Column(name = "DOJ")
 	private Timestamp dOJ;
 	@Expose

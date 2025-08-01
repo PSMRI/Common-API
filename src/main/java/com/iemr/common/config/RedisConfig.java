@@ -29,6 +29,9 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.session.data.redis.config.ConfigureRedisAction;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.iemr.common.data.users.User;
 
 @Configuration
@@ -40,15 +43,15 @@ public class RedisConfig {
 	}
 
 	@Bean
-	public RedisTemplate<String, User> redisTemplate(RedisConnectionFactory factory) {
-		RedisTemplate<String, User> template = new RedisTemplate<>();
+	public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
+		RedisTemplate<String, Object> template = new RedisTemplate<>();
 		template.setConnectionFactory(factory);
 
-		// Use StringRedisSerializer for keys (userId)
-		template.setKeySerializer(new StringRedisSerializer());
-
-		// Use Jackson2JsonRedisSerializer for values (Users objects)
 		Jackson2JsonRedisSerializer<User> serializer = new Jackson2JsonRedisSerializer<>(User.class);
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.registerModule(new JavaTimeModule());
+		mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+		serializer.setObjectMapper(mapper);
 		template.setValueSerializer(serializer);
 
 		return template;
