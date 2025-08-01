@@ -76,7 +76,7 @@ public class User implements Serializable  {
 
 	@Expose
 	// @Transient
-	@OneToMany(fetch = FetchType.EAGER)
+	@OneToMany(/* mappedBy = "m_user", fetch = FetchType.EAGER */)
 	@JoinColumn(updatable = false, insertable = false, name = "userID", referencedColumnName = "userID")
 	private Set<UserLangMapping> m_UserLangMappings;
 
