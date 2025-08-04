@@ -179,13 +179,8 @@ class GrievanceControllerTest {
         when(grievanceHandlingService.getFormattedGrievanceData(anyString()))
                 .thenThrow(serviceException);
 
-        // The controller returns statusCode 500 and errorMessage "Error" for generic exceptions
-        String expectedJson = "{"
-                + "\"data\":[],"
-                + "\"statusCode\":500,"
-                + "\"errorMessage\":\"Failed to fetch data\","
-                + "\"status\":\"Error\""
-                + "}";
+        // The controller returns a single error DTO in the data array for error cases
+        String expectedJson = "{\"data\":[{\"complaint\":\"Error fetching grievance data\",\"subjectOfComplaint\":\"Failed to fetch data\"}],\"statusCode\":500,\"errorMessage\":\"Failed to fetch data\",\"status\":\"Error\"}";
 
         mockMvc.perform(post("/getGrievanceOutboundWorklist")
                 .contentType(MediaType.APPLICATION_JSON)

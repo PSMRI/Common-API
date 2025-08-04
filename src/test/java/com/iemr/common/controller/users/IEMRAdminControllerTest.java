@@ -1851,10 +1851,6 @@ class IEMRAdminControllerTest {
         doNothing().when(valueOps).set(anyString(), any(), anyLong(), any(TimeUnit.class));
 
         // Mock cookie logic
-        // Use ArgumentMatchers to allow any value, but also allow nulls as controller may pass nulls
-        org.mockito.ArgumentMatchers.<String>any();
-        org.mockito.ArgumentMatchers.<jakarta.servlet.http.HttpServletResponse>any();
-        org.mockito.ArgumentMatchers.<jakarta.servlet.http.HttpServletRequest>any();
         doNothing().when(cookieUtil).addJwtTokenToCookie(org.mockito.ArgumentMatchers.<String>any(), org.mockito.ArgumentMatchers.<jakarta.servlet.http.HttpServletResponse>any(), org.mockito.ArgumentMatchers.<jakarta.servlet.http.HttpServletRequest>any());
 
         // Mock privilege mapping and IP validation
