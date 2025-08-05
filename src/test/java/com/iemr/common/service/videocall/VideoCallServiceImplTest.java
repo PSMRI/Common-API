@@ -11,14 +11,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -109,7 +110,7 @@ public class VideoCallServiceImplTest {
             try (MockedConstruction<File> fileConstruction = mockConstruction(File.class, (mock, context) -> {
                 if (context.arguments().size() > 0 && "/tmp/jibri".equals(context.arguments().get(0))) {
                     File matchingFile = mock(File.class);
-                    when(matchingFile.getName()).thenReturn("meeting123.mp4");
+            
                     when(matchingFile.toPath()).thenReturn(Path.of("/tmp/jibri/meeting123.mp4"));
                     when(mock.exists()).thenReturn(true);
                     when(mock.isDirectory()).thenReturn(true);
@@ -137,7 +138,6 @@ public class VideoCallServiceImplTest {
             try (MockedConstruction<File> fileConstruction = mockConstruction(File.class, (mock, context) -> {
                 if (context.arguments().size() > 0 && "/tmp/jibri".equals(context.arguments().get(0))) {
                     File nonMatchingFile = mock(File.class);
-                    when(nonMatchingFile.getName()).thenReturn("otherfile.mp4");
                     when(mock.exists()).thenReturn(true);
                     when(mock.isDirectory()).thenReturn(true);
                     when(mock.listFiles(any(java.io.FilenameFilter.class))).then(invocation -> {
@@ -163,7 +163,7 @@ public class VideoCallServiceImplTest {
             try (MockedConstruction<File> fileConstruction = mockConstruction(File.class, (mock, context) -> {
                 if (context.arguments().size() > 0 && "/tmp/jibri".equals(context.arguments().get(0))) {
                     File matchingFile = mock(File.class);
-                    when(matchingFile.getName()).thenReturn("meeting123.mp4");
+                   
                     when(matchingFile.toPath()).thenReturn(Path.of("/tmp/jibri/meeting123.mp4"));
                     when(mock.exists()).thenReturn(true);
                     when(mock.isDirectory()).thenReturn(true);
