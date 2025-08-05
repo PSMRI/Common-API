@@ -337,6 +337,8 @@ public class CTIServiceImplTest {
                     .thenReturn("http://CTI_SERVER/api/skills?agent=AGENT_ID&skill=SKILL_NAME&weight=WEIGHTAGE&operation=OPERATION&ip=AGENT_IP");
             configMock.when(() -> ConfigProperties.getPropertyByName("cti-server-ip"))
                     .thenReturn(TEST_SERVER_URL);
+            configMock.when(() -> ConfigProperties.getPropertyByName("get-agent-ip-address-URL"))
+                    .thenReturn("http://CTI_SERVER/api/agentip?agent=AGENT_ID");
 
         AgentSkills agentSkills = new AgentSkills();
         // Use ReflectionTestUtils to set the field that getAgentID() reads from
@@ -346,10 +348,8 @@ public class CTIServiceImplTest {
         agentSkills.setType("ADD");
         // Don't set response to avoid null pointer in setResponse method
 
-        ObjectMapper requestMapper = new ObjectMapper();
-        requestMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        requestMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        String requestJson = requestMapper.writeValueAsString(agentSkills);            // Use full AgentSkills JSON object for correct deserialization
+        // Use hand-crafted JSON to avoid serialization issues with null response field
+        String requestJson = "{\"agentid\":\"" + TEST_AGENT_ID + "\",\"skill\":\"English\",\"weight\":\"5\",\"type\":\"ADD\"}";            // Use full AgentSkills JSON object for correct deserialization
             String responseJson = "{"
                 + "\"agent_id\":\"agent123\"," 
                 + "\"skill\":\"English\"," 
@@ -373,7 +373,18 @@ public class CTIServiceImplTest {
                 ReflectionTestUtils.setField(responseSkills, "response", ctiResponse);
                 when(mockInputMapper.fromJson(responseJson, AgentSkills.class)).thenReturn(responseSkills);
 
-                when(httpUtils.get(anyString())).thenReturn(responseJson);
+                // Mock getAgentIP call response and AgentState for it
+                String agentIPResponse = "{\"response\":{\"response_code\":\"1\",\"status\":\"SUCCESS\",\"agent_ip\":\"192.168.1.100\"}}";
+                CTIResponseTemp agentIPCtiResponse = new CTIResponseTemp();
+                agentIPCtiResponse.setResponse_code("1");
+                agentIPCtiResponse.setStatus("SUCCESS");
+                agentIPCtiResponse.setAgent_ip("192.168.1.100");
+                AgentState agentIPState = new AgentState();
+                agentIPState.setResponse(agentIPCtiResponse);
+                
+                when(mockInputMapper.fromJson(agentIPResponse, AgentState.class)).thenReturn(agentIPState);
+                when(httpUtils.get(contains("agentip"))).thenReturn(agentIPResponse);
+                when(httpUtils.get(contains("skills"))).thenReturn(responseJson);
 
                 CTIServiceImpl spyService = spy(ctiServiceImpl);
                 doReturn("0.0.0.0").when(spyService).getAgentIP(TEST_AGENT_ID);
@@ -737,6 +748,8 @@ public class CTIServiceImplTest {
                     .thenReturn("http://cti_server/api/disconnect?agent=AGENT_ID&session=SESSION_ID&ip=AGENT_IP&feedback=IS_FEEDBACK");
             configMock.when(() -> ConfigProperties.getPropertyByName("cti-server-ip"))
                     .thenReturn(TEST_SERVER_URL);
+            configMock.when(() -> ConfigProperties.getPropertyByName("get-agent-ip-address-URL"))
+                    .thenReturn("http://CTI_SERVER/api/agentip?agent=AGENT_ID");
 
             AgentSkills agentSkills = new AgentSkills();
             // Use ReflectionTestUtils to set the field that getAgentID() reads from
@@ -766,7 +779,18 @@ public class CTIServiceImplTest {
                 ReflectionTestUtils.setField(responseSkills, "response", ctiResponse);
                 when(mockInputMapper.fromJson(responseJson, AgentSkills.class)).thenReturn(responseSkills);
 
-                when(httpUtils.get(anyString())).thenReturn(responseJson);
+                // Mock getAgentIP call response and AgentState for it
+                String agentIPResponse = "{\"response\":{\"response_code\":\"1\",\"status\":\"SUCCESS\",\"agent_ip\":\"192.168.1.100\"}}";
+                CTIResponseTemp agentIPCtiResponse = new CTIResponseTemp();
+                agentIPCtiResponse.setResponse_code("1");
+                agentIPCtiResponse.setStatus("SUCCESS");
+                agentIPCtiResponse.setAgent_ip("192.168.1.100");
+                AgentState agentIPState = new AgentState();
+                agentIPState.setResponse(agentIPCtiResponse);
+                
+                when(mockInputMapper.fromJson(agentIPResponse, AgentState.class)).thenReturn(agentIPState);
+                when(httpUtils.get(contains("agentip"))).thenReturn(agentIPResponse);
+                when(httpUtils.get(contains("disconnect"))).thenReturn(responseJson);
 
                 CTIServiceImpl spyService = spy(ctiServiceImpl);
                 doReturn("192.168.1.100").when(spyService).getAgentIP(TEST_AGENT_ID);
@@ -786,6 +810,8 @@ public class CTIServiceImplTest {
                     .thenReturn("http://cti_server/api/disconnect?agent=AGENT_ID&session=SESSION_ID&ip=AGENT_IP&feedback=IS_FEEDBACK");
             configMock.when(() -> ConfigProperties.getPropertyByName("cti-server-ip"))
                     .thenReturn(TEST_SERVER_URL);
+            configMock.when(() -> ConfigProperties.getPropertyByName("get-agent-ip-address-URL"))
+                    .thenReturn("http://CTI_SERVER/api/agentip?agent=AGENT_ID");
 
             AgentSkills agentSkills = new AgentSkills();
             // Use ReflectionTestUtils to set null values for failure case
@@ -793,7 +819,8 @@ public class CTIServiceImplTest {
             ReflectionTestUtils.setField(agentSkills, "call_id", null);
             ReflectionTestUtils.setField(agentSkills, "isFeedback", 0);
 
-            String requestJson = getConfiguredObjectMapper().writeValueAsString(agentSkills);
+            // Use hand-crafted JSON to avoid serialization issues with null response field
+            String requestJson = "{\"agentid\":null,\"call_id\":null,\"isFeedback\":0}";
 
             CTIResponse ctiResponse = new CTIResponse();
             ctiResponse.setResponse_code("0");
@@ -814,7 +841,18 @@ public class CTIServiceImplTest {
                 ReflectionTestUtils.setField(responseSkills, "response", ctiResponse);
                 when(mockInputMapper.fromJson(responseJson, AgentSkills.class)).thenReturn(responseSkills);
 
-                when(httpUtils.get(anyString())).thenReturn(responseJson);
+                // Mock getAgentIP call response and AgentState for it
+                String agentIPResponse = "{\"response\":{\"response_code\":\"1\",\"status\":\"SUCCESS\",\"agent_ip\":\"192.168.1.100\"}}";
+                CTIResponseTemp agentIPCtiResponse = new CTIResponseTemp();
+                agentIPCtiResponse.setResponse_code("1");
+                agentIPCtiResponse.setStatus("SUCCESS");
+                agentIPCtiResponse.setAgent_ip("192.168.1.100");
+                AgentState agentIPState = new AgentState();
+                agentIPState.setResponse(agentIPCtiResponse);
+                
+                when(mockInputMapper.fromJson(agentIPResponse, AgentState.class)).thenReturn(agentIPState);
+                when(httpUtils.get(contains("agentip"))).thenReturn(agentIPResponse);
+                when(httpUtils.get(contains("disconnect"))).thenReturn(responseJson);
 
                 CTIServiceImpl spyService = spy(ctiServiceImpl);
                 doReturn("0.0.0.0").when(spyService).getAgentIP("");
@@ -1296,6 +1334,8 @@ public class CTIServiceImplTest {
                     .thenReturn("http://CTI_SERVER/api/agents/online?agent=AGENT_ID&ip=AGENT_IP");
             configMock.when(() -> ConfigProperties.getPropertyByName("cti-server-ip"))
                     .thenReturn(TEST_SERVER_URL);
+            configMock.when(() -> ConfigProperties.getPropertyByName("get-agent-ip-address-URL"))
+                    .thenReturn("http://CTI_SERVER/api/agentip?agent=AGENT_ID");
 
             AgentState agentState = new AgentState();
             agentState.setAgent_id(TEST_AGENT_ID);
@@ -1316,7 +1356,18 @@ public class CTIServiceImplTest {
                 inputMapperMock.when(() -> InputMapper.gson()).thenReturn(mockInputMapper);
                 when(mockInputMapper.fromJson(responseJson, AgentState.class)).thenReturn(responseState);
 
-                when(httpUtils.get(anyString())).thenReturn(responseJson);
+                // Mock getAgentIP call response and AgentState for it
+                String agentIPResponse = "{\"response\":{\"response_code\":\"1\",\"status\":\"SUCCESS\",\"agent_ip\":\"192.168.1.100\"}}";
+                CTIResponseTemp agentIPCtiResponse = new CTIResponseTemp();
+                agentIPCtiResponse.setResponse_code("1");
+                agentIPCtiResponse.setStatus("SUCCESS");
+                agentIPCtiResponse.setAgent_ip("192.168.1.100");
+                AgentState agentIPState = new AgentState();
+                agentIPState.setResponse(agentIPCtiResponse);
+                
+                when(mockInputMapper.fromJson(agentIPResponse, AgentState.class)).thenReturn(agentIPState);
+                when(httpUtils.get(contains("agentip"))).thenReturn(agentIPResponse);
+                when(httpUtils.get(contains("online"))).thenReturn(responseJson);
 
                 OutputResponse result = ctiServiceImpl.getOnlineAgents(requestJson, TEST_IP);
 
@@ -1972,6 +2023,8 @@ public class CTIServiceImplTest {
                     .thenReturn("http://CTI_SERVER/api/agents/online?agent=AGENT_ID&ip=AGENT_IP");
             configMock.when(() -> ConfigProperties.getPropertyByName("cti-server-ip"))
                     .thenReturn(TEST_SERVER_URL);
+            configMock.when(() -> ConfigProperties.getPropertyByName("get-agent-ip-address-URL"))
+                    .thenReturn("http://CTI_SERVER/api/agentip?agent=AGENT_ID");
 
             AgentState agentState = new AgentState();
             agentState.setAgent_id(TEST_AGENT_ID);
@@ -1990,7 +2043,19 @@ public class CTIServiceImplTest {
                 InputMapper mockInputMapper = mock(InputMapper.class);
                 inputMapperMock.when(() -> InputMapper.gson()).thenReturn(mockInputMapper);
                 when(mockInputMapper.fromJson(responseJson, AgentState.class)).thenReturn(responseState);
-                when(httpUtils.get(anyString())).thenReturn(responseJson);
+                
+                // Mock getAgentIP call response and AgentState for it
+                String agentIPResponse = "{\"response\":{\"response_code\":\"1\",\"status\":\"SUCCESS\",\"agent_ip\":\"192.168.1.100\"}}";
+                CTIResponseTemp agentIPCtiResponse = new CTIResponseTemp();
+                agentIPCtiResponse.setResponse_code("1");
+                agentIPCtiResponse.setStatus("SUCCESS");
+                agentIPCtiResponse.setAgent_ip("192.168.1.100");
+                AgentState agentIPState = new AgentState();
+                agentIPState.setResponse(agentIPCtiResponse);
+                
+                when(mockInputMapper.fromJson(agentIPResponse, AgentState.class)).thenReturn(agentIPState);
+                when(httpUtils.get(contains("agentip"))).thenReturn(agentIPResponse);
+                when(httpUtils.get(contains("online"))).thenReturn(responseJson);
 
                 OutputResponse result = ctiServiceImpl.getOnlineAgents(requestJson, TEST_IP);
                 assertNotNull(result);
