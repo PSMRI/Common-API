@@ -66,9 +66,13 @@ public class RestTemplateUtil {
 		}
 		HttpServletRequest requestHeader = servletRequestAttributes.getRequest();
 		String jwtTokenFromCookie = extractJwttoken(requestHeader);
-		headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=utf-8");
+		if (!headers.containsKey(HttpHeaders.CONTENT_TYPE)) {
+			headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE + ";charset=utf-8");
+		}
 		if (null != UserAgentContext.getUserAgent()) {
-			headers.add(HttpHeaders.USER_AGENT, UserAgentContext.getUserAgent());
+			if (!headers.containsKey(HttpHeaders.USER_AGENT)) {
+				headers.add(HttpHeaders.USER_AGENT, UserAgentContext.getUserAgent());
+			}
 		}
 		if (null != jwtTokenFromCookie) {
 			headers.add(HttpHeaders.COOKIE, Constants.JWT_TOKEN + "=" + jwtTokenFromCookie);
