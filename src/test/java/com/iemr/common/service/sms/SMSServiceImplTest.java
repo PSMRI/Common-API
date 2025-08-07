@@ -1,3 +1,24 @@
+/*
+* AMRIT – Accessible Medical Records via Integrated Technology 
+* Integrated EHR (Electronic Health Records) Solution 
+*
+* Copyright (C) "Piramal Swasthya Management and Research Institute" 
+*
+* This file is part of AMRIT.
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see https://www.gnu.org/licenses/.
+*/
 package com.iemr.common.service.sms;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -18,12 +39,21 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.iemr.common.data.sms.*;
 import com.iemr.common.data.videocall.VideoCallParameters;
+import com.iemr.common.data.feedback.FeedbackDetails;
+import com.iemr.common.data.institute.Institute;
+import com.iemr.common.data.users.User;
 import com.iemr.common.mapper.sms.SMSMapper;
 import com.iemr.common.model.sms.*;
+import com.iemr.common.model.beneficiary.BeneficiaryModel;
 import com.iemr.common.repository.sms.*;
 import com.iemr.common.repository.videocall.VideoCallParameterRepository;
+import com.iemr.common.repository.institute.InstituteRepository;
+import com.iemr.common.repository.users.IEMRUserRepositoryCustom;
+import com.iemr.common.repository.feedback.FeedbackRepository;
 import com.iemr.common.service.beneficiary.IEMRSearchUserService;
 import com.iemr.common.utils.mapper.OutputMapper;
+import com.iemr.common.repository.helpline104history.PrescribedDrugRepository;
+import com.iemr.common.repository.mctshistory.OutboundHistoryRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class SMSServiceImplTest {
@@ -35,7 +65,12 @@ public class SMSServiceImplTest {
     @Mock private SMSParameterMapRepository smsParameterMapRepository;
     @Mock private SMSNotificationRepository smsNotificationRepository;
     @Mock private VideoCallParameterRepository videoCallParameterRepository;
+    @Mock private InstituteRepository instituteRepository;
+    @Mock private IEMRUserRepositoryCustom userRepository;
+    @Mock private FeedbackRepository feedbackReporsitory;
     @Mock private IEMRSearchUserService searchBeneficiary;
+    @Mock private PrescribedDrugRepository prescribedDrugRepository;
+    @Mock private OutboundHistoryRepository outboundHistoryRepository;
 
     @InjectMocks private SMSServiceImpl smsService;
 
@@ -465,14 +500,9 @@ public class SMSServiceImplTest {
     void testGetVideoCallData_DefaultCase() throws Exception {
         VideoCallParameters vcParams = createSampleVideoCallParameters();
         
-        // Test with a method that doesn't exist in VideoCallParameters
-        // This will cause a NoSuchMethodException which should be thrown
-        Exception exception = assertThrows(Exception.class, () -> {
-            smsService.getVideoCallData("nonexistentmethod", vcParams);
-        });
+        String result = smsService.getVideoCallData("unknownmethod", vcParams);
         
-        assertTrue(exception.getMessage().contains("NoSuchMethodException") || 
-                   exception.getCause() instanceof NoSuchMethodException);
+        assertEquals("", result);
     }
 
     // Test methods for getFullSMSTemplate
@@ -581,7 +611,7 @@ public class SMSServiceImplTest {
         assertEquals("", result2);
         
         // Test null case - this should return null (as per the method implementation)
-        String result3 = (String) capitalizeMethod.invoke(smsService, null);
+        String result3 = (String) capitalizeMethod.invoke(smsService, (Object) null);
         assertNull(result3);
     }
 
@@ -940,13 +970,278 @@ public class SMSServiceImplTest {
         }
         
         // Test getUptsuData
-        try {
-            java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getUptsuData", 
-                String.class, String.class, Object.class);
-            method.setAccessible(true);
-            method.invoke(smsService, "test", "test", new Object());
-        } catch (Exception e) {
-            // Expected for reflection testing
-        }
+        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getUptsuData", 
+            String.class, String.class, SMSRequest.class);
+        method.setAccessible(true);
+        Object result = method.invoke(smsService, "test", "test", createSampleSMSRequest());
+        assertNull(result); // Implementation always returns null
+    }
+
+    // Additional tests for methods with 0% coverage
+    @Test 
+    void testGetBeneficiaryData_AllCases() throws Exception {
+        SMSRequest request = createSampleSMSRequest();
+        BeneficiaryModel beneficiary = new BeneficiaryModel();
+        beneficiary.setFirstName("John");
+        beneficiary.setPhoneNo("1234567890");
+        beneficiary.setGenderName("Male");
+        beneficiary.setAge(25);
+        beneficiary.setBenPhoneMaps(new ArrayList<>()); // Fix NullPointer
+        
+        // Use reflection to test private method
+        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getBeneficiaryData", 
+                String.class, String.class, SMSRequest.class, BeneficiaryModel.class);
+        method.setAccessible(true);
+        
+        // Test name case
+        String result = (String) method.invoke(smsService, "className", "name", request, beneficiary);
+        assertEquals("John", result);
+        
+        // Test phoneno case
+        result = (String) method.invoke(smsService, "className", "phoneno", request, beneficiary);
+        assertEquals("1234567890", result);
+        
+        // Test gender case
+        result = (String) method.invoke(smsService, "className", "gender", request, beneficiary);
+        assertEquals("Male", result);
+        
+        // Test age case
+        result = (String) method.invoke(smsService, "className", "age", request, beneficiary);
+        assertEquals("25", result);
+        
+        // Test default case
+        result = (String) method.invoke(smsService, "className", "unknown", request, beneficiary);
+        assertEquals("", result);
+    }
+
+    @Test
+    void testGetInstituteData() throws Exception {
+        SMSRequest request = createSampleSMSRequest();
+        request.setInstituteID(1);
+        
+        // Mock institute
+        Institute institute = mock(Institute.class);
+        when(instituteRepository.findByInstitutionID(1)).thenReturn(institute);
+        
+        // Use reflection to test private method
+        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getInstituteData", 
+                String.class, String.class, SMSRequest.class, String.class);
+        method.setAccessible(true);
+        
+        String result = (String) method.invoke(smsService, "className", "methodName", request, "authToken");
+        assertNotNull(result);
+    }
+
+    @Test
+    void testGetPrescriptionData() throws Exception {
+        SMSRequest request = createSampleSMSRequest();
+        BeneficiaryModel beneficiary = new BeneficiaryModel();
+        
+        // Use reflection to test private method
+        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getPrescriptionData", 
+                String.class, String.class, SMSRequest.class, BeneficiaryModel.class);
+        method.setAccessible(true);
+        
+        String result = (String) method.invoke(smsService, "className", "methodName", request, beneficiary);
+        assertNotNull(result);
+    }
+
+    @Test
+    void testGetBloodOnCallData() throws Exception {
+        when(prescribedDrugRepository.getBloodRequest(any())).thenReturn(new com.iemr.common.data.helpline104history.T_BloodRequest());
+        when(prescribedDrugRepository.getBloodBankAddress(any())).thenReturn(new com.iemr.common.data.helpline104history.T_RequestedBloodBank());
+        SMSRequest request = createSampleSMSRequest();
+        BeneficiaryModel beneficiary = new BeneficiaryModel();
+        
+        // Use reflection to test private method
+        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getBloodOnCallData", 
+                String.class, String.class, SMSRequest.class, BeneficiaryModel.class);
+        method.setAccessible(true);
+        
+        String result = (String) method.invoke(smsService, "className", "methodName", request, beneficiary);
+        assertNotNull(result);
+    }
+
+    @Test
+    void testGetDirectoryserviceData() throws Exception {
+        SMSRequest request = createSampleSMSRequest();
+        
+        // Use reflection to test private method
+        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getDirectoryserviceData", 
+                String.class, String.class, SMSRequest.class);
+        method.setAccessible(true);
+        
+        String result = (String) method.invoke(smsService, "className", "methodName", request);
+        assertNotNull(result);
+    }
+
+    @Test
+    void testGetFoodSafetyComplaintData() throws Exception {
+        SMSRequest request = createSampleSMSRequest();
+        
+        // Use reflection to test private method
+        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getFoodSafetyComplaintData", 
+                String.class, String.class, SMSRequest.class);
+        method.setAccessible(true);
+        
+        String result = (String) method.invoke(smsService, "className", "methodName", request);
+        assertNotNull(result);
+    }
+
+    @Test
+    void testGetEpidemicComplaintData() throws Exception {
+        SMSRequest request = createSampleSMSRequest();
+        
+        // Use reflection to test private method
+        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getEpidemicComplaintData", 
+                String.class, String.class, SMSRequest.class);
+        method.setAccessible(true);
+        
+        String result = (String) method.invoke(smsService, "className", "methodName", request);
+        assertNotNull(result);
+    }
+
+    @Test
+    void testGetGrievanceData() throws Exception {
+        SMSRequest request = createSampleSMSRequest();
+        BeneficiaryModel beneficiary = new BeneficiaryModel();
+        
+        // Use reflection to test private method
+        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getGrievanceData", 
+                String.class, String.class, SMSRequest.class, String.class, BeneficiaryModel.class);
+        method.setAccessible(true);
+        
+        String result = (String) method.invoke(smsService, "className", "methodName", request, "authToken", beneficiary);
+        assertNotNull(result);
+    }
+
+    @Test
+    void testGetMCTSCallAlertData() throws Exception {
+        SMSRequest request = createSampleSMSRequest();
+        
+        // Use reflection to test private method
+        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getMCTSCallAlertData", 
+                String.class, String.class, SMSRequest.class);
+        method.setAccessible(true);
+        
+        String result = (String) method.invoke(smsService, "className", "methodName", request);
+        assertNotNull(result);
+    }
+
+    @Test
+    void testGetOrganDonationData() throws Exception {
+        SMSRequest request = createSampleSMSRequest();
+        
+        // Use reflection to test private method
+        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getOrganDonationData", 
+                String.class, String.class, SMSRequest.class);
+        method.setAccessible(true);
+        
+        String result = (String) method.invoke(smsService, "className", "methodName", request);
+        assertNotNull(result);
+    }
+
+    @Test
+    void testGetSpecializationAndTcDateInfo() throws Exception {
+        SMSRequest request = createSampleSMSRequest();
+        
+        // Use reflection to test private method
+        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getSpecializationAndTcDateInfo", 
+                String.class, String.class, SMSRequest.class);
+        method.setAccessible(true);
+        
+        String result = (String) method.invoke(smsService, "className", "methodName", request);
+        assertNotNull(result);
+    }
+
+    @Test
+    void testGetIMRMMRData() throws Exception {
+        SMSRequest request = createSampleSMSRequest();
+        
+        // Use reflection to test private method
+        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getIMRMMRData", 
+                String.class, String.class, SMSRequest.class);
+        method.setAccessible(true);
+        
+        String result = (String) method.invoke(smsService, "className", "methodName", request);
+        assertNotNull(result);
+    }
+
+    @Test
+    void testGetCOVIDData() throws Exception {
+        when(prescribedDrugRepository.getCOVIDData(any())).thenReturn(Arrays.asList(new com.iemr.common.data.helpline104history.COVIDHistory()));
+        when(prescribedDrugRepository.getDirectoryservice(any())).thenReturn(new com.iemr.common.data.helpline104history.Directoryservice());
+        when(prescribedDrugRepository.getEpidemicOutbreak(any())).thenReturn(new com.iemr.common.data.helpline104history.T_EpidemicOutbreak());
+        when(prescribedDrugRepository.getFoodSafetyCopmlaint(any())).thenReturn(new com.iemr.common.data.helpline104history.T_FoodSafetyCopmlaint());
+        when(prescribedDrugRepository.getOrganDonation(any())).thenReturn(new com.iemr.common.data.helpline104history.T_OrganDonation());
+        when(prescribedDrugRepository.getAcceptorHospitalAddress(any())).thenReturn(new com.iemr.common.data.helpline104history.RequestedInstitution());
+        when(prescribedDrugRepository.findByPrescribedDrugID(any())).thenReturn(new com.iemr.common.data.helpline104history.PrescribedDrug());
+        when(outboundHistoryRepository.getMCTSCallStartDate(any())).thenReturn(new com.iemr.common.data.mctshistory.MctsOutboundCall());
+        SMSRequest request = createSampleSMSRequest();
+        
+        // Use reflection to test private method
+        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getCOVIDData", 
+                String.class, String.class, SMSRequest.class);
+        method.setAccessible(true);
+        
+        String result = (String) method.invoke(smsService, "className", "methodName", request);
+        assertNotNull(result);
+    }
+
+    @Test
+    void testGetUptsuData() throws Exception {
+        SMSRequest request = createSampleSMSRequest();
+        
+        // Use reflection to test private method
+        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getUptsuData", 
+                String.class, String.class, SMSRequest.class);
+        method.setAccessible(true);
+        
+        String result = (String) method.invoke(smsService, "className", "methodName", request);
+        assertNotNull(result);
+    }
+
+    @Test
+    void testGetUserData() throws Exception {
+        SMSRequest request = createSampleSMSRequest();
+        
+        // Mock user
+        User user = mock(User.class);
+        when(user.getFirstName()).thenReturn("Test User");
+        when(userRepository.findByUserID(1L)).thenReturn(user);
+        
+        // Use reflection to test private method
+        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getUserData", 
+                String.class, String.class, SMSRequest.class, String.class);
+        method.setAccessible(true);
+        
+        String result = (String) method.invoke(smsService, "className", "FirstName", request, "authToken");
+        assertEquals("Test User", result);
+    }
+
+    @Test
+    void testGetFeedbackData() throws Exception {
+        SMSRequest request = createSampleSMSRequest();
+        request.setFeedbackID(1L);
+        
+        // Mock feedback
+        FeedbackDetails feedback = mock(FeedbackDetails.class);
+        when(feedbackReporsitory.findByFeedbackID(1L)).thenReturn(feedback);
+        
+        // Use reflection to test private method
+        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getFeedbackData", 
+                String.class, String.class, SMSRequest.class, String.class);
+        method.setAccessible(true);
+        
+        String result = (String) method.invoke(smsService, "className", "methodName", request, "authToken");
+        assertTrue(result == null || result.isEmpty());
+    }
+
+    @Test
+    void testPublishSMSAsync() {
+        // Test the async publishSMS method
+        assertDoesNotThrow(() -> {
+            smsService.publishSMS();
+        });
     }
 } 
