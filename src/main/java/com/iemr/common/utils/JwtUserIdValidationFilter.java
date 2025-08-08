@@ -43,7 +43,7 @@ public class JwtUserIdValidationFilter implements Filter {
 		if (origin != null && isOriginAllowed(origin)) {
 			response.setHeader("Access-Control-Allow-Origin", origin);
 			response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-			response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, Jwttoken, serverAuthorization, ServerAuthorization, serverauthorization, Serverauthoriztion");
+			response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, Jwttoken, serverAuthorization, ServerAuthorization, serverauthorization, Serverauthorization");
 			response.setHeader("Access-Control-Allow-Credentials", "true");
 		} else {
 			logger.warn("Origin [{}] is NOT allowed. CORS headers NOT added.", origin);
