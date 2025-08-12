@@ -34,7 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(value= "/firebaseNotification",headers = "Authorization")
+@RequestMapping(value= "/firebaseNotification")
 public class FirebaseNotificationController {
     final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
