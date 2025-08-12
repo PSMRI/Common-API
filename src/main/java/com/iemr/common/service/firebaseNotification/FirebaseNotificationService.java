@@ -67,7 +67,7 @@ public class FirebaseNotificationService {
 
         Notification notification = Notification.builder().setTitle(notificationMessage.getTitle()).setBody(notificationMessage.getBody()).build();
 
-        Message message = Message.builder().setToken(notificationMessage.getToken()).setNotification(notification).putAllData(notificationMessage.getData()).build();
+        Message message = Message.builder().setTopic(notificationMessage.getToken()).setNotification(notification).putAllData(notificationMessage.getData()).build();
 
 
         try {
