@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-@RequestMapping(value = { "/beneficiaryConsent" },headers ="Authorization" )
+@RequestMapping(value = { "/beneficiaryConsent" })
 @RestController
 public class BeneficiaryConsentController {
     final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
@@ -46,7 +46,7 @@ public class BeneficiaryConsentController {
     private BeneficiaryOTPHandler beneficiaryOTPHandler;
 
     @Operation(summary = "Send Consent")
-    @RequestMapping(value = "/sendConsent", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+    @RequestMapping(value = "/sendConsent", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON)
     public String sendConsent(@Param(value = "{\"mobNo\":\"String\"}") @RequestBody String requestOBJ) {
 
         OutputResponse response = new OutputResponse();
@@ -66,7 +66,7 @@ public class BeneficiaryConsentController {
     }
 
     @Operation(summary = "Validate Consent")
-    @RequestMapping(value = "/validateConsent", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+    @RequestMapping(value = "/validateConsent", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON)
     public String validateConsent(@Param(value = "{\"mobNo\":\"String\",\"otp\":\"Integer\"}") @RequestBody String requestOBJ) {
 
         OutputResponse response = new OutputResponse();
@@ -88,7 +88,7 @@ public class BeneficiaryConsentController {
     }
 
     @Operation(summary = "Resend Consent")
-    @RequestMapping(value = "/resendConsent", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+    @RequestMapping(value = "/resendConsent", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON)
     public String resendConsent(@Param(value = "{\"mobNo\":\"String\"}") @RequestBody String requestOBJ) {
         logger.info(requestOBJ.toString());
 
