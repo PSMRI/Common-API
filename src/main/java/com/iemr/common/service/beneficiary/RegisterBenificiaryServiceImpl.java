@@ -184,12 +184,12 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 		setSaveDemographicDetails(identityDTO,beneficiaryModel);
 //		 identityDTO.setOtherFields(beneficiaryModel.getOtherFields());
 		identityDTO.setIsConsent(beneficiaryModel.getIsConsent());
-		identityDTO.setIsDeath(beneficiaryModel.getIsDeath());
-		identityDTO.setIsDeathValue(beneficiaryModel.getIsDeathValue());
-		identityDTO.setDateOfDeath(beneficiaryModel.getDateOfDeath());
-		identityDTO.setPlaceOfDeath(beneficiaryModel.getPlaceOfDeath());
-		identityDTO.setOtherPlaceOfDeath(beneficiaryModel.getOtherPlaceOfDeath());
-		identityDTO.setTimeOfDeath(beneficiaryModel.getTimeOfDeath());
+//		identityDTO.setIsDeath(beneficiaryModel.getIsDeath());
+//		identityDTO.setIsDeathValue(beneficiaryModel.getIsDeathValue());
+//		identityDTO.setDateOfDeath(beneficiaryModel.getDateOfDeath());
+//		identityDTO.setPlaceOfDeath(beneficiaryModel.getPlaceOfDeath());
+//		identityDTO.setOtherPlaceOfDeath(beneficiaryModel.getOtherPlaceOfDeath());
+//		identityDTO.setTimeOfDeath(beneficiaryModel.getTimeOfDeath());
 
 
 		identityDTO.setFaceEmbedding(beneficiaryModel.getFaceEmbedding());
