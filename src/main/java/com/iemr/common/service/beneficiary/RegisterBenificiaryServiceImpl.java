@@ -30,6 +30,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.iemr.common.service.welcomeSms.WelcomeBenificarySmsService;
+import com.iemr.common.service.welcomeSms.WelcomeBenificarySmsServiceImpl;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,6 +74,9 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 
 	@Autowired
 	IdentityBenEditMapper identityBenEditMapper;
+
+	@Autowired
+	private WelcomeBenificarySmsService welcomeBenificarySmsService;
 
 	@Autowired
 	Validator validator;
@@ -175,15 +180,24 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 		 logger.info("benificiaryDetails: " + beneficiaryModel);
 
 		CommonIdentityDTO identityDTO = identityMapper.beneficiaryModelCommonIdentityDTO(beneficiaryModel);
+
 		setSaveDemographicDetails(identityDTO,beneficiaryModel);
-		// identityDTO.setOtherFields(beneficiaryModel.getOtherFields());
+//		 identityDTO.setOtherFields(beneficiaryModel.getOtherFields());
 		identityDTO.setIsConsent(beneficiaryModel.getIsConsent());
+		identityDTO.setIsDeath(beneficiaryModel.getIsDeath());
+		identityDTO.setIsDeathValue(beneficiaryModel.getIsDeathValue());
+		identityDTO.setDateOfDeath(beneficiaryModel.getDateOfDeath());
+		identityDTO.setPlaceOfDeath(beneficiaryModel.getPlaceOfDeath());
+		identityDTO.setOtherPlaceOfDeath(beneficiaryModel.getOtherPlaceOfDeath());
+		identityDTO.setTimeOfDeath(beneficiaryModel.getTimeOfDeath());
+
+
 		identityDTO.setFaceEmbedding(beneficiaryModel.getFaceEmbedding());
 		identityDTO.setEmergencyRegistration(beneficiaryModel.isEmergencyRegistration());
-		identityDTO.setIsConsent(beneficiaryModel.getIsConsent());
 		identityDTO
 				.setBenFamilyDTOs(identityMapper.benPhoneMapListToBenFamilyDTOList(beneficiaryModel.getBenPhoneMaps()));
 		String request = new Gson().toJson(identityDTO);
+
 
 		if (beneficiaryModel.getIs1097() == null)
 			beneficiaryModel.setIs1097(false);
@@ -204,9 +218,14 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 			} else {
 				return response.toString();
 			}
+			if(identityDTO.getContact().getEmergencyContactNum()!=null){
+				welcomeBenificarySmsService.sendWelcomeSMStoBenificiary(identityDTO.getContact().getEmergencyContactNum(),beneficiary.getFirstName()+" "+beneficiary.getLastName(),beneficiary.getBeneficiaryID());
+			}
 		}
 		return OutputMapper.gson().toJson(beneficiary);
 	}
+
+
 
 	private void setSaveDemographicDetails(CommonIdentityDTO identityDTO, BeneficiaryModel beneficiaryModel) {
 		if(null != beneficiaryModel.getI_bendemographics()) {
