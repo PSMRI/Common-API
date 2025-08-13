@@ -218,9 +218,12 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 			} else {
 				return response.toString();
 			}
-			if(beneficiaryModel.getBenPhoneMaps().get(0).getPhoneNo()!=null){
-				welcomeBenificarySmsService.sendWelcomeSMStoBenificiary(beneficiaryModel.getBenPhoneMaps().get(0).getPhoneNo(),beneficiary.getFirstName()+" "+beneficiary.getLastName(),beneficiary.getBeneficiaryID());
+			if(beneficiary!=null){
+				if(beneficiary.getBenPhoneMaps().get(0).getPhoneNo()!=null){
+					welcomeBenificarySmsService.sendWelcomeSMStoBenificiary(beneficiary.getBenPhoneMaps().get(0).getPhoneNo(),beneficiary.getFirstName()+" "+beneficiary.getLastName(),beneficiary.getBeneficiaryID());
+				}
 			}
+
 		}
 		return OutputMapper.gson().toJson(beneficiary);
 	}
