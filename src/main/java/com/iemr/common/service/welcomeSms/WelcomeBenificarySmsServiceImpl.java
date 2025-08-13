@@ -26,8 +26,8 @@ public class WelcomeBenificarySmsServiceImpl  implements   WelcomeBenificarySmsS
     @Value("${sms-entityid}")
     private String smsEntityId;
 
-    @Value("${source-address}")
-    private String smsSourceAddress;
+//    @Value("${source-address}")
+    private String smsSourceAddress ="PSMRAM";
     @Value("${send-message-url}")
     private  String SMS_GATEWAY_URL;
 
