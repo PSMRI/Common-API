@@ -220,16 +220,19 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 		this.validator = validator;
 	}
 
+	private void checkUserAccountStatus(User user) throws IEMRException {
+		if (user.getDeleted()) {
+			throw new IEMRException("Your account is locked or de-activated. Please contact administrator");
+		} else if (user.getStatusID() > 2) {
+			throw new IEMRException("Your account is not active. Please contact administrator");
+		}
+	}
+
 	@Override
 	public List<User> userAuthenticate(String userName, String password) throws Exception {
 		List<User> users = iEMRUserRepositoryCustom.findByUserNameNew(userName);
 		if (users.size() != 1) {
-			throw new IEMRException("User login failed due to incorrect username/password");
-		} else {
-			if (users.get(0).getDeleted())
-				throw new IEMRException("Your account is locked or de-activated. Please contact administrator");
-			else if (users.get(0).getStatusID() > 2)
-				throw new IEMRException("Your account is not active. Please contact administrator");
+			throw new IEMRException("Invalid username or password");
 		}
 		int failedAttempt = 0;
 		if (failedLoginAttempt != null)
@@ -241,6 +244,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 			int validatePassword;
 			validatePassword = securePassword.validatePassword(password, user.getPassword());
 			if (validatePassword == 1) {
+				checkUserAccountStatus(user);
 				int iterations = 1001;
 				char[] chars = password.toCharArray();
 				byte[] salt = getSalt();
@@ -254,27 +258,37 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 				iEMRUserRepositoryCustom.save(user);
 
 			} else if (validatePassword == 2) {
+				checkUserAccountStatus(user);
 				iEMRUserRepositoryCustom.save(user);
 
 			} else if (validatePassword == 3) {
+				checkUserAccountStatus(user);
 				iEMRUserRepositoryCustom.save(user);
 			} else if (validatePassword == 0) {
-				if (user.getFailedAttempt() + 1 >= failedAttempt) {
+				if (user.getFailedAttempt() + 1 < failedAttempt) {
+					user.setFailedAttempt(user.getFailedAttempt() + 1);
+					user = iEMRUserRepositoryCustom.save(user);
+					logger.warn("User Password Wrong");
+					throw new IEMRException("Invalid username or password");
+				} else if (user.getFailedAttempt() + 1 >= failedAttempt) {
 					user.setFailedAttempt(user.getFailedAttempt() + 1);
 					user.setDeleted(true);
 					user = iEMRUserRepositoryCustom.save(user);
+					logger.warn("User Account has been locked after reaching the limit of {} failed login attempts.",
+							ConfigProperties.getInteger("failedLoginAttempt"));
+
 					throw new IEMRException(
-							"User login failed due to incorrect username/password. Your account is locked due to "
-									+ ConfigProperties.getInteger("failedLoginAttempt")
-									+ " failed attempts. Please contact administrator.");
+							"Invalid username or password. Please contact administrator.");
 				} else {
 					user.setFailedAttempt(user.getFailedAttempt() + 1);
 					user = iEMRUserRepositoryCustom.save(user);
-					throw new IEMRException("User login failed due to incorrect username/password. "
-							+ (ConfigProperties.getInteger("failedLoginAttempt") - user.getFailedAttempt())
-							+ " more attempt left.");
+					logger.warn("Failed login attempt {} of {} for a user account.",
+							user.getFailedAttempt(), ConfigProperties.getInteger("failedLoginAttempt"));
+					throw new IEMRException(
+							"Invalid username or password. Please contact administrator.");
 				}
 			} else {
+				checkUserAccountStatus(user);
 				if (user.getFailedAttempt() != 0) {
 					user.setFailedAttempt(0);
 					user = iEMRUserRepositoryCustom.save(user);
@@ -307,12 +321,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 		List<User> users = iEMRUserRepositoryCustom.findByUserName(userName);
 
 		if (users.size() != 1) {
-			throw new IEMRException("User login failed due to incorrect username/password");
-		} else {
-			if (users.get(0).getDeleted())
-				throw new IEMRException("Your account is locked or de-activated. Please contact administrator");
-			else if (users.get(0).getStatusID() > 2)
-				throw new IEMRException("Your account is not active. Please contact administrator");
+			throw new IEMRException("Invalid username or password");
 		}
 		int failedAttempt = 0;
 		if (failedLoginAttempt != null)
@@ -324,6 +333,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 			int validatePassword;
 			validatePassword = securePassword.validatePassword(password, user.getPassword());
 			if (validatePassword == 1) {
+				checkUserAccountStatus(user);
 				int iterations = 1001;
 				char[] chars = password.toCharArray();
 				byte[] salt = getSalt();
@@ -337,25 +347,34 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 				iEMRUserRepositoryCustom.save(user);
 
 			} else if (validatePassword == 2) {
+				checkUserAccountStatus(user);
 				iEMRUserRepositoryCustom.save(user);
 
 			} else if (validatePassword == 0) {
-				if (user.getFailedAttempt() + 1 >= failedAttempt) {
+				if (user.getFailedAttempt() + 1 < failedAttempt) {
+					user.setFailedAttempt(user.getFailedAttempt() + 1);
+					user = iEMRUserRepositoryCustom.save(user);
+					logger.warn("User Password Wrong");
+					throw new IEMRException("Invalid username or password");
+				} else if (user.getFailedAttempt() + 1 >= failedAttempt) {
 					user.setFailedAttempt(user.getFailedAttempt() + 1);
 					user.setDeleted(true);
 					user = iEMRUserRepositoryCustom.save(user);
+					logger.warn("User Account has been locked after reaching the limit of {} failed login attempts.",
+							ConfigProperties.getInteger("failedLoginAttempt"));
+
 					throw new IEMRException(
-							"User login failed due to incorrect username/password. Your account is locked due to "
-									+ ConfigProperties.getInteger("failedLoginAttempt")
-									+ " failed attempts. Please contact administrator.");
+							"Invalid username or password. Please contact administrator.");
 				} else {
 					user.setFailedAttempt(user.getFailedAttempt() + 1);
 					user = iEMRUserRepositoryCustom.save(user);
-					throw new IEMRException("User login failed due to incorrect username/password. "
-							+ (ConfigProperties.getInteger("failedLoginAttempt") - user.getFailedAttempt())
-							+ " more attempt left.");
+					logger.warn("Failed login attempt {} of {} for a user account.",
+							user.getFailedAttempt(), ConfigProperties.getInteger("failedLoginAttempt"));
+					throw new IEMRException(
+							"Invalid username or password. Please contact administrator.");
 				}
 			} else {
+				checkUserAccountStatus(user);
 				if (user.getFailedAttempt() != 0) {
 					user.setFailedAttempt(0);
 					user = iEMRUserRepositoryCustom.save(user);
@@ -376,10 +395,10 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 			User user = users.get(0);
 			try {
 				if (!securePassword.validatePasswordExisting(loginRequest.getPassword(), user.getPassword())) {
-					throw new IEMRException("User login failed due to incorrect username/password");
+					throw new IEMRException("Invalid username or password");
 				}
 			} catch (Exception e) {
-				throw new IEMRException("User login failed due to incorrect username/password");
+				throw new IEMRException("Invalid username or password");
 			}
 			loginResponseModel = userMapper.userDataToLoginResponse(user);
 			logger.info("Login response is " + loginResponseModel.toString());
@@ -391,7 +410,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 			// loginResponseModel.setHostName(hostName);
 			// loginResponseModel.setIpAddress(ipAddress);
 		} else {
-			throw new IEMRException("User login failed due to incorrect username/password");
+			throw new IEMRException("Invalid username or password");
 		}
 
 		return loginResponseModel;
@@ -614,7 +633,8 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 				User users = iEMRUserRepositoryCustom
 						.findUserByUserID(m_UserSecurityQMapping.iterator().next().getUserID());
 				if (users == null) {
-					throw new IEMRException("User does not exist or is not active");
+					logger.warn("User validation failed: user not found for provided ID.");
+					throw new IEMRException("Invalid user. Please contact administrator.");
 				}
 
 				Iterable<UserSecurityQMapping> obj = iEMRUserSecurityQuesAnsRepository.saveAll(m_UserSecurityQMapping);
@@ -627,7 +647,9 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 					sessionObject.deleteSessionObject((users.getUserID().toString() + users.getUserName()));
 					return generateTransactionIdForPasswordChange(users);
 				} else {
-					throw new IEMRException("Failed to save security question and answers, Please try again");
+					logger.error(
+							"Failed to save user security questions. Repository save operation returned empty result.");
+					throw new IEMRException("Unable to complete the operation. Please try again later.");
 				}
 			} else
 				throw new IEMRException("Invalid user, please contact administrator");
@@ -867,9 +889,9 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 			throws JSONException, NoSuchAlgorithmException, IEMRException {
 		String key = generateKey(responseObj);
 		// commented the below code to restrict IP address and hostname to be sent on UI
-//		responseObj.put("loginIPAddress", ipAddress);
-//		responseObj.put("ipAddress", ipAddress);
-//		responseObj.put("hostName", hostName);
+		// responseObj.put("loginIPAddress", ipAddress);
+		// responseObj.put("ipAddress", ipAddress);
+		// responseObj.put("hostName", hostName);
 		responseObj = validator.updateCacheObj(responseObj, key, "");
 		setConcurrentCheckSessionObject(responseObj, key);
 		return responseObj;
@@ -958,10 +980,10 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 		}
 		try {
 			if (!securePassword.validatePasswordExisting(request.getPassword(), users.get(0).getPassword())) {
-				throw new Exception("Force logout failed due to incorrect password");
+				throw new Exception("Force logout failed");
 			}
 		} catch (Exception e) {
-			throw new Exception("Force logout failed due to incorrect password");
+			throw new Exception("Force logout failed");
 		}
 		userForceLogout(request, users.get(0));
 	}
@@ -1049,15 +1071,15 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 		LoginRequestModel m_user = InputMapper.gson().fromJson(jsonreq, LoginRequestModel.class);
 		List<User> users = iEMRUserRepositoryCustom.findByUserName(m_user.getUserName());
 		if (users.size() != 1) {
-			throw new IEMRException("User login failed due to incorrect username/password");
+			throw new IEMRException("Invalid username or password");
 		}
 		User user = users.get(0);
 		try {
 			if (!securePassword.validatePasswordExisting(m_user.getPassword(), user.getPassword())) {
-				throw new IEMRException("User login failed due to incorrect username/password");
+				throw new IEMRException("Invalid username or password");
 			}
 		} catch (Exception e) {
-			throw new IEMRException("User login failed due to incorrect username/password");
+			throw new IEMRException("Invalid username or password");
 		}
 		user.setM_UserServiceRoleMapping(getUserServiceRoleMapping(user.getUserID()));
 		return users;
@@ -1105,7 +1127,10 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 			if (request.has("userName") && request.get("userName") != null) {
 				List<User> users = iEMRUserRepositoryCustom.findByUserName(request.get("userName").getAsString());
 				if (users.size() != 1) {
-					throw new IEMRException("User does not exist or is not active or more than 1 user found");
+					logger.warn("User validation failed: not found or duplicate entries for username '{}'",
+							request.get("userName").getAsString());
+					throw new IEMRException("Unable to validate credentials. Please contact administrator.");
+
 				}
 				User user = users.get(0);
 				sessionObject.deleteSessionObject((user.getUserID().toString() + user.getUserName()));
@@ -1118,8 +1143,12 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 								user.getUserID(), securityAnswers.getQuestionId(), securityAnswers.getAnswer());
 
 						if (userSecurityQuestionAnswers == null
-								|| userSecurityQuestionAnswers.getUserSecurityQAID() == null)
-							throw new IEMRException("Security answers does not match");
+								|| userSecurityQuestionAnswers.getUserSecurityQAID() == null) {
+							logger.warn("Security answer mismatch for userId={}, questionId={}",
+									user.getUserID(), securityAnswers.getQuestionId());
+							throw new IEMRException(
+									"We couldn't verify your answers. Please try again");
+						}
 
 						pointer++;
 					}
@@ -1132,7 +1161,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 					throw new IEMRException("Invalid questions, validation failed, please contact administrator");
 
 			} else
-				throw new IEMRException("Invalid/NULL user name");
+				throw new IEMRException("Invalid request. Please try again.");
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			throw new IEMRException(e.getMessage());

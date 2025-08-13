@@ -296,7 +296,7 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	        
 	        // Loop through the worklist data and format the response
 	        for (Object[] row : worklistData) {
-	        	if (row == null || row.length < 22)
+	        	if (row == null || row.length < 24)
 	        	{
 	        		logger.warn("invalid row data received");
 	        		continue;
@@ -334,7 +334,8 @@ public class GrievanceHandlingServiceImpl implements GrievanceHandlingService {
 	                ageFormatted,
 	                (Boolean) row[21], // retryNeeded
 	                (Integer) row[22], // callCounter
-	                (Timestamp) row[13] //lastCall 
+	                (Timestamp) row[13], // lastCall
+    				(Boolean) row[23]   //beneficiaryConsent
 
 	            );
 
