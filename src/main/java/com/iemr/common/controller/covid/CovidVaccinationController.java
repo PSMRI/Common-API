@@ -83,8 +83,7 @@ public class CovidVaccinationController {
 	 * @return Covid vaccination details of a beneficiary
 	 */
 	@Operation(summary = "Getting beneficiary covid vaccination details")
-
-	@PostMapping(value = { "/getCovidVaccinationDetails" })
+	@PostMapping(value = { "/getCovidVaccinationDetails" }, produces = MediaType.APPLICATION_JSON)
 	public String getCovidVaccinationDetails(
 			@Param(value = "{\"beneficiaryRegID\":\"Long\"}") @RequestBody CovidVaccinationStatus covidVaccinationStatus,
 			@RequestHeader(value = "Authorization") String Authorization) {
@@ -126,7 +125,7 @@ public class CovidVaccinationController {
 	 */
 
 	@Operation(summary = "Save beneficiary covid vaccination details")
-	@PostMapping(value = { "/saveCovidVaccinationDetails" })
+	@PostMapping(value = { "/saveCovidVaccinationDetails" }, produces = MediaType.APPLICATION_JSON)
 	public String saveCovidVaccinationDetails(
 			@Param(value = "{\"covidVSID\": \"Long\",\"beneficiaryRegID\":\"Long\","
 					+ "\"CovidVaccineTypeID\":\"Integer\","

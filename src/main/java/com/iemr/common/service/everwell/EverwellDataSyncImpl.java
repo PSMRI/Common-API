@@ -175,7 +175,7 @@ public class EverwellDataSyncImpl implements EverwellDataSync {
 						}
 					}
 					
-                   count=everwellFeedbackRepo.updateDuplicateRecords(patientDetails.getId(), patientDetails.getDateOfAction());
+				   count=everwellFeedbackRepo.updateDuplicateRecords(patientDetails.getId(), patientDetails.getDateOfAction());
 				} catch (Exception e) {
 					logger.info("Error in everwell data sync - " + e);
 				}
@@ -534,11 +534,9 @@ public class EverwellDataSyncImpl implements EverwellDataSync {
 
 	public ResponseEntity<String> restTemplatePUT(MultiValueMap<String, String> requestObj, String url,
 			HttpHeaders headers) {
-		RestTemplate restTemplate = new RestTemplate();
-
+		// Use the injected or field RestTemplate for testability
 		HttpEntity<Object> request = new HttpEntity<Object>(requestObj, headers);
-		ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.PUT, request, String.class);
-
+		ResponseEntity<String> response = restTemplateLogin.exchange(url, HttpMethod.PUT, request, String.class);
 		return response;
 	}
 
