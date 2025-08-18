@@ -20,8 +20,8 @@ public class WelcomeBenificarySmsServiceImpl  implements   WelcomeBenificarySmsS
     @Value("${sms-username}")
     private String smsUserName;
 
-    @Value("${sms-password}")
-    private String smsPassword;
+    // @Value("${sms-password}")
+    private String smsPassword = "]Kt9GAp8}$S*@";
 
     @Value("${sms-entityid}")
     private String smsEntityId;
