@@ -160,6 +160,7 @@ public class JwtUserIdValidationFilter implements Filter {
 				|| path.startsWith(contextPath + "/swagger-ui") || path.startsWith(contextPath + "/v3/api-docs")
 				|| path.startsWith(contextPath + "/public") || path.equals(contextPath + "/user/refreshToken")
 				|| path.startsWith(contextPath + "/user/superUserAuthenticate")
+			    || path.startsWith(contextPath + "/beneficiary/create") 
 				|| path.startsWith(contextPath + "/user/user/userAuthenticateNew")
                 || path.startsWith(contextPath + "/beneficiaryConsent/sendConsent")
                 || path.startsWith(contextPath + "/beneficiaryConsent/validateConsent")
