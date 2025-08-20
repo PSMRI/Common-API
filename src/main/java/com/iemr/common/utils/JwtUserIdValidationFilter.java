@@ -150,7 +150,8 @@ public class JwtUserIdValidationFilter implements Filter {
 		if (userAgent == null)
 			return false;
 		userAgent = userAgent.toLowerCase();
-		return userAgent.contains("okhttp"); // iOS (custom clients)
+		// return userAgent.contains("okhttp"); // iOS (custom clients)
+		return userAgent.contains("okhttp") || userAgent.contains("java/"); // iOS (custom clients)
 	}
 
 	private boolean shouldSkipAuthentication(String path, String contextPath) {
