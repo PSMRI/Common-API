@@ -150,7 +150,7 @@ public class JwtUserIdValidationFilter implements Filter {
 		if (userAgent == null)
 			return false;
 		userAgent = userAgent.toLowerCase();
-		logger.info("User agent="+userAgent);
+		logger.info(userAgent);
 		// return userAgent.contains("okhttp"); // iOS (custom clients)
 		return userAgent.contains("okhttp") || userAgent.contains("java/"); // iOS (custom clients)
 	}
