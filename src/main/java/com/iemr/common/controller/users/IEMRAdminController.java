@@ -80,8 +80,8 @@ public class IEMRAdminController {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	private InputMapper inputMapper = new InputMapper();
 
-	@Value("${captcha.enable-captcha}")
-	private boolean enableCaptcha;
+	// @Value("${captcha.enable-captcha}")
+	private boolean enableCaptcha = false;
 
 	@Autowired
 	private CaptchaValidationService captchaValidatorService;
