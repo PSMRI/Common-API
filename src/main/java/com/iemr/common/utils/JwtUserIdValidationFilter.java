@@ -165,6 +165,8 @@ public class JwtUserIdValidationFilter implements Filter {
 					|| path.startsWith(contextPath + "/user/user/userAuthenticateNew")
 					|| path.startsWith(contextPath + "/beneficiaryConsent/sendConsent")
 					|| path.startsWith(contextPath + "/beneficiaryConsent/validateConsent")
+					|| path.startsWith(contextPath + "/bulkRegistration")
+					|| path.startsWith(contextPath + "/download-error-sheet")
 					|| path.startsWith(contextPath + "/dynamicForm")
 					|| path.startsWith(contextPath + "/beneficiaryConsent/resendConsent")
 					|| path.startsWith(contextPath + "/firebaseNotification/sendNotification")
