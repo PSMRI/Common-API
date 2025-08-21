@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RequestMapping(value = "dynamicForm",headers = "Authorization")
+@RequestMapping(value = "dynamicForm")
 @RestController
 public class DynamicFormController {
     @Autowired
