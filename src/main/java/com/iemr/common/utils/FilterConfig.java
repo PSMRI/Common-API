@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 @Configuration
 public class FilterConfig {
 
-	@Value("${cors.allowed-origins}")
+	@Value("${cors.allowed-origin}")
 	private String allowedOrigins;
 
 	@Bean
