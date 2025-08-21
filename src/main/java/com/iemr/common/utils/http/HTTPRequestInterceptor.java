@@ -38,6 +38,10 @@ import com.iemr.common.utils.validator.Validator;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import java.util.Arrays;
+import java.util.List;
+
 @Configuration
 @Component
 public class HTTPRequestInterceptor implements HandlerInterceptor {
@@ -125,17 +129,21 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
 					break;
 				}
 			} catch (Exception e) {
+				String origin = request.getHeader("Origin");
+
 				OutputResponse output = new OutputResponse();
 				output.setError(e);
 				response.getOutputStream().print(output.toString());
 				response.setContentType(MediaType.APPLICATION_JSON);
 				response.setContentLength(output.toString().length());
-				response.setHeader("Access-Control-Allow-Origin", "*");
+				response.setHeader("Access-Control-Allow-Origin", "http://devbox.bizbrolly.com:4901");
 				status = false;
 			}
 		}
 		return status;
 	}
+
+
 
 	@Override
 	public void postHandle(HttpServletRequest request, HttpServletResponse response, Object object, ModelAndView model)
