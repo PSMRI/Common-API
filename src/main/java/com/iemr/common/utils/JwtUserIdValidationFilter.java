@@ -164,6 +164,7 @@ public class JwtUserIdValidationFilter implements Filter {
 					|| path.startsWith(contextPath + "/beneficiaryConsent/sendConsent")
 					|| path.startsWith(contextPath + "/beneficiaryConsent/validateConsent")
 					|| path.startsWith(contextPath + "/dynamicForm")
+					|| path.startsWith(contextPath + "/beneficiary/create")
 					|| path.startsWith(contextPath + "/beneficiaryConsent/resendConsent")
 					|| path.startsWith(contextPath + "/firebaseNotification/sendNotification")
 					|| path.startsWith(contextPath + "/user/userAuthenticateV1")
@@ -175,27 +176,7 @@ public class JwtUserIdValidationFilter implements Filter {
 					|| path.startsWith(contextPath + "/user/validateSecurityQuestionAndAnswer")
 					|| path.startsWith(contextPath + "/user/logOutUserFromConcurrentSession");
 		}
-	private boolean shouldSkipAuthentication(String path, String contextPath) {
-		return path.equals(contextPath + "/user/userAuthenticate")
-				|| path.equalsIgnoreCase(contextPath + "/user/logOutUserFromConcurrentSession")
-				|| path.startsWith(contextPath + "/swagger-ui") || path.startsWith(contextPath + "/v3/api-docs")
-				|| path.startsWith(contextPath + "/public") || path.equals(contextPath + "/user/refreshToken")
-				|| path.startsWith(contextPath + "/user/superUserAuthenticate")
-			    || path.startsWith(contextPath + "/beneficiary/create")
-				|| path.startsWith(contextPath + "/user/user/userAuthenticateNew")
-                || path.startsWith(contextPath + "/beneficiaryConsent/sendConsent")
-                || path.startsWith(contextPath + "/beneficiaryConsent/validateConsent")
-                || path.startsWith(contextPath + "/beneficiaryConsent/resendConsent")
-			    || path.startsWith(contextPath + "/firebaseNotification/sendNotification")
-				|| path.startsWith(contextPath + "/user/userAuthenticateV1")
-				|| path.startsWith(contextPath + "/user/forgetPassword")
-				|| path.startsWith(contextPath + "/user/setForgetPassword")
-				|| path.startsWith(contextPath + "/user/changePassword")
-				|| path.startsWith(contextPath + "/user/saveUserSecurityQuesAns")
-				|| path.startsWith(contextPath + "/user/userLogout")
-				|| path.startsWith(contextPath + "/user/validateSecurityQuestionAndAnswer")
-				|| path.startsWith(contextPath + "/user/logOutUserFromConcurrentSession");
-	}
+
 
 	private String getJwtTokenFromCookies(HttpServletRequest request) {
 		Cookie[] cookies = request.getCookies();
