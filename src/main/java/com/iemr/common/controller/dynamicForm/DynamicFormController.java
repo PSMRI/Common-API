@@ -82,7 +82,7 @@ public class DynamicFormController {
         }
     }
 
-    @GetMapping(value = "form/{formId}/fields",headers = "Authorization")
+    @GetMapping(value = "form/{formId}/fields")
     public ResponseEntity<ApiResponse<?>> getStructuredForm(@PathVariable String formId) {
         try {
             Object result = formMasterService.getStructuredFormByFormId(formId);
