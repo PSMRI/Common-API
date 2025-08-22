@@ -126,7 +126,6 @@ public class KMFileManagerServiceImpl implements KMFileManagerService {
 		return kmFileManagers.toString();
 	}
 
-	
 	private ArrayList<KMFileManager> addKMFile(Iterable<KMFileManager> kmFileManagers)
 			throws IOException, NoSuchAlgorithmException {
 		ArrayList<KMFileManager> savedFileManagers = new ArrayList<KMFileManager>();
@@ -141,9 +140,11 @@ public class KMFileManagerServiceImpl implements KMFileManagerService {
 
 					// Extract extension from fileName
 					String extensionFromName = FilenameUtils.getExtension(kmFileManager.getFileName());
+					logger.info("extensionFromName " + extensionFromName);
 
 					// Normalize payload fileExtension (remove dot if present)
 					String extensionFromPayload = kmFileManager.getFileExtension();
+					logger.info("extensionPayload " + extensionFromPayload);
 					if (extensionFromPayload != null && extensionFromPayload.startsWith(".")) {
 						extensionFromPayload = extensionFromPayload.substring(1);
 					}
@@ -196,38 +197,34 @@ public class KMFileManagerServiceImpl implements KMFileManagerService {
 					if (kmFileManager.getVanID() != null)
 						documentPath += kmFileManager.getVanID() + "/";
 
-				documentPath += version + "/";
-				documentPath += kmFileManager.getFileName();
-				kmFileManager.setKmUploadStatus(KM_UPLOADSTATUS_STARTED);
-				String uuid = kmService.createDocument(documentPath, tempFilePath + "/" + kmFileManager.getFileName());
-				if (uuid != null) {
-					kmFileManager.setKmUploadStatus(KM_UPLOADSTATUS_COMPLETED);
-					kmFileManager.setFileUID(uuid);
-					
-					kmFileManager.setSubCategoryID(kmFileManager.getSubCategoryID());
-					
-					savedFileManagers.add(kmFileManagerRepository.save(kmFileManager));
-					if (kmFileManager.getSubCategoryID() != null) {
-						updateSubcategoryFilePath(kmFileManager);
+					documentPath += version + "/";
+					documentPath += kmFileManager.getFileName();
+					kmFileManager.setKmUploadStatus(KM_UPLOADSTATUS_STARTED);
+					String uuid = kmService.createDocument(documentPath,
+							tempFilePath + "/" + kmFileManager.getFileName());
+					if (uuid != null) {
+						kmFileManager.setKmUploadStatus(KM_UPLOADSTATUS_COMPLETED);
+						kmFileManager.setFileUID(uuid);
+
+						kmFileManager.setSubCategoryID(kmFileManager.getSubCategoryID());
+
+						savedFileManagers.add(kmFileManagerRepository.save(kmFileManager));
+						if (kmFileManager.getSubCategoryID() != null) {
+							updateSubcategoryFilePath(kmFileManager);
+						}
 					}
 				}
 			}
-		}
-		}
-		catch(Exception e)
-		{
+		} catch (Exception e) {
 			logger.error("error " + e.getMessage());
-		}
-		finally
-		{
-			if(newFile !=null)
-			newFile.close();	
-			if(fis !=null)
-			fis.close();
+		} finally {
+			if (newFile != null)
+				newFile.close();
+			if (fis != null)
+				fis.close();
 		}
 		return savedFileManagers;
 	}
-
 
 	private void updateSubcategoryFilePath(KMFileManager kmFileManager) {
 		subCategoryRepository.updateFilePath(kmFileManager.getSubCategoryID(), kmFileManager.getFileUID());
@@ -238,7 +235,7 @@ public class KMFileManagerServiceImpl implements KMFileManagerService {
 		List<KMFileManager> files = kmFileManagerRepository.getKMFileByFileName(kmFileManager.getProviderServiceMapID(),
 				kmFileManager.getFileName());
 		version = "V" + (files.size() + 1);
-		
+
 		return version;
 	}
 }
