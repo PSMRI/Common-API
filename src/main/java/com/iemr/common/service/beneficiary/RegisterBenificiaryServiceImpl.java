@@ -118,7 +118,6 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 	@Override
 	public Integer updateBenificiary(BeneficiaryModel benificiaryDetails, String auth) throws IEMRException {
 		Integer updatedRows = 0;
-
 		IdentityEditDTO identityEditDTO = identityBenEditMapper.BenToIdentityEditMapper(benificiaryDetails);
 		setDemographicDetails(identityEditDTO,benificiaryDetails);
 		
@@ -128,11 +127,9 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 					benificiaryDetails.getCreatedBy()));
 		}
 		identityEditDTO.setDob(benificiaryDetails.getDOB());
-		// identityEditDTO.setOtherFields(benificiaryDetails.getOtherFields());
-		// String jsoninput=new Gson().toJson(identityEditDTO);
 		updatedRows = identityBeneficiaryService.editIdentityEditDTO(identityEditDTO, auth,
 				benificiaryDetails.getIs1097());
-
+			
 		return updatedRows;
 	}
 
@@ -146,11 +143,22 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 				identityEditDTO.setReligion(benificiaryDetails.getI_bendemographics().getReligion());
 			else 
 				identityEditDTO.setReligion(benificiaryDetails.getI_bendemographics().getReligionName());
-			if(null != benificiaryDetails.getOccupation())
-				identityEditDTO.setOccupationName(benificiaryDetails.getOccupation());
-			else
-				identityEditDTO.setOccupationName(benificiaryDetails.getI_bendemographics().getOccupation());
-			identityEditDTO.setEducation(benificiaryDetails.getI_bendemographics().getEducationName());
+
+			if (null != benificiaryDetails.getOccupation()) {
+   				identityEditDTO.setOccupationName(benificiaryDetails.getOccupation());
+			} else if (null != benificiaryDetails.getI_bendemographics()  &&
+         		null != benificiaryDetails.getI_bendemographics().getOccupation()) {
+    			identityEditDTO.setOccupationName(benificiaryDetails.getI_bendemographics().getOccupation());
+			} else {
+    			identityEditDTO.setOccupationName(benificiaryDetails.getOccupationName());
+			}
+
+			if (null != benificiaryDetails.getEducation()) {
+    			identityEditDTO.setEducation(benificiaryDetails.getEducation());
+			} else if (null != benificiaryDetails.getI_bendemographics() &&
+           		null != benificiaryDetails.getI_bendemographics().getEducationName()) {
+    			identityEditDTO.setEducation(benificiaryDetails.getI_bendemographics().getEducationName());
+			} 
 			if(null != benificiaryDetails.getIncomeStatus())
 				identityEditDTO.setIncomeStatus(benificiaryDetails.getIncomeStatus());
 			else
@@ -231,12 +239,25 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 				identityDTO.setReligion(beneficiaryModel.getI_bendemographics().getReligion());
 			else 
 				identityDTO.setReligion(beneficiaryModel.getI_bendemographics().getReligionName());
-			if(null != beneficiaryModel.getOccupation())
-				identityDTO.setOccupationName(beneficiaryModel.getOccupation());
-			else
-				identityDTO.setOccupationName(beneficiaryModel.getI_bendemographics().getOccupation());
-			if(null != beneficiaryModel.getI_bendemographics().getEducationName())
-				identityDTO.setEducation(beneficiaryModel.getI_bendemographics().getEducationName());
+			
+			if (null != beneficiaryModel.getOccupation()) {
+    			identityDTO.setOccupationName(beneficiaryModel.getOccupation());
+			} else if (null != beneficiaryModel.getI_bendemographics()  &&
+         		null != beneficiaryModel.getI_bendemographics().getOccupation()) {
+    			identityDTO.setOccupationName(beneficiaryModel.getI_bendemographics().getOccupation());
+			} else {
+    			identityDTO.setOccupationName(beneficiaryModel.getOccupationName());
+			}
+
+			if (null != beneficiaryModel.getEducation()) {
+    			identityDTO.setEducation(beneficiaryModel.getEducation());
+			} else if (null != beneficiaryModel.getI_bendemographics() &&
+           		null != beneficiaryModel.getI_bendemographics().getEducationName()) {
+    			identityDTO.setEducation(beneficiaryModel.getI_bendemographics().getEducationName());
+			} 
+
+
+
 			if(null != beneficiaryModel.getIncomeStatus())
 				identityDTO.setIncomeStatus(beneficiaryModel.getIncomeStatus());
 			else
