@@ -39,8 +39,6 @@ import com.iemr.common.utils.validator.Validator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 @Component
