@@ -62,6 +62,8 @@ public class FirebaseNotificationService {
     @Autowired
     private JwtUtil jwtUtil;
 
+    private Message message;
+
 
     public String sendNotification(NotificationMessage notificationMessage) {
         if (firebaseMessaging == null) {
