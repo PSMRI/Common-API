@@ -55,5 +55,4 @@ public interface NotificationService {
 
 	String updateEmergencyContacts(String request)
 			throws JSONException, NoSuchAlgorithmException, IOException, IEMRException, Exception;
-
 }
