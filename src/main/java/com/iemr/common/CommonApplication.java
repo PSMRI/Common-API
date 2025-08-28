@@ -82,7 +82,4 @@ public class CommonApplication extends SpringBootServletInitializer {
 
 		return template;
 	}
-
 }
-
-
