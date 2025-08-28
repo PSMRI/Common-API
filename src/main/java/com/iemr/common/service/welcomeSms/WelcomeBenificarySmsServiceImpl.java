@@ -20,14 +20,14 @@ public class WelcomeBenificarySmsServiceImpl  implements   WelcomeBenificarySmsS
     @Value("${sms-username}")
     private String smsUserName;
 
-    // @Value("${sms-password}")
-    private String smsPassword = "]Kt9GAp8}$S*@";
+     @Value("${sms-password}")
+    private String smsPassword ;
 
     @Value("${sms-entityid}")
     private String smsEntityId;
 
-//    @Value("${source-address}")
-    private String smsSourceAddress ="PSMRAM";
+    @Value("${source-address}")
+    private String smsSourceAddress;
     @Value("${send-message-url}")
     private  String SMS_GATEWAY_URL;
 
