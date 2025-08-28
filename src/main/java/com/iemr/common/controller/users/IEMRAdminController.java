@@ -80,8 +80,8 @@ public class IEMRAdminController {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	private InputMapper inputMapper = new InputMapper();
 
-	// @Value("${captcha.enable-captcha}")
-	private boolean enableCaptcha = false;
+	 @Value("${captcha.enable-captcha}")
+	private boolean enableCaptcha ;
 
 	@Autowired
 	private CaptchaValidationService captchaValidatorService;
@@ -257,34 +257,28 @@ public class IEMRAdminController {
 				logger.warn("Token validation failed: invalid token provided.");
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
 			}
-
 			Claims claims = jwtUtil.getAllClaimsFromToken(refreshToken);
-
 			// Verify token type
 			if (!"refresh".equals(claims.get("token_type", String.class))) {
 				logger.warn("Token validation failed: incorrect token type in refresh request.");
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
 
 			}
-
 			// Check revocation using JTI
 			String jti = claims.getId();
 			if (!redisTemplate.hasKey("refresh:" + jti)) {
 				logger.warn("Token validation failed: refresh token is revoked or not found in store.");
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
 			}
-
 			// Get user details
 			// Get user details
 			String userId = claims.get("userId", String.class);
 			User user = iemrAdminUserServiceImpl.getUserById(Long.parseLong(userId));
-			
 			// Validate that the user still exists and is active
 			if (user == null) {
 				logger.warn("Token validation failed: user not found for userId in token.");
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
 			}
-			
 			if (user.getM_status() == null || !"Active".equalsIgnoreCase(user.getM_status().getStatus())) {
 				logger.warn("Token validation failed: user account is inactive or not in 'Active' status.");
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");

@@ -129,14 +129,12 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
 					break;
 				}
 			} catch (Exception e) {
-				String origin = request.getHeader("Origin");
-
 				OutputResponse output = new OutputResponse();
 				output.setError(e);
 				response.getOutputStream().print(output.toString());
 				response.setContentType(MediaType.APPLICATION_JSON);
 				response.setContentLength(output.toString().length());
-				response.setHeader("Access-Control-Allow-Origin", "http://devbox.bizbrolly.com:4901");
+				response.setHeader("Access-Control-Allow-Origin", "*");
 				status = false;
 			}
 		}

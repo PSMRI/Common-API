@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
 
-    @Value("${cors.allowed-origin}")
+    @Value("${cors.allowed-origins}")
     private String allowedOrigins;
 
     @Override
