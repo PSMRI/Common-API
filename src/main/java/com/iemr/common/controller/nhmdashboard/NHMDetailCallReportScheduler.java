@@ -38,8 +38,8 @@ public class NHMDetailCallReportScheduler {
 
 	Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
-//	@Value("${start-ctidatacheck-scheduler}")
-	private boolean startCtiDataCheckFlag = true;
+	@Value("${start-ctidatacheck-scheduler}")
+	private boolean startCtiDataCheckFlag ;
 
 
 	@Scheduled(cron = "${cron-scheduler-ctidatacheck}")
