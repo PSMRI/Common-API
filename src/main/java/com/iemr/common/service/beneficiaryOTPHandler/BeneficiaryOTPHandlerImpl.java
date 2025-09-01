@@ -67,18 +67,24 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
 
     @Autowired
     SMSTypeRepository smsTypeRepository;
+   @Value("${sms-template-name}")
+   private String  smsTemplateName ;
 
+   private String smsTemplate;
     @Value("${sms-username}")
     private String smsUserName;
 
-   // @Value("${sms-password}")
-    private String smsPassword ="]Kt9GAp8}$S*@";
+    @Value("${sms-password}")
+    private String smsPassword ;
+
+    @Value("${sms-message-type}")
+    private String smsMessageType;
 
     @Value("${sms-entityid}")
     private String smsEntityId;
 
-   // @Value("${source-address}")
-    private String smsSourceAddress = "PSMRAM";
+    @Value("${source-address}")
+    private String smsSourceAddress ;
     @Value("${send-message-url}")
     private  String SMS_GATEWAY_URL;
 
@@ -174,18 +180,18 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
 
         final RestTemplate restTemplate = new RestTemplate();
 
-        String dltTemplateId = smsTemplateRepository.findDLTTemplateID(28);
-        SMSTemplate template = smsTemplateRepository.findBySmsTemplateID(28);
+        Optional<SMSTemplate> smsTemplateData = smsTemplateRepository.findBySmsTemplateName(smsTemplateName);
+        if(smsTemplateData.isPresent()){
+            smsTemplate = smsTemplateRepository.findBySmsTemplateID(smsTemplateData.get().getSmsTemplateID()).getSmsTemplate();
+
+        }
 
         String sendSMSAPI = SMS_GATEWAY_URL;
-        logger.info("sms template"+template);
+        logger.info("sms template"+smsTemplate);
 
         try {
-                        String  message ="Hello! Your OTP for providing consent for registration on AMRIT is "+otp+". This OTP is valid for 10 minutes. Kindly share it only with Asha to complete the process. Regards PSMRI";
-//            String message = template.getSmsTemplate()
-//                    .replace("$$OTP$$",String.valueOf(otp))
-//                    .replace("$$UserName$$", obj.getUserName())
-//                    .replace("$$Designation$$", obj.getDesignation());
+            String message = smsTemplate
+                    .replace("$$OTP$$",String.valueOf(otp));
 
             // Build payload
             Map<String, Object> payload = new HashMap<>();
@@ -193,8 +199,8 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
             payload.put("destinationAddress", obj.getMobNo());
             payload.put("message", message);
             payload.put("sourceAddress", smsSourceAddress);
-            payload.put("messageType", "SERVICE_IMPLICIT");
-            payload.put("dltTemplateId", "1007730329175402034");
+            payload.put("messageType", smsMessageType);
+            payload.put("dltTemplateId", smsTemplateData.get().getDltTemplateId());
             payload.put("entityId",smsEntityId );
             payload.put("otp", true);
             // Set headers

@@ -44,8 +44,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.iemr.common.data.users.User;
 import com.iemr.common.utils.IEMRApplBeans;
 
-import java.io.IOException;
-
 @SpringBootApplication
 @EnableScheduling
 public class CommonApplication extends SpringBootServletInitializer {
@@ -82,7 +80,4 @@ public class CommonApplication extends SpringBootServletInitializer {
 
 		return template;
 	}
-
-
 }
-

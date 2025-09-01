@@ -50,7 +50,7 @@ import java.util.Optional;
 public class FirebaseNotificationService {
     final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
-    @Autowired
+    @Autowired(required = false)
     FirebaseMessaging firebaseMessaging;
 
     @Autowired
@@ -62,8 +62,14 @@ public class FirebaseNotificationService {
     @Autowired
     private JwtUtil jwtUtil;
 
+    private Message message;
+
 
     public String sendNotification(NotificationMessage notificationMessage) {
+        if (firebaseMessaging == null) {
+            logger.error("⚠️ Firebase is not configured, skipping notification");
+            return null;
+        }
 
         Notification notification = Notification.builder().setTitle(notificationMessage.getTitle()).setBody(notificationMessage.getBody()).build();
 

@@ -22,6 +22,7 @@
 package com.iemr.common.repository.sms;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -56,6 +57,8 @@ public abstract interface SMSTemplateRepository extends CrudRepository<SMSTempla
 	
 	@Query("select smsTemplate.dltTemplateId from SMSTemplate smsTemplate where smsTemplate.smsTemplateID = :smsTemplateID and smsTemplate.deleted <> true")
 	public String findDLTTemplateID(@Param("smsTemplateID") Integer smsTemplateID );
+
+	public Optional<SMSTemplate> findBySmsTemplateName(String smsTemplateName);
 	
 	SMSTemplate findBySmsTemplateID(Integer smsTemplateID);
 

@@ -145,7 +145,6 @@ public class FormMasterServiceImpl implements FormMasterService {
                         }
                     } catch (JsonProcessingException e) {
                         System.err.println("JSON Parsing Error in field: " + field.getFieldId());
-                        e.printStackTrace();
                         throw new RuntimeException("Failed to parse JSON for field: " + field.getFieldId(), e);
                     }
 
