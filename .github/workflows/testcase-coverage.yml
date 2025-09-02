@@ -1,0 +1,44 @@
+name: TestCase Coverage Check
+on:
+  pull_request_target:  
+
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read  
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build with Maven
+        run: mvn clean verify
+
+      - name: Upload JaCoCo Report Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: target/site/jacoco/jacoco.xml
+          if-no-files-found: warn
+
+      - name: Compare JaCoCo Coverage
+        uses: madrapps/jacoco-report@v1.7.2
+        with:
+          paths: ${{ github.workspace }}/target/site/jacoco/jacoco.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 0
+          title: Code Coverage Report
+          comment-type: pr_comment
