@@ -1,6 +1,7 @@
 package com.iemr.common.utils;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,6 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Arrays;
 
 public class JwtUserIdValidationFilter implements Filter {
 
@@ -39,11 +39,11 @@ public class JwtUserIdValidationFilter implements Filter {
 
 		logger.debug("Incoming Origin: {}", origin);
 		logger.debug("Allowed Origins Configured: {}", allowedOrigins);
-
+		logger.info("Add server authorization header to response");
 		if (origin != null && isOriginAllowed(origin)) {
 			response.setHeader("Access-Control-Allow-Origin", origin);
 			response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-			response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, Jwttoken");
+			response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, Jwttoken, serverAuthorization, ServerAuthorization, serverauthorization, Serverauthorization");
 			response.setHeader("Access-Control-Allow-Credentials", "true");
 		} else {
 			logger.warn("Origin [{}] is NOT allowed. CORS headers NOT added.", origin);
@@ -150,7 +150,9 @@ public class JwtUserIdValidationFilter implements Filter {
 		if (userAgent == null)
 			return false;
 		userAgent = userAgent.toLowerCase();
-		return userAgent.contains("okhttp"); // iOS (custom clients)
+		logger.info(userAgent);
+		// return userAgent.contains("okhttp"); // iOS (custom clients)
+		return userAgent.contains("okhttp") || userAgent.contains("java/"); // iOS (custom clients)
 	}
 
 	private boolean shouldSkipAuthentication(String path, String contextPath) {
