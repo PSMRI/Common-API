@@ -115,7 +115,7 @@ public class EmailServiceImpl implements EmailService {
 
 	@Override
 	public String SendEmail(String request, String authToken) throws Exception {
-        ObjectMapper objectMapper = new ObjectMapper();
+		ObjectMapper objectMapper = new ObjectMapper();
 		EmailNotification notification = objectMapper.readValue(request, EmailNotification.class);
 
 		FeedbackDetails feedbackDetail = feedbackRepository.getFeedback(notification.getFeedbackID());
@@ -154,11 +154,15 @@ public class EmailServiceImpl implements EmailService {
 			feedbackdescription = feedbackDetail.getFeedback();
 		}
 
+		// Ensure all replacements are non-null
+		benName = benName == null ? "" : benName;
+		complaintAgainst = complaintAgainst == null ? "" : complaintAgainst;
+		feedbackdescription = feedbackdescription == null ? "" : feedbackdescription;
+
 		emailToSend = emailTemplate.getEmailTemplate().replace("BENEFICIARY_NAME", benName)
 				.replace("COMPLAINT_AGAINST", complaintAgainst).replace("FEEDBACK_DESCERIPTION", feedbackdescription);
 
 		if (subDistrictName != null) {
-
 			emailToSend = emailToSend.replace("SUB_DISTRICT_NAME", subDistrictName);
 		} else {
 			emailToSend = emailToSend.replace("from SUB_DISTRICT_NAME", "");

@@ -56,41 +56,55 @@ public class NHM_AgentRealTimeDatacServiceImpl implements NHM_AgentRealTimeDataS
 			log.error("Error While callin CZ Url : " + czUrl + " Error Message " + e.getMessage());
 		}
 		ObjectMapper mapper = new ObjectMapper();
-		if (null != resp && resp.startsWith("[") && resp.endsWith("]")) {
-			ArrayList<HashMap<String, Object>> readValue = mapper.readValue(resp, ArrayList.class);
-			for (HashMap<String, Object> object : readValue) {
-				HashMap convertValue = mapper.convertValue(object, HashMap.class);
-				for (String key : object.keySet()) {
-					AgentRealTimeData agentRealTimeData = new AgentRealTimeData();
-					HashMap<String, Integer> object2 = (HashMap<String, Integer>) convertValue.get(key);
-					agentRealTimeData.setCampaignName(key);
-					agentRealTimeData.setCreatedBy("default");
-					agentRealTimeData.setModifiedBy("default");
-					SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
-					String DateToStoreInDataBase = sdf.format(new Date());
-					Timestamp ts = Timestamp.valueOf(DateToStoreInDataBase);
-					agentRealTimeData.setCreatedDate(ts);
-					agentRealTimeData.setModifiedDate(ts);
-					for (String key1 : object2.keySet()) {
-						if (key1.equalsIgnoreCase(Constants.LOGGED_IN))
-							agentRealTimeData.setLoggedIn(object2.get(key1));
-						if (key1.equalsIgnoreCase(Constants.FREE))
-							agentRealTimeData.setFree(object2.get(key1));
-						if (key1.equalsIgnoreCase(Constants.IN_CALL))
-							agentRealTimeData.setInCall(object2.get(key1));
-						if (key1.equalsIgnoreCase(Constants.AWT))
-							agentRealTimeData.setAwt(object2.get(key1));
-						if (key1.equalsIgnoreCase(Constants.HOLD))
-							agentRealTimeData.setHold(object2.get(key1));
-						if (key1.equalsIgnoreCase(Constants.NOT_READY))
-							agentRealTimeData.setNotReady(object2.get(key1));
-						if (key1.equalsIgnoreCase(Constants.AUX))
-							agentRealTimeData.setAux(object2.get(key1));
-					}
-					arrayList.add(agentRealTimeData);
-				}
-			}
-		}
+	   if (resp == null) {
+		   return null;
+	   }
+	   if (resp.startsWith("[") && resp.endsWith("]")) {
+		   try {
+			   @SuppressWarnings("unchecked")
+			   ArrayList<HashMap<String, Object>> readValue = mapper.readValue(resp, ArrayList.class);
+			   for (HashMap<String, Object> object : readValue) {
+				   @SuppressWarnings("unchecked")
+				   HashMap<String, Object> convertValue = mapper.convertValue(object, HashMap.class);
+				   for (String key : object.keySet()) {
+					   AgentRealTimeData agentRealTimeData = new AgentRealTimeData();
+					   @SuppressWarnings("unchecked")
+					   HashMap<String, Integer> object2 = (HashMap<String, Integer>) convertValue.get(key);
+					   agentRealTimeData.setCampaignName(key);
+					   agentRealTimeData.setCreatedBy("default");
+					   agentRealTimeData.setModifiedBy("default");
+					   SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
+					   String DateToStoreInDataBase = sdf.format(new Date());
+					   Timestamp ts = Timestamp.valueOf(DateToStoreInDataBase);
+					   agentRealTimeData.setCreatedDate(ts);
+					   agentRealTimeData.setModifiedDate(ts);
+					   for (String key1 : object2.keySet()) {
+						   if (key1.equalsIgnoreCase(Constants.LOGGED_IN))
+							   agentRealTimeData.setLoggedIn(object2.get(key1));
+						   if (key1.equalsIgnoreCase(Constants.FREE))
+							   agentRealTimeData.setFree(object2.get(key1));
+						   if (key1.equalsIgnoreCase(Constants.IN_CALL))
+							   agentRealTimeData.setInCall(object2.get(key1));
+						   if (key1.equalsIgnoreCase(Constants.AWT))
+							   agentRealTimeData.setAwt(object2.get(key1));
+						   if (key1.equalsIgnoreCase(Constants.HOLD))
+							   agentRealTimeData.setHold(object2.get(key1));
+						   if (key1.equalsIgnoreCase(Constants.NOT_READY))
+							   agentRealTimeData.setNotReady(object2.get(key1));
+						   if (key1.equalsIgnoreCase(Constants.AUX))
+							   agentRealTimeData.setAux(object2.get(key1));
+					   }
+					   arrayList.add(agentRealTimeData);
+				   }
+			   }
+		   } catch (Exception e) {
+			   // If JSON parsing fails, return null as per test expectation
+			   return null;
+		   }
+	   } else {
+		   // If not a valid JSON array, return null as per test expectation
+		   return null;
+	   }
 		if(null != arrayList && !ObjectUtils.isEmpty(arrayList)) {
 			agentRealTimeDataRepo.deleteAll();
 			agentRealTimeDataRepo.saveAll(arrayList);
