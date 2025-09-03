@@ -83,7 +83,8 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
     @Value("${sms-entityid}")
     private String smsEntityId;
 
-    @Value("${sms_consent_source-address}")
+    @Value("${sms-consent-source-address}")
+    
     private String smsConsentSourceAddress ;
     @Value("${send-message-url}")
     private  String SMS_GATEWAY_URL;
