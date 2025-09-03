@@ -83,8 +83,8 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
     @Value("${sms-entityid}")
     private String smsEntityId;
 
-    @Value("${source-address}")
-    private String smsSourceAddress ;
+    @Value("${sms_consent_source-address}")
+    private String smsConsentSourceAddress ;
     @Value("${send-message-url}")
     private  String SMS_GATEWAY_URL;
 
@@ -177,10 +177,14 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
 
 
     public String sendSMS(int otp, BeneficiaryConsentRequest obj) {
+        logger.info("templateName"+smsTemplateName);
 
         final RestTemplate restTemplate = new RestTemplate();
 
         Optional<SMSTemplate> smsTemplateData = smsTemplateRepository.findBySmsTemplateName(smsTemplateName);
+        List<SMSTemplate> smsTemplateAllData = (List<SMSTemplate>) smsTemplateRepository.findAll();
+        logger.info("AllData"+smsTemplateAllData.stream().toArray());
+
         if(smsTemplateData.isPresent()){
             smsTemplate = smsTemplateRepository.findBySmsTemplateID(smsTemplateData.get().getSmsTemplateID()).getSmsTemplate();
 
@@ -198,7 +202,7 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
             payload.put("customerId",smsUserName);
             payload.put("destinationAddress", obj.getMobNo());
             payload.put("message", message);
-            payload.put("sourceAddress", smsSourceAddress);
+            payload.put("sourceAddress", smsConsentSourceAddress);
             payload.put("messageType", smsMessageType);
             payload.put("dltTemplateId", smsTemplateData.get().getDltTemplateId());
             payload.put("entityId",smsEntityId );
