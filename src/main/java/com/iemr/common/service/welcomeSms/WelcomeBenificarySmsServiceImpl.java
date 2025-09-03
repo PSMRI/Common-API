@@ -32,8 +32,9 @@ public class WelcomeBenificarySmsServiceImpl implements WelcomeBenificarySmsServ
     @Value("${sms-entityid}")
     private String smsEntityId;
 
-    @Value("${sms_consent_source-address}")
+    @Value("${sms-consent-source-address}")
     private String smsSourceAddress;
+    
     @Value("${send-message-url}")
     private String SMS_GATEWAY_URL;
 
