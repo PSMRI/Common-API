@@ -14,8 +14,8 @@ import com.iemr.common.service.grievance.GrievanceDataSync;
 @Component
 public class ScheduleForGrievanceDataSync {
 
-	@Value("${start-grievancedatasync-scheduler}")
-	private boolean grievanceFlag;
+	// @Value("${start-grievancedatasync-scheduler}")
+	private boolean grievanceFlag=true;
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
@@ -37,3 +37,4 @@ public class ScheduleForGrievanceDataSync {
 	}
 
 }
+
