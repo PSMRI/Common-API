@@ -110,7 +110,7 @@ public class FirebaseNotificationService {
         HttpServletRequest requestHeader = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
                 .getRequest();
         String jwtTokenFromCookie = cookieUtil.getJwtTokenFromCookie(requestHeader);
-        return userTokenRepo.findById(Integer.parseInt(jwtUtil.extractUserId(jwtTokenFromCookie))) // because your userId is Long in DB
+        return userTokenRepo.findById(Integer.parseInt(jwtUtil.getUserIdFromToken(jwtTokenFromCookie))) // because your userId is Long in DB
                 .map(UserTokenData::getToken)
                 .orElse(null); //
     }
