@@ -1,24 +1,24 @@
 /*
- * AMRIT – Accessible Medical Records via Integrated Technology
- * Integrated EHR (Electronic Health Records) Solution
- *
- * Copyright (C) "Piramal Swasthya Management and Research Institute"
- *
- * This file is part of AMRIT.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see https://www.gnu.org/licenses/.
- */
+* AMRIT – Accessible Medical Records via Integrated Technology
+* Integrated EHR (Electronic Health Records) Solution
+*
+* Copyright (C) "Piramal Swasthya Management and Research Institute"
+*
+* This file is part of AMRIT.
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see https://www.gnu.org/licenses/.
+*/
 package com.iemr.common.controller.users;
 
 import java.util.*;
@@ -171,8 +171,8 @@ public class IEMRAdminController {
 			JSONArray serviceRoleList = new JSONArray();
 			JSONObject previlegeObj = new JSONObject();
 			if (m_User.getUserName() != null
-					&& (m_User.getDoLogout() == null || !m_User.getDoLogout())
-					&& (m_User.getWithCredentials() != null && m_User.getWithCredentials())) {
+					    && (m_User.getDoLogout() == null || !m_User.getDoLogout())
+					    && (m_User.getWithCredentials() != null && m_User.getWithCredentials())) {
 				String tokenFromRedis = getConcurrentCheckSessionObjectAgainstUser(
 						m_User.getUserName().trim().toLowerCase());
 				if (tokenFromRedis != null) {
@@ -299,10 +299,10 @@ public class IEMRAdminController {
 			String newRefreshToken = jwtUtil.generateRefreshToken(user.getUserName(), userId);
 			String newJti = jwtUtil.getJtiFromToken(newRefreshToken);
 			redisTemplate.opsForValue().set(
-					"refresh:" + newJti,
-					userId,
-					jwtUtil.getRefreshTokenExpiration(),
-					TimeUnit.MILLISECONDS
+				"refresh:" + newJti,
+				userId,
+				jwtUtil.getRefreshTokenExpiration(),
+				TimeUnit.MILLISECONDS
 			);
 			tokens.put("refreshToken", newRefreshToken);
 
@@ -374,7 +374,7 @@ public class IEMRAdminController {
 	}
 
 	private void createUserMapping(User mUser, JSONObject resMap, JSONObject serviceRoleMultiMap,
-								   JSONObject serviceRoleMap, JSONArray serviceRoleList, JSONObject previlegeObj) {
+			JSONObject serviceRoleMap, JSONArray serviceRoleList, JSONObject previlegeObj) {
 		System.out.println(mUser);
 		String fName = mUser.getFirstName();
 		String lName = mUser.getLastName();
@@ -468,8 +468,8 @@ public class IEMRAdminController {
 				jwtToken = jwtUtil.generateToken(m_User.getUserName(), mUser.getUserID().toString());
 
 				User user = new User(); // Assuming the Users class exists
-				user.setUserID(mUser.getUserID());
-				user.setUserName(mUser.getUserName());
+	            user.setUserID(mUser.getUserID());
+	            user.setUserName(mUser.getUserName());
 
 				String userAgent = request.getHeader("User-Agent");
 				isMobile = UserAgentUtil.isMobileDevice(userAgent);
@@ -942,51 +942,51 @@ public class IEMRAdminController {
 	@Operation(summary = "Force log out")
 	@RequestMapping(value = "/forceLogout", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String forceLogout(@RequestBody ForceLogoutRequestModel request, HttpServletRequest httpRequest, HttpServletResponse response) {
-		OutputResponse outputResponse = new OutputResponse();
-		try {
-			// Perform the force logout logic
-			iemrAdminUserServiceImpl.forceLogout(request);
+	    OutputResponse outputResponse = new OutputResponse();
+	    try {
+	        // Perform the force logout logic
+	        iemrAdminUserServiceImpl.forceLogout(request);
 
-			// Extract token from cookies or headers
-			String token = getJwtTokenFromCookies(httpRequest);
-			if (token == null) {
-				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-				outputResponse.setError(new RuntimeException("No JWT token found in request"));
-				return outputResponse.toString();
-			}
+	        // Extract token from cookies or headers
+	        String token = getJwtTokenFromCookies(httpRequest);
+	        if (token == null) {
+	        	 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+	             outputResponse.setError(new RuntimeException("No JWT token found in request"));
+	        	 return outputResponse.toString();
+	        	 }
 
-			// Validate the token: Check if it is expired or in the deny list
-			Claims claims = jwtUtil.validateToken(token);
-			if (claims.isEmpty() || claims.getExpiration() == null || claims.getId() == null) {	            // If token is either expired or in the deny list, return 401 Unauthorized
-				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-				outputResponse.setError(new RuntimeException("Token is expired or has been logged out"));
-				return outputResponse.toString();
-			}
+	        // Validate the token: Check if it is expired or in the deny list
+	        Claims claims = jwtUtil.validateToken(token);
+	        if (claims.isEmpty() || claims.getExpiration() == null || claims.getId() == null) {	            // If token is either expired or in the deny list, return 401 Unauthorized
+	        	response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+	        	outputResponse.setError(new RuntimeException("Token is expired or has been logged out"));
+	        	return outputResponse.toString();
+	        }
 
-			// Extract the jti (JWT ID) and expiration time from the validated claims
-			String jti = claims.getId();  // jti is in the 'id' field of claims
-			long expirationTime = claims.getExpiration().getTime(); // Use expiration from claims
-			long ttlMillis = expirationTime - System.currentTimeMillis();
-			tokenDenylist.addTokenToDenylist(jti, ttlMillis);
+	        // Extract the jti (JWT ID) and expiration time from the validated claims
+	        String jti = claims.getId();  // jti is in the 'id' field of claims
+	        long expirationTime = claims.getExpiration().getTime(); // Use expiration from claims
+	        long ttlMillis = expirationTime - System.currentTimeMillis();
+	        tokenDenylist.addTokenToDenylist(jti, ttlMillis);
 
-			// Set the response message
-			outputResponse.setResponse("Success");
-		} catch (Exception e) {
-			outputResponse.setError(e);
-		}
-		return outputResponse.toString();
+	        // Set the response message
+	        outputResponse.setResponse("Success");
+	    } catch (Exception e) {
+	        outputResponse.setError(e);
+	    }
+	    return outputResponse.toString();
 	}
 
 	private String getJwtTokenFromCookies(HttpServletRequest request) {
-		Cookie[] cookies = request.getCookies();
-		if (cookies != null) {
-			for (Cookie cookie : cookies) {
-				if (cookie.getName().equalsIgnoreCase(Constants.JWT_TOKEN)) {
-					return cookie.getValue();
-				}
-			}
-		}
-		return null;
+	    Cookie[] cookies = request.getCookies();
+	    if (cookies != null) {
+	        for (Cookie cookie : cookies) {
+	        	 if (cookie.getName().equalsIgnoreCase(Constants.JWT_TOKEN)) {
+	        		 return cookie.getValue();
+	            }
+	        }
+	    }
+	    return null;
 	}
 
 

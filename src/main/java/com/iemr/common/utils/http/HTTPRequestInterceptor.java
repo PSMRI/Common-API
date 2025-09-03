@@ -38,8 +38,6 @@ import com.iemr.common.utils.validator.Validator;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-
 @Configuration
 @Component
 public class HTTPRequestInterceptor implements HandlerInterceptor {

@@ -59,7 +59,6 @@ public class JwtUserIdValidationFilter implements Filter {
 		String contextPath = request.getContextPath();
 		logger.info("JwtUserIdValidationFilter invoked for path: " + path);
 
-
 		// Log cookies for debugging
 		Cookie[] cookies = request.getCookies();
 		if (cookies != null) {
@@ -171,9 +170,7 @@ public class JwtUserIdValidationFilter implements Filter {
 				|| path.startsWith(contextPath + "/user/userLogout")
 				|| path.startsWith(contextPath + "/user/validateSecurityQuestionAndAnswer")
 				|| path.startsWith(contextPath + "/user/logOutUserFromConcurrentSession");
-
 	}
-
 
 	private String getJwtTokenFromCookies(HttpServletRequest request) {
 		Cookie[] cookies = request.getCookies();
