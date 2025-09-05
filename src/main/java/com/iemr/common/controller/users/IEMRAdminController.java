@@ -343,9 +343,10 @@ public class IEMRAdminController {
 						deleteSessionObjectByGettingSessionDetails(previousTokenFromRedis);
 						sessionObject.deleteSessionObject(previousTokenFromRedis);
 						response.setResponse("User successfully logged out");
-					} else
+					} else{
 						logger.error("Unable to fetch session from redis");
 					throw new IEMRException("Session error. Please try again later");
+					}
 				}
 			} else {
 				throw new IEMRException("Invalid request object");
