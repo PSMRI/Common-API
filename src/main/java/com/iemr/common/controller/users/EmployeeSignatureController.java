@@ -21,14 +21,16 @@
 */
 package com.iemr.common.controller.users;
 
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +38,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.google.gson.Gson;
 import com.iemr.common.data.users.EmployeeSignature;
@@ -63,11 +66,16 @@ public class EmployeeSignatureController {
 
 		try {
 			EmployeeSignature userSignID = employeeSignatureServiceImpl.fetchSignature(userID);
+			String originalName = userSignID.getFileName();
+			if (originalName == null || originalName.isBlank()) {
+				originalName = "signature";
+			}
 			HttpHeaders responseHeaders = new HttpHeaders();
-			String fileName = URLEncoder.encode(userSignID.getFileName(), StandardCharsets.UTF_8);
-			responseHeaders.set(HttpHeaders.CONTENT_DISPOSITION,
-					"attachment; filename=\"" + fileName + "\"; filename*=UTF-8''" + fileName);
-
+			responseHeaders.setContentDisposition(
+					ContentDisposition.attachment().filename(originalName, StandardCharsets.UTF_8).build());
+			responseHeaders.setCacheControl(CacheControl.noStore());
+			responseHeaders.add(HttpHeaders.PRAGMA, "no-cache");
+			responseHeaders.setExpires(0);
 			MediaType mediaType;
 			try {
 				mediaType = MediaType.parseMediaType(userSignID.getFileType());
@@ -76,6 +84,9 @@ public class EmployeeSignatureController {
 			}
 
 			byte[] fileBytes = userSignID.getSignature(); // MUST be byte[]
+			if (fileBytes == null || fileBytes.length == 0) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Signature not found for userID: " + userID);
+			}
 
 			return ResponseEntity.ok().headers(responseHeaders).contentType(mediaType).contentLength(fileBytes.length)
 					.body(fileBytes);
