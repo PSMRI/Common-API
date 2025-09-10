@@ -30,6 +30,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.session.data.redis.config.ConfigureRedisAction;
 
 import com.iemr.common.data.users.User;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 @Configuration
 public class RedisConfig {
@@ -53,5 +54,11 @@ public class RedisConfig {
 
 		return template;
 	}
+
+	// new bean for rate limiting & counters
+    @Bean
+    public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory factory) {
+        return new StringRedisTemplate(factory);
+    }
 
 }

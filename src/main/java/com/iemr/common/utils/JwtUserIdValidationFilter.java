@@ -1,3 +1,24 @@
+/*
+ * AMRIT – Accessible Medical Records via Integrated Technology
+ * Integrated EHR (Electronic Health Records) Solution
+ *
+ * Copyright (C) "Piramal Swasthya Management and Research Institute"
+ *
+ * This file is part of AMRIT.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see https://www.gnu.org/licenses/.
+ */
 package com.iemr.common.utils;
 
 import java.io.IOException;
@@ -59,6 +80,13 @@ public class JwtUserIdValidationFilter implements Filter {
 		String contextPath = request.getContextPath();
 		logger.info("JwtUserIdValidationFilter invoked for path: " + path);
 
+        // NEW: if this is a platform-feedback endpoint, treat it as public (skip auth)
+        // and also ensure we don't clear any user cookies for these requests.
+        if (isPlatformFeedbackPath(path, contextPath)) {
+            logger.debug("Platform-feedback path detected - skipping authentication and leaving cookies intact: {}", path);
+            filterChain.doFilter(servletRequest, servletResponse);
+            return;
+        }
 		// Log cookies for debugging
 		Cookie[] cookies = request.getCookies();
 		if (cookies != null) {
@@ -126,6 +154,19 @@ public class JwtUserIdValidationFilter implements Filter {
 			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authorization error: " + e.getMessage());
 		}
 	}
+
+    /**
+     * New helper: identifies platform-feedback endpoints so we can treat them
+     * specially (public + preserve cookies).
+     */
+    private boolean isPlatformFeedbackPath(String path, String contextPath) {
+        if (path == null) return false;
+        String normalized = path.toLowerCase();
+        String base = (contextPath == null ? "" : contextPath).toLowerCase();
+        // match /platform-feedback and anything under it
+        return normalized.startsWith(base + "/platform-feedback");
+    }
+
 
 	private boolean isOriginAllowed(String origin) {
 		if (origin == null || allowedOrigins == null || allowedOrigins.trim().isEmpty()) {
