@@ -58,17 +58,18 @@ public class FeedbackCategory {
     private String scope;
 
     @Column(name = "Active", nullable = false)
-    private boolean active;
+    private boolean active = true;
 
-    @Column(name = "CreatedAt", nullable = false)
+
+    @Column(name = "CreatedAt", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "UpdatedAt", nullable = false)
+    @Column(name = "UpdatedAt", nullable = false, insertable = false, updatable = false)
     private LocalDateTime updatedAt;
 
     // ===== Constructors =====
     public FeedbackCategory() {
-        // default ctor for JPA
+        // nothing — categoryId will be generated at persist if not provided
     }
 
     public FeedbackCategory(String slug, String label, String scope, boolean active) {
@@ -79,20 +80,15 @@ public class FeedbackCategory {
     }
 
     // ===== JPA lifecycle hooks =====
+    /**
+     * Ensure CategoryID exists for new rows created via JPA. If DB seeding provides IDs,
+     * those will be used instead (we only set if null).
+     */
     @PrePersist
-    protected void onCreate() {
-        if (this.categoryId == null) {
+    protected void ensureId() {
+        if (this.categoryId == null || this.categoryId.trim().isEmpty()) {
             this.categoryId = UUID.randomUUID().toString();
         }
-        if (this.createdAt == null) {
-            this.createdAt = LocalDateTime.now();
-        }
-        this.updatedAt = this.createdAt;
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
     }
 
     // ===== Getters & Setters =====
@@ -141,7 +137,7 @@ public class FeedbackCategory {
         return createdAt;
     }
 
-    // CreatedAt normally set by lifecycle; setter available for tests/migrations
+    // CreatedAt normally set by DB; setter available for tests/migrations
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
@@ -150,7 +146,7 @@ public class FeedbackCategory {
         return updatedAt;
     }
 
-    // UpdatedAt normally managed by lifecycle
+    // UpdatedAt normally managed by DB
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }

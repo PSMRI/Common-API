@@ -24,15 +24,10 @@ package com.iemr.common.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * Represents feedback provided by users for a specific service or category.
- * Mapped to "m_platform_feedback".
- */
 @Entity
 @Table(name = "m_platform_feedback")
 public class Feedback {
@@ -41,10 +36,10 @@ public class Feedback {
     @Column(name = "FeedbackID", length = 36, updatable = false, nullable = false)
     private String feedbackId;
 
-    @Column(name = "CreatedAt", nullable = false)
+    @Column(name = "CreatedAt", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "UpdatedAt", nullable = false)
+    @Column(name = "UpdatedAt", nullable = false, insertable = false, updatable = false)
     private LocalDateTime updatedAt;
 
     @Min(1)
@@ -52,38 +47,29 @@ public class Feedback {
     @Column(name = "Rating", nullable = false)
     private int rating;
 
-    @NotBlank(message = "Comment cannot be blank")
-    @Size(max = 2000, message = "Comment cannot exceed 2000 characters")
-    @Column(name = "Comment", columnDefinition = "TEXT", nullable = false)
+    @Size(max = 2000)
+    @Column(name = "Comment", columnDefinition = "TEXT", nullable = true)
     private String comment;
 
     @Column(name = "ServiceLine", nullable = false, length = 10)
     private String serviceLine;
 
     @Column(name = "IsAnonymous", nullable = false)
-    private boolean isAnonymous;
+    private boolean isAnonymous = true;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "CategoryID", referencedColumnName = "CategoryID", nullable = false)
     private FeedbackCategory category;
 
-    /**
-     * We store the numeric UserID if the submission is identified. We don't map to a User
-     * entity here to avoid cross-module coupling; the DB should have the FK enforced if desired.
-     */
-    @Column(name = "UserID")
+    @Column(name = "UserID", nullable = true)
     private Integer userId;
 
-    // ===== Constructors =====
     public Feedback() {
-        // default constructor for JPA
+        this.feedbackId = UUID.randomUUID().toString();
     }
 
-    // convenience constructor (optional)
     public Feedback(int rating, String comment, String serviceLine, boolean isAnonymous, FeedbackCategory category, Integer userId) {
-        this.feedbackId = UUID.randomUUID().toString();
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = this.createdAt;
+        this(); // ensures feedbackId
         this.setRating(rating);
         this.setComment(comment);
         this.setServiceLine(serviceLine);
@@ -92,28 +78,11 @@ public class Feedback {
         this.userId = userId;
     }
 
-    // ======= JPA lifecycle callbacks =======
-    @PrePersist
-    protected void onCreate() {
-        if (this.feedbackId == null) {
-            this.feedbackId = UUID.randomUUID().toString();
-        }
-        if (this.createdAt == null) {
-            this.createdAt = LocalDateTime.now();
-        }
-        this.updatedAt = this.createdAt;
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    // ======= Getters & Setters =======
     public String getFeedbackId() {
         return feedbackId;
     }
 
+    // Don't usually set feedbackId externally, but keep setter for testing/migration if needed
     public void setFeedbackId(String feedbackId) {
         this.feedbackId = feedbackId;
     }
@@ -122,18 +91,14 @@ public class Feedback {
         return createdAt;
     }
 
-    // createdAt should only be set once; still exposing setter if needed
     public void setCreatedAt(LocalDateTime createdAt) {
-        if (this.createdAt == null) {
-            this.createdAt = createdAt;
-        }
+        this.createdAt = createdAt;
     }
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
 
-    // updatedAt is managed by lifecycle callbacks but a setter is fine for tests/migration
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
@@ -154,13 +119,10 @@ public class Feedback {
     }
 
     public void setComment(String comment) {
-        if (comment == null || comment.trim().isEmpty()) {
-            throw new IllegalArgumentException("Comment cannot be blank");
-        }
-        if (comment.length() > 2000) {
+        if (comment != null && comment.length() > 2000) {
             throw new IllegalArgumentException("Comment cannot exceed 2000 characters");
         }
-        this.comment = comment;
+        this.comment = (comment == null || comment.trim().isEmpty()) ? null : comment.trim();
     }
 
     public String getServiceLine() {
@@ -180,6 +142,9 @@ public class Feedback {
 
     public void setAnonymous(boolean anonymous) {
         isAnonymous = anonymous;
+        if (anonymous) {
+            this.userId = null;
+        }
     }
 
     public FeedbackCategory getCategory() {
@@ -199,5 +164,8 @@ public class Feedback {
 
     public void setUserId(Integer userId) {
         this.userId = userId;
+        if (userId != null) {
+            this.isAnonymous = false;
+        }
     }
 }
