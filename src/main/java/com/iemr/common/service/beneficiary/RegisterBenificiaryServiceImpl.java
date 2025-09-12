@@ -30,6 +30,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.iemr.common.model.beneficiary.RMNCHBeneficiaryDetailsRmnch;
+import com.iemr.common.repository.beneficiary.BeneficiaryDetailsRmnchRepository;
+import com.iemr.common.service.welcomeSms.WelcomeBenificarySmsService;
+import com.iemr.common.service.welcomeSms.WelcomeBenificarySmsServiceImpl;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +78,17 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 	IdentityBenEditMapper identityBenEditMapper;
 
 	@Autowired
+	private WelcomeBenificarySmsService welcomeBenificarySmsService;
+
+	@Autowired
 	Validator validator;
+
+	@Autowired
+	private BeneficiaryDetailsRmnchRepository beneficiaryDetailsRmnchRepository;
+
+
+
+
 
 	@Autowired
 	OutboundHistoryRepository outboundHistoryRepository;
@@ -113,6 +127,8 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 		Integer updatedRows = 0;
 		IdentityEditDTO identityEditDTO = identityBenEditMapper.BenToIdentityEditMapper(benificiaryDetails);
 		setDemographicDetails(identityEditDTO,benificiaryDetails);
+
+
 		
 		if (benificiaryDetails.getBeneficiaryIdentities() != null
 				&& benificiaryDetails.getBeneficiaryIdentities().size() > 0) {
@@ -122,8 +138,20 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 		identityEditDTO.setDob(benificiaryDetails.getDOB());
 		updatedRows = identityBeneficiaryService.editIdentityEditDTO(identityEditDTO, auth,
 				benificiaryDetails.getIs1097());
-			
+		updateDeathOfBenificiary(benificiaryDetails);
 		return updatedRows;
+	}
+	private void updateDeathOfBenificiary(BeneficiaryModel beneficiaryModel){
+		RMNCHBeneficiaryDetailsRmnch rmnchBeneficiaryDetailsRmnch = new RMNCHBeneficiaryDetailsRmnch();
+		rmnchBeneficiaryDetailsRmnch.setIsDeath(beneficiaryModel.getIsDeath());
+		rmnchBeneficiaryDetailsRmnch.setPlaceOfDeathId(beneficiaryModel.getPlaceOfDeathId());
+		rmnchBeneficiaryDetailsRmnch.setPlaceOfDeath(beneficiaryModel.getPlaceOfDeath());
+		rmnchBeneficiaryDetailsRmnch.setOtherPlaceOfDeath(beneficiaryModel.getOtherPlaceOfDeath());
+		rmnchBeneficiaryDetailsRmnch.setReasonOfDeath(beneficiaryModel.getReasonOfDeath());
+		rmnchBeneficiaryDetailsRmnch.setTimeOfDeath(beneficiaryModel.getTimeOfDeath());
+		rmnchBeneficiaryDetailsRmnch.setDateOfDeath(beneficiaryModel.getDateOfDeath());
+
+		beneficiaryDetailsRmnchRepository.save(rmnchBeneficiaryDetailsRmnch);
 	}
 
 	private void setDemographicDetails(IdentityEditDTO identityEditDTO, BeneficiaryModel benificiaryDetails) {
@@ -157,6 +185,9 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 			else
 				identityEditDTO.setIncomeStatus(benificiaryDetails.getI_bendemographics().getIncomeStatus());
 		}
+		if(benificiaryDetails!=null){
+			updateDeathOfBenificiary(benificiaryDetails);
+		}
 		
 	}
 
@@ -170,16 +201,20 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 	@Override
 	public String save(BeneficiaryModel beneficiaryModel, HttpServletRequest servletRequest) throws Exception {
 
-		// logger.info("benificiaryDetails: " + beneficiaryModel);
+		 logger.info("benificiaryDetails: " + beneficiaryModel);
 
 		CommonIdentityDTO identityDTO = identityMapper.beneficiaryModelCommonIdentityDTO(beneficiaryModel);
+
 		setSaveDemographicDetails(identityDTO,beneficiaryModel);
-		// identityDTO.setOtherFields(beneficiaryModel.getOtherFields());
+//		 identityDTO.setOtherFields(beneficiaryModel.getOtherFields());
+		identityDTO.setIsConsent(beneficiaryModel.getIsConsent());
+
 		identityDTO.setFaceEmbedding(beneficiaryModel.getFaceEmbedding());
 		identityDTO.setEmergencyRegistration(beneficiaryModel.isEmergencyRegistration());
 		identityDTO
 				.setBenFamilyDTOs(identityMapper.benPhoneMapListToBenFamilyDTOList(beneficiaryModel.getBenPhoneMaps()));
 		String request = new Gson().toJson(identityDTO);
+
 
 		if (beneficiaryModel.getIs1097() == null)
 			beneficiaryModel.setIs1097(false);
@@ -200,9 +235,20 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 			} else {
 				return response.toString();
 			}
+			if(beneficiary!=null){
+				if(beneficiary.getBenPhoneMaps().get(0).getPhoneNo()!=null){
+					welcomeBenificarySmsService.sendWelcomeSMStoBenificiary(beneficiary.getBenPhoneMaps().get(0).getPhoneNo(),beneficiary.getFirstName()+" "+beneficiary.getLastName(),beneficiary.getBeneficiaryID());
+				}
+			}
+
 		}
 		return OutputMapper.gson().toJson(beneficiary);
 	}
+
+   private void  saveBeneficiarDeathDetails(BeneficiaryModel beneficiaryModel){
+
+
+   }
 
 	private void setSaveDemographicDetails(CommonIdentityDTO identityDTO, BeneficiaryModel beneficiaryModel) {
 		if(null != beneficiaryModel.getI_bendemographics()) {

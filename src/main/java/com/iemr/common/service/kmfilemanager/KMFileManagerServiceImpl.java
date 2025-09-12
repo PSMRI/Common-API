@@ -1,8 +1,8 @@
 /*
-* AMRIT – Accessible Medical Records via Integrated Technology 
-* Integrated EHR (Electronic Health Records) Solution 
+* AMRIT – Accessible Medical Records via Integrated Technology
+* Integrated EHR (Electronic Health Records) Solution
 *
-* Copyright (C) "Piramal Swasthya Management and Research Institute" 
+* Copyright (C) "Piramal Swasthya Management and Research Institute"
 *
 * This file is part of AMRIT.
 *
@@ -125,7 +125,7 @@ public class KMFileManagerServiceImpl implements KMFileManagerService {
 		return kmFileManagers.toString();
 	}
 
-	
+
 	private ArrayList<KMFileManager> addKMFile(Iterable<KMFileManager> kmFileManagers)
 			throws IOException, NoSuchAlgorithmException {
 		ArrayList<KMFileManager> savedFileManagers = new ArrayList<KMFileManager>();
@@ -176,9 +176,9 @@ public class KMFileManagerServiceImpl implements KMFileManagerService {
 				if (uuid != null) {
 					kmFileManager.setKmUploadStatus(KM_UPLOADSTATUS_COMPLETED);
 					kmFileManager.setFileUID(uuid);
-					
+
 					kmFileManager.setSubCategoryID(kmFileManager.getSubCategoryID());
-					
+
 					savedFileManagers.add(kmFileManagerRepository.save(kmFileManager));
 					if (kmFileManager.getSubCategoryID() != null) {
 						updateSubcategoryFilePath(kmFileManager);
@@ -194,7 +194,7 @@ public class KMFileManagerServiceImpl implements KMFileManagerService {
 		finally
 		{
 			if(newFile !=null)
-			newFile.close();	
+			newFile.close();
 			if(fis !=null)
 			fis.close();
 		}
@@ -211,7 +211,7 @@ public class KMFileManagerServiceImpl implements KMFileManagerService {
 		List<KMFileManager> files = kmFileManagerRepository.getKMFileByFileName(kmFileManager.getProviderServiceMapID(),
 				kmFileManager.getFileName());
 		version = "V" + (files.size() + 1);
-		
+
 		return version;
 	}
 }
