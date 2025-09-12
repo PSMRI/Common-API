@@ -283,6 +283,9 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 			else
 				identityDTO.setIncomeStatus(beneficiaryModel.getI_bendemographics().getIncomeStatus());
 		}
+		if(beneficiaryModel!=null){
+			updateDeathOfBenificiary(beneficiaryModel);
+		}
 		
 	}
 
