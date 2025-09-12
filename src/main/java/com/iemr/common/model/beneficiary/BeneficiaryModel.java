@@ -85,6 +85,9 @@ public class BeneficiaryModel implements Comparable<BeneficiaryModel> {
 	private Boolean isDeath;
 
 	@Expose
+	private String  dateOfDeath;
+
+	@Expose
 	private String isDeathValue;
 
 	@Expose
