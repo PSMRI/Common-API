@@ -138,6 +138,7 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 		identityEditDTO.setDob(benificiaryDetails.getDOB());
 		updatedRows = identityBeneficiaryService.editIdentityEditDTO(identityEditDTO, auth,
 				benificiaryDetails.getIs1097());
+		logger.info("updateBen");
 		updateDeathOfBenificiary(benificiaryDetails);
 		return updatedRows;
 	}
@@ -245,10 +246,7 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 		return OutputMapper.gson().toJson(beneficiary);
 	}
 
-   private void  saveBeneficiarDeathDetails(BeneficiaryModel beneficiaryModel){
 
-
-   }
 
 	private void setSaveDemographicDetails(CommonIdentityDTO identityDTO, BeneficiaryModel beneficiaryModel) {
 		if(null != beneficiaryModel.getI_bendemographics()) {
