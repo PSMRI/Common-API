@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.iemr.common.model.beneficiary.RMNCHBeneficiaryDetailsRmnch;
-import com.iemr.common.repository.beneficiary.BeneficiaryDetailsRmnchRepository;
 import com.iemr.common.service.welcomeSms.WelcomeBenificarySmsService;
 import com.iemr.common.service.welcomeSms.WelcomeBenificarySmsServiceImpl;
 import org.json.JSONObject;
@@ -83,8 +82,7 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 	@Autowired
 	Validator validator;
 
-	@Autowired
-	private BeneficiaryDetailsRmnchRepository beneficiaryDetailsRmnchRepository;
+
 
 
 
@@ -139,7 +137,7 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 		updatedRows = identityBeneficiaryService.editIdentityEditDTO(identityEditDTO, auth,
 				benificiaryDetails.getIs1097());
 		logger.info("updateBen");
-		updateDeathOfBenificiary(benificiaryDetails);
+		//updateDeathOfBenificiary(benificiaryDetails);
 		return updatedRows;
 	}
 	private void updateDeathOfBenificiary(BeneficiaryModel beneficiaryModel){
@@ -152,7 +150,7 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 		rmnchBeneficiaryDetailsRmnch.setTimeOfDeath(beneficiaryModel.getTimeOfDeath());
 		rmnchBeneficiaryDetailsRmnch.setDateOfDeath(beneficiaryModel.getDateOfDeath());
 
-		beneficiaryDetailsRmnchRepository.save(rmnchBeneficiaryDetailsRmnch);
+		//beneficiaryDetailsRmnchRepository.save(rmnchBeneficiaryDetailsRmnch);
 	}
 
 	private void setDemographicDetails(IdentityEditDTO identityEditDTO, BeneficiaryModel benificiaryDetails) {
@@ -187,7 +185,7 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 				identityEditDTO.setIncomeStatus(benificiaryDetails.getI_bendemographics().getIncomeStatus());
 		}
 		if(benificiaryDetails!=null){
-			updateDeathOfBenificiary(benificiaryDetails);
+			//updateDeathOfBenificiary(benificiaryDetails);
 		}
 		
 	}
@@ -282,7 +280,7 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 				identityDTO.setIncomeStatus(beneficiaryModel.getI_bendemographics().getIncomeStatus());
 		}
 		if(beneficiaryModel!=null){
-			updateDeathOfBenificiary(beneficiaryModel);
+		//	updateDeathOfBenificiary(beneficiaryModel);
 		}
 		
 	}
