@@ -29,7 +29,6 @@ import java.util.Set;
 
 import javax.ws.rs.core.MediaType;
 
-import com.iemr.common.repository.beneficiary.BeneficiaryDetailsRmnchRepository;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -104,8 +103,6 @@ public class BeneficiaryRegistrationController {
 	private BeneficiaryOccupationService beneficiaryOccupationService;
 	private GovtIdentityTypeService govtIdentityTypeService;
 
-	@Autowired
-	private BeneficiaryDetailsRmnchRepository beneficiaryDetailsRmnchRepository;
 
 	@Autowired
 	public void setBenRelationshipTypeService(BenRelationshipTypeService benRelationshipTypeService) {
