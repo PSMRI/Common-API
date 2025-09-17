@@ -9,7 +9,7 @@ import java.math.BigInteger;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "i_beneficiarydetails_rmnch")
+@Table(name = "i_beneficiarydetails_rmnch",schema = "db_identity")
 @Data
 public class RMNCHBeneficiaryDetailsRmnch {
 	@Id
