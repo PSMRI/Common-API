@@ -45,6 +45,7 @@ import com.iemr.common.utils.http.HttpUtils;
 import com.iemr.common.utils.mapper.InputMapper;
 import com.iemr.common.utils.mapper.OutputMapper;
 import com.iemr.common.utils.response.OutputResponse;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryService {
@@ -54,8 +55,10 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 	Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	private static HttpUtils httpUtils = new HttpUtils();
 	private InputMapper inputMapper = new InputMapper();
-	private String identityBaseURL = ConfigProperties.getPropertyByName("identity-api-url");
-	private String identity1097BaseURL = ConfigProperties.getPropertyByName("identity-1097-api-url");
+    @Value("${identity-api-url}")
+    private String identityBaseURL;
+	@Value("${identity-1097-api-url}")
+    private String identity1097BaseURL;
 	private static final String IDENTITY_BASE_URL = "IDENTITY_BASE_URL";
 
 	private static final String BEN_GEN = ConfigProperties.getPropertyByName("genben-api");
