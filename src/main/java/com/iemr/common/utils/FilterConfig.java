@@ -40,6 +40,10 @@ public class FilterConfig {
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
 
+    @Value("${platform.feedback.ratelimit.enabled:false}")
+    private boolean enabled;
+
+
     @Bean
     public FilterRegistrationBean<JwtUserIdValidationFilter> jwtUserIdValidationFilter(
             JwtAuthenticationUtil jwtAuthenticationUtil) {
@@ -63,25 +67,13 @@ public class FilterConfig {
      */
     @Bean
     public FilterRegistrationBean<PlatformFeedbackRateLimitFilter> platformFeedbackRateLimitFilter(
-            StringRedisTemplate stringRedisTemplate,
-            Environment env) {
+            StringRedisTemplate stringRedisTemplate) {
 
-        // Read flag from environment (property file or env var)
-        boolean enabled = Boolean.parseBoolean(env.getProperty("platform.feedback.ratelimit.enabled", "false"));
 
         // Allow optional override for order if needed
-        int defaultOrder = Ordered.HIGHEST_PRECEDENCE + 10;
-        int order = defaultOrder;
-        String orderStr = env.getProperty("platform.feedback.ratelimit.order");
-        if (orderStr != null) {
-            try {
-                order = Integer.parseInt(orderStr);
-            } catch (NumberFormatException e) {
-                log.warn("Invalid platform.feedback.ratelimit.order value '{}', using default {}", orderStr, defaultOrder);
-            }
-        }
+        int order = Ordered.HIGHEST_PRECEDENCE + 10;
 
-        PlatformFeedbackRateLimitFilter filter = new PlatformFeedbackRateLimitFilter(stringRedisTemplate, env);
+        PlatformFeedbackRateLimitFilter filter = new PlatformFeedbackRateLimitFilter(stringRedisTemplate);
 
         FilterRegistrationBean<PlatformFeedbackRateLimitFilter> reg = new FilterRegistrationBean<>(filter);
 
