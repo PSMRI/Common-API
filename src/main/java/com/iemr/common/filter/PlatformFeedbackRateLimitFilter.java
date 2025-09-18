@@ -70,7 +70,7 @@ public class PlatformFeedbackRateLimitFilter extends OncePerRequestFilter {
     @Value("${platform.feedback.ratelimit.fail-window-minutes:5}")
     private Duration FAIL_COUNT_WINDOW;
     private int FAILS_TO_BACKOFF = 3;
-    @Value("${platform.feedback.ratelimit.backoff-window-minutes:15}")
+    @Value("${platform.feedback.ratelimit.backoff-minutes:15}")
     private Duration BACKOFF_WINDOW;
 
     public PlatformFeedbackRateLimitFilter(StringRedisTemplate redis) {
