@@ -42,7 +42,6 @@ import java.time.ZoneId;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.beans.factory.annotation.Value;
 
 
 @Component
@@ -51,30 +50,26 @@ import org.springframework.beans.factory.annotation.Value;
 public class PlatformFeedbackRateLimitFilter extends OncePerRequestFilter {
 
     private final StringRedisTemplate redis;
-    @Value("${platform.feedback.ratelimit.pepper}")
-    private String pepper;
-    @Value("${platform.feedback.ratelimit.trust-forwarded-for:false}")
-    private boolean trustForwardedFor;
-    @Value("${platform.feedback.ratelimit.forwarded-for-header:X-Forwarded-For}")
-    private String forwardedForHeader;
+    private final String pepper;
+    private final boolean trustForwardedFor;
+    private final String forwardedForHeader;
 
     // Limits & TTLs (tweak if needed)
-    @Value("${platform.feedback.ratelimit.minute-limit:10}")
-    private int MINUTE_LIMIT;
-    @Value("${platform.feedback.ratelimit.day-limit:100}")
-    private int DAY_LIMIT;
-    @Value("${platform.feedback.ratelimit.user-day-limit:50}")
-    private int USER_DAY_LIMIT; // for identified users
-    private Duration MINUTE_WINDOW = Duration.ofMinutes(1);
-    private Duration DAY_WINDOW = Duration.ofHours(48); // keep key TTL ~48h
-    @Value("${platform.feedback.ratelimit.fail-window-minutes:5}")
-    private Duration FAIL_COUNT_WINDOW;
-    private int FAILS_TO_BACKOFF = 3;
-    @Value("${platform.feedback.ratelimit.backoff-minutes:15}")
-    private Duration BACKOFF_WINDOW;
+    private static final int MINUTE_LIMIT = 10;
+    private static final int DAY_LIMIT = 100;
+    private static final int USER_DAY_LIMIT = 50; // for identified users
+    private static final Duration MINUTE_WINDOW = Duration.ofMinutes(1);
+    private static final Duration DAY_WINDOW = Duration.ofHours(48); // keep key TTL ~48h
+    private static final Duration FAIL_COUNT_WINDOW = Duration.ofMinutes(5);
+    private static final int FAILS_TO_BACKOFF = 3;
+    private static final Duration BACKOFF_WINDOW = Duration.ofMinutes(15);
 
-    public PlatformFeedbackRateLimitFilter(StringRedisTemplate redis) {
+    public PlatformFeedbackRateLimitFilter(StringRedisTemplate redis,
+                                           org.springframework.core.env.Environment env) {
         this.redis = redis;
+        this.pepper = env.getProperty("platform.feedback.pepper", "");
+        this.trustForwardedFor = Boolean.parseBoolean(env.getProperty("platform.feedback.trust-forwarded-for", "true"));
+        this.forwardedForHeader = env.getProperty("platform.feedback.forwarded-for-header", "X-Forwarded-For");
     }
 
     @Override
