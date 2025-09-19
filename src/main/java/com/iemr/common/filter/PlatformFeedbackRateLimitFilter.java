@@ -21,13 +21,10 @@
  */
 package com.iemr.common.filter;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -45,67 +42,34 @@ import java.time.ZoneId;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.beans.factory.annotation.Value;
+
 
 @Component
 @ConditionalOnProperty(prefix = "platform.feedback.ratelimit", name = "enabled", havingValue = "true", matchIfMissing = false)
-@Order(Ordered.HIGHEST_PRECEDENCE + 10)
+@Order(Ordered.HIGHEST_PRECEDENCE + 10) // run early (adjust order as needed)
 public class PlatformFeedbackRateLimitFilter extends OncePerRequestFilter {
 
-    private static final Logger log = LoggerFactory.getLogger(PlatformFeedbackRateLimitFilter.class);
-
     private final StringRedisTemplate redis;
+    private final String pepper;
+    private final boolean trustForwardedFor;
+    private final String forwardedForHeader;
 
-    @Value("${platform.feedback.ratelimit.pepper:}")
-    private String pepper;
+    // Limits & TTLs (tweak if needed)
+    private static final int MINUTE_LIMIT = 10;
+    private static final int DAY_LIMIT = 100;
+    private static final int USER_DAY_LIMIT = 50; // for identified users
+    private static final Duration MINUTE_WINDOW = Duration.ofMinutes(1);
+    private static final Duration DAY_WINDOW = Duration.ofHours(48); // keep key TTL ~48h
+    private static final Duration FAIL_COUNT_WINDOW = Duration.ofMinutes(5);
+    private static final int FAILS_TO_BACKOFF = 3;
+    private static final Duration BACKOFF_WINDOW = Duration.ofMinutes(15);
 
-    @Value("${platform.feedback.ratelimit.trust-forwarded-for:false}")
-    private boolean trustForwardedFor;
-
-    @Value("${platform.feedback.ratelimit.forwarded-for-header:X-Forwarded-For}")
-    private String forwardedForHeader;
-
-    @Value("${platform.feedback.ratelimit.minute-limit:10}")
-    private int minuteLimit;
-
-    @Value("${platform.feedback.ratelimit.day-limit:100}")
-    private int dayLimit;
-
-    @Value("${platform.feedback.ratelimit.user-day-limit:50}")
-    private int userDayLimit;
-
-    private final Duration MINUTE_WINDOW = Duration.ofMinutes(1);
-    private final Duration DAY_WINDOW = Duration.ofHours(48); 
-
-    @Value("${platform.feedback.ratelimit.fail-window-minutes:5}")
-    private long failCountWindowMinutes;
-
-    @Value("${platform.feedback.ratelimit.backoff-minutes:15}")
-    private long backoffWindowMinutes;
-
-    @Value("${platform.feedback.ratelimit.fails-to-backoff:3}")
-    private int failsToBackoff;
-
-    public PlatformFeedbackRateLimitFilter(StringRedisTemplate redis) {
+    public PlatformFeedbackRateLimitFilter(StringRedisTemplate redis,
+                                           org.springframework.core.env.Environment env) {
         this.redis = redis;
-    }
-
-    @PostConstruct
-    public void validateConfig() {
-        if (!StringUtils.hasText(pepper)) {
-            throw new IllegalStateException("platform.feedback.ratelimit.pepper must be set");
-        }
-        if (failCountWindowMinutes <= 0) {
-            throw new IllegalStateException("platform.feedback.ratelimit.fail-window-minutes must be > 0");
-        }
-        if (backoffWindowMinutes <= 0) {
-            throw new IllegalStateException("platform.feedback.ratelimit.backoff-minutes must be > 0");
-        }
-        if (minuteLimit <= 0 || dayLimit <= 0 || userDayLimit <= 0) {
-            log.warn("One of the rate limits is non-positive; please check configuration");
-        }
-        log.info("PlatformFeedbackRateLimitFilter initialized (minuteLimit={}, dayLimit={}, userDayLimit={}, failWindowMinutes={}, backoffMinutes={}, failsToBackoff={})",
-                minuteLimit, dayLimit, userDayLimit, failCountWindowMinutes, backoffWindowMinutes, failsToBackoff);
+        this.pepper = env.getProperty("platform.feedback.pepper", "");
+        this.trustForwardedFor = Boolean.parseBoolean(env.getProperty("platform.feedback.trust-forwarded-for", "true"));
+        this.forwardedForHeader = env.getProperty("platform.feedback.forwarded-for-header", "X-Forwarded-For");
     }
 
     @Override
@@ -113,17 +77,18 @@ public class PlatformFeedbackRateLimitFilter extends OncePerRequestFilter {
         // Only filter specific endpoints (POST to platform-feedback). Keep it narrow.
         String path = request.getRequestURI();
         String method = request.getMethod();
-        // Allow context path prefixes, e.g. /common-api/platform-feedback
-        return !("POST".equalsIgnoreCase(method) && path != null && path.matches(".*/platform-feedback(?:/.*)?$"));
+        // adjust path as needed (supports /common-api/platform-feedback and subpaths)
+        return !("POST".equalsIgnoreCase(method) && path != null && path.matches("^/platform-feedback(?:/.*)?$"));
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        // compute day key
         String clientIp = extractClientIp(request);
         if (clientIp == null || clientIp.isBlank()) {
-            log.debug("Client IP could not be determined; allowing request (fail-open). RequestURI={}", request.getRequestURI());
+            // If we can't identify an IP, be conservative and allow but log (or optionally block)
             filterChain.doFilter(request, response);
             return;
         }
@@ -135,77 +100,68 @@ public class PlatformFeedbackRateLimitFilter extends OncePerRequestFilter {
         String failKey = "rl:fb:fail:" + ipHash;
         String backoffKey = "rl:fb:backoff:" + ipHash;
 
+        // If under backoff -> respond 429 with Retry-After = TTL
         Long backoffTtl = getTtlSeconds(backoffKey);
         if (backoffTtl != null && backoffTtl > 0) {
-            log.debug("IP in backoff (ipHash={}, ttl={})", ipHash, backoffTtl);
             sendTooMany(response, backoffTtl);
             return;
         }
 
+        // Minute window check (INCR + TTL if first)
         long minuteCount = incrementWithExpire(minKey, 1, MINUTE_WINDOW.getSeconds());
-        if (minuteCount > minuteLimit) {
-            log.info("Minute limit hit for ipHash={} minuteCount={}", ipHash, minuteCount);
+        if (minuteCount > MINUTE_LIMIT) {
             handleFailureAndMaybeBackoff(failKey, backoffKey, response, minKey, dayKey);
             return;
         }
 
+        // Day window check
         long dayCount = incrementWithExpire(dayKey, 1, DAY_WINDOW.getSeconds());
-        if (dayCount > dayLimit) {
-            log.info("Day limit hit for ipHash={} dayCount={}", ipHash, dayCount);
+        if (dayCount > DAY_LIMIT) {
             handleFailureAndMaybeBackoff(failKey, backoffKey, response, minKey, dayKey);
             return;
         }
 
+        // Optional: per-user daily cap if we can extract an authenticated user id from header/jwt
         Integer userId = extractUserIdFromRequest(request); // implement extraction as per your JWT scheme
         if (userId != null) {
             String userDayKey = "rl:fb:user:" + today + ":" + userId;
             long ucount = incrementWithExpire(userDayKey, 1, DAY_WINDOW.getSeconds());
-            if (ucount > userDayLimit) {
-                log.info("User day limit hit for userId={} count={}", userId, ucount);
+            if (ucount > USER_DAY_LIMIT) {
                 handleFailureAndMaybeBackoff(failKey, backoffKey, response, minKey, userDayKey);
                 return;
             }
         }
 
+        // All checks passed — proceed to controller
         filterChain.doFilter(request, response);
     }
 
+    // increments key by delta; sets TTL when key is new (INCR returns 1)
     private long incrementWithExpire(String key, long delta, long ttlSeconds) {
-        try {
-            Long value = redis.opsForValue().increment(key, delta);
-            if (value != null && value == 1L) {
-                redis.expire(key, ttlSeconds, TimeUnit.SECONDS);
-            }
-            return value == null ? 0L : value;
-        } catch (Exception ex) {
-            log.error("Redis increment failed for key={} delta={} - failing open (allow request). Exception: {}", key, delta, ex.toString());
-            return 0L;
+        Long value = redis.opsForValue().increment(key, delta);
+        if (value != null && value == 1L) {
+            redis.expire(key, ttlSeconds, TimeUnit.SECONDS);
         }
+        return value == null ? 0L : value;
     }
 
     private void handleFailureAndMaybeBackoff(String failKey, String backoffKey, HttpServletResponse response, String trigKey, String dayKey) throws IOException {
-        try {
-            Long fails = redis.opsForValue().increment(failKey, 1);
-            if (fails != null && fails == 1L) {
-                redis.expire(failKey, getFailCountWindowSeconds(), TimeUnit.SECONDS);
-            }
-            log.debug("Fail counter for key {} is {}", failKey, fails);
-
-            if (fails != null && fails >= failsToBackoff) {
-                long backoffSeconds = getBackoffWindowSeconds();
-                redis.opsForValue().set(backoffKey, "1", backoffSeconds, TimeUnit.SECONDS);
-                log.info("Entering backoff for ip (backoffKey={}, backoffSeconds={})", backoffKey, backoffSeconds);
-                sendTooMany(response, backoffSeconds);
-                return;
-            }
-
-            Long retryAfter = getTtlSeconds(trigKey);
-            if (retryAfter == null || retryAfter <= 0) retryAfter = 60L;
-            log.debug("Responding rate-limited with Retry-After={} for key={}", retryAfter, trigKey);
-            sendTooMany(response, retryAfter);
-        } catch (Exception ex) {
-            log.error("Error while handling failure/backoff; failing open and allowing request. Exception: {}", ex.toString());
+        // increment fail counter and possibly set backoff
+        Long fails = redis.opsForValue().increment(failKey, 1);
+        if (fails != null && fails == 1L) {
+            redis.expire(failKey, FAIL_COUNT_WINDOW.getSeconds(), TimeUnit.SECONDS);
         }
+        if (fails != null && fails >= FAILS_TO_BACKOFF) {
+            // set backoff flag
+            redis.opsForValue().set(backoffKey, "1", BACKOFF_WINDOW.getSeconds(), TimeUnit.SECONDS);
+            sendTooMany(response, BACKOFF_WINDOW.getSeconds());
+            return;
+        }
+
+        // otherwise respond with Retry-After for the triggering key TTL (minute/day)
+        Long retryAfter = getTtlSeconds(trigKey);
+        if (retryAfter == null || retryAfter <= 0) retryAfter = 60L;
+        sendTooMany(response, retryAfter);
     }
 
     private void sendTooMany(HttpServletResponse response, long retryAfterSeconds) throws IOException {
@@ -217,19 +173,15 @@ public class PlatformFeedbackRateLimitFilter extends OncePerRequestFilter {
     }
 
     private Long getTtlSeconds(String key) {
-        try {
-            Long ttl = redis.getExpire(key, TimeUnit.SECONDS);
-            return ttl == null || ttl < 0 ? null : ttl;
-        } catch (Exception ex) {
-            log.warn("Redis getExpire failed for key={} - treating as no TTL. Exception: {}", key, ex.toString());
-            return null;
-        }
+        Long ttl = redis.getExpire(key, TimeUnit.SECONDS);
+        return ttl == null || ttl < 0 ? null : ttl;
     }
 
     private String extractClientIp(HttpServletRequest request) {
         if (trustForwardedFor) {
             String header = request.getHeader(forwardedForHeader);
             if (StringUtils.hasText(header)) {
+                // X-Forwarded-For may contain comma-separated list; take the first (client) entry
                 String[] parts = header.split(",");
                 if (parts.length > 0) {
                     String ip = parts[0].trim();
@@ -241,25 +193,21 @@ public class PlatformFeedbackRateLimitFilter extends OncePerRequestFilter {
     }
 
     private Integer extractUserIdFromRequest(HttpServletRequest request) {
+        // implement based on how you propagate JWT or user info.
+        // Example: if your gateway injects header X-User-Id for authenticated requests:
         String s = request.getHeader("X-User-Id");
         if (StringUtils.hasText(s)) {
             try { return Integer.valueOf(s); } catch (NumberFormatException ignored) {}
         }
+        // If JWT parsing required, do it here, but keep this filter light — prefer upstream auth filter to populate a header.
         return null;
-    }
-
-    private long getFailCountWindowSeconds() {
-        return Duration.ofMinutes(failCountWindowMinutes).getSeconds();
-    }
-
-    private long getBackoffWindowSeconds() {
-        return Duration.ofMinutes(backoffWindowMinutes).getSeconds();
     }
 
     private static String sha256Base64(String input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hashed = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            // base64 url-safe or normal base64 — either is fine; base64 is shorter than hex
             return Base64.getUrlEncoder().withoutPadding().encodeToString(hashed);
         } catch (Exception ex) {
             throw new RuntimeException("sha256 failure", ex);
