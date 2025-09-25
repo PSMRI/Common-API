@@ -285,8 +285,9 @@ public class IEMRAdminController {
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
 			}
 
-			if (user.getM_status() == null || !"Active".equalsIgnoreCase(user.getM_status().getStatus())) {
-				logger.warn("Token validation failed: user account is inactive or not in 'Active' status.");
+			if (user.getM_status() == null || !("Active".equalsIgnoreCase(user.getM_status().getStatus())
+					|| "New".equalsIgnoreCase(user.getM_status().getStatus()))) {
+				logger.warn("Token validation failed: user account is neither 'Active' nor 'New'.");
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
 			}
 			// Generate new tokens
