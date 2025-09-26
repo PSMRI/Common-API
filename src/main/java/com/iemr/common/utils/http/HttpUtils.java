@@ -125,7 +125,6 @@ public class HttpUtils {
 
 	public String post(String uri, String data, HashMap<String, Object> header) {
 		String body;
-		logger.info("Post uri="+uri);
 		HttpHeaders headers = new HttpHeaders();
 		if (header.containsKey(headers.AUTHORIZATION)) {
 			headers.add(headers.AUTHORIZATION, header.get(headers.AUTHORIZATION).toString());
