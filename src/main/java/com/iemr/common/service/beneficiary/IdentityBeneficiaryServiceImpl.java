@@ -59,11 +59,11 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 	private static final String IDENTITY_BASE_URL = "IDENTITY_BASE_URL";
 
 	@Value("${genben-api}")
-	private static  String BEN_GEN ;
+	private String BEN_GEN ;
 
 
 	@Value("${generateBeneficiaryIDs-api-url}")
-	private static  String BEN_GEN_API_URL ;
+	private String BEN_GEN_API_URL ;
 
 
 	@Override
