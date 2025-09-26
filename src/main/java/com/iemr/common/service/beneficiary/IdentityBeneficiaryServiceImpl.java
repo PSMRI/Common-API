@@ -529,8 +529,10 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 		if (auth != null) {
 			header.put("Authorization", auth);
 		}
+		logger.info("Request to generate ben IDs: " + request);
+		logger.info("Generating ben IDs API URL: " + BEN_GEN + BEN_GEN_API_URL);
 		result = httpUtils.post(BEN_GEN + BEN_GEN_API_URL, request, header);
-
+logger.info("Response from generate ben IDs: " + result);
 		OutputResponse identityResponse = inputMapper.gson().fromJson(result, OutputResponse.class);
 
 		if (identityResponse.getStatusCode() == OutputResponse.USERID_FAILURE) {
