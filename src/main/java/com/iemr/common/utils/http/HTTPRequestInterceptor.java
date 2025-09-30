@@ -21,7 +21,7 @@
 */
 package com.iemr.common.utils.http;
 
-
+import java.nio.charset.StandardCharsets;
 import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
@@ -32,10 +32,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
-import com.iemr.common.utils.response.OutputResponse;
 import com.iemr.common.utils.sessionobject.SessionObject;
 import com.iemr.common.utils.validator.Validator;
 
+import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 @Configuration
@@ -125,12 +125,30 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
 					break;
 				}
 			} catch (Exception e) {
-				OutputResponse output = new OutputResponse();
-				output.setError(e);
-				response.getOutputStream().print(output.toString());
-				response.setContentType(MediaType.APPLICATION_JSON);
-				response.setContentLength(output.toString().length());
-				response.setHeader("Access-Control-Allow-Origin", "*");
+				logger.error("Authorization failed: {}", e.getMessage(), e);
+
+			    String errorMessage = e.getMessage();
+			    if (errorMessage == null || errorMessage.trim().isEmpty()) {
+			        errorMessage = "Unauthorized access or session expired.";
+			    }
+
+			    String jsonErrorResponse = "{"
+			            + "\"status\": \"Unauthorized\","
+			            + "\"statusCode\": 401,"
+			            + "\"errorMessage\": \"" + errorMessage.replace("\"", "\\\"") + "\""
+			            + "}";
+
+			    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
+			    response.setContentType(MediaType.APPLICATION_JSON);
+			    response.setHeader("Access-Control-Allow-Origin", "*");
+
+			    // Better to use getBytes().length for accurate byte size
+			    byte[] responseBytes = jsonErrorResponse.getBytes(StandardCharsets.UTF_8);
+			    response.setContentLength(responseBytes.length);
+
+			    ServletOutputStream out = response.getOutputStream();
+			    out.write(responseBytes);
+			    out.flush();
 				status = false;
 			}
 		}

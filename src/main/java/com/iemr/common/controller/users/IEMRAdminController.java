@@ -1,8 +1,8 @@
 /*
-* AMRIT – Accessible Medical Records via Integrated Technology 
-* Integrated EHR (Electronic Health Records) Solution 
+* AMRIT – Accessible Medical Records via Integrated Technology
+* Integrated EHR (Electronic Health Records) Solution
 *
-* Copyright (C) "Piramal Swasthya Management and Research Institute" 
+* Copyright (C) "Piramal Swasthya Management and Research Institute"
 *
 * This file is part of AMRIT.
 *
@@ -170,8 +170,8 @@ public class IEMRAdminController {
 			JSONObject serviceRoleMap = new JSONObject();
 			JSONArray serviceRoleList = new JSONArray();
 			JSONObject previlegeObj = new JSONObject();
-			if (m_User.getUserName() != null 
-					    && (m_User.getDoLogout() == null || !m_User.getDoLogout()) 
+			if (m_User.getUserName() != null
+					    && (m_User.getDoLogout() == null || !m_User.getDoLogout())
 					    && (m_User.getWithCredentials() != null && m_User.getWithCredentials())) {
 				String tokenFromRedis = getConcurrentCheckSessionObjectAgainstUser(
 						m_User.getUserName().trim().toLowerCase());
@@ -187,7 +187,7 @@ public class IEMRAdminController {
 			String refreshToken = null;
 			if (mUser.size() == 1) {
 				jwtToken = jwtUtil.generateToken(m_User.getUserName(), mUser.get(0).getUserID().toString());
-				
+
 				User user = new User(); // Assuming the Users class exists
 				user.setUserID(mUser.get(0).getUserID());
 				user.setUserName(mUser.get(0).getUserName());
@@ -278,15 +278,16 @@ public class IEMRAdminController {
 			// Get user details
 			String userId = claims.get("userId", String.class);
 			User user = iemrAdminUserServiceImpl.getUserById(Long.parseLong(userId));
-			
+
 			// Validate that the user still exists and is active
 			if (user == null) {
 				logger.warn("Token validation failed: user not found for userId in token.");
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
 			}
-			
-			if (user.getM_status() == null || !"Active".equalsIgnoreCase(user.getM_status().getStatus())) {
-				logger.warn("Token validation failed: user account is inactive or not in 'Active' status.");
+
+			if (user.getM_status() == null || !("Active".equalsIgnoreCase(user.getM_status().getStatus())
+					|| "New".equalsIgnoreCase(user.getM_status().getStatus()))) {
+				logger.warn("Token validation failed: user account is neither 'Active' nor 'New'.");
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
 			}
 			// Generate new tokens
@@ -294,7 +295,7 @@ public class IEMRAdminController {
 
 			Map<String, String> tokens = new HashMap<>();
 			tokens.put("jwtToken", newJwt);
-			
+
 			// Generate and store a new refresh token (token rotation)
 			String newRefreshToken = jwtUtil.generateRefreshToken(user.getUserName(), userId);
 			String newJti = jwtUtil.getJtiFromToken(newRefreshToken);
@@ -343,9 +344,10 @@ public class IEMRAdminController {
 						deleteSessionObjectByGettingSessionDetails(previousTokenFromRedis);
 						sessionObject.deleteSessionObject(previousTokenFromRedis);
 						response.setResponse("User successfully logged out");
-					} else
+					} else{
 						logger.error("Unable to fetch session from redis");
 					throw new IEMRException("Session error. Please try again later");
+					}
 				}
 			} else {
 				throw new IEMRException("Invalid request object");
@@ -360,7 +362,7 @@ public class IEMRAdminController {
 	}
 
 	/**
-	 * 
+	 *
 	 * function to return session object against userName
 	 */
 	private String getConcurrentCheckSessionObjectAgainstUser(String userName) {
@@ -466,7 +468,7 @@ public class IEMRAdminController {
 				resMap.put("isAuthenticated", /* Boolean.valueOf(true) */true);
 				resMap.put("userName", mUser.getUserName());
 				jwtToken = jwtUtil.generateToken(m_User.getUserName(), mUser.getUserID().toString());
-				
+
 				User user = new User(); // Assuming the Users class exists
 	            user.setUserID(mUser.getUserID());
 	            user.setUserName(mUser.getUserName());
@@ -561,7 +563,7 @@ public class IEMRAdminController {
 			if (authHeader.isEmpty()) {
 				// Try JWT token from header first
 				String jwtToken = request.getHeader("Jwttoken");
-				
+
 				// If not in header, try cookie
 				if (jwtToken == null) {
 					Cookie[] cookies = request.getCookies();
@@ -574,15 +576,15 @@ public class IEMRAdminController {
 						}
 					}
 				}
-				
+
 				if (jwtToken == null) {
 					logger.warn("Authentication failed: no token found in header or cookies.");
 					throw new IEMRException("Authentication failed. Please log in again.");
 				}
-				
+
 				// Extract user ID from the JWT token
 				String userId = jwtUtil.getUserIdFromToken(jwtToken);
-				
+
 				// Get user details and prepare response
 				User user = iemrAdminUserServiceImpl.getUserById(Long.parseLong(userId));
 				if (user == null) {
@@ -759,7 +761,7 @@ public class IEMRAdminController {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return security qtns
 	 */
 	@Operation(summary = "Get security quetions")
@@ -908,7 +910,7 @@ public class IEMRAdminController {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param key
 	 * @return
 	 */
@@ -952,7 +954,7 @@ public class IEMRAdminController {
 	        if (token == null) {
 	        	 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 	             outputResponse.setError(new RuntimeException("No JWT token found in request"));
-	        	 return outputResponse.toString();	
+	        	 return outputResponse.toString();
 	        	 }
 
 	        // Validate the token: Check if it is expired or in the deny list
@@ -989,7 +991,7 @@ public class IEMRAdminController {
 	    return null;
 	}
 
-	
+
 	@Operation(summary = "User force log out")
 	@RequestMapping(value = "/userForceLogout", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String userForceLogout(

@@ -1684,8 +1684,11 @@ public class BeneficiaryCallServiceImpl implements BeneficiaryCallService {
 					.getModelByWorkerID(beneficiary.getI_bendemographics().getHealthCareWorkerID()));
 			beneficiary.setM_gender(
 					genderMapper.genderByIDToLoginResponse(beneficiaryModel.getBeneficiaryDetails().getGenderId()));
-			beneficiary.setMaritalStatus(maritalStatusMapper
-					.maritalStatusByIDToResponse(beneficiaryModel.getBeneficiaryDetails().getMaritalStatusId()));
+			if(beneficiaryModel.getBeneficiaryDetails().getMaritalStatusId()!=null){
+				beneficiary.setMaritalStatus(maritalStatusMapper
+						.maritalStatusByIDToResponse(beneficiaryModel.getBeneficiaryDetails().getMaritalStatusId()));
+			}
+
 			beneficiary
 					.setM_title(titleMapper.titleByIDToResponse(beneficiaryModel.getBeneficiaryDetails().getTitleId()));
 
