@@ -33,7 +33,7 @@ public interface EmployeeSignatureRepo extends CrudRepository<EmployeeSignature,
 
 	EmployeeSignature findOneByUserID(Long userID);
 
-	@Query("SELECT es.userSignatureID FROM EmployeeSignature es WHERE es.userID=:userid")
+	@Query("SELECT es.userSignatureID FROM EmployeeSignature es WHERE es.userID=:userid AND es.deleted=0")
 	Long findUserSignature(@Param("userid") Long userid);
 
 	Long countByUserIDAndSignatureNotNull(Long userID);
