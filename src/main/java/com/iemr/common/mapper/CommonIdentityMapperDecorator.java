@@ -168,8 +168,17 @@ public abstract class CommonIdentityMapperDecorator implements CommonIdentityMap
 		Short maritalStatusID = beneficiary.getMaritalStatusID();
 		if (maritalStatusID != null) {
 			commonIdentityDTO.setMaritalStatusId(maritalStatusID.intValue());
-			commonIdentityDTO.setMaritalStatus(
-					maritalStatusMapper.maritalStatusByIDToResponse(maritalStatusID.intValue()).getStatus());
+			var model = maritalStatusMapper.maritalStatusByIDToResponse(maritalStatusID.intValue());
+			if (model != null) {
+				commonIdentityDTO.setMaritalStatus(model.getStatus());
+			} else {
+				// Option 1: Return null
+				commonIdentityDTO.setMaritalStatus(null);
+				// Option 2: Or set a default
+				// commonIdentityDTO.setMaritalStatus("Unknown");
+				// Option 3: Or log a warning
+				// logger.warn("Invalid maritalStatusID: {}", maritalStatusID);
+			}
 		}
 		commonIdentityDTO.setMaritalStatus(beneficiary.getMaritalStatusName());
 		commonIdentityDTO.setGender(beneficiary.getGenderName());

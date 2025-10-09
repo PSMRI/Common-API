@@ -26,15 +26,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
+import com.google.gson.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.iemr.common.dto.identity.BeneficiariesDTO;
 import com.iemr.common.dto.identity.BeneficiariesPartialDTO;
 import com.iemr.common.dto.identity.IdentityEditDTO;
@@ -54,20 +51,20 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 	Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	private static HttpUtils httpUtils = new HttpUtils();
 	private InputMapper inputMapper = new InputMapper();
-	private String identityBaseURL = ConfigProperties.getPropertyByName("identity-api-url");
-	private String identity1097BaseURL = ConfigProperties.getPropertyByName("identity-1097-api-url");
+	@Value("${identity-api-url}")
+	private String identityBaseURL;
+	@Value("${identity-1097-api-url}")
+	private String identity1097BaseURL;
+
 	private static final String IDENTITY_BASE_URL = "IDENTITY_BASE_URL";
 
-	private static final String BEN_GEN = ConfigProperties.getPropertyByName("genben-api");
-	private static final String BEN_GEN_API_URL = ConfigProperties.getPropertyByName("generateBeneficiaryIDs-api-url");
-	// public IdentityBeneficiaryServiceImpl()
-	// {
-	//
-	//// if (urlRequest == null)
-	//// {
-	//// urlRequest = ConfigProperties.getPropertyByName("identity-api-url");
-	//// }
-	// }
+	@Value("${genben-api}")
+	private String BEN_GEN ;
+
+
+	@Value("${generateBeneficiaryIDs-api-url}")
+	private String BEN_GEN_API_URL ;
+
 
 	@Override
 	// public List<Beneficiary> getBeneficiaryListByIDs() {// search by regID
@@ -399,22 +396,37 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 
 	@Override
 	public String getIdentityResponse(String request, String auth, Boolean is1097) throws IEMRException {
-
 		String result;
 
 		HashMap<String, Object> header = new HashMap<>();
 		if (auth != null) {
 			header.put("Authorization", auth);
 		}
-		result = httpUtils.post(ConfigProperties.getPropertyByName("identity-api-url-benCreate")
-				.replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL)), request, header);
+		String apiUrl = ConfigProperties.getPropertyByName("identity-api-url-benCreate")
+				.replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL));
+		logger.info("Calling URL: {}", apiUrl);
+		logger.info("Request Payload: {}", request);
 
-		OutputResponse identityResponse = inputMapper.gson().fromJson(result, OutputResponse.class);
-		if (identityResponse.getStatusCode() == OutputResponse.USERID_FAILURE) {
-			throw new IEMRException(identityResponse.getErrorMessage());
+		result = httpUtils.post(apiUrl, request, header);
+
+		if (result == null || result.isEmpty()) {
+			logger.error("Empty response from Identity API");
+			throw new IEMRException("No response received from Identity API");
 		}
+
+		try {
+			OutputResponse identityResponse = inputMapper.gson().fromJson(result, OutputResponse.class);
+			if (identityResponse.getStatusCode() == OutputResponse.USERID_FAILURE) {
+				throw new IEMRException(identityResponse.getErrorMessage());
+			}
+		} catch (JsonSyntaxException e) {
+			logger.error("JSON parsing error: {}", e.getMessage());
+			throw new IEMRException("Invalid response format from Identity API");
+		}
+
 		return result;
 	}
+
 
 	public Integer editIdentityEditDTO(IdentityEditDTO identityEditDTO, String auth, Boolean is1097)
 			throws IEMRException {
@@ -517,8 +529,11 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 		if (auth != null) {
 			header.put("Authorization", auth);
 		}
+		
+		logger.info("Request to generate ben IDs: " + request);
+		logger.info("Generating ben IDs API URL: " + BEN_GEN + BEN_GEN_API_URL);
 		result = httpUtils.post(BEN_GEN + BEN_GEN_API_URL, request, header);
-
+logger.info("Response from generate ben IDs: " + result);
 		OutputResponse identityResponse = inputMapper.gson().fromJson(result, OutputResponse.class);
 
 		if (identityResponse.getStatusCode() == OutputResponse.USERID_FAILURE) {

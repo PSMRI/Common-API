@@ -23,9 +23,9 @@ public class JwtUtil {
 
     @Value("${jwt.refresh.expiration}")
     private long REFRESH_EXPIRATION_TIME;
-    
+
     @Autowired
-    private TokenDenylist tokenDenylist;  
+    private TokenDenylist tokenDenylist;
 
     private SecretKey getSigningKey() {
         if (SECRET_KEY == null || SECRET_KEY.isEmpty()) {
@@ -86,12 +86,12 @@ public class JwtUtil {
         try {
             Claims claims = Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
             String jti = claims.getId();
-            
+
             // Check if token is denylisted (only if jti exists)
             if (jti != null && tokenDenylist.isTokenDenylisted(jti)) {
                 return null;
             }
-            
+
             return claims;
         } catch (ExpiredJwtException ex) {
 
