@@ -38,5 +38,6 @@ public interface EmployeeSignatureRepo extends CrudRepository<EmployeeSignature,
 
 	Long countByUserIDAndSignatureNotNull(Long userID);
 
+	EmployeeSignature findOneByUserIDAndDeleted(Long userID, Boolean deleted);
 
 }

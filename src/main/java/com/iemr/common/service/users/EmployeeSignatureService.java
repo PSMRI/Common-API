@@ -27,5 +27,6 @@ public interface EmployeeSignatureService {
 	
 	public EmployeeSignature fetchSignature(Long userID);
 
+	public  EmployeeSignature fetchActiveSignature(Long userSignID);
 
 }
