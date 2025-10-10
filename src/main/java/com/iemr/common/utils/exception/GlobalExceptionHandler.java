@@ -36,7 +36,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ApiResponse<Object>> handleResponseStatusException(ResponseStatusException ex) {
+        int statusCode = ex.getStatusCode().value(); // Get status code value
+        String message = ex.getReason() != null ? ex.getReason() : ex.getMessage();
+
         return ResponseEntity.status(ex.getStatusCode())
-                .body(ApiResponse.error(ex.getReason(), ex.getStatusCode().value(), null));
+                .body(ApiResponse.error(message, statusCode, null));
     }
 }
