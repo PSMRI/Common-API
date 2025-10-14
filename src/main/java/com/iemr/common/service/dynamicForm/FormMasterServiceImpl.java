@@ -1,6 +1,7 @@
 package com.iemr.common.service.dynamicForm;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.common.data.dynamic_from.FormDefinition;
 import com.iemr.common.data.dynamic_from.FormField;
@@ -122,8 +123,14 @@ public class FormMasterServiceImpl implements FormMasterService {
                     try {
                         // Handle options
                         if (field.getOptions() != null && !field.getOptions().isBlank()) {
-                            List<String> options = objectMapper.readValue(field.getOptions(), new TypeReference<>() {});
-                            dto.setOptions(options.isEmpty() ? null : options);
+                            JsonNode node = objectMapper.readTree(field.getOptions());
+                            List<String> options = null;
+                            if (node.isArray()) {
+                                options = objectMapper.convertValue(node, new TypeReference<>() {});
+                            } else if (node.has("options")) {
+                                options = objectMapper.convertValue(node.get("options"), new TypeReference<>() {});
+                            }
+                            dto.setOptions(options == null || options.isEmpty() ? null : options);
                         } else {
                             dto.setOptions(null);
                         }
