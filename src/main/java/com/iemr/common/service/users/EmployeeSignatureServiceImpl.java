@@ -41,6 +41,12 @@ public class EmployeeSignatureServiceImpl implements EmployeeSignatureService {
 		return employeeSignatureRepo.findOneByUserID(userSignID);
 	}
 
+	@Override
+	public EmployeeSignature fetchActiveSignature(Long userSignID) {
+		// New method - fetches only non-deleted records
+		return employeeSignatureRepo.findOneByUserIDAndDeleted(userSignID, false);
+	}
+
 	public Boolean existSignature(Long userID) {
 		// TODO Auto-generated method stub
 		return employeeSignatureRepo.countByUserIDAndSignatureNotNull(userID)>0;
