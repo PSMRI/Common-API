@@ -76,6 +76,7 @@ import com.iemr.common.data.sms.SMSType;
 import com.iemr.common.data.telemedicine.PrescribedDrugDetail;
 import com.iemr.common.data.users.User;
 import com.iemr.common.data.videocall.VideoCallParameters;
+import com.iemr.common.dto.sms.SMSTemplateDTO;
 import com.iemr.common.mapper.sms.SMSMapper;
 import com.iemr.common.model.beneficiary.BeneficiaryModel;
 import com.iemr.common.model.sms.CreateSMSRequest;
@@ -218,10 +219,16 @@ public class SMSServiceImpl implements SMSService {
 		}
 		SMSTemplate smsTemplate;
 		SMSTemplate request = smsMapper.createRequestToSMSTemplate(smsRequest);
-		smsTemplate = smsTemplateRepository.save(request);
-		saveSMSParameterMaps(smsRequest, smsTemplate.getSmsTemplateID());
-		smsTemplate = smsTemplateRepository.findBySmsTemplateID(smsTemplate.getSmsTemplateID());
-		return OutputMapper.gsonWithoutExposeRestriction().toJson(smsMapper.smsTemplateToResponse(smsTemplate));
+		SMSTemplate savedTemplate = smsTemplateRepository.save(request);
+
+		saveSMSParameterMaps(smsRequest, savedTemplate.getSmsTemplateID());
+
+
+		SMSTemplate fetchedTemplate = smsTemplateRepository.findBySmsTemplateID(savedTemplate.getSmsTemplateID());
+
+		SMSTemplateDTO responseDTO = smsMapper.smsTemplateToDTO(fetchedTemplate);
+
+		return OutputMapper.gsonWithoutExposeRestriction().toJson(responseDTO);
 	}
 	
 	/**
@@ -267,7 +274,13 @@ public class SMSServiceImpl implements SMSService {
 		List<SMSParameterMapModel> smsParameterMapModels = smsRequest.getSmsParameterMaps();
 		for (SMSParameterMapModel smsParameterMapModel : smsParameterMapModels) {
 			smsParameterMapModel.setSmsTemplateID(smsTemplateID);
-			smsParameterMapRepository.save(smsMapper.smsParameterMapModelToSMSParametersMap(smsParameterMapModel));
+			SMSParametersMap entity = smsMapper.smsParameterMapModelToSMSParametersMap(smsParameterMapModel);
+
+			if (entity.getCreatedBy() == null) {
+				entity.setCreatedBy(smsRequest.getCreatedBy());
+			}
+
+			SMSParametersMap savedEntity = smsParameterMapRepository.save(entity);
 		}
 	}
 
