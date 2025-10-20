@@ -68,6 +68,7 @@ import com.iemr.common.data.location.Districts;
 import com.iemr.common.data.location.States;
 import com.iemr.common.data.mctshistory.MctsDataReaderDetail;
 import com.iemr.common.data.mctshistory.MctsOutboundCall;
+import com.iemr.common.data.mmuDrugHistory.PrescribedMMUDrugDetail;
 import com.iemr.common.data.sms.SMSNotification;
 import com.iemr.common.data.sms.SMSParameters;
 import com.iemr.common.data.sms.SMSParametersMap;
@@ -96,6 +97,7 @@ import com.iemr.common.repository.location.LocationDistrictBlockRepository;
 import com.iemr.common.repository.location.LocationDistrictRepository;
 import com.iemr.common.repository.location.LocationStateRepository;
 import com.iemr.common.repository.mctshistory.OutboundHistoryRepository;
+import com.iemr.common.repository.mmuDrugHistory.PrescribedMMUDrugRepository;
 import com.iemr.common.repository.sms.SMSNotificationRepository;
 import com.iemr.common.repository.sms.SMSParameterMapRepository;
 import com.iemr.common.repository.sms.SMSParameterRepository;
@@ -162,6 +164,9 @@ public class SMSServiceImpl implements SMSService {
 
 	@Autowired
 	PrescribedDrugRepository prescribedDrugRepository;
+
+	@Autowired
+	PrescribedMMUDrugRepository prescribedMMUDrugRepository;
 
 	@Autowired
 	OutboundHistoryRepository outboundHistoryRepository;
@@ -648,61 +653,64 @@ public class SMSServiceImpl implements SMSService {
 				String methodName = smsParametersMap.getSmsParameter().getDataName(); // DataVariableName
 				String variableValue = "";
 				switch (paramType) {
-				case "Beneficiary":
-					variableValue = getBeneficiaryData(className, methodName, request, beneficiary);
-					benID = variableValue;
-					break;
-				case "Institute":
-					if (request.getIs1097() == true) {
-						variableValue = getInstituteData(className, methodName, request, authToken);
-					} else {
-						variableValue = getDirectoryserviceData(className, methodName, request);
-					}
-					break;
-				case "User":
-					variableValue = getUserData(className, methodName, request, authToken);
-					break;
-				case "Feedback":
-					variableValue = getFeedbackData(className, methodName, request, authToken);
-					break;
-				case "Prescription":
-					variableValue = getPrescriptionData(className, methodName, request, beneficiary);
-					break;
-				case "Blood on Call":
-					variableValue = getBloodOnCallData(className, methodName, request, beneficiary);
-					break;
-				case "Food Safety Complaint":
-					variableValue = getFoodSafetyComplaintData(className, methodName, request);
-					break;
-				case "Epidemic Outbreak Complaint":
-					variableValue = getEpidemicComplaintData(className, methodName, request);
-					break;
-				case "Grievance Tracking":
-					variableValue = getGrievanceData(className, methodName, request, authToken, beneficiary);
-					break;
-				case "MCTS Call Alert":
-					variableValue = getMCTSCallAlertData(className, methodName, request);
-					break;
-				case "Organ Donation":
-					variableValue = getOrganDonationData(className, methodName, request);
-					break;
-				case "TM Schedule":
-					variableValue = getSpecializationAndTcDateInfo(className, methodName, request);
-					break;
-				case "COVID-19":
-					variableValue = getCOVIDData(className, methodName, request);
-					break;
-				case "IMRMMR":
-					variableValue = getIMRMMRData(className, methodName, request);
-					break;
-				case "104 appointment":
-					variableValue = getUptsuData(className, methodName, request);
-					break;
-				case "Grievance":
-					variableValue = getGrievanceData(className, methodName, request, authToken, beneficiary);
-					break;
-				default:
-					break;
+					case "Beneficiary":
+						variableValue = getBeneficiaryData(className, methodName, request, beneficiary);
+						benID = variableValue;
+						break;
+					case "Institute":
+						if (request.getIs1097() == true) {
+							variableValue = getInstituteData(className, methodName, request, authToken);
+						} else {
+							variableValue = getDirectoryserviceData(className, methodName, request);
+						}
+						break;
+					case "User":
+						variableValue = getUserData(className, methodName, request, authToken);
+						break;
+					case "Feedback":
+						variableValue = getFeedbackData(className, methodName, request, authToken);
+						break;
+					case "Prescription":
+						variableValue = getPrescriptionData(className, methodName, request, beneficiary);
+						break;
+					case "Blood on Call":
+						variableValue = getBloodOnCallData(className, methodName, request, beneficiary);
+						break;
+					case "Food Safety Complaint":
+						variableValue = getFoodSafetyComplaintData(className, methodName, request);
+						break;
+					case "Epidemic Outbreak Complaint":
+						variableValue = getEpidemicComplaintData(className, methodName, request);
+						break;
+					case "Grievance Tracking":
+						variableValue = getGrievanceData(className, methodName, request, authToken, beneficiary);
+						break;
+					case "MCTS Call Alert":
+						variableValue = getMCTSCallAlertData(className, methodName, request);
+						break;
+					case "Organ Donation":
+						variableValue = getOrganDonationData(className, methodName, request);
+						break;
+					case "TM Schedule":
+						variableValue = getSpecializationAndTcDateInfo(className, methodName, request);
+						break;
+					case "COVID-19":
+						variableValue = getCOVIDData(className, methodName, request);
+						break;
+					case "IMRMMR":
+						variableValue = getIMRMMRData(className, methodName, request);
+						break;
+					case "104 appointment":
+						variableValue = getUptsuData(className, methodName, request);
+						break;
+					case "Grievance":
+						variableValue = getGrievanceData(className, methodName, request, authToken, beneficiary);
+						break;
+					case "MMUPrescription":
+						variableValue = getMMUPrescriptionData(className, methodName, request, beneficiary);
+						break;
+					default:
+						break;
 				}
 				if (variable.equalsIgnoreCase("SMS_PHONE_NO")) {
 					if (request.getIsBloodBankSMS() == true) {
@@ -1267,6 +1275,108 @@ public class SMSServiceImpl implements SMSService {
 		}
 		return variableValue;
 	}
+
+	private String getMMUPrescriptionData(String className, String methodName, SMSRequest request,
+			BeneficiaryModel beneficiary) throws NoSuchMethodException, SecurityException, IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException, ClassNotFoundException {
+		PrescribedMMUDrugDetail prescribedMMUDrug = prescribedMMUDrugRepository
+				.findByPrescribedDrugID(request.getPrescribedDrugID());
+		String variableValue = "";
+		switch (methodName.toLowerCase()) {
+			case "diagnosis":
+				// Format: "Diagnosis, DrugName(DrugStrength)"
+				StringBuilder diagnosisBuilder = new StringBuilder();
+
+				// Add diagnosis
+				String diagnosis = prescribedMMUDrug.getPrescription() != null
+						&& prescribedMMUDrug.getPrescription().getDiagnosisProvided() != null
+								? prescribedMMUDrug.getPrescription().getDiagnosisProvided().trim()
+								: "";
+
+				if (!diagnosis.isEmpty()) {
+					diagnosisBuilder.append(diagnosis);
+				}
+
+				// Add drug name with strength
+				String drugName = prescribedMMUDrug.getDrugName();
+				String drugStrength = prescribedMMUDrug.getDrugStrength();
+
+				if (drugName != null && !drugName.trim().isEmpty()) {
+					if (diagnosisBuilder.length() > 0) {
+						diagnosisBuilder.append(", ");
+					}
+					diagnosisBuilder.append(drugName.trim());
+
+					if (drugStrength != null && !drugStrength.trim().isEmpty()) {
+						diagnosisBuilder.append(" (").append(drugStrength.trim()).append(")");
+					}
+				}
+
+				variableValue = diagnosisBuilder.toString();
+				break;
+			case "dosage":
+				// Format: "duration unit, dose, frequency"
+				StringBuilder dosageBuilder = new StringBuilder();
+
+				// Add duration with unit
+				String duration = prescribedMMUDrug.getDuration();
+				String unit = prescribedMMUDrug.getUnit();
+
+				if (duration != null && !duration.trim().isEmpty()) {
+					dosageBuilder.append(duration.trim());
+					if (unit != null && !unit.trim().isEmpty()) {
+						dosageBuilder.append(" ").append(unit.trim());
+					}
+				}
+
+				// Add dose
+				String dose = prescribedMMUDrug.getDose();
+				if (dose != null && !dose.trim().isEmpty()) {
+					if (dosageBuilder.length() > 0) {
+						dosageBuilder.append(", ");
+					}
+					dosageBuilder.append(dose.trim());
+				}
+
+				// Add frequency
+				String frequency = prescribedMMUDrug.getFrequency();
+				if (frequency != null && !frequency.trim().isEmpty()) {
+					if (dosageBuilder.length() > 0) {
+						dosageBuilder.append(", ");
+					}
+					dosageBuilder.append(frequency.trim());
+				}
+
+				variableValue = dosageBuilder.toString();
+				break;
+
+			case "by":
+				// Format: "route, By: CreatedBy"
+				StringBuilder doctorBuilder = new StringBuilder();
+
+				// Add route
+				String route = prescribedMMUDrug.getRoute();
+				if (route != null && !route.trim().isEmpty()) {
+					doctorBuilder.append(route.trim());
+				}
+
+				// Add created by
+				String createdBy = prescribedMMUDrug.getCreatedBy();
+				if (createdBy != null && !createdBy.trim().isEmpty()) {
+					if (doctorBuilder.length() > 0) {
+						doctorBuilder.append(", ");
+					}
+					doctorBuilder.append("By: ").append(createdBy.trim());
+				}
+
+				variableValue = doctorBuilder.toString();
+				break;
+			default:
+				break;
+		}
+		return variableValue;
+	}
+
 
 	private String getGrievanceData(String className, String methodName, SMSRequest request, String authToken,
 			BeneficiaryModel beneficiary) throws NoSuchMethodException, SecurityException, IllegalAccessException,
