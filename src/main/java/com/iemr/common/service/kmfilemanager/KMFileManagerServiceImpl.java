@@ -34,12 +34,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
@@ -83,6 +85,9 @@ public class KMFileManagerServiceImpl implements KMFileManagerService {
 	}
 
 	private InputMapper inputMapper = new InputMapper();
+
+	@Value("${allowed.file.extensions}")
+	private String allowedFileExtensions;
 
 	@Override
 	public String getKMFileLists(String request) throws Exception {
@@ -131,43 +136,78 @@ public class KMFileManagerServiceImpl implements KMFileManagerService {
 		ArrayList<KMFileManager> savedFileManagers = new ArrayList<KMFileManager>();
 		FileOutputStream newFile = null;
 		FileInputStream fis = null;
-		try
-		{
-		for (KMFileManager kmFileManager : kmFileManagers) {
-			if (kmFileManager.getFileName() != null && kmFileManager.getProviderServiceMapID() != null
-					&& kmFileManager.getFileContent() != null) {
-				kmFileManager.setFileName(kmFileManager.getFileName().replace("`", "").replace("'", "").replace("$", "")
-						.replace("\\", "").replace("/", "").replace("~", "").replace("`", "").replace("!", "")
-						.replace("@", "").replace("#", "").replace("$", "").replace("%", "").replace("^", "")
-						.replace("&", "").replace("*", "").replace("(", "").replace(")", "").replace("{", "")
-						.replace("}", "").replace("[", "").replace("]", "").replace("|", "").replace("\\", "")
-						.replace(":", "").replace(";", "").replace("-", "").replace("_", "").replace("+", "")
-						.replace("=", "").replace("\"", "").replace("'", ""));
-				String tempFilePath = ConfigProperties.getPropertyByName("tempFilePath");
-				newFile = new FileOutputStream(tempFilePath + "/" + kmFileManager.getFileName());
-				newFile.write(Base64.getDecoder().decode(kmFileManager.getFileContent()));
-				newFile.flush();
-				newFile.close();
-				fis = new FileInputStream(tempFilePath + "/" + kmFileManager.getFileName());
-				String checksum = DigestUtils.md5DigestAsHex(fis);
-				fis.close();
-				logger.info("File is " + kmFileManager.getFileName());
-				logger.info("File size is " + new File(tempFilePath + "/" + kmFileManager.getFileName()).length());
-				logger.info("File checksum is " + checksum);
-				logger.info("File checksum length is " + checksum.length());
-				kmFileManager.setFileCheckSum(checksum);
-				kmFileManager.setKmUploadStatus(KM_UPLOADSTATUS_PENDING);
-				String version = getFileVersion(kmFileManager);
-				kmFileManager.setVersionNo(version);
-				String documentPath = kmFileManager.getProviderServiceMapID() + "/";
-				if (kmFileManager.getCategoryID() != null) {
-					documentPath += kmFileManager.getCategoryID() + "/";
-				}
-				if (kmFileManager.getSubCategoryID() != null) {
-					documentPath += kmFileManager.getSubCategoryID() + "/";
-				}
-				if (kmFileManager.getVanID() != null)
-					documentPath += kmFileManager.getVanID() + "/";
+		try {
+			for (KMFileManager kmFileManager : kmFileManagers) {
+				if (kmFileManager.getFileName() != null && kmFileManager.getProviderServiceMapID() != null
+						&& kmFileManager.getFileContent() != null) {
+
+					if (allowedFileExtensions == null || allowedFileExtensions.trim().isEmpty()) {
+						throw new IllegalStateException(
+								"Environment variable 'allowed.file.extensions' is not configured or is empty");
+					}
+					List<String> allowedExtensions = Arrays.asList(allowedFileExtensions.split(","));
+					logger.info("Allowed extensions: " + allowedExtensions);
+
+
+					// Extract extension from fileName
+					String extensionFromName = FilenameUtils.getExtension(kmFileManager.getFileName());
+					logger.info("extensionFromName " + extensionFromName);
+
+					// Normalize payload fileExtension (remove dot if present)
+					String extensionFromPayload = kmFileManager.getFileExtension();
+					logger.info("extensionPayload " + extensionFromPayload);
+
+					if (extensionFromPayload != null && extensionFromPayload.startsWith(".")) {
+						extensionFromPayload = extensionFromPayload.substring(1);
+					}
+
+					// Validate extensions
+					if (extensionFromName == null || extensionFromPayload == null) {
+						throw new IOException("File extension missing");
+					}
+
+					if (!extensionFromName.equalsIgnoreCase(extensionFromPayload)) {
+						throw new IOException(
+								"File extension mismatch: " + extensionFromName + " vs " + extensionFromPayload);
+					}
+
+					if (!allowedExtensions.contains(extensionFromName.toLowerCase())) {
+						throw new IOException("File extension not allowed: " + extensionFromName);
+					}
+
+					kmFileManager.setFileName(kmFileManager.getFileName().replace("`", "").replace("'", "")
+							.replace("$", "")
+							.replace("\\", "").replace("/", "").replace("~", "").replace("`", "").replace("!", "")
+							.replace("@", "").replace("#", "").replace("$", "").replace("%", "").replace("^", "")
+							.replace("&", "").replace("*", "").replace("(", "").replace(")", "").replace("{", "")
+							.replace("}", "").replace("[", "").replace("]", "").replace("|", "").replace("\\", "")
+							.replace(":", "").replace(";", "").replace("-", "").replace("_", "").replace("+", "")
+							.replace("=", "").replace("\"", "").replace("'", ""));
+					String tempFilePath = ConfigProperties.getPropertyByName("tempFilePath");
+					newFile = new FileOutputStream(tempFilePath + "/" + kmFileManager.getFileName());
+					newFile.write(Base64.getDecoder().decode(kmFileManager.getFileContent()));
+					newFile.flush();
+					newFile.close();
+					fis = new FileInputStream(tempFilePath + "/" + kmFileManager.getFileName());
+					String checksum = DigestUtils.md5DigestAsHex(fis);
+					fis.close();
+					logger.info("File is " + kmFileManager.getFileName());
+					logger.info("File size is " + new File(tempFilePath + "/" + kmFileManager.getFileName()).length());
+					logger.info("File checksum is " + checksum);
+					logger.info("File checksum length is " + checksum.length());
+					kmFileManager.setFileCheckSum(checksum);
+					kmFileManager.setKmUploadStatus(KM_UPLOADSTATUS_PENDING);
+					String version = getFileVersion(kmFileManager);
+					kmFileManager.setVersionNo(version);
+					String documentPath = kmFileManager.getProviderServiceMapID() + "/";
+					if (kmFileManager.getCategoryID() != null) {
+						documentPath += kmFileManager.getCategoryID() + "/";
+					}
+					if (kmFileManager.getSubCategoryID() != null) {
+						documentPath += kmFileManager.getSubCategoryID() + "/";
+					}
+					if (kmFileManager.getVanID() != null)
+						documentPath += kmFileManager.getVanID() + "/";
 
 				documentPath += version + "/";
 				documentPath += kmFileManager.getFileName();
