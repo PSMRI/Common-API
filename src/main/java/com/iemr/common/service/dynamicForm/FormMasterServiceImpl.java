@@ -6,10 +6,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.common.data.dynamic_from.FormDefinition;
 import com.iemr.common.data.dynamic_from.FormField;
 import com.iemr.common.data.dynamic_from.FormModule;
+import com.iemr.common.data.translation.Translation;
 import com.iemr.common.dto.dynamicForm.*;
 import com.iemr.common.repository.dynamic_form.FieldRepository;
 import com.iemr.common.repository.dynamic_form.FormRepository;
 import com.iemr.common.repository.dynamic_form.ModuleRepository;
+import com.iemr.common.repository.translation.TranslationRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -27,6 +29,9 @@ public class FormMasterServiceImpl implements FormMasterService {
     private ModuleRepository moduleRepo;
     @Autowired private FormRepository formRepo;
     @Autowired private FieldRepository fieldRepo;
+
+    @Autowired
+    private TranslationRepo translationRepo;
 
     @Override
     public FormModule createModule(ModuleDTO dto) {
@@ -98,7 +103,7 @@ public class FormMasterServiceImpl implements FormMasterService {
     }
 
     @Override
-    public FormResponseDTO getStructuredFormByFormId(String formId) {
+    public FormResponseDTO getStructuredFormByFormId(String formId,String lang) {
         FormDefinition form = formRepo.findByFormId(formId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid form ID"));
 
@@ -107,13 +112,28 @@ public class FormMasterServiceImpl implements FormMasterService {
 
         List<FieldResponseDTO> fieldDtos = fields.stream()
                 .map(field -> {
+                    String labelKey = field.getLabel();  // field label already contains label_key
+
+                    Translation t = translationRepo.findByLabelKeyAndIsActive(labelKey, true)
+                            .orElse(null);
+
+                    String translatedLabel = labelKey; // fallback
+
+                    if (t != null) {
+                        if ("hi".equalsIgnoreCase(lang)) {
+                            translatedLabel = t.getHindiTranslation();
+                        } else {
+                            translatedLabel = t.getEnglish();
+                        }
+                    }
+
                     FieldResponseDTO dto = new FieldResponseDTO();
                     dto.setId(field.getId());
                     dto.setVisible(field.getIsVisible());
                     dto.setFormId(field.getForm().getFormId());
                     dto.setSectionTitle(field.getSectionTitle());
                     dto.setFieldId(field.getFieldId());
-                    dto.setLabel(field.getLabel());
+                    dto.setLabel(translatedLabel);
                     dto.setType(field.getType());
                     dto.setIsRequired(field.getIsRequired());
                     dto.setDefaultValue(field.getDefaultValue());
