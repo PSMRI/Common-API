@@ -117,7 +117,7 @@ public class FormMasterServiceImpl implements FormMasterService {
                     Translation t = translationRepo.findByLabelKeyAndIsActive(labelKey, true)
                             .orElse(null);
 
-                    String translatedLabel = labelKey; // fallback
+                    String translatedLabel = field.getLabel(); // fallback
 
                     if (t != null) {
                         if ("hi".equalsIgnoreCase(lang)) {
