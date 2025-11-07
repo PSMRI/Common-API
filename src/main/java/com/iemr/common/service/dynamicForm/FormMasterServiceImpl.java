@@ -162,7 +162,7 @@ public class FormMasterServiceImpl implements FormMasterService {
 
 
         GroupedFieldResponseDTO singleSection = new GroupedFieldResponseDTO();
-        singleSection.setSectionTitle("HBNC Form Fields"); // your custom section title
+        singleSection.setSectionTitle(singleSection.getSectionTitle()); // your custom section title
         singleSection.setFields(fieldDtos);
 
         FormResponseDTO response = new FormResponseDTO();
