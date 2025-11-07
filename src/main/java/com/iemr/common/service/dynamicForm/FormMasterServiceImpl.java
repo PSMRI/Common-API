@@ -112,7 +112,7 @@ public class FormMasterServiceImpl implements FormMasterService {
 
         List<FieldResponseDTO> fieldDtos = fields.stream()
                 .map(field -> {
-                    String labelKey = field.getLabel();  // field label already contains label_key
+                    String labelKey = field.getFieldId();  // field label already contains label_key
 
                     Translation t = translationRepo.findByLabelKeyAndIsActive(labelKey, true)
                             .orElse(null);
