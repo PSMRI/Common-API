@@ -23,17 +23,32 @@ package com.iemr.common.model.sms;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 @Data
 public class CreateSMSRequest
 {
 	Integer smsTemplateID;
+	@NotBlank(message = "SMS template name is required")
+	@Size(min = 3, max = 100, message = "Template name must be between 3 and 100 characters")
+	@Pattern(regexp = "^[a-zA-Z0-9_\\s-]+$", 
+	         message = "Template name can only contain alphanumeric characters, spaces, hyphens and underscores")
 	String smsTemplateName;
+	@NotBlank(message = "SMS template content is required")
+	@Size(min = 10, max = 500, message = "Template content must be between 10 and 500 characters")
+	@Pattern(regexp = "^[^<>]*$", 
+	         message = "Template cannot contain < or > characters")
 	String smsTemplate;
 	Integer smsTypeID;
 	SMSTypeModel smsType;
+	@NotNull(message = "Provider service map ID is required")
+	@Positive(message = "Provider service map ID must be positive")
 	Integer providerServiceMapID;
 	String createdBy;
+	@Valid
+	@NotEmpty(message = "At least one SMS parameter is required")
+	@Size(max = 20, message = "Maximum 20 parameters allowed")
 	List<SMSParameterMapModel> smsParameterMaps;
 }
