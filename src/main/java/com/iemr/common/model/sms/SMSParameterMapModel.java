@@ -21,6 +21,7 @@
 */
 package com.iemr.common.model.sms;
 
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 @Data
@@ -30,7 +31,14 @@ public class SMSParameterMapModel
 	Integer smsTemplateID;
 	String createdBy;
 	String modifiedBy;
+	@Size(max = 200, message = "Parameter value must not exceed 200 characters")
+	@Pattern(regexp = "^[^<>\"';&|`$(){}\\[\\]]*$", 
+	         message = "Parameter value contains invalid characters")
 	String smsParameterValue;
+	@NotBlank(message = "Parameter name is required")
+	@Size(min = 2, max = 50, message = "Parameter name must be between 2 and 50 characters")
+	@Pattern(regexp = "^[a-zA-Z][a-zA-Z0-9_]*$", 
+	         message = "Parameter name must start with a letter and contain only alphanumeric and underscore")
 	String smsParameterName;
 	String smsParameterType;
 }
