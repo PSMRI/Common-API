@@ -56,6 +56,7 @@ import com.iemr.common.data.cti.TransferCall;
 import com.iemr.common.repository.callhandling.BeneficiaryCallRepository;
 import com.iemr.common.repository.callhandling.IEMRCalltypeRepositoryImplCustom;
 import com.iemr.common.utils.config.ConfigProperties;
+import com.iemr.common.utils.encryption.AESUtil;
 import com.iemr.common.utils.exception.IEMRException;
 import com.iemr.common.utils.http.HttpUtils;
 import com.iemr.common.utils.mapper.InputMapper;
@@ -81,6 +82,9 @@ public class CTIServiceImpl implements CTIService {
 	private static final String CUSTOM_API_FAILURE = "0";
 
 	private static final String DEFAULT_IP = "0.0.0.0";
+		
+	private AESUtil aesUtil;
+
 
 	@Autowired
 	private BeneficiaryCallRepository beneficiaryCallRepository;
@@ -290,9 +294,12 @@ public class CTIServiceImpl implements CTIService {
 		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		AgentLoginKey agentState = objectMapper.readValue(request, AgentLoginKey.class);
 
+		String decryptPassword = aesUtil.decrypt("Piramal12Piramal", agentState.getPassword());
+
+
 		ctiURI = ctiURI.replace("CTI_SERVER", serverURL);
 		ctiURI = ctiURI.replace("USERNAME", (agentState.getUsername() != null) ? agentState.getUsername() : "");
-		ctiURI = ctiURI.replace("PASSWORD", (agentState.getPassword() != null) ? agentState.getPassword() : "");
+		ctiURI = ctiURI.replace("PASSWORD", (decryptPassword != null) ? decryptPassword : "");
 		logger.info("calling URL " + ctiURI);
 		ctiURI = ctiURI.replace("AGENT_IP", ipAddress);
 		String response = this.callUrl(ctiURI);// httpUtils.get(ctiURI);
