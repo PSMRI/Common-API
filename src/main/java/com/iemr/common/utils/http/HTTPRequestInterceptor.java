@@ -212,8 +212,7 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
 				.anyMatch(pattern -> {
 					String regex = pattern
 							.replace(".", "\\.")
-							.replace("*", ".*")
-							.replace("http://localhost:.*", "http://localhost:\\d+"); // special case for wildcard port
+						    .replace("*", ".*");
 					return origin.matches(regex);
 				});
 	}
