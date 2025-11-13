@@ -26,17 +26,6 @@ public class JwtUserIdValidationFilter implements Filter {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	private final String allowedOrigins;
 
-	// Default allowed methods for unconfigured endpoints
-	private static final Set<String> DEFAULT_ALLOWED_METHODS = Set.of("GET", "POST", "OPTIONS");
-
-	// Endpoint-specific method control map
-	// Key = endpoint path pattern (supports wildcards), Value = Set of allowed HTTP methods
-	private static final Map<String, Set<String>> ENDPOINT_ALLOWED_METHODS = new HashMap<>();
-
-	static {
-		ENDPOINT_ALLOWED_METHODS.put("/dynamicForm/delete/*/field",
-				Set.of("GET", "POST", "DELETE"));
-	}
 
 	public JwtUserIdValidationFilter(JwtAuthenticationUtil jwtAuthenticationUtil,
 			String allowedOrigins) {
@@ -81,24 +70,14 @@ public class JwtUserIdValidationFilter implements Filter {
 			}
 		}
 
-		// STEP 2: Endpoint-Specific Method Validation
+		// Determine request path/context for later checks
 		String path = request.getRequestURI();
 		String contextPath = request.getContextPath();
-		String relativePath = path.startsWith(contextPath) ? path.substring(contextPath.length()) : path;
-
-		Set<String> allowedMethods = getAllowedMethodsForEndpoint(relativePath);
-		if (!allowedMethods.contains(method.toUpperCase())) {
-			logger.warn("BLOCKED - Method Not Allowed | Method: {} | URI: {} | Allowed Methods: {}", 
-					method, uri, allowedMethods);
-			response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, 
-					"Method " + method + " not allowed for this endpoint");
-			return;
-		}
 
 		// STEP 3: Add CORS Headers (only for validated origins)
 		if (origin != null && isOriginAllowed(origin)) {
 			response.setHeader("Access-Control-Allow-Origin", origin); // Never use wildcard
-			response.setHeader("Access-Control-Allow-Methods", String.join(", ", allowedMethods) + ", OPTIONS");
+			response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
 			response.setHeader("Access-Control-Allow-Headers", 
 					"Authorization, Content-Type, Accept, Jwttoken, serverAuthorization, ServerAuthorization, serverauthorization, Serverauthorization");
 			response.setHeader("Access-Control-Allow-Credentials", "true");
@@ -108,7 +87,12 @@ public class JwtUserIdValidationFilter implements Filter {
 
 		// STEP 4: Handle OPTIONS Preflight Request
 		if ("OPTIONS".equalsIgnoreCase(method)) {
-			logger.info("OPTIONS preflight request - skipping JWT validation");
+			// OPTIONS (preflight) - respond with full allowed methods
+			response.setHeader("Access-Control-Allow-Origin", origin);
+			response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+			response.setHeader("Access-Control-Allow-Headers",
+					"Authorization, Content-Type, Accept, Jwttoken, serverAuthorization, ServerAuthorization, serverauthorization, Serverauthorization");
+			response.setHeader("Access-Control-Allow-Credentials", "true");
 			response.setStatus(HttpServletResponse.SC_OK);
 			return;
 		}
@@ -200,35 +184,7 @@ public class JwtUserIdValidationFilter implements Filter {
 				});
 	}
 
-	/**
-	 * Get allowed HTTP methods for a given endpoint path.
-	 * Checks against ENDPOINT_ALLOWED_METHODS map with wildcard support.
-	 * Returns DEFAULT_ALLOWED_METHODS if endpoint is not configured.
-	 * 
-	 * @param endpointPath The endpoint path (relative, without context path)
-	 * @return Set of allowed HTTP methods for this endpoint
-	 */
-	private Set<String> getAllowedMethodsForEndpoint(String endpointPath) {
-		// Check exact match first
-		if (ENDPOINT_ALLOWED_METHODS.containsKey(endpointPath)) {
-			return ENDPOINT_ALLOWED_METHODS.get(endpointPath);
-		}
 
-		// Check wildcard patterns (e.g., /dynamicForm/delete/*/field)
-		for (Map.Entry<String, Set<String>> entry : ENDPOINT_ALLOWED_METHODS.entrySet()) {
-			String pattern = entry.getKey();
-			// Convert wildcard pattern to regex: escape special chars, then replace * with [^/]+
-			String regex = pattern
-					.replace(".", "\\.")
-					.replace("*", "[^/]+"); // * matches one or more non-slash characters
-			if (endpointPath.matches(regex)) {
-				return entry.getValue();
-			}
-		}
-
-		// Default: only GET, POST, OPTIONS allowed
-		return DEFAULT_ALLOWED_METHODS;
-	}
 
 	private boolean isMobileClient(String userAgent) {
 		if (userAgent == null)
