@@ -3,7 +3,6 @@ package com.iemr.common.utils;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,11 +34,8 @@ public class JwtUserIdValidationFilter implements Filter {
 	private static final Map<String, Set<String>> ENDPOINT_ALLOWED_METHODS = new HashMap<>();
 
 	static {
-		Set<String> dynamicFormMethods = new HashSet<>();
-		dynamicFormMethods.add("GET");
-		dynamicFormMethods.add("POST");
-		dynamicFormMethods.add("DELETE");
-		ENDPOINT_ALLOWED_METHODS.put("/dynamicForm/delete/*/field", dynamicFormMethods);
+		ENDPOINT_ALLOWED_METHODS.put("/dynamicForm/delete/*/field",
+				Set.of("GET", "POST", "DELETE"));
 	}
 
 	public JwtUserIdValidationFilter(JwtAuthenticationUtil jwtAuthenticationUtil,
