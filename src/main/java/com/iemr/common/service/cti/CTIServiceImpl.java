@@ -83,6 +83,7 @@ public class CTIServiceImpl implements CTIService {
 
 	private static final String DEFAULT_IP = "0.0.0.0";
 		
+	@Autowired
 	private AESUtil aesUtil;
 
 
@@ -294,9 +295,13 @@ public class CTIServiceImpl implements CTIService {
 		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		AgentLoginKey agentState = objectMapper.readValue(request, AgentLoginKey.class);
 
-		String decryptPassword = aesUtil.decrypt("Piramal12Piramal", agentState.getPassword());
-
-
+		String decryptPassword = null;
+		
+		String passphrase = ConfigProperties.getPropertyByName("encryption.passphrase");
+			
+		decryptPassword = aesUtil.decrypt(passphrase, agentState.getPassword());
+				
+			
 		ctiURI = ctiURI.replace("CTI_SERVER", serverURL);
 		ctiURI = ctiURI.replace("USERNAME", (agentState.getUsername() != null) ? agentState.getUsername() : "");
 		ctiURI = ctiURI.replace("PASSWORD", (decryptPassword != null) ? decryptPassword : "");
