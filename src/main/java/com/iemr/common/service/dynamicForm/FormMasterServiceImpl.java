@@ -170,7 +170,8 @@ public class FormMasterServiceImpl implements FormMasterService {
                         } else {
                             dto.setConditional(null);
                         }
-                    } catch (JsonProcessingException e) {
+                    } catch (Exception e) {
+
                         System.err.println("JSON Parsing Error in field: " + field.getFieldId());
                         throw new RuntimeException("Failed to parse JSON for field: " + field.getFieldId(), e);
                     }
