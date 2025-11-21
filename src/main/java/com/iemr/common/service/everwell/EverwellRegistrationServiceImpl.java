@@ -296,7 +296,7 @@ public class EverwellRegistrationServiceImpl implements EverwellRegistrationServ
 
 						if (everwellBenRegListAS != null) {
 
-							registerEverWellPatient(everwellBenRegListAS, Authorization);
+					   registerEverWellPatient(everwellBenRegListAS, Authorization, new RestTemplate());
 							logger.info("data saved successfully - size" + everwellBenRegListAS.size());
 							count++;
 						} else
@@ -318,7 +318,7 @@ public class EverwellRegistrationServiceImpl implements EverwellRegistrationServ
 
 	// register the saved everwell data into 1097 identity and update in
 	// t_everwellAPI table;
-	public String registerEverWellPatient(List<EverwellDetails> everwellBenRegListAS, String Authorization) {
+	   public String registerEverWellPatient(List<EverwellDetails> everwellBenRegListAS, String Authorization, RestTemplate restTemplate) {
 		Integer failUserCount = 0;
 		String everwellRegistration = "Failure";
 		List<EverwellDetails> userDetailsRegister = everwellBenRegListAS;
@@ -376,7 +376,7 @@ public class EverwellRegistrationServiceImpl implements EverwellRegistrationServ
 
 					logger.info("registration RequestObj" + data);
 
-					RestTemplate restTemplate = new RestTemplate();
+				   // Use the provided RestTemplate for testability
 
 					HttpEntity<Object> request = RestTemplateUtil.createRequestEntity(data, Authorization);
 					// registering the everwell patient into AMRIT

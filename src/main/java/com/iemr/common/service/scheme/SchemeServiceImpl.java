@@ -111,7 +111,9 @@ public class SchemeServiceImpl implements SchemeService {
 			fileUIDAsURI = dmsProtocol + "://" + userName + ":" + userPassword + "@" + dmsPath + "/Download?uuid="
 					+ fileUID;
 		}
-		return fileUIDAsURI;
+		// return fileUIDAsURI;
+		String message = kmFileManager.getFileUID() ;
+		return message;
 	}
 
 	@Override

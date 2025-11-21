@@ -104,10 +104,12 @@ import com.iemr.common.repository.users.IEMRUserRepositoryCustom;
 import com.iemr.common.repository.videocall.VideoCallParameterRepository;
 import com.iemr.common.service.beneficiary.IEMRSearchUserService;
 import com.iemr.common.utils.CryptoUtil;
+import com.iemr.common.utils.InputSanitizer;
 import com.iemr.common.utils.config.ConfigProperties;
 import com.iemr.common.utils.http.HttpUtils;
 import com.iemr.common.utils.mapper.OutputMapper;
 //import java.util.Date;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SMSServiceImpl implements SMSService {
@@ -206,13 +208,59 @@ public class SMSServiceImpl implements SMSService {
 	}
 
 	@Override
+	@Transactional(rollbackFor = Exception.class)
 	public String saveSMSTemplate(CreateSMSRequest smsRequest) throws Exception {
+		// Sanitize inputs before processing
+		sanitizeInputs(smsRequest);
+		// Validate template syntax
+		if (!InputSanitizer.isValidTemplateParameter(smsRequest.getSmsTemplate())) {
+			throw new IllegalArgumentException("Template contains invalid parameter syntax");
+		}
 		SMSTemplate smsTemplate;
 		SMSTemplate request = smsMapper.createRequestToSMSTemplate(smsRequest);
 		smsTemplate = smsTemplateRepository.save(request);
 		saveSMSParameterMaps(smsRequest, smsTemplate.getSmsTemplateID());
 		smsTemplate = smsTemplateRepository.findBySmsTemplateID(smsTemplate.getSmsTemplateID());
 		return OutputMapper.gsonWithoutExposeRestriction().toJson(smsMapper.smsTemplateToResponse(smsTemplate));
+	}
+	
+	/**
+	 * Sanitize all inputs to prevent XSS, SQL injection, and command injection
+	 */
+	private void sanitizeInputs(CreateSMSRequest smsRequest) {
+		logger.debug("Sanitizing SMS template request inputs");
+		
+		// Sanitize template name
+		if (smsRequest.getSmsTemplateName() != null) {
+			smsRequest.setSmsTemplateName(
+				InputSanitizer.sanitize(smsRequest.getSmsTemplateName())
+			);
+		}
+		
+		// Sanitize template content (preserve ${} but remove dangerous chars)
+		if (smsRequest.getSmsTemplate() != null) {
+			smsRequest.setSmsTemplate(
+				InputSanitizer.sanitizeForXSS(smsRequest.getSmsTemplate())
+			);
+		}
+		
+		// Sanitize parameter maps
+		if (smsRequest.getSmsParameterMaps() != null) {
+			for (SMSParameterMapModel param : smsRequest.getSmsParameterMaps()) {
+				if (param.getSmsParameterName() != null) {
+					param.setSmsParameterName(
+						InputSanitizer.sanitize(param.getSmsParameterName())
+					);
+				}
+				if (param.getSmsParameterValue() != null) {
+					param.setSmsParameterValue(
+						InputSanitizer.sanitize(param.getSmsParameterValue())
+					);
+				}
+			}
+		}
+		
+		logger.debug("Input sanitization completed");
 	}
 
 	private void saveSMSParameterMaps(CreateSMSRequest smsRequest, Integer smsTemplateID) {

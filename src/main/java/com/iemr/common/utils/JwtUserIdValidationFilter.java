@@ -2,6 +2,9 @@ package com.iemr.common.utils;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +26,7 @@ public class JwtUserIdValidationFilter implements Filter {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	private final String allowedOrigins;
 
+
 	public JwtUserIdValidationFilter(JwtAuthenticationUtil jwtAuthenticationUtil,
 			String allowedOrigins) {
 		this.jwtAuthenticationUtil = jwtAuthenticationUtil;
@@ -36,27 +40,63 @@ public class JwtUserIdValidationFilter implements Filter {
 		HttpServletResponse response = (HttpServletResponse) servletResponse;
 
 		String origin = request.getHeader("Origin");
+		String method = request.getMethod();
+		String uri = request.getRequestURI();
 
 		logger.debug("Incoming Origin: {}", origin);
+		logger.debug("Request Method: {}", method);
+		logger.debug("Request URI: {}", uri);
 		logger.debug("Allowed Origins Configured: {}", allowedOrigins);
-		logger.info("Add server authorization header to response");
-		if (origin != null && isOriginAllowed(origin)) {
-			response.setHeader("Access-Control-Allow-Origin", origin);
-			response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-			response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept, Jwttoken, serverAuthorization, ServerAuthorization, serverauthorization, Serverauthorization");
-			response.setHeader("Access-Control-Allow-Credentials", "true");
+
+		// STEP 1: STRICT Origin Validation - Block unauthorized origins immediately
+		// For OPTIONS requests, Origin header is required (CORS preflight)
+		if ("OPTIONS".equalsIgnoreCase(method)) {
+			if (origin == null) {
+				logger.warn("BLOCKED - OPTIONS request without Origin header | Method: {} | URI: {}", method, uri);
+				response.sendError(HttpServletResponse.SC_FORBIDDEN, "OPTIONS request requires Origin header");
+				return;
+			}
+			if (!isOriginAllowed(origin)) {
+				logger.warn("BLOCKED - Unauthorized Origin | Origin: {} | Method: {} | URI: {}", origin, method, uri);
+				response.sendError(HttpServletResponse.SC_FORBIDDEN, "Origin not allowed");
+				return;
+			}
 		} else {
-			logger.warn("Origin [{}] is NOT allowed. CORS headers NOT added.", origin);
+			// For non-OPTIONS requests, validate origin if present
+			if (origin != null && !isOriginAllowed(origin)) {
+				logger.warn("BLOCKED - Unauthorized Origin | Origin: {} | Method: {} | URI: {}", origin, method, uri);
+				response.sendError(HttpServletResponse.SC_FORBIDDEN, "Origin not allowed");
+				return;
+			}
 		}
 
-		if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-			logger.info("OPTIONS request - skipping JWT validation");
+		// Determine request path/context for later checks
+		String path = request.getRequestURI();
+		String contextPath = request.getContextPath();
+
+		// STEP 3: Add CORS Headers (only for validated origins)
+		if (origin != null && isOriginAllowed(origin)) {
+			response.setHeader("Access-Control-Allow-Origin", origin); // Never use wildcard
+			response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+			response.setHeader("Access-Control-Allow-Headers", 
+					"Authorization, Content-Type, Accept, Jwttoken, serverAuthorization, ServerAuthorization, serverauthorization, Serverauthorization");
+			response.setHeader("Access-Control-Allow-Credentials", "true");
+			response.setHeader("Access-Control-Max-Age", "3600");
+			logger.info("Origin Validated | Origin: {} | Method: {} | URI: {}", origin, method, uri);
+		}
+
+		// STEP 4: Handle OPTIONS Preflight Request
+		if ("OPTIONS".equalsIgnoreCase(method)) {
+			// OPTIONS (preflight) - respond with full allowed methods
+			response.setHeader("Access-Control-Allow-Origin", origin);
+			response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+			response.setHeader("Access-Control-Allow-Headers",
+					"Authorization, Content-Type, Accept, Jwttoken, serverAuthorization, ServerAuthorization, serverauthorization, Serverauthorization");
+			response.setHeader("Access-Control-Allow-Credentials", "true");
 			response.setStatus(HttpServletResponse.SC_OK);
 			return;
 		}
 
-		String path = request.getRequestURI();
-		String contextPath = request.getContextPath();
 		logger.info("JwtUserIdValidationFilter invoked for path: " + path);
 
 		// Log cookies for debugging
@@ -73,8 +113,7 @@ public class JwtUserIdValidationFilter implements Filter {
 		}
 
 		// Log headers for debugging
-		String jwtTokenFromHeader = request.getHeader("Jwttoken");
-		logger.info("JWT token from header: ");
+		logger.debug("JWT token from header: {}", request.getHeader("Jwttoken") != null ? "present" : "not present");
 
 		// Skip authentication for public endpoints
 		if (shouldSkipAuthentication(path, contextPath)) {
@@ -138,13 +177,14 @@ public class JwtUserIdValidationFilter implements Filter {
 				.anyMatch(pattern -> {
 					String regex = pattern
 							.replace(".", "\\.")
-							.replace("*", ".*")
-							.replace("http://localhost:.*", "http://localhost:\\d+"); // special case for wildcard port
+						.replace("*", ".*");
 
 					boolean matched = origin.matches(regex);
 					return matched;
 				});
 	}
+
+
 
 	private boolean isMobileClient(String userAgent) {
 		if (userAgent == null)
