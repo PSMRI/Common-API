@@ -96,6 +96,7 @@ import com.iemr.common.repository.users.VanServicepointMappingRepo;
 import com.iemr.common.service.cti.CTIService;
 import com.iemr.common.utils.config.ConfigProperties;
 import com.iemr.common.utils.encryption.AESUtil;
+import com.iemr.common.utils.exception.AccountStatusException;
 import com.iemr.common.utils.exception.IEMRException;
 import com.iemr.common.utils.mapper.InputMapper;
 import com.iemr.common.utils.mapper.OutputMapper;
@@ -220,11 +221,12 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 		this.validator = validator;
 	}
 
-	private void checkUserAccountStatus(User user) throws IEMRException {
+	private void checkUserAccountStatus(User user) throws AccountStatusException {
+		logger.info(" Checking user account status for user: " + user.getUserName());
 		if (user.getDeleted()) {
-			throw new IEMRException("Your account is locked or de-activated. Please contact administrator");
+			throw new AccountStatusException("Your account is locked or de-activated. Please contact administrator");
 		} else if (user.getStatusID() > 2) {
-			throw new IEMRException("Your account is not active. Please contact administrator");
+			throw new AccountStatusException("Your account is not active. Please contact administrator");
 		}
 	}
 
@@ -294,7 +296,11 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 					user = iEMRUserRepositoryCustom.save(user);
 				}
 			}
+		} catch (AccountStatusException e) {
+			logger.error("Caught AccountStatusException, re-throwing: " + e.getMessage());
+			throw e;
 		} catch (Exception e) {
+			logger.error("Caught generic Exception: " + e.getClass().getSimpleName());
 			throw new IEMRException(e.getMessage());
 		}
 		user.setM_UserServiceRoleMapping(getUserServiceRoleMapping(user.getUserID()));

@@ -44,6 +44,7 @@ public class OutputResponse
 	public static final int GENERIC_FAILURE = 5000;
 	public static final int OBJECT_FAILURE = 5001;
 	public static final int USERID_FAILURE = 5002;
+	public static final int ACCOUNTSTATUS_FAILURE = 403;
 	public static final int PASSWORD_FAILURE = 5003;
 	public static final int PREVILAGE_FAILURE = 5004;
 	public static final int CODE_EXCEPTION = 5005;
@@ -99,6 +100,11 @@ public class OutputResponse
 				this.statusCode = OBJECT_FAILURE;
 				status = "Invalid object conversion";
 				errorMessage = "Invalid object conversion";
+				break;
+			case "AccountStatusException":
+				this.statusCode = ACCOUNTSTATUS_FAILURE;
+				status = "Account access forbidden";
+				errorMessage = thrown.getMessage();
 				break;
 			case "SQLException":
 			case "ParseException":
