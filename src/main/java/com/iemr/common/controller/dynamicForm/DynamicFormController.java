@@ -90,8 +90,9 @@ public class DynamicFormController {
             return ResponseEntity.status(HttpStatus.OK)
                     .body(ApiResponse.success("Form structure fetched successfully", HttpStatus.OK.value(), result));
         } catch (Exception e) {
+
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Failed to fetch form structure:"+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value(), null));
+                    .body(ApiResponse.error("Failed to fetch form structure:"+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value(), e));
         }
     }
 
