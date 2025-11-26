@@ -140,18 +140,7 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 		//updateDeathOfBenificiary(benificiaryDetails);
 		return updatedRows;
 	}
-	private void updateDeathOfBenificiary(BeneficiaryModel beneficiaryModel){
-		RMNCHBeneficiaryDetailsRmnch rmnchBeneficiaryDetailsRmnch = new RMNCHBeneficiaryDetailsRmnch();
-		rmnchBeneficiaryDetailsRmnch.setIsDeath(beneficiaryModel.getIsDeath());
-		rmnchBeneficiaryDetailsRmnch.setPlaceOfDeathId(beneficiaryModel.getPlaceOfDeathId());
-		rmnchBeneficiaryDetailsRmnch.setPlaceOfDeath(beneficiaryModel.getPlaceOfDeath());
-		rmnchBeneficiaryDetailsRmnch.setOtherPlaceOfDeath(beneficiaryModel.getOtherPlaceOfDeath());
-		rmnchBeneficiaryDetailsRmnch.setReasonOfDeath(beneficiaryModel.getReasonOfDeath());
-		rmnchBeneficiaryDetailsRmnch.setTimeOfDeath(beneficiaryModel.getTimeOfDeath());
-		rmnchBeneficiaryDetailsRmnch.setDateOfDeath(beneficiaryModel.getDateOfDeath());
 
-		//beneficiaryDetailsRmnchRepository.save(rmnchBeneficiaryDetailsRmnch);
-	}
 
 	private void setDemographicDetails(IdentityEditDTO identityEditDTO, BeneficiaryModel benificiaryDetails) {
 		if(null != benificiaryDetails.getI_bendemographics()) {
