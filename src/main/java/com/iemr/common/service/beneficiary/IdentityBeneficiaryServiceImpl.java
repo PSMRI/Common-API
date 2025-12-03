@@ -42,6 +42,7 @@ import com.iemr.common.utils.http.HttpUtils;
 import com.iemr.common.utils.mapper.InputMapper;
 import com.iemr.common.utils.mapper.OutputMapper;
 import com.iemr.common.utils.response.OutputResponse;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryService {
@@ -51,6 +52,7 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 	Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	private static HttpUtils httpUtils = new HttpUtils();
 	private InputMapper inputMapper = new InputMapper();
+
 	@Value("${identity-api-url}")
 	private String identityBaseURL;
 	@Value("${identity-1097-api-url}")
