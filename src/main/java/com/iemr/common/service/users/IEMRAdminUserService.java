@@ -121,6 +121,8 @@ public interface IEMRAdminUserService
 
 	List<UserServiceRoleMapping> getUserServiceRoleMapping(Long userID) throws IEMRException;
 
+	List<User> getUserIdbyUserName(String userName) throws IEMRException;
+
 
 	
 }

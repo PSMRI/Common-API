@@ -30,6 +30,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.iemr.common.model.beneficiary.RMNCHBeneficiaryDetailsRmnch;
+import com.iemr.common.service.welcomeSms.WelcomeBenificarySmsService;
+import com.iemr.common.service.welcomeSms.WelcomeBenificarySmsServiceImpl;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +40,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.iemr.common.data.beneficiary.Beneficiary;
 import com.iemr.common.data.mctshistory.MctsOutboundCallDetail;
@@ -75,7 +77,16 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 	IdentityBenEditMapper identityBenEditMapper;
 
 	@Autowired
+	private WelcomeBenificarySmsService welcomeBenificarySmsService;
+
+	@Autowired
 	Validator validator;
+
+
+
+
+
+
 
 	@Autowired
 	OutboundHistoryRepository outboundHistoryRepository;
@@ -112,9 +123,10 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 	@Override
 	public Integer updateBenificiary(BeneficiaryModel benificiaryDetails, String auth) throws IEMRException {
 		Integer updatedRows = 0;
-
 		IdentityEditDTO identityEditDTO = identityBenEditMapper.BenToIdentityEditMapper(benificiaryDetails);
 		setDemographicDetails(identityEditDTO,benificiaryDetails);
+
+
 		
 		if (benificiaryDetails.getBeneficiaryIdentities() != null
 				&& benificiaryDetails.getBeneficiaryIdentities().size() > 0) {
@@ -122,13 +134,13 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 					benificiaryDetails.getCreatedBy()));
 		}
 		identityEditDTO.setDob(benificiaryDetails.getDOB());
-		// identityEditDTO.setOtherFields(benificiaryDetails.getOtherFields());
-		// String jsoninput=new Gson().toJson(identityEditDTO);
 		updatedRows = identityBeneficiaryService.editIdentityEditDTO(identityEditDTO, auth,
 				benificiaryDetails.getIs1097());
-
+		logger.info("updateBen");
+		//updateDeathOfBenificiary(benificiaryDetails);
 		return updatedRows;
 	}
+
 
 	private void setDemographicDetails(IdentityEditDTO identityEditDTO, BeneficiaryModel benificiaryDetails) {
 		if(null != benificiaryDetails.getI_bendemographics()) {
@@ -140,15 +152,29 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 				identityEditDTO.setReligion(benificiaryDetails.getI_bendemographics().getReligion());
 			else 
 				identityEditDTO.setReligion(benificiaryDetails.getI_bendemographics().getReligionName());
-			if(null != benificiaryDetails.getOccupation())
-				identityEditDTO.setOccupationName(benificiaryDetails.getOccupation());
-			else
-				identityEditDTO.setOccupationName(benificiaryDetails.getI_bendemographics().getOccupation());
-			identityEditDTO.setEducation(benificiaryDetails.getI_bendemographics().getEducationName());
+
+			if (null != benificiaryDetails.getOccupation()) {
+   				identityEditDTO.setOccupationName(benificiaryDetails.getOccupation());
+			} else if (null != benificiaryDetails.getI_bendemographics()  &&
+         		null != benificiaryDetails.getI_bendemographics().getOccupation()) {
+    			identityEditDTO.setOccupationName(benificiaryDetails.getI_bendemographics().getOccupation());
+			} else {
+    			identityEditDTO.setOccupationName(benificiaryDetails.getOccupationName());
+			}
+
+			if (null != benificiaryDetails.getEducation()) {
+    			identityEditDTO.setEducation(benificiaryDetails.getEducation());
+			} else if (null != benificiaryDetails.getI_bendemographics() &&
+           		null != benificiaryDetails.getI_bendemographics().getEducationName()) {
+    			identityEditDTO.setEducation(benificiaryDetails.getI_bendemographics().getEducationName());
+			} 
 			if(null != benificiaryDetails.getIncomeStatus())
 				identityEditDTO.setIncomeStatus(benificiaryDetails.getIncomeStatus());
 			else
 				identityEditDTO.setIncomeStatus(benificiaryDetails.getI_bendemographics().getIncomeStatus());
+		}
+		if(benificiaryDetails!=null){
+			//updateDeathOfBenificiary(benificiaryDetails);
 		}
 		
 	}
@@ -163,16 +189,20 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 	@Override
 	public String save(BeneficiaryModel beneficiaryModel, HttpServletRequest servletRequest) throws Exception {
 
-		// logger.info("benificiaryDetails: " + beneficiaryModel);
+		 logger.info("benificiaryDetails: " + beneficiaryModel);
 
 		CommonIdentityDTO identityDTO = identityMapper.beneficiaryModelCommonIdentityDTO(beneficiaryModel);
+
 		setSaveDemographicDetails(identityDTO,beneficiaryModel);
-		// identityDTO.setOtherFields(beneficiaryModel.getOtherFields());
+//		 identityDTO.setOtherFields(beneficiaryModel.getOtherFields());
+		identityDTO.setIsConsent(beneficiaryModel.getIsConsent());
+
 		identityDTO.setFaceEmbedding(beneficiaryModel.getFaceEmbedding());
 		identityDTO.setEmergencyRegistration(beneficiaryModel.isEmergencyRegistration());
 		identityDTO
 				.setBenFamilyDTOs(identityMapper.benPhoneMapListToBenFamilyDTOList(beneficiaryModel.getBenPhoneMaps()));
 		String request = new Gson().toJson(identityDTO);
+
 
 		if (beneficiaryModel.getIs1097() == null)
 			beneficiaryModel.setIs1097(false);
@@ -193,9 +223,17 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 			} else {
 				return response.toString();
 			}
+			if(beneficiary!=null){
+				if(beneficiary.getBenPhoneMaps().get(0).getPhoneNo()!=null){
+					welcomeBenificarySmsService.sendWelcomeSMStoBenificiary(beneficiary.getBenPhoneMaps().get(0).getPhoneNo(),beneficiary.getFirstName()+" "+beneficiary.getLastName(),beneficiary.getBeneficiaryID());
+				}
+			}
+
 		}
 		return OutputMapper.gson().toJson(beneficiary);
 	}
+
+
 
 	private void setSaveDemographicDetails(CommonIdentityDTO identityDTO, BeneficiaryModel beneficiaryModel) {
 		if(null != beneficiaryModel.getI_bendemographics()) {
@@ -206,16 +244,32 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 				identityDTO.setReligion(beneficiaryModel.getI_bendemographics().getReligion());
 			else 
 				identityDTO.setReligion(beneficiaryModel.getI_bendemographics().getReligionName());
-			if(null != beneficiaryModel.getOccupation())
-				identityDTO.setOccupationName(beneficiaryModel.getOccupation());
-			else
-				identityDTO.setOccupationName(beneficiaryModel.getI_bendemographics().getOccupation());
-			if(null != beneficiaryModel.getI_bendemographics().getEducationName())
-				identityDTO.setEducation(beneficiaryModel.getI_bendemographics().getEducationName());
+			
+			if (null != beneficiaryModel.getOccupation()) {
+    			identityDTO.setOccupationName(beneficiaryModel.getOccupation());
+			} else if (null != beneficiaryModel.getI_bendemographics()  &&
+         		null != beneficiaryModel.getI_bendemographics().getOccupation()) {
+    			identityDTO.setOccupationName(beneficiaryModel.getI_bendemographics().getOccupation());
+			} else {
+    			identityDTO.setOccupationName(beneficiaryModel.getOccupationName());
+			}
+
+			if (null != beneficiaryModel.getEducation()) {
+    			identityDTO.setEducation(beneficiaryModel.getEducation());
+			} else if (null != beneficiaryModel.getI_bendemographics() &&
+           		null != beneficiaryModel.getI_bendemographics().getEducationName()) {
+    			identityDTO.setEducation(beneficiaryModel.getI_bendemographics().getEducationName());
+			} 
+
+
+
 			if(null != beneficiaryModel.getIncomeStatus())
 				identityDTO.setIncomeStatus(beneficiaryModel.getIncomeStatus());
 			else
 				identityDTO.setIncomeStatus(beneficiaryModel.getI_bendemographics().getIncomeStatus());
+		}
+		if(beneficiaryModel!=null){
+		//	updateDeathOfBenificiary(beneficiaryModel);
 		}
 		
 	}

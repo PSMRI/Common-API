@@ -35,6 +35,7 @@ import org.json.JSONObject;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.Expose;
 import com.iemr.common.model.user.TitleModel;
@@ -77,6 +78,51 @@ public class BeneficiaryModel implements Comparable<BeneficiaryModel> {
 	// private List<OutboundCallRequestModel> outboundCallRequests;
 	// private List<BeneficiaryCallModel> beneficiaryCalls;
 	// private List<FeedbackDetailsModel> feedbacks;
+	@Expose
+	private Boolean isConsent=false;
+
+	@Expose
+	private Boolean isDeath;
+
+	@Expose
+	private String  dateOfDeath;
+
+	@Expose
+	private String isDeathValue;
+
+	@Expose
+	private String timeOfDeath;
+
+	@Expose
+	private String reasonOfDeath;
+
+	@Expose
+	private Integer reasonOfDeathId;
+
+	@Expose
+	private String placeOfDeath;
+
+	@Expose
+	private Integer placeOfDeathId;
+
+	@Expose
+	private String  otherPlaceOfDeath;
+
+	@Expose
+	private Boolean isSpouseAdded;
+
+	@Expose
+	private Boolean isChildrenAdded;
+
+	@Expose
+	private Boolean isMarried;
+
+	@Expose
+	private Integer doYouHavechildren;
+
+	@Expose
+	private Integer noofAlivechildren;
+
 	@Expose
 	private String beneficiaryID;
 	@Expose
@@ -211,16 +257,19 @@ public class BeneficiaryModel implements Comparable<BeneficiaryModel> {
 	@Expose
 	private Integer occupationId;
 	@Expose
+	@JsonProperty("occupationOther")
 	private String occupationName;
 	@Expose
 	private String occupation;
 	@Expose
+	@JsonProperty("incomeName")
 	private String incomeStatus;
 	@Expose
 	private BigInteger religionId;
 	@Expose
 	private String religion;
 	@Expose
+	@JsonProperty("educationQualificationName")
 	private String education;
 	@Expose
 	private Integer providerServiceMapID;

@@ -36,3 +36,6 @@ hs_err_pid89928.log
 
 # Properties
 src/main/environment/common_local.properties
+
+
+node_modules

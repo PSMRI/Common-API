@@ -21,22 +21,28 @@
 */
 package com.iemr.common.controller.users;
 
+import java.nio.charset.StandardCharsets;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.google.gson.Gson;
 import com.iemr.common.data.users.EmployeeSignature;
 import com.iemr.common.service.users.EmployeeSignatureServiceImpl;
-import com.iemr.common.utils.mapper.InputMapper;
 import com.iemr.common.utils.response.OutputResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,28 +57,49 @@ public class EmployeeSignatureController {
 	@Autowired
 	EmployeeSignatureServiceImpl employeeSignatureServiceImpl;
 
-	private InputMapper inputMapper = new InputMapper();
-
 	private Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
 	@Operation(summary = "Fetch file")
 	@RequestMapping(value = "/{userID}", headers = "Authorization", method = { RequestMethod.GET })
 	public ResponseEntity<byte[]> fetchFile(@PathVariable("userID") Long userID) throws Exception {
-		OutputResponse response = new OutputResponse();
 		logger.debug("File download for userID" + userID);
 
 		try {
+			EmployeeSignature userSignID = employeeSignatureServiceImpl.fetchActiveSignature(userID);
 
-			EmployeeSignature userSignID = employeeSignatureServiceImpl.fetchSignature(userID);
-			return ResponseEntity.ok().contentType(MediaType.parseMediaType(userSignID.getFileType()))
-					.header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + userSignID.getFileName() + "\"")
-					.body(userSignID.getSignature());
+			if (userSignID == null) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+						"Active signature not found for userID: " + userID);
+			}
+			String originalName = userSignID.getFileName();
+			if (originalName == null || originalName.isBlank()) {
+				originalName = "signature";
+			}
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.setContentDisposition(
+					ContentDisposition.attachment().filename(originalName, StandardCharsets.UTF_8).build());
+			responseHeaders.setCacheControl(CacheControl.noStore());
+			responseHeaders.add(HttpHeaders.PRAGMA, "no-cache");
+			responseHeaders.setExpires(0);
+			MediaType mediaType;
+			try {
+				mediaType = MediaType.parseMediaType(userSignID.getFileType());
+			} catch (InvalidMediaTypeException | NullPointerException e) {
+				mediaType = MediaType.APPLICATION_OCTET_STREAM;
+			}
+
+			byte[] fileBytes = userSignID.getSignature(); // MUST be byte[]
+			if (fileBytes == null || fileBytes.length == 0) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Signature not found for userID: " + userID);
+			}
+
+			return ResponseEntity.ok().headers(responseHeaders).contentType(mediaType).contentLength(fileBytes.length)
+					.body(fileBytes);
 
 		} catch (Exception e) {
 			logger.error("File download for userID failed with exception " + e.getMessage(), e);
+			throw new Exception("Error while downloading file. Please contact administrator..");
 		}
-
-		return ResponseEntity.badRequest().body(new byte[] {});
 
 	}
 
