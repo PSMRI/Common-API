@@ -69,9 +69,9 @@ public class SnomedController {
 			else
 				output.setResponse(new Gson().toJson(sctdescriptions));
 
-			logger.info("ggetSnomedCTRecord response: " + output);
+			logger.info("getSnomedCTRecord response: " + output);
 		} catch (Exception e) {
-			logger.error("ggetSnomedCTRecord failed with error " + e.getMessage(), e);
+			logger.error("getSnomedCTRecord failed with error " + e.getMessage(), e);
 			output.setError(e);
 		}
 		return output.toString();
@@ -94,9 +94,9 @@ public class SnomedController {
 			else
 				output.setResponse("No Records Found");
 
-			logger.info("ggetSnomedCTRecord response: " + output);
+			logger.info("getSnomedCTRecord response: " + output);
 		} catch (Exception e) {
-			logger.error("ggetSnomedCTRecord failed with error " + e.getMessage(), e);
+			logger.error("getSnomedCTRecord failed with error " + e.getMessage(), e);
 			output.setError(e);
 		}
 		return output.toString();

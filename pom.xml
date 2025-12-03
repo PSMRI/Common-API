@@ -6,7 +6,7 @@
 
 	<groupId>com.iemr.common-API</groupId>
 	<artifactId>common-api</artifactId>
-	<version>3.6.0</version>
+	<version>3.6.1</version>
 	<packaging>war</packaging>
 
 	<name>Common-API</name>
@@ -253,6 +253,17 @@
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+		
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
