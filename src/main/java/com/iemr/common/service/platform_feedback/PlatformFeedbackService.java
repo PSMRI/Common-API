@@ -19,11 +19,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
-package com.iemr.common.service;
+package com.iemr.common.service.platform_feedback;
 
-import com.iemr.common.dto.*;
-import com.iemr.common.model.Feedback;
-import com.iemr.common.model.FeedbackCategory;
+import com.iemr.common.data.platform_feedback.Feedback;
+import com.iemr.common.data.platform_feedback.FeedbackCategory;
+import com.iemr.common.dto.platform_feedback.CategoryResponse;
+import com.iemr.common.dto.platform_feedback.FeedbackRequest;
+import com.iemr.common.dto.platform_feedback.FeedbackResponse;
 import com.iemr.common.repository.platform_feedback.PlatformFeedbackCategoryRepository;
 import com.iemr.common.repository.platform_feedback.PlatformFeedbackRepository;
 import com.iemr.common.exception.BadRequestException;

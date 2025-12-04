@@ -21,7 +21,7 @@
  */
 package com.iemr.common.repository.platform_feedback;
 
-import com.iemr.common.model.Feedback;
+import com.iemr.common.data.platform_feedback.Feedback;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
