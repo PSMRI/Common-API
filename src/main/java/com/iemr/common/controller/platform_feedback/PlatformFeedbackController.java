@@ -19,10 +19,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
-package com.iemr.common.controller;
+package com.iemr.common.controller.platform_feedback;
 
-import com.iemr.common.dto.*;
-import com.iemr.common.service.PlatformFeedbackService;
+import com.iemr.common.dto.platform_feedback.CategoryResponse;
+import com.iemr.common.dto.platform_feedback.FeedbackRequest;
+import com.iemr.common.dto.platform_feedback.FeedbackResponse;
+import com.iemr.common.service.platform_feedback.PlatformFeedbackService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Parameter;
