@@ -55,6 +55,7 @@ import lombok.Data;
 @Entity
 @Table(name = "m_user")
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class User implements Serializable  {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
