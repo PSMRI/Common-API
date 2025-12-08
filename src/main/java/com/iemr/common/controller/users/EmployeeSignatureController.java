@@ -65,7 +65,12 @@ public class EmployeeSignatureController {
 		logger.debug("File download for userID" + userID);
 
 		try {
-			EmployeeSignature userSignID = employeeSignatureServiceImpl.fetchSignature(userID);
+			EmployeeSignature userSignID = employeeSignatureServiceImpl.fetchActiveSignature(userID);
+
+			if (userSignID == null) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+						"Active signature not found for userID: " + userID);
+			}
 			String originalName = userSignID.getFileName();
 			if (originalName == null || originalName.isBlank()) {
 				originalName = "signature";

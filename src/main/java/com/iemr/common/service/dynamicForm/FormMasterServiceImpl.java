@@ -1,14 +1,17 @@
 package com.iemr.common.service.dynamicForm;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.common.data.dynamic_from.FormDefinition;
 import com.iemr.common.data.dynamic_from.FormField;
 import com.iemr.common.data.dynamic_from.FormModule;
+import com.iemr.common.data.translation.Translation;
 import com.iemr.common.dto.dynamicForm.*;
 import com.iemr.common.repository.dynamic_form.FieldRepository;
 import com.iemr.common.repository.dynamic_form.FormRepository;
 import com.iemr.common.repository.dynamic_form.ModuleRepository;
+import com.iemr.common.repository.translation.TranslationRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -26,6 +29,9 @@ public class FormMasterServiceImpl implements FormMasterService {
     private ModuleRepository moduleRepo;
     @Autowired private FormRepository formRepo;
     @Autowired private FieldRepository fieldRepo;
+
+    @Autowired
+    private TranslationRepo translationRepo;
 
     @Override
     public FormModule createModule(ModuleDTO dto) {
@@ -97,7 +103,7 @@ public class FormMasterServiceImpl implements FormMasterService {
     }
 
     @Override
-    public FormResponseDTO getStructuredFormByFormId(String formId) {
+    public FormResponseDTO getStructuredFormByFormId(String formId,String lang) {
         FormDefinition form = formRepo.findByFormId(formId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid form ID"));
 
@@ -106,13 +112,28 @@ public class FormMasterServiceImpl implements FormMasterService {
 
         List<FieldResponseDTO> fieldDtos = fields.stream()
                 .map(field -> {
+                    String labelKey = field.getFieldId();  // field label already contains label_key
+
+                    Translation t = translationRepo.findByLabelKeyAndIsActive(labelKey, true)
+                            .orElse(null);
+
+                    String translatedLabel = field.getLabel(); // fallback
+
+                    if (t != null) {
+                        if ("hi".equalsIgnoreCase(lang)) {
+                            translatedLabel = t.getHindiTranslation();
+                        } else {
+                            translatedLabel = t.getEnglish();
+                        }
+                    }
+
                     FieldResponseDTO dto = new FieldResponseDTO();
                     dto.setId(field.getId());
                     dto.setVisible(field.getIsVisible());
                     dto.setFormId(field.getForm().getFormId());
                     dto.setSectionTitle(field.getSectionTitle());
                     dto.setFieldId(field.getFieldId());
-                    dto.setLabel(field.getLabel());
+                    dto.setLabel(translatedLabel);
                     dto.setType(field.getType());
                     dto.setIsRequired(field.getIsRequired());
                     dto.setDefaultValue(field.getDefaultValue());
@@ -122,8 +143,14 @@ public class FormMasterServiceImpl implements FormMasterService {
                     try {
                         // Handle options
                         if (field.getOptions() != null && !field.getOptions().isBlank()) {
-                            List<String> options = objectMapper.readValue(field.getOptions(), new TypeReference<>() {});
-                            dto.setOptions(options.isEmpty() ? null : options);
+                            JsonNode node = objectMapper.readTree(field.getOptions());
+                            List<String> options = null;
+                            if (node.isArray()) {
+                                options = objectMapper.convertValue(node, new TypeReference<>() {});
+                            } else if (node.has("options")) {
+                                options = objectMapper.convertValue(node.get("options"), new TypeReference<>() {});
+                            }
+                            dto.setOptions(options == null || options.isEmpty() ? null : options);
                         } else {
                             dto.setOptions(null);
                         }
@@ -143,7 +170,8 @@ public class FormMasterServiceImpl implements FormMasterService {
                         } else {
                             dto.setConditional(null);
                         }
-                    } catch (JsonProcessingException e) {
+                    } catch (Exception e) {
+
                         System.err.println("JSON Parsing Error in field: " + field.getFieldId());
                         throw new RuntimeException("Failed to parse JSON for field: " + field.getFieldId(), e);
                     }
@@ -155,7 +183,7 @@ public class FormMasterServiceImpl implements FormMasterService {
 
 
         GroupedFieldResponseDTO singleSection = new GroupedFieldResponseDTO();
-        singleSection.setSectionTitle("HBNC Form Fields"); // your custom section title
+        singleSection.setSectionTitle(singleSection.getSectionTitle()); // your custom section title
         singleSection.setFields(fieldDtos);
 
         FormResponseDTO response = new FormResponseDTO();

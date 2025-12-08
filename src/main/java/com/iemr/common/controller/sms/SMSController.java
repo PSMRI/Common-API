@@ -24,6 +24,7 @@ package com.iemr.common.controller.sms;
 import java.util.Arrays;
 
 import javax.ws.rs.core.MediaType;
+import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,7 +102,7 @@ public class SMSController {
 	@Operation(summary = "Save SMS template")
 	@PostMapping(value = "/saveSMSTemplate", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String saveSMSTemplate(
-			@Param(value = "\"{\\\"createdBy\\\":\\\"String\\\",\\\"providerServiceMapID\\\":\\\"String\\\",\\\"smsParameterMaps\\\":\\\"String\\\",\\\"smsTemplate\\\":\\\"String\\\",\\\"smsTemplateName\\\":\\\"String\\\",\\\"smsTypeID\\\":\\\"Integer\\\"}\"") @RequestBody CreateSMSRequest request,
+			@Param(value = "\"{\\\"createdBy\\\":\\\"String\\\",\\\"providerServiceMapID\\\":\\\"String\\\",\\\"smsParameterMaps\\\":\\\"String\\\",\\\"smsTemplate\\\":\\\"String\\\",\\\"smsTemplateName\\\":\\\"String\\\",\\\"smsTypeID\\\":\\\"Integer\\\"}\"") @Valid @RequestBody CreateSMSRequest request,
 			HttpServletRequest serverRequest) {
 		OutputResponse response = new OutputResponse();
 		logger.info("saveSMSTemplate received request");

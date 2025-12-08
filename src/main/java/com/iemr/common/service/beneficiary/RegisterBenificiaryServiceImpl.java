@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.iemr.common.model.beneficiary.RMNCHBeneficiaryDetailsRmnch;
 import com.iemr.common.service.welcomeSms.WelcomeBenificarySmsService;
 import com.iemr.common.service.welcomeSms.WelcomeBenificarySmsServiceImpl;
 import org.json.JSONObject;
@@ -83,6 +84,10 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 
 
 
+
+
+
+
 	@Autowired
 	OutboundHistoryRepository outboundHistoryRepository;
 
@@ -120,6 +125,8 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 		Integer updatedRows = 0;
 		IdentityEditDTO identityEditDTO = identityBenEditMapper.BenToIdentityEditMapper(benificiaryDetails);
 		setDemographicDetails(identityEditDTO,benificiaryDetails);
+
+
 		
 		if (benificiaryDetails.getBeneficiaryIdentities() != null
 				&& benificiaryDetails.getBeneficiaryIdentities().size() > 0) {
@@ -129,9 +136,11 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 		identityEditDTO.setDob(benificiaryDetails.getDOB());
 		updatedRows = identityBeneficiaryService.editIdentityEditDTO(identityEditDTO, auth,
 				benificiaryDetails.getIs1097());
-			
+		logger.info("updateBen");
+		//updateDeathOfBenificiary(benificiaryDetails);
 		return updatedRows;
 	}
+
 
 	private void setDemographicDetails(IdentityEditDTO identityEditDTO, BeneficiaryModel benificiaryDetails) {
 		if(null != benificiaryDetails.getI_bendemographics()) {
@@ -164,6 +173,9 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 			else
 				identityEditDTO.setIncomeStatus(benificiaryDetails.getI_bendemographics().getIncomeStatus());
 		}
+		if(benificiaryDetails!=null){
+			//updateDeathOfBenificiary(benificiaryDetails);
+		}
 		
 	}
 
@@ -184,13 +196,6 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 		setSaveDemographicDetails(identityDTO,beneficiaryModel);
 //		 identityDTO.setOtherFields(beneficiaryModel.getOtherFields());
 		identityDTO.setIsConsent(beneficiaryModel.getIsConsent());
-//		identityDTO.setIsDeath(beneficiaryModel.getIsDeath());
-//		identityDTO.setIsDeathValue(beneficiaryModel.getIsDeathValue());
-//		identityDTO.setDateOfDeath(beneficiaryModel.getDateOfDeath());
-//		identityDTO.setPlaceOfDeath(beneficiaryModel.getPlaceOfDeath());
-//		identityDTO.setOtherPlaceOfDeath(beneficiaryModel.getOtherPlaceOfDeath());
-//		identityDTO.setTimeOfDeath(beneficiaryModel.getTimeOfDeath());
-
 
 		identityDTO.setFaceEmbedding(beneficiaryModel.getFaceEmbedding());
 		identityDTO.setEmergencyRegistration(beneficiaryModel.isEmergencyRegistration());
@@ -262,6 +267,9 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 				identityDTO.setIncomeStatus(beneficiaryModel.getIncomeStatus());
 			else
 				identityDTO.setIncomeStatus(beneficiaryModel.getI_bendemographics().getIncomeStatus());
+		}
+		if(beneficiaryModel!=null){
+		//	updateDeathOfBenificiary(beneficiaryModel);
 		}
 		
 	}
