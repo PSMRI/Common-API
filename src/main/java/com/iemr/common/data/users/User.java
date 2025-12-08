@@ -209,6 +209,10 @@ public class User implements Serializable  {
 	@Column(name = "failed_attempt")
 	private Integer failedAttempt;
 
+	@Expose
+	@Column(name = "dhistoken")
+	private String dhistoken;
+
 	/*
 	 * protected User() { }
 	 */
@@ -218,7 +222,7 @@ public class User implements Serializable  {
 			Timestamp dOJ, Integer qualificationID, String userName, String password, String emailID, Status m_Status,
 			List<UserServiceRoleMapping> m_UserServiceRoleMapping, String emergencyContactPerson,
 			String emergencyContactNo, Boolean isSupervisor, Boolean deleted, String createdBy, Timestamp createdDate,
-			String modifiedBy, Timestamp lastModDate, String newPassword) {
+			String modifiedBy, Timestamp lastModDate, String newPassword, String dhistoken) {
 		User user = new User();
 		user.userID = userID;
 		user.titleID = titleID;
@@ -245,6 +249,7 @@ public class User implements Serializable  {
 		user.modifiedBy = modifiedBy;
 		user.lastModDate = lastModDate;
 		user.newPassword = newPassword;
+		user.dhistoken = dhistoken;
 		return user;
 	}
 
@@ -530,6 +535,9 @@ public class User implements Serializable  {
 
 	public Designation getDesignation() {
 		return designation;
+	}
+	public String getDhistoken() {
+		return dhistoken;
 	}
 
 	/*

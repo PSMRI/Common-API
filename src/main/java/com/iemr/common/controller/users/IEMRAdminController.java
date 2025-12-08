@@ -392,6 +392,7 @@ public class IEMRAdminController {
 		resMap.put("agentPassword", mUser.getAgentPassword());
 		resMap.put("m_UserLangMappings", new JSONArray(mUser.getM_UserLangMappings().toString()));
 		resMap.put("designationID", mUser.getDesignationID());
+		resMap.put("dhistoken",mUser.getDhistoken());
 		if (mUser.getDesignation() != null) {
 			resMap.put("designation", new JSONObject(mUser.getDesignation().toString()));
 		}
