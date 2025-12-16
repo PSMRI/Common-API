@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -70,6 +71,8 @@ import com.iemr.common.service.userbeneficiarydata.LanguageService;
 import com.iemr.common.service.userbeneficiarydata.MaritalStatusService;
 import com.iemr.common.service.userbeneficiarydata.StatusService;
 import com.iemr.common.service.userbeneficiarydata.TitleService;
+import com.iemr.common.utils.CookieUtil;
+import com.iemr.common.utils.JwtUtil;
 import com.iemr.common.utils.mapper.InputMapper;
 import com.iemr.common.utils.mapper.OutputMapper;
 import com.iemr.common.utils.response.OutputResponse;
@@ -102,6 +105,10 @@ public class BeneficiaryRegistrationController {
 	private BenRelationshipTypeService benRelationshipTypeService;
 	private BeneficiaryOccupationService beneficiaryOccupationService;
 	private GovtIdentityTypeService govtIdentityTypeService;
+
+
+   	@Autowired
+	private JwtUtil jwtUtil;
 
 	@Autowired
 	public void setBenRelationshipTypeService(BenRelationshipTypeService benRelationshipTypeService) {
@@ -340,6 +347,57 @@ public class BeneficiaryRegistrationController {
 
 		return response.toString();
 	}
+
+	@Operation(summary = "Provide the list of beneficiaries using Elasticsearch")
+	@RequestMapping(value = "/searchUser", method = RequestMethod.POST, headers = "Authorization")
+	public String searchUser(
+			@RequestBody String request,
+			@RequestHeader(value = "Authorization", required = false) String auth, HttpServletRequest httpRequest) {
+		
+		OutputResponse response = new OutputResponse();
+		
+		try {
+			logger.info("Universal search request received");
+			
+			JsonParser parser = new JsonParser();
+			JsonObject requestObj = parser.parse(request).getAsJsonObject();
+			
+			String searchQuery = null;
+			if (requestObj.has("search") && !requestObj.get("search").isJsonNull()) {
+				searchQuery = requestObj.get("search").getAsString();
+			}
+			
+			if (searchQuery == null || searchQuery.trim().isEmpty()) {
+				response.setError(5000, "Search query is required");
+				return response.toString();
+			}
+			
+		   String jwtToken = CookieUtil.getJwtTokenFromCookie(httpRequest);
+			String userId = jwtUtil.getUserIdFromToken(jwtToken);
+            int userID=Integer.parseInt(userId);
+			
+			Boolean is1097 = false;
+			if (requestObj.has("is1097") && !requestObj.get("is1097").isJsonNull()) {
+				is1097 = requestObj.get("is1097").getAsBoolean();
+			}
+			
+			logger.info("Searching with query: {}, userId: {}, is1097: {}", searchQuery, userID, is1097);
+			
+			String result = iemrSearchUserService.searchUser(searchQuery, userID, auth, is1097);
+			
+			if (result == null || result.trim().isEmpty()) {
+				response.setError(5000, "No beneficiaries found");
+				return response.toString();
+			}
+			
+			return result;
+			
+		} catch (Exception e) {
+			logger.error("Error in universal search: {}", e.getMessage(), e);
+			response.setError(5000, "Error searching beneficiaries: " + e.getMessage());
+			return response.toString();
+		}
+			}
 
 	@Operation(summary = "Provide the list of beneficiaries based on search criteria")
 	@RequestMapping(value = "/searchBeneficiary", method = RequestMethod.POST, headers = "Authorization")

@@ -38,6 +38,8 @@ public interface IEMRSearchUserService {
 
 	String findBeneficiary(BeneficiaryModel request, String auth) throws Exception;
 
+	String searchUser(String searchQuery, Integer userId, String auth, Boolean is1097) throws Exception;
+
 	List<BeneficiaryModel> userExitsCheckWithId(String beneficiaryID, String auth, Boolean is1097) throws Exception;
 
 	public List<BeneficiaryModel> userExitsCheckWithHealthId_ABHAId(String healthID, String auth, Boolean is1097)
