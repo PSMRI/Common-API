@@ -19,13 +19,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
-package com.iemr.common.dto;
+package com.iemr.common.dto.platform_feedback;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import java.time.LocalDateTime;
 
 public record FeedbackRequest(
     @Min(1) @Max(5) int rating,

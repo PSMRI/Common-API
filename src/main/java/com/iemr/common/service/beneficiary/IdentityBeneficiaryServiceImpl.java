@@ -62,7 +62,6 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 	Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	private static HttpUtils httpUtils = new HttpUtils();
 	private InputMapper inputMapper = new InputMapper();
-
 	@Value("${identity-api-url}")
 	private String identityBaseURL;
 	@Value("${identity-1097-api-url}")
@@ -232,6 +231,9 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 	// search beneficiaries by phone number
 	public List<BeneficiariesDTO> getBeneficiaryListByPhone(String phoneNo, String auth, Boolean is1097)
 			throws IEMRException {
+	logger.info("Phone no from getBeneficiaryListByPhone: " + phoneNo);
+ 	String cleanedPhoneNo = cleanPhoneNumber(phoneNo);
+    logger.info("Cleaned phone no: " + cleanedPhoneNo);
 
 		List<BeneficiariesDTO> listBenDetailForOutboundDTO = new ArrayList<>();
 
@@ -243,8 +245,12 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 		if (auth != null) {
 			header.put("Authorization", auth);
 		}
+		
+		logger.info("Result="+(ConfigProperties.getPropertyByName("identity-api-url-getByPhoneNum")
+				.replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL))) + cleanedPhoneNo);
+
 		result = httpUtils.post((ConfigProperties.getPropertyByName("identity-api-url-getByPhoneNum")
-				.replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL))) + phoneNo, "", header);
+				.replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL))) + cleanedPhoneNo, "", header);
 
 		OutputResponse identityResponse = InputMapper.gson().fromJson(result, OutputResponse.class);
 		if (identityResponse.getStatusCode() == OutputResponse.USERID_FAILURE) {
@@ -262,6 +268,25 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 
 		}
 		return listBenDetailForOutboundDTO;
+	}
+
+	private String cleanPhoneNumber(String phoneNumber) {
+    	if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+	        return phoneNumber;
+    	}
+    
+    	String cleaned = phoneNumber.trim();
+    
+    	// Remove +91 prefix
+    	if (cleaned.startsWith("+91")) {
+	        cleaned = cleaned.substring(3);
+	    } 
+	    // Remove 91 prefix if it's a 12-digit number (91 + 10 digit mobile)
+	    else if (cleaned.startsWith("91") && cleaned.length() == 12) {
+    	    cleaned = cleaned.substring(2);
+    	}
+    
+    	return cleaned.trim();
 	}
 
 	@Override
