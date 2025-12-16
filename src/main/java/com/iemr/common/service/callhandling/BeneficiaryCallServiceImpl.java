@@ -408,7 +408,10 @@ public class BeneficiaryCallServiceImpl implements BeneficiaryCallService {
 							benificiaryCallAtClose.getCallReceivedUserID(), benificiaryCallAtClose.getCallID())
 					+ " rows where session ID was " + benificiaryCallAtClose.getCallID());
 
-			if (benificiaryCall.getIsTransfered() == null || benificiaryCall.getIsTransfered() == false) {
+			Boolean isTransfered = benificiaryCall.getIsTransfered();
+   			logger.info("Checking isTransfered - value: " + isTransfered + ", will disconnect: " + (isTransfered == null || !Boolean.TRUE.equals(isTransfered)));
+    
+   			if (isTransfered == null || !Boolean.TRUE.equals(isTransfered)) {
 				updateCallDisposition(benificiaryCall, benificiaryCall.getAgentIPAddress());
 
 				Thread.sleep(1000);
