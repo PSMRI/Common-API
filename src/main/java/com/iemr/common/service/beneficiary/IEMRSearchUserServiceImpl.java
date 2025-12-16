@@ -25,6 +25,7 @@ import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import org.slf4j.Logger;
@@ -76,7 +77,7 @@ import com.iemr.common.repository.userbeneficiarydata.GenderRepository;
 import com.iemr.common.repository.userbeneficiarydata.MaritalStatusRepository;
 import com.iemr.common.repository.userbeneficiarydata.SexualOrientationRepository;
 import com.iemr.common.repository.userbeneficiarydata.TitleRepository;
-import com.iemr.common.utils.mapper.OutputMapper;
+import com.iemr.common.utils.exception.IEMRException;
 
 /**
  * 
@@ -321,6 +322,34 @@ public class IEMRSearchUserServiceImpl implements IEMRSearchUserService {
 		}
 
 	}
+
+	/**
+      Universal search using Elasticsearch
+    */
+	@Override
+	public String searchUser(String searchQuery, Integer userId, String auth, Boolean is1097) throws Exception {
+
+    try {
+        if (searchQuery == null || searchQuery.trim().isEmpty()) {
+            throw new IEMRException("Search query is required");
+        }
+
+        logger.info("Universal search with query: {}, userId: {}", searchQuery, userId);
+
+        Map<String, Object> response =
+                identityBeneficiaryService.searchBeneficiariesUsingES(
+                        searchQuery, userId, auth, is1097
+                );
+
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(response);
+
+    } catch (Exception e) {
+        logger.error("Error in universal search", e);
+        throw new Exception("Error searching beneficiaries: " + e.getMessage(), e);
+    }
+}
+
 
 	// Advance search
 	@Override
