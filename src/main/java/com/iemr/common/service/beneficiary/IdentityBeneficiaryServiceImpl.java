@@ -21,15 +21,20 @@
 */
 package com.iemr.common.service.beneficiary;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gson.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.iemr.common.dto.identity.BeneficiariesDTO;
@@ -42,7 +47,14 @@ import com.iemr.common.utils.http.HttpUtils;
 import com.iemr.common.utils.mapper.InputMapper;
 import com.iemr.common.utils.mapper.OutputMapper;
 import com.iemr.common.utils.response.OutputResponse;
+
 import org.springframework.beans.factory.annotation.Value;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iemr.common.mapper.BenSearchMapper;
+
 
 @Service
 public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryService {
@@ -108,6 +120,75 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 		}
 		return listBenDetailForOutboundDTO;
 	}
+
+	 /**
+     Call Identity API's Elasticsearch universal search
+     */
+	@Override
+	public Map<String, Object> searchBeneficiariesUsingES(String query, Integer userId, String auth, Boolean is1097 ) throws IEMRException {
+
+    Map<String, Object> response = new HashMap<>();
+
+    try {
+        HashMap<String, Object> headers = new HashMap<>();
+        if (auth != null && !auth.isEmpty()) {
+            headers.put("Authorization", auth);
+        }
+
+        String baseUrl = ConfigProperties
+                .getPropertyByName("identity-api-url-searchByES")
+                .replace(
+                        IDENTITY_BASE_URL,
+                        (Boolean.TRUE.equals(is1097)) ? identity1097BaseURL : identityBaseURL
+                );
+
+        StringBuilder url = new StringBuilder(baseUrl)
+                .append("?query=").append(URLEncoder.encode(query, StandardCharsets.UTF_8));
+
+        if (userId != null) {
+            url.append("&userId=").append(userId);
+        }
+
+        logger.info("Calling Identity ES search URL: {}", url);
+
+        String result = httpUtils.get(url.toString(), headers);
+
+        if (result == null || result.isEmpty()) {
+            response.put("data", Collections.emptyList());
+            response.put("statusCode", 200);
+            response.put("status", "Success");
+            response.put("errorMessage", "Success");
+            return response;
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+
+        JsonNode rootNode = mapper.readTree(result);
+
+        if (rootNode.has("statusCode") && rootNode.get("statusCode").asInt() != 200) {
+            String errMsg = rootNode.has("errorMessage")
+                    ? rootNode.get("errorMessage").asText()
+                    : "Identity ES search failed";
+            throw new IEMRException(errMsg);
+        }
+
+        response.put("data", rootNode.path("data"));
+        response.put("statusCode", 200);
+        response.put("status", "Success");
+        response.put("errorMessage", "Success");
+
+        return response;
+
+    	} catch (IEMRException e) {
+        throw e;
+    } catch (Exception e) {
+        logger.error("Error calling Identity ES search API", e);
+        throw new IEMRException("Error calling Identity ES search API");
+    }
+}
 
 	@Override
 	public List<BeneficiariesPartialDTO> getPartialBeneficiaryListByIDs(HashSet benIdList, String auth, Boolean is1097)
