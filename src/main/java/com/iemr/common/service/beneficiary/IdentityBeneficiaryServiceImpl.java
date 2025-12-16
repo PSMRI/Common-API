@@ -53,8 +53,6 @@ import org.springframework.beans.factory.annotation.Value;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iemr.common.mapper.BenSearchMapper;
-
 
 @Service
 public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryService {
