@@ -411,11 +411,21 @@ public class BeneficiaryCallServiceImpl implements BeneficiaryCallService {
 			Boolean isTransfered = benificiaryCall.getIsTransfered();
    			logger.info("Checking isTransfered - value: " + isTransfered + ", will disconnect: " + (isTransfered == null || !Boolean.TRUE.equals(isTransfered)));
     
-   			if (isTransfered == null || !Boolean.TRUE.equals(isTransfered)) {
-				updateCallDisposition(benificiaryCall, benificiaryCall.getAgentIPAddress());
+   			// if (isTransfered == null || !Boolean.TRUE.equals(isTransfered)) {
+			// 	updateCallDisposition(benificiaryCall, benificiaryCall.getAgentIPAddress());
 
+			// 	Thread.sleep(1000);
+			// 	disconnectCallInCTI(benificiaryCall);
+			// }
+
+						if (isTransfered == null || !Boolean.TRUE.equals(isTransfered)) {
+				logger.info("ENTERING if block - will update disposition and disconnect call");
+				updateCallDisposition(benificiaryCall, benificiaryCall.getAgentIPAddress());
 				Thread.sleep(1000);
 				disconnectCallInCTI(benificiaryCall);
+				logger.info("COMPLETED disconnect call");
+			} else {
+				logger.info("SKIPPING if block - call was transferred, not disconnecting");
 			}
 		}
 
