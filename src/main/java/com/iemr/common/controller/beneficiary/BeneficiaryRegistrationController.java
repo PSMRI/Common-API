@@ -369,11 +369,11 @@ public class BeneficiaryRegistrationController {
 			}
 			
 			if (searchQuery == null || searchQuery.trim().isEmpty()) {
-				response.setError(5000, "Search query is required");
+				response.setError(400, "Search query is required");
 				return response.toString();
 			}
 			
-		   String jwtToken = CookieUtil.getJwtTokenFromCookie(httpRequest);
+		   	String jwtToken = CookieUtil.getJwtTokenFromCookie(httpRequest);
 			String userId = jwtUtil.getUserIdFromToken(jwtToken);
             int userID=Integer.parseInt(userId);
 			
@@ -387,7 +387,7 @@ public class BeneficiaryRegistrationController {
 			String result = iemrSearchUserService.searchUser(searchQuery, userID, auth, is1097);
 			
 			if (result == null || result.trim().isEmpty()) {
-				response.setError(5000, "No beneficiaries found");
+				response.setError(200, "No beneficiaries found");
 				return response.toString();
 			}
 			
@@ -395,7 +395,7 @@ public class BeneficiaryRegistrationController {
 			
 		} catch (Exception e) {
 			logger.error("Error in universal search: {}", e.getMessage(), e);
-			response.setError(5000, "Error searching beneficiaries: " + e.getMessage());
+			response.setError(400, "Error searching beneficiaries: " + e.getMessage());
 			return response.toString();
 		}
 			}
