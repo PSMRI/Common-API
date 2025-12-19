@@ -44,7 +44,7 @@ public class CookieUtil {
 	    // Set the SameSite attribute for cross-site request handling (if needed)
 	    String sameSite = "None"; // Allow cross-site cookies (can be 'Strict', 'Lax', or 'None')
 	    if(isProduction) {
-	    	sameSite= "Strict";
+	    	sameSite= "None";
 	    }
 	    cookie.setSecure(true);
 	 
