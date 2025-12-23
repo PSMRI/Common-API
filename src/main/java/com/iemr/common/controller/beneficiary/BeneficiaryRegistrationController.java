@@ -351,18 +351,14 @@ public class BeneficiaryRegistrationController {
 
 	@Operation(summary = "Provide the list of beneficiaries using Elasticsearch")
 	@RequestMapping(value = "/searchUser", method = RequestMethod.POST, headers = "Authorization")
-	public String searchUser(
-			@RequestBody String request,
-			@RequestHeader(value = "Authorization", required = false) String auth, HttpServletRequest httpRequest) {
-		
+	public String searchUser(@RequestBody String request, HttpServletRequest httpRequest) {
 		OutputResponse response = new OutputResponse();
-		
 		try {
 			logger.info("Universal search request received");
 			
 			JsonParser parser = new JsonParser();
 			JsonObject requestObj = parser.parse(request).getAsJsonObject();
-			
+
 			String searchQuery = null;
 			if (requestObj.has("search") && !requestObj.get("search").isJsonNull()) {
 				searchQuery = requestObj.get("search").getAsString();
@@ -372,18 +368,20 @@ public class BeneficiaryRegistrationController {
 				response.setError(400, "Search query is required");
 				return response.toString();
 			}
-			
-		   	String jwtToken = CookieUtil.getJwtTokenFromCookie(httpRequest);
-			String userId = jwtUtil.getUserIdFromToken(jwtToken);
+
+		String jwtToken = httpRequest.getHeader("Jwttoken");
+		String auth=httpRequest.getHeader("Authorization");
+		String cookieToken = CookieUtil.getJwtTokenFromCookie(httpRequest);
+
+			String userId = jwtToken !="" ? jwtUtil.getUserIdFromToken(jwtToken) : jwtUtil.getUserIdFromToken(cookieToken);
             int userID=Integer.parseInt(userId);
-			
+
 			Boolean is1097 = false;
 			if (requestObj.has("is1097") && !requestObj.get("is1097").isJsonNull()) {
 				is1097 = requestObj.get("is1097").getAsBoolean();
 			}
 			
 			logger.info("Searching with query: {}, userId: {}, is1097: {}", searchQuery, userID, is1097);
-			
 			String result = iemrSearchUserService.searchUser(searchQuery, userID, auth, is1097);
 			
 			if (result == null || result.trim().isEmpty()) {

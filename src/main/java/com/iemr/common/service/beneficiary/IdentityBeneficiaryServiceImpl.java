@@ -131,7 +131,7 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
         if (auth != null && !auth.isEmpty()) {
             headers.put("Authorization", auth);
         }
-
+		
         String baseUrl = ConfigProperties
                 .getPropertyByName("identity-api-url-searchByES")
                 .replace(
@@ -148,7 +148,7 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 
         logger.info("Calling Identity ES search URL: {}", url);
 
-        String result = httpUtils.get(url.toString(), headers);
+        String result = httpUtils.get(url.toString());
 
         if (result == null || result.isEmpty()) {
             response.put("data", Collections.emptyList());
