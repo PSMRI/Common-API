@@ -121,17 +121,18 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 
 		Map<String, Object> response = new HashMap<>();
 
-		try {
-			HashMap<String, Object> headers = new HashMap<>();
-			if (auth != null && !auth.isEmpty()) {
-				headers.put("Authorization", auth);
-			}
-
-			String baseUrl = ConfigProperties
-					.getPropertyByName("identity-api-url-searchByES")
-					.replace(
-							IDENTITY_BASE_URL,
-							(Boolean.TRUE.equals(is1097)) ? identity1097BaseURL : identityBaseURL);
+    try {
+        HashMap<String, Object> headers = new HashMap<>();
+        if (auth != null && !auth.isEmpty()) {
+            headers.put("Authorization", auth);
+        }
+		
+        String baseUrl = ConfigProperties
+                .getPropertyByName("identity-api-url-searchByES")
+                .replace(
+                        IDENTITY_BASE_URL,
+                        (Boolean.TRUE.equals(is1097)) ? identity1097BaseURL : identityBaseURL
+                );
 
 			StringBuilder url = new StringBuilder(baseUrl)
 					.append("?query=").append(URLEncoder.encode(query, StandardCharsets.UTF_8));
@@ -142,7 +143,7 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 
 			logger.info("Calling Identity ES search URL: {}", url);
 
-			String result = httpUtils.get(url.toString());
+        String result = httpUtils.get(url.toString());
 
 			if (result == null || result.isEmpty()) {
 				response.put("data", Collections.emptyList());
