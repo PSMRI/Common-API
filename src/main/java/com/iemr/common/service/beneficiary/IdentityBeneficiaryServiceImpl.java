@@ -21,6 +21,7 @@
 */
 package com.iemr.common.service.beneficiary;
 
+import java.math.BigInteger;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.google.gson.*;
 
@@ -40,6 +42,7 @@ import org.springframework.stereotype.Service;
 import com.iemr.common.dto.identity.BeneficiariesDTO;
 import com.iemr.common.dto.identity.BeneficiariesPartialDTO;
 import com.iemr.common.dto.identity.IdentityEditDTO;
+import com.iemr.common.dto.identity.IdentitySearchDTO;
 import com.iemr.common.model.beneficiary.BeneficiaryGenModel;
 import com.iemr.common.utils.config.ConfigProperties;
 import com.iemr.common.utils.exception.IEMRException;
@@ -595,6 +598,62 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 		}
 		return listBenDetailForOutboundDTO;
 	}
+
+	public List<BeneficiariesDTO> searchBeneficiaryListES(
+        String identitySearchDTO,
+        String auth,
+        Boolean is1097) throws IEMRException {
+
+    List<BeneficiariesDTO> listBenDetailForOutboundDTO = new ArrayList<>();
+
+    try {
+        JsonParser parser = new JsonParser();
+        String result;
+
+   		HashMap<String, Object> header = new HashMap<>();
+
+        if (auth != null) {
+            header.put("Authorization", auth);
+        }
+
+        // Call Identity ES Advance Search API
+		result = httpUtils.post(ConfigProperties.getPropertyByName("identity-api-url-advancesearch-es").replace(
+				IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL)), identitySearchDTO, header);
+
+        // Parse response JSON
+        JsonObject responseObj = parser.parse(result).getAsJsonObject();
+logger.info("Response obj="+responseObj);
+        /*
+         * Expected ES response:
+         * {
+         *   "data": [ {...}, {...} ],
+         *   "statusCode": 200,
+         *   "status": "Success",
+         *   "errorMessage": "Success"
+         * }
+         */
+
+        if (responseObj.has("data") && responseObj.get("data").isJsonArray()) {
+
+            JsonArray responseArray = responseObj.getAsJsonArray("data");
+
+            for (JsonElement jsonElement : responseArray) {
+                BeneficiariesDTO dto =
+                        inputMapper.gson().fromJson(jsonElement.toString(), BeneficiariesDTO.class);
+                listBenDetailForOutboundDTO.add(dto);
+            }
+        }
+
+    } catch (Exception e) {
+        throw new IEMRException(
+                "Error while calling Identity ES advance search API",
+                e
+        );
+    }
+
+    return listBenDetailForOutboundDTO;
+}
+
 
 	@Override
 	public Integer editIdentityEditDTOCommunityorEducation(IdentityEditDTO identityEditDTO, String auth, Boolean is1097)

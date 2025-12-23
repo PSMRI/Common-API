@@ -350,8 +350,88 @@ public class IEMRSearchUserServiceImpl implements IEMRSearchUserService {
     }
 }
 
+/**
+ * Advanced search using Elasticsearch with multiple criteria
+ */
+@Override
+public String findBeneficiaryES(BeneficiaryModel i_beneficiary,
+                                Integer userId,
+                                String auth) throws Exception {
+
+    List<BeneficiaryModel> beneficiaryList = new ArrayList<>();
+
+    try {
+        // Build IdentitySearchDTO exactly like DB flow
+        IdentitySearchDTO identitySearchDTO =
+                identityBenEditMapper.getidentitysearchModel(i_beneficiary);
+
+        if (i_beneficiary.getDOB() != null) {
+            identitySearchDTO.setDob(i_beneficiary.getDOB());
+        }
+
+        if (i_beneficiary.getHouseHoldID() != null) {
+            identitySearchDTO.setHouseHoldID(i_beneficiary.getHouseHoldID());
+        }
+
+        if (i_beneficiary.getIsD2D() != null) {
+            identitySearchDTO.setIsD2D(i_beneficiary.getIsD2D());
+        }
+
+        if (i_beneficiary.getBenPhoneMaps() != null
+                && !i_beneficiary.getBenPhoneMaps().isEmpty()) {
+            identitySearchDTO.setContactNumber(
+                    i_beneficiary.getBenPhoneMaps().get(0).getPhoneNo());
+        }
+
+        if (i_beneficiary.getBeneficiaryID() != null
+                && !i_beneficiary.getBeneficiaryID().isEmpty()) {
+            identitySearchDTO.setBeneficiaryId(
+                    new BigInteger(i_beneficiary.getBeneficiaryID()));
+        }
+
+        // 1097 flag
+        if (i_beneficiary.getIs1097() != null && i_beneficiary.getIs1097()) {
+            i_beneficiary.setIs1097(true);
+        } else {
+            i_beneficiary.setIs1097(false);
+        }
+
+        logger.info("ES advance search request going to identity: {}", identitySearchDTO);
+
+        // Convert DTO to JSON
+        Gson gson = new GsonBuilder()
+                .setDateFormat("yyyy-MM-dd")
+                .create();
+
+        String requestJson = gson.toJson(identitySearchDTO);
+
+        // 🔹 Call ES advance search API (CONTROL TRANSFER TO IDENTITY API)
+        List<BeneficiariesDTO> listBen =
+                identityBeneficiaryService.searchBeneficiaryListES(
+                        requestJson,
+                        auth,
+                        i_beneficiary.getIs1097()
+                );
+
+				logger.info("Response from list="+listBen);
+        // Map DTO → Model (same as DB flow)
+        beneficiaryList = getBeneficiaryListFromMapper(listBen);
+
+        logger.info("ES search response size: {}",
+                beneficiaryList != null ? beneficiaryList.size() : "No Beneficiary Found");
+logger.info("Resppnse from iemr="+beneficiaryList);
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(beneficiaryList);
+
+    } catch (Exception e) {
+        logger.error("Error in ES advance search", e);
+        throw new Exception("Error searching beneficiaries using ES", e);
+    }
+}
+
 
 	// Advance search
+
 	@Override
 	public String findBeneficiary(BeneficiaryModel i_beneficiary, String auth) throws Exception {
 

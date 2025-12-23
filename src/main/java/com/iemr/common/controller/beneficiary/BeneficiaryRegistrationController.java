@@ -420,6 +420,43 @@ public class BeneficiaryRegistrationController {
 		return output.toString();
 	}
 
+/**
+ * NEW Elasticsearch-based advanced search endpoint
+*/
+@Operation(summary = "Advanced search beneficiaries using Elasticsearch")
+@RequestMapping(value = "/searchBeneficiaryES", method = RequestMethod.POST, headers = "Authorization")
+public String searchBeneficiaryES(
+        @RequestBody BeneficiaryModel request,
+        HttpServletRequest httpRequest) {
+    
+    logger.info("searchBeneficiaryES request: {}", request);
+    OutputResponse output = new OutputResponse();
+    
+    try {
+        String auth = httpRequest.getHeader(AUTHORIZATION);
+        
+        // Get userId from JWT token
+        String jwtToken = CookieUtil.getJwtTokenFromCookie(httpRequest);
+        String userId = jwtUtil.getUserIdFromToken(jwtToken);
+        int userID = Integer.parseInt(userId);
+        
+        logger.info("ES Advanced search for userId: {}", userID);
+        
+        String result = iemrSearchUserService.findBeneficiaryES(request, userID, auth);
+        
+        return result;
+        
+    } catch (NumberFormatException ne) {
+        logger.error("searchBeneficiaryES failed with number format error: {}", ne.getMessage(), ne);
+        output.setError(400, "Invalid number format in search criteria");
+        return output.toString();
+    } catch (Exception e) {
+        logger.error("searchBeneficiaryES failed with error: {}", e.getMessage(), e);
+        output.setError(500, "Error searching beneficiaries: " + e.getMessage());
+        return output.toString();
+    }
+}
+
 	@Operation(summary = "Provide all common data list needed for beneficiary registration")
 	@RequestMapping(value = "/getRegistrationData", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getRegistrationData() {
