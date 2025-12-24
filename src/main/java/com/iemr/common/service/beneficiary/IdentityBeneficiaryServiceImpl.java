@@ -30,19 +30,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.google.gson.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.iemr.common.dto.identity.BeneficiariesDTO;
 import com.iemr.common.dto.identity.BeneficiariesPartialDTO;
 import com.iemr.common.dto.identity.IdentityEditDTO;
-import com.iemr.common.dto.identity.IdentitySearchDTO;
 import com.iemr.common.model.beneficiary.BeneficiaryGenModel;
 import com.iemr.common.utils.config.ConfigProperties;
 import com.iemr.common.utils.exception.IEMRException;
@@ -73,12 +70,10 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 	private static final String IDENTITY_BASE_URL = "IDENTITY_BASE_URL";
 
 	@Value("${genben-api}")
-	private String BEN_GEN ;
-
+	private String BEN_GEN;
 
 	@Value("${generateBeneficiaryIDs-api-url}")
-	private String BEN_GEN_API_URL ;
-
+	private String BEN_GEN_API_URL;
 
 	@Override
 	// public List<Beneficiary> getBeneficiaryListByIDs() {// search by regID
@@ -102,13 +97,10 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 		}
 		if (null != result) {
 			JsonObject responseObj = (JsonObject) parser.parse(result);
-			// JsonArray data = (JsonArray) parser.parse(
 			JsonObject data1 = (JsonObject) responseObj.get("response");
 			String s = data1.get("data").getAsString();
 			JsonArray responseArray = parser.parse(s).getAsJsonArray();
 
-			// String data="s";
-			// JsonArray responseArray = (JsonArray) parser.parse(data);
 
 			for (JsonElement jsonElement : responseArray) {
 
@@ -121,79 +113,78 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 		return listBenDetailForOutboundDTO;
 	}
 
-	 /**
-     Call Identity API's Elasticsearch universal search
-     */
+	/**
+	 * Call Identity API's Elasticsearch universal search
+	 */
 	@Override
-	public Map<String, Object> searchBeneficiariesUsingES(String query, Integer userId, String auth, Boolean is1097 ) throws IEMRException {
+	public Map<String, Object> searchBeneficiariesUsingES(String query, Integer userId, String auth, Boolean is1097)
+			throws IEMRException {
 
-    Map<String, Object> response = new HashMap<>();
+		Map<String, Object> response = new HashMap<>();
 
-    try {
-        HashMap<String, Object> headers = new HashMap<>();
-        if (auth != null && !auth.isEmpty()) {
-            headers.put("Authorization", auth);
-        }
-		
-        String baseUrl = ConfigProperties
-                .getPropertyByName("identity-api-url-searchByES")
-                .replace(
-                        IDENTITY_BASE_URL,
-                        (Boolean.TRUE.equals(is1097)) ? identity1097BaseURL : identityBaseURL
-                );
+		try {
+			HashMap<String, Object> headers = new HashMap<>();
+			if (auth != null && !auth.isEmpty()) {
+				headers.put("Authorization", auth);
+			}
 
-        StringBuilder url = new StringBuilder(baseUrl)
-                .append("?query=").append(URLEncoder.encode(query, StandardCharsets.UTF_8));
+			String baseUrl = ConfigProperties
+					.getPropertyByName("identity-api-url-searchByES")
+					.replace(
+							IDENTITY_BASE_URL,
+							(Boolean.TRUE.equals(is1097)) ? identity1097BaseURL : identityBaseURL);
 
-        if (userId != null) {
-            url.append("&userId=").append(userId);
-        }
+			StringBuilder url = new StringBuilder(baseUrl)
+					.append("?query=").append(URLEncoder.encode(query, StandardCharsets.UTF_8));
 
-        logger.info("Calling Identity ES search URL: {}", url);
+			if (userId != null) {
+				url.append("&userId=").append(userId);
+			}
 
-        String result = httpUtils.get(url.toString());
+			logger.info("Calling Identity ES search URL: {}", url);
 
-        if (result == null || result.isEmpty()) {
-            response.put("data", Collections.emptyList());
-            response.put("statusCode", 200);
-            response.put("status", "Success");
-            response.put("errorMessage", "Success");
-            return response;
-        }
+			String result = httpUtils.get(url.toString());
 
-        ObjectMapper mapper = new ObjectMapper();
+			if (result == null || result.isEmpty()) {
+				response.put("data", Collections.emptyList());
+				response.put("statusCode", 200);
+				response.put("status", "Success");
+				response.put("errorMessage", "Success");
+				return response;
+			}
 
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+			ObjectMapper mapper = new ObjectMapper();
 
-        JsonNode rootNode = mapper.readTree(result);
+			mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+			mapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
 
-        if (rootNode.has("statusCode") && rootNode.get("statusCode").asInt() != 200) {
-            String errMsg = rootNode.has("errorMessage")
-                    ? rootNode.get("errorMessage").asText()
-                    : "Identity ES search failed";
-            throw new IEMRException(errMsg);
-        }
+			JsonNode rootNode = mapper.readTree(result);
 
-        response.put("data", rootNode.path("data"));
-        response.put("statusCode", 200);
-        response.put("status", "Success");
-        response.put("errorMessage", "Success");
+			if (rootNode.has("statusCode") && rootNode.get("statusCode").asInt() != 200) {
+				String errMsg = rootNode.has("errorMessage")
+						? rootNode.get("errorMessage").asText()
+						: "Identity ES search failed";
+				throw new IEMRException(errMsg);
+			}
 
-        return response;
+			response.put("data", rootNode.path("data"));
+			response.put("statusCode", 200);
+			response.put("status", "Success");
+			response.put("errorMessage", "Success");
 
-    	} catch (IEMRException e) {
-        throw e;
-    } catch (Exception e) {
-        logger.error("Error calling Identity ES search API", e);
-        throw new IEMRException("Error calling Identity ES search API");
-    }
-}
+			return response;
+
+		} catch (IEMRException e) {
+			throw e;
+		} catch (Exception e) {
+			logger.error("Error calling Identity ES search API", e);
+			throw new IEMRException("Error calling Identity ES search API");
+		}
+	}
 
 	@Override
 	public List<BeneficiariesPartialDTO> getPartialBeneficiaryListByIDs(HashSet benIdList, String auth, Boolean is1097)
 			throws IEMRException {
-		// TODO Auto-generated method stub
 		List<BeneficiariesPartialDTO> listBenDetailForOutboundDTO = new ArrayList<>();
 
 		JsonParser parser = new JsonParser();
@@ -213,13 +204,10 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 			throw new IEMRException(identityResponse.getErrorMessage());
 		}
 		JsonObject responseObj = (JsonObject) parser.parse(result);
-		// JsonArray data = (JsonArray) parser.parse(
 		JsonObject data1 = (JsonObject) responseObj.get("response");
 		String s = data1.get("data").getAsString();
 		JsonArray responseArray = parser.parse(s).getAsJsonArray();
 
-		// String data="s";
-		// JsonArray responseArray = (JsonArray) parser.parse(data);
 
 		for (JsonElement jsonElement : responseArray) {
 
@@ -234,9 +222,9 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 	// search beneficiaries by phone number
 	public List<BeneficiariesDTO> getBeneficiaryListByPhone(String phoneNo, String auth, Boolean is1097)
 			throws IEMRException {
-	logger.info("Phone no from getBeneficiaryListByPhone: " + phoneNo);
- 	String cleanedPhoneNo = cleanPhoneNumber(phoneNo);
-    logger.info("Cleaned phone no: " + cleanedPhoneNo);
+		logger.info("Phone no from getBeneficiaryListByPhone: " + phoneNo);
+		String cleanedPhoneNo = cleanPhoneNumber(phoneNo);
+		logger.info("Cleaned phone no: " + cleanedPhoneNo);
 
 		List<BeneficiariesDTO> listBenDetailForOutboundDTO = new ArrayList<>();
 
@@ -248,12 +236,13 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 		if (auth != null) {
 			header.put("Authorization", auth);
 		}
-		
-		logger.info("Result="+(ConfigProperties.getPropertyByName("identity-api-url-getByPhoneNum")
+
+		logger.info("Result=" + (ConfigProperties.getPropertyByName("identity-api-url-getByPhoneNum")
 				.replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL))) + cleanedPhoneNo);
 
 		result = httpUtils.post((ConfigProperties.getPropertyByName("identity-api-url-getByPhoneNum")
-				.replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL))) + cleanedPhoneNo, "", header);
+				.replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL))) + cleanedPhoneNo, "",
+				header);
 
 		OutputResponse identityResponse = InputMapper.gson().fromJson(result, OutputResponse.class);
 		if (identityResponse.getStatusCode() == OutputResponse.USERID_FAILURE) {
@@ -274,22 +263,22 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 	}
 
 	private String cleanPhoneNumber(String phoneNumber) {
-    	if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
-	        return phoneNumber;
-    	}
-    
-    	String cleaned = phoneNumber.trim();
-    
-    	// Remove +91 prefix
-    	if (cleaned.startsWith("+91")) {
-	        cleaned = cleaned.substring(3);
-	    } 
-	    // Remove 91 prefix if it's a 12-digit number (91 + 10 digit mobile)
-	    else if (cleaned.startsWith("91") && cleaned.length() == 12) {
-    	    cleaned = cleaned.substring(2);
-    	}
-    
-    	return cleaned.trim();
+		if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+			return phoneNumber;
+		}
+
+		String cleaned = phoneNumber.trim();
+
+		// Remove +91 prefix
+		if (cleaned.startsWith("+91")) {
+			cleaned = cleaned.substring(3);
+		}
+		// Remove 91 prefix if it's a 12-digit number (91 + 10 digit mobile)
+		else if (cleaned.startsWith("91") && cleaned.length() == 12) {
+			cleaned = cleaned.substring(2);
+		}
+
+		return cleaned.trim();
 	}
 
 	@Override
@@ -536,7 +525,6 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 		return result;
 	}
 
-
 	public Integer editIdentityEditDTO(IdentityEditDTO identityEditDTO, String auth, Boolean is1097)
 			throws IEMRException {
 		JsonParser parser = new JsonParser();
@@ -581,13 +569,10 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 				IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL)), identitySearchDTO, header);
 
 		JsonObject responseObj = (JsonObject) parser.parse(result);
-		// JsonArray data = (JsonArray) parser.parse(
 		JsonObject data1 = (JsonObject) responseObj.get("response");
 		String s = data1.get("data").getAsString();
 		JsonArray responseArray = parser.parse(s).getAsJsonArray();
 
-		// String data="s";
-		// JsonArray responseArray = (JsonArray) parser.parse(data);
 
 		for (JsonElement jsonElement : responseArray) {
 
@@ -599,61 +584,67 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 		return listBenDetailForOutboundDTO;
 	}
 
-	public List<BeneficiariesDTO> searchBeneficiaryListES(
-        String identitySearchDTO,
-        String auth,
-        Boolean is1097) throws IEMRException {
+	@Override
+	public Map<String, Object> searchBeneficiaryListES(String identitySearchDTO, String auth, Boolean is1097)
+			throws IEMRException {
 
-    List<BeneficiariesDTO> listBenDetailForOutboundDTO = new ArrayList<>();
+		Map<String, Object> response = new HashMap<>();
 
-    try {
-        JsonParser parser = new JsonParser();
-        String result;
+		try {
+			HashMap<String, Object> headers = new HashMap<>();
+			if (auth != null && !auth.isEmpty()) {
+				headers.put("Authorization", auth);
+			}
 
-   		HashMap<String, Object> header = new HashMap<>();
+			String url = ConfigProperties
+					.getPropertyByName("identity-api-url-advancesearch-es")
+					.replace(
+							IDENTITY_BASE_URL,
+							Boolean.TRUE.equals(is1097)
+									? identity1097BaseURL
+									: identityBaseURL);
 
-        if (auth != null) {
-            header.put("Authorization", auth);
-        }
+			logger.info("Calling Identity ES Advance Search API");
 
-        // Call Identity ES Advance Search API
-		result = httpUtils.post(ConfigProperties.getPropertyByName("identity-api-url-advancesearch-es").replace(
-				IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL)), identitySearchDTO, header);
+			String result = httpUtils.post(url, identitySearchDTO, headers);
 
-        // Parse response JSON
-        JsonObject responseObj = parser.parse(result).getAsJsonObject();
-logger.info("Response obj="+responseObj);
-        /*
-         * Expected ES response:
-         * {
-         *   "data": [ {...}, {...} ],
-         *   "statusCode": 200,
-         *   "status": "Success",
-         *   "errorMessage": "Success"
-         * }
-         */
+			if (result == null || result.isEmpty()) {
+				response.put("data", Collections.emptyList());
+				response.put("statusCode", 200);
+				response.put("status", "Success");
+				response.put("errorMessage", "Success");
+				return response;
+			}
 
-        if (responseObj.has("data") && responseObj.get("data").isJsonArray()) {
+			ObjectMapper mapper = new ObjectMapper();
+			mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-            JsonArray responseArray = responseObj.getAsJsonArray("data");
+			JsonNode rootNode = mapper.readTree(result);
 
-            for (JsonElement jsonElement : responseArray) {
-                BeneficiariesDTO dto =
-                        inputMapper.gson().fromJson(jsonElement.toString(), BeneficiariesDTO.class);
-                listBenDetailForOutboundDTO.add(dto);
-            }
-        }
+			if (rootNode.has("statusCode")
+					&& rootNode.get("statusCode").asInt() != 200) {
 
-    } catch (Exception e) {
-        throw new IEMRException(
-                "Error while calling Identity ES advance search API",
-                e
-        );
-    }
+				String errMsg = rootNode.has("errorMessage")
+						? rootNode.get("errorMessage").asText()
+						: "Identity ES advance search failed";
 
-    return listBenDetailForOutboundDTO;
-}
+				throw new IEMRException(errMsg);
+			}
 
+			response.put("data", rootNode.path("data"));
+			response.put("statusCode", 200);
+			response.put("status", "Success");
+			response.put("errorMessage", "Success");
+
+			return response;
+
+		} catch (IEMRException e) {
+			throw e;
+		} catch (Exception e) {
+			logger.error("Error calling Identity ES advance search API", e);
+			throw new IEMRException("Error calling Identity ES advance search API", e);
+		}
+	}
 
 	@Override
 	public Integer editIdentityEditDTOCommunityorEducation(IdentityEditDTO identityEditDTO, String auth, Boolean is1097)
@@ -694,11 +685,11 @@ logger.info("Response obj="+responseObj);
 		if (auth != null) {
 			header.put("Authorization", auth);
 		}
-		
+
 		logger.info("Request to generate ben IDs: " + request);
 		logger.info("Generating ben IDs API URL: " + BEN_GEN + BEN_GEN_API_URL);
 		result = httpUtils.post(BEN_GEN + BEN_GEN_API_URL, request, header);
-logger.info("Response from generate ben IDs: " + result);
+		logger.info("Response from generate ben IDs: " + result);
 		OutputResponse identityResponse = inputMapper.gson().fromJson(result, OutputResponse.class);
 
 		if (identityResponse.getStatusCode() == OutputResponse.USERID_FAILURE) {

@@ -433,11 +433,13 @@ public String searchBeneficiaryES(
     OutputResponse output = new OutputResponse();
     
     try {
-        String auth = httpRequest.getHeader(AUTHORIZATION);
-        
-        // Get userId from JWT token
-        String jwtToken = CookieUtil.getJwtTokenFromCookie(httpRequest);
-        String userId = jwtUtil.getUserIdFromToken(jwtToken);
+           
+		// Get userId from JWT token
+
+		String jwtToken = httpRequest.getHeader("Jwttoken");
+		String auth=httpRequest.getHeader("Authorization");
+        String cookieToken = CookieUtil.getJwtTokenFromCookie(httpRequest);
+		String userId = jwtToken !="" ? jwtUtil.getUserIdFromToken(jwtToken) : jwtUtil.getUserIdFromToken(cookieToken);
         int userID = Integer.parseInt(userId);
         
         logger.info("ES Advanced search for userId: {}", userID);

@@ -54,8 +54,7 @@ public interface IdentityBeneficiaryService {
 	List<BeneficiariesDTO> searchBeneficiaryList(String identitySearchDTO, String auth, Boolean is1097)
 			throws IEMRException;
 
-	List<BeneficiariesDTO> searchBeneficiaryListES(String identitySearchDTO, String auth, Boolean is1097)
-			throws IEMRException;
+	public Map<String, Object> searchBeneficiaryListES(String identitySearchDTO, String auth, Boolean is1097) throws IEMRException ;
 
 	Integer editIdentityEditDTOCommunityorEducation(IdentityEditDTO identityEditDTO, String auth, Boolean is1097)
 			throws IEMRException;
