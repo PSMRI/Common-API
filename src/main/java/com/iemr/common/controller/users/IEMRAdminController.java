@@ -1230,4 +1230,42 @@ public class IEMRAdminController {
 		}
 
 	}
+
+	@Operation(summary = "Unlock user account locked due to failed login attempts")
+	@RequestMapping(value = "/unlockUserAccount", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+	public String unlockUserAccount(@RequestBody String request) {
+		OutputResponse response = new OutputResponse();
+		try {
+			Long userId = parseUserIdFromRequest(request);
+			boolean unlocked = iemrAdminUserServiceImpl.unlockUserAccount(userId);
+			response.setResponse(unlocked ? "User account successfully unlocked" : "User account was not locked");
+		} catch (Exception e) {
+			logger.error("Error unlocking user account: " + e.getMessage(), e);
+			response.setError(e);
+		}
+		return response.toString();
+	}
+
+	@Operation(summary = "Get user account lock status")
+	@RequestMapping(value = "/getUserLockStatus", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+	public String getUserLockStatus(@RequestBody String request) {
+		OutputResponse response = new OutputResponse();
+		try {
+			Long userId = parseUserIdFromRequest(request);
+			String lockStatusJson = iemrAdminUserServiceImpl.getUserLockStatusJson(userId);
+			response.setResponse(lockStatusJson);
+		} catch (Exception e) {
+			logger.error("Error getting user lock status: " + e.getMessage(), e);
+			response.setError(e);
+		}
+		return response.toString();
+	}
+
+	private Long parseUserIdFromRequest(String request) throws IEMRException {
+		JsonObject requestObj = JsonParser.parseString(request).getAsJsonObject();
+		if (!requestObj.has("userId") || requestObj.get("userId").isJsonNull()) {
+			throw new IEMRException("userId is required");
+		}
+		return requestObj.get("userId").getAsLong();
+	}
 }
