@@ -75,7 +75,7 @@ public interface IEMRUserRepositoryCustom extends CrudRepository<User, Long> {
 	
 	@Query("SELECT u FROM User u WHERE u.userID=5718")
 	User getAllExistingUsers();
-	
+
 	User findByUserID(Long userID);
 
 }
