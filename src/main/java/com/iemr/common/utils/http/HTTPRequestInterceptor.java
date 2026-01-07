@@ -21,21 +21,23 @@
 */
 package com.iemr.common.utils.http;
 
-
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
-import com.iemr.common.utils.response.OutputResponse;
 import com.iemr.common.utils.sessionobject.SessionObject;
 import com.iemr.common.utils.validator.Validator;
 
+import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 @Configuration
@@ -44,6 +46,9 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
 	private Validator validator;
 
 	Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
+
+	@Value("${cors.allowed-origins}")
+	private String allowedOrigins;
 
 	@Autowired
 	public void setValidator(Validator validator) {
@@ -125,12 +130,37 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
 					break;
 				}
 			} catch (Exception e) {
-				OutputResponse output = new OutputResponse();
-				output.setError(e);
-				response.getOutputStream().print(output.toString());
-				response.setContentType(MediaType.APPLICATION_JSON);
-				response.setContentLength(output.toString().length());
-				response.setHeader("Access-Control-Allow-Origin", "*");
+				logger.error("Authorization failed: {}", e.getMessage(), e);
+
+			    String errorMessage = e.getMessage();
+			    if (errorMessage == null || errorMessage.trim().isEmpty()) {
+			        errorMessage = "Unauthorized access or session expired.";
+			    }
+
+			    String jsonErrorResponse = "{"
+			            + "\"status\": \"Unauthorized\","
+			            + "\"statusCode\": 401,"
+			            + "\"errorMessage\": \"" + errorMessage.replace("\"", "\\\"") + "\""
+			            + "}";
+
+			    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
+			    response.setContentType(MediaType.APPLICATION_JSON);
+			    
+			    String origin = request.getHeader("Origin");
+			    if (origin != null && isOriginAllowed(origin)) {
+			        response.setHeader("Access-Control-Allow-Origin", origin);
+			        response.setHeader("Access-Control-Allow-Credentials", "true");
+			    } else if (origin != null) {
+			        logger.warn("CORS headers NOT added for error response | Unauthorized origin: {}", origin);
+			    }
+
+			    // Better to use getBytes().length for accurate byte size
+			    byte[] responseBytes = jsonErrorResponse.getBytes(StandardCharsets.UTF_8);
+			    response.setContentLength(responseBytes.length);
+
+			    ServletOutputStream out = response.getOutputStream();
+			    out.write(responseBytes);
+			    out.flush();
 				status = false;
 			}
 		}
@@ -163,5 +193,27 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
 	public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object object, Exception arg3)
 			throws Exception {
 		logger.debug("In afterCompletion Request Completed");
+	}
+
+	/**
+	 * Check if the given origin is allowed based on configured allowedOrigins.
+	 * Uses the same logic as JwtUserIdValidationFilter for consistency.
+	 * 
+	 * @param origin The origin to validate
+	 * @return true if origin is allowed, false otherwise
+	 */
+	private boolean isOriginAllowed(String origin) {
+		if (origin == null || allowedOrigins == null || allowedOrigins.trim().isEmpty()) {
+			return false;
+		}
+
+		return Arrays.stream(allowedOrigins.split(","))
+				.map(String::trim)
+				.anyMatch(pattern -> {
+					String regex = pattern
+							.replace(".", "\\.")
+						    .replace("*", ".*");
+					return origin.matches(regex);
+				});
 	}
 }

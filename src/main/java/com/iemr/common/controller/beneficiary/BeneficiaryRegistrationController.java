@@ -103,6 +103,7 @@ public class BeneficiaryRegistrationController {
 	private BeneficiaryOccupationService beneficiaryOccupationService;
 	private GovtIdentityTypeService govtIdentityTypeService;
 
+
 	@Autowired
 	public void setBenRelationshipTypeService(BenRelationshipTypeService benRelationshipTypeService) {
 		this.benRelationshipTypeService = benRelationshipTypeService;

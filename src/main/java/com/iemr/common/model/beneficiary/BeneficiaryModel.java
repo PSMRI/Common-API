@@ -79,6 +79,51 @@ public class BeneficiaryModel implements Comparable<BeneficiaryModel> {
 	// private List<BeneficiaryCallModel> beneficiaryCalls;
 	// private List<FeedbackDetailsModel> feedbacks;
 	@Expose
+	private Boolean isConsent=false;
+
+	@Expose
+	private Boolean isDeath;
+
+	@Expose
+	private String  dateOfDeath;
+
+	@Expose
+	private String isDeathValue;
+
+	@Expose
+	private String timeOfDeath;
+
+	@Expose
+	private String reasonOfDeath;
+
+	@Expose
+	private Integer reasonOfDeathId;
+
+	@Expose
+	private String placeOfDeath;
+
+	@Expose
+	private Integer placeOfDeathId;
+
+	@Expose
+	private String  otherPlaceOfDeath;
+
+	@Expose
+	private Boolean isSpouseAdded;
+
+	@Expose
+	private Boolean isChildrenAdded;
+
+	@Expose
+	private Boolean isMarried;
+
+	@Expose
+	private Integer doYouHavechildren;
+
+	@Expose
+	private Integer noofAlivechildren;
+
+	@Expose
 	private String beneficiaryID;
 	@Expose
 	private Short titleId;
