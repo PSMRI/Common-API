@@ -19,7 +19,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
-
+/**
+ * REST controller exposing application version and build metadata.
+ * <p>
+ * Provides the <code>/version</code> endpoint which returns the
+ * Git commit hash and build timestamp in a standardized JSON format.
+ * </p>
+ *
+ * @author Vaishnav Bhosale
+ */
 package com.iemr.common.controller.version;
 
 import java.io.InputStream;
