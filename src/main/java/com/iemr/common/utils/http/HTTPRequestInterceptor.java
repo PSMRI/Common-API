@@ -87,23 +87,7 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
 			return true; // Allow the request to proceed without validation
 		}
 
-		// Inject userId into request (for controllers)
-		try {
-			String token = resolveToken(request);
-			if (token != null) {
-				Claims claims = jwtUtil.validateToken(token);
-				if (claims != null) {
-					String userId = claims.get("userId", String.class);
-					if (userId != null) {
-						request.setAttribute("userId", Integer.parseInt(userId));
-					}
-				}
-			}
-		} catch (Exception ex) {
-			logger.warn("Unable to extract userId from token: {}", ex.getMessage());
-		}
-
-		logger.debug("RequestURI::" + request.getRequestURI() + " || Authorization ::" + authorization
+				logger.debug("RequestURI::" + request.getRequestURI() + " || Authorization ::" + authorization
 				+ " || method :: " + request.getMethod());
 		if (!request.getMethod().equalsIgnoreCase("OPTIONS")) {
 			try {
@@ -240,19 +224,5 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
 				});
 	}
 
-	private String resolveToken(HttpServletRequest request) {
-
-		String jwtToken = request.getHeader("Jwttoken");
-		if (jwtToken != null && !jwtToken.isBlank()) {
-			return jwtToken;
-		}
-
-		String authHeader = request.getHeader("Authorization");
-		if (authHeader != null && authHeader.startsWith("Bearer ")) {
-			return authHeader.substring(7);
-		}
-
-		return CookieUtil.getJwtTokenFromCookie(request);
-	}
 
 }

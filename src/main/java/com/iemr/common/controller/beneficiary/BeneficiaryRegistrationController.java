@@ -366,10 +366,12 @@ public class BeneficiaryRegistrationController {
 				response.setError(400, "Search query is required");
 				return response.toString();
 			}
-			
+
 			String auth = httpRequest.getHeader("Authorization");
-			
-			Integer userID = (Integer) httpRequest.getAttribute("userId");
+
+			Integer userID = jwtUtil.getUserIdFromRequest(httpRequest);
+
+			logger.info("ES search for userId: {}", userID);
 
 			Boolean is1097 = false;
 			if (requestObj.has("is1097") && !requestObj.get("is1097").isJsonNull()) {
@@ -431,7 +433,7 @@ public class BeneficiaryRegistrationController {
 
 			String auth = httpRequest.getHeader("Authorization");
 
-			Integer userID = (Integer) httpRequest.getAttribute("userId");
+			Integer userID = jwtUtil.getUserIdFromRequest(httpRequest);
 
 			logger.info("ES Advanced search for userId: {}", userID);
 
