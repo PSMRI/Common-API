@@ -123,6 +123,10 @@ public interface IEMRAdminUserService
 
 	List<User> getUserIdbyUserName(String userName) throws IEMRException;
 
+	boolean unlockUserAccount(Long userId) throws IEMRException;
 
-	
+	String getUserLockStatusJson(Long userId) throws IEMRException;
+
+	boolean hasAdminPrivileges(Long userId) throws IEMRException;
+
 }

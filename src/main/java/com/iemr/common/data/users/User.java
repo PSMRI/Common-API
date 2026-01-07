@@ -213,6 +213,10 @@ public class User implements Serializable  {
 	@Column(name = "dhistoken")
 	private String dhistoken;
 
+	@Expose
+	@Column(name = "lock_timestamp")
+	private Timestamp lockTimestamp;
+
 	/*
 	 * protected User() { }
 	 */

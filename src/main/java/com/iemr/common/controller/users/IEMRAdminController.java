@@ -77,6 +77,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @RequestMapping("/user")
 @RestController
 public class IEMRAdminController {
+	private static final String USER_ID_FIELD = "userId";
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	private InputMapper inputMapper = new InputMapper();
 
@@ -580,6 +581,13 @@ public class IEMRAdminController {
 
 				if (jwtToken == null) {
 					logger.warn("Authentication failed: no token found in header or cookies.");
+					throw new IEMRException("Authentication failed. Please log in again.");
+				}
+
+				// Validate the token first
+				Claims claims = jwtUtil.validateToken(jwtToken);
+				if (claims == null) {
+					logger.warn("Authentication failed: invalid or expired token.");
 					throw new IEMRException("Authentication failed. Please log in again.");
 				}
 
@@ -1229,5 +1237,88 @@ public class IEMRAdminController {
 			return new ResponseEntity<>(Map.of("error", "Internal server error"), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
+	}
+
+	@Operation(summary = "Unlock user account locked due to failed login attempts")
+	@PostMapping(value = "/unlockUserAccount", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+	public String unlockUserAccount(@RequestBody String request, HttpServletRequest httpRequest) {
+		OutputResponse response = new OutputResponse();
+		try {
+			Long authenticatedUserId = getAuthenticatedUserId(httpRequest);
+			validateAdminPrivileges(authenticatedUserId);
+			Long userId = parseUserIdFromRequest(request);
+			boolean unlocked = iemrAdminUserServiceImpl.unlockUserAccount(userId);
+			response.setResponse(unlocked ? "User account successfully unlocked" : "User account was not locked");
+		} catch (Exception e) {
+			logger.error("Error unlocking user account: " + e.getMessage(), e);
+			response.setError(e);
+		}
+		return response.toString();
+	}
+
+	@Operation(summary = "Get user account lock status")
+	@PostMapping(value = "/getUserLockStatus", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+	public String getUserLockStatus(@RequestBody String request, HttpServletRequest httpRequest) {
+		OutputResponse response = new OutputResponse();
+		try {
+			Long authenticatedUserId = getAuthenticatedUserId(httpRequest);
+			validateAdminPrivileges(authenticatedUserId);
+			Long userId = parseUserIdFromRequest(request);
+			String lockStatusJson = iemrAdminUserServiceImpl.getUserLockStatusJson(userId);
+			response.setResponse(lockStatusJson);
+		} catch (Exception e) {
+			logger.error("Error getting user lock status: " + e.getMessage(), e);
+			response.setError(e);
+		}
+		return response.toString();
+	}
+
+	private Long parseUserIdFromRequest(String request) throws IEMRException {
+		try {
+			JsonObject requestObj = JsonParser.parseString(request).getAsJsonObject();
+			if (!requestObj.has(USER_ID_FIELD) || requestObj.get(USER_ID_FIELD).isJsonNull()) {
+				throw new IEMRException(USER_ID_FIELD + " is required");
+			}
+			JsonElement userIdElement = requestObj.get(USER_ID_FIELD);
+			if (!userIdElement.isJsonPrimitive() || !userIdElement.getAsJsonPrimitive().isNumber()) {
+				throw new IEMRException(USER_ID_FIELD + " must be a number");
+			}
+			return userIdElement.getAsLong();
+		} catch (IEMRException e) {
+			throw e;
+		} catch (Exception e) {
+			logger.error("Failed to parse {} from request: {}", USER_ID_FIELD, e.getMessage());
+			throw new IEMRException("Invalid request body");
+		}
+	}
+
+	private Long getAuthenticatedUserId(HttpServletRequest httpRequest) throws IEMRException {
+		String authorization = httpRequest.getHeader("Authorization");
+		if (authorization != null && authorization.contains("Bearer ")) {
+			authorization = authorization.replace("Bearer ", "");
+		}
+		if (authorization == null || authorization.isEmpty()) {
+			throw new IEMRException("Authentication required");
+		}
+		try {
+			String sessionJson = sessionObject.getSessionObject(authorization);
+			if (sessionJson == null || sessionJson.isEmpty()) {
+				throw new IEMRException("Session expired. Please log in again.");
+			}
+			JSONObject session = new JSONObject(sessionJson);
+			return session.getLong("userID");
+		} catch (IEMRException e) {
+			throw e;
+		} catch (Exception e) {
+			logger.error("Authentication failed while extracting user ID: {}", e.getMessage());
+			throw new IEMRException("Authentication failed");
+		}
+	}
+
+	private void validateAdminPrivileges(Long userId) throws IEMRException {
+		if (!iemrAdminUserServiceImpl.hasAdminPrivileges(userId)) {
+			logger.warn("Unauthorized access attempt by userId: {}", userId);
+			throw new IEMRException("Access denied. Admin privileges required.");
+		}
 	}
 }
