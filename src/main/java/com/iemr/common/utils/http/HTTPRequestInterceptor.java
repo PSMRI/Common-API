@@ -36,10 +36,14 @@ import org.springframework.web.servlet.ModelAndView;
 
 import com.iemr.common.utils.sessionobject.SessionObject;
 import com.iemr.common.utils.validator.Validator;
+import com.iemr.common.utils.JwtUtil;
+import io.jsonwebtoken.Claims;
+import com.iemr.common.utils.CookieUtil;
 
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 @Configuration
 @Component
 public class HTTPRequestInterceptor implements HandlerInterceptor {
@@ -49,6 +53,9 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
 
 	@Value("${cors.allowed-origins}")
 	private String allowedOrigins;
+
+	@Autowired
+	private JwtUtil jwtUtil;
 
 	@Autowired
 	public void setValidator(Validator validator) {
@@ -67,18 +74,35 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
 		boolean status = true;
 		logger.info("In info preHandle we are Intercepting the Request");
 		logger.debug("In preHandle we are Intercepting the Request");
-	//	String authorization = request.getHeader("Authorization");
+		// String authorization = request.getHeader("Authorization");
 		String authorization = null;
 		String preAuth = request.getHeader("Authorization");
-		if(null != preAuth && preAuth.contains("Bearer "))
-			authorization=preAuth.replace("Bearer ", "");
+		if (null != preAuth && preAuth.contains("Bearer "))
+			authorization = preAuth.replace("Bearer ", "");
 		else
 			authorization = preAuth;
-		
+
 		if (authorization == null || authorization.isEmpty()) {
-	        logger.info("Authorization header is null or empty. Skipping HTTPRequestInterceptor.");
-	        return true; // Allow the request to proceed without validation
-	    }
+			logger.info("Authorization header is null or empty. Skipping HTTPRequestInterceptor.");
+			return true; // Allow the request to proceed without validation
+		}
+
+		// Inject userId into request (for controllers)
+		try {
+			String token = resolveToken(request);
+			if (token != null) {
+				Claims claims = jwtUtil.validateToken(token);
+				if (claims != null) {
+					String userId = claims.get("userId", String.class);
+					if (userId != null) {
+						request.setAttribute("userId", Integer.parseInt(userId));
+					}
+				}
+			}
+		} catch (Exception ex) {
+			logger.warn("Unable to extract userId from token: {}", ex.getMessage());
+		}
+
 		logger.debug("RequestURI::" + request.getRequestURI() + " || Authorization ::" + authorization
 				+ " || method :: " + request.getMethod());
 		if (!request.getMethod().equalsIgnoreCase("OPTIONS")) {
@@ -86,81 +110,81 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
 				String[] requestURIParts = request.getRequestURI().split("/");
 				String requestAPI = requestURIParts[requestURIParts.length - 1];
 				switch (requestAPI) {
-				case "userAuthenticate":
-				case "superUserAuthenticate":
-				case "userAuthenticateNew":
-				case "userAuthenticateV1":
-				case "forgetPassword":
-				case "setForgetPassword":
-				case "changePassword":
-				case "saveUserSecurityQuesAns":
-				case "doAgentLogout":
-				case "userLogout":
-				case "swagger-ui.html":
-				case "index.html":
-				case "index.css":
-				case "swagger-initializer.js":
-				case "swagger-config":
-				case "swagger-ui-bundle.js":
-				case "swagger-ui.css":
-				case "ui":
-				case "swagger-ui-standalone-preset.js":
-				case "favicon-32x32.png":
-				case "favicon-16x16.png":
-				case "swagger-resources":
-				case "api-docs":
-				case "updateBenCallIdsInPhoneBlock":
-				case "userAuthenticateByEncryption":
-				case "sendOTP":
-				case "validateOTP":
-				case "resendOTP":
-				case "validateSecurityQuestionAndAnswer":
-				case "logOutUserFromConcurrentSession":
-				case "refreshToken":
-					break;
-				case "error":
-					status = false;
-					break;
-				default:
-					String remoteAddress = request.getHeader("X-FORWARDED-FOR");
-					if (remoteAddress == null || remoteAddress.trim().length() == 0) {
-						remoteAddress = request.getRemoteAddr();
-					}
-					validator.checkKeyExists(authorization, remoteAddress);
-					break;
+					case "userAuthenticate":
+					case "superUserAuthenticate":
+					case "userAuthenticateNew":
+					case "userAuthenticateV1":
+					case "forgetPassword":
+					case "setForgetPassword":
+					case "changePassword":
+					case "saveUserSecurityQuesAns":
+					case "doAgentLogout":
+					case "userLogout":
+					case "swagger-ui.html":
+					case "index.html":
+					case "index.css":
+					case "swagger-initializer.js":
+					case "swagger-config":
+					case "swagger-ui-bundle.js":
+					case "swagger-ui.css":
+					case "ui":
+					case "swagger-ui-standalone-preset.js":
+					case "favicon-32x32.png":
+					case "favicon-16x16.png":
+					case "swagger-resources":
+					case "api-docs":
+					case "updateBenCallIdsInPhoneBlock":
+					case "userAuthenticateByEncryption":
+					case "sendOTP":
+					case "validateOTP":
+					case "resendOTP":
+					case "validateSecurityQuestionAndAnswer":
+					case "logOutUserFromConcurrentSession":
+					case "refreshToken":
+						break;
+					case "error":
+						status = false;
+						break;
+					default:
+						String remoteAddress = request.getHeader("X-FORWARDED-FOR");
+						if (remoteAddress == null || remoteAddress.trim().length() == 0) {
+							remoteAddress = request.getRemoteAddr();
+						}
+						validator.checkKeyExists(authorization, remoteAddress);
+						break;
 				}
 			} catch (Exception e) {
 				logger.error("Authorization failed: {}", e.getMessage(), e);
 
-			    String errorMessage = e.getMessage();
-			    if (errorMessage == null || errorMessage.trim().isEmpty()) {
-			        errorMessage = "Unauthorized access or session expired.";
-			    }
+				String errorMessage = e.getMessage();
+				if (errorMessage == null || errorMessage.trim().isEmpty()) {
+					errorMessage = "Unauthorized access or session expired.";
+				}
 
-			    String jsonErrorResponse = "{"
-			            + "\"status\": \"Unauthorized\","
-			            + "\"statusCode\": 401,"
-			            + "\"errorMessage\": \"" + errorMessage.replace("\"", "\\\"") + "\""
-			            + "}";
+				String jsonErrorResponse = "{"
+						+ "\"status\": \"Unauthorized\","
+						+ "\"statusCode\": 401,"
+						+ "\"errorMessage\": \"" + errorMessage.replace("\"", "\\\"") + "\""
+						+ "}";
 
-			    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
-			    response.setContentType(MediaType.APPLICATION_JSON);
-			    
-			    String origin = request.getHeader("Origin");
-			    if (origin != null && isOriginAllowed(origin)) {
-			        response.setHeader("Access-Control-Allow-Origin", origin);
-			        response.setHeader("Access-Control-Allow-Credentials", "true");
-			    } else if (origin != null) {
-			        logger.warn("CORS headers NOT added for error response | Unauthorized origin: {}", origin);
-			    }
+				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
+				response.setContentType(MediaType.APPLICATION_JSON);
 
-			    // Better to use getBytes().length for accurate byte size
-			    byte[] responseBytes = jsonErrorResponse.getBytes(StandardCharsets.UTF_8);
-			    response.setContentLength(responseBytes.length);
+				String origin = request.getHeader("Origin");
+				if (origin != null && isOriginAllowed(origin)) {
+					response.setHeader("Access-Control-Allow-Origin", origin);
+					response.setHeader("Access-Control-Allow-Credentials", "true");
+				} else if (origin != null) {
+					logger.warn("CORS headers NOT added for error response | Unauthorized origin: {}", origin);
+				}
 
-			    ServletOutputStream out = response.getOutputStream();
-			    out.write(responseBytes);
-			    out.flush();
+				// Better to use getBytes().length for accurate byte size
+				byte[] responseBytes = jsonErrorResponse.getBytes(StandardCharsets.UTF_8);
+				response.setContentLength(responseBytes.length);
+
+				ServletOutputStream out = response.getOutputStream();
+				out.write(responseBytes);
+				out.flush();
 				status = false;
 			}
 		}
@@ -172,15 +196,14 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
 			throws Exception {
 		try {
 			logger.debug("In postHandle we are Intercepting the Request");
-		//	String authorization = request.getHeader("Authorization");
 			String authorization = null;
 			String postAuth = request.getHeader("Authorization");
-			if(null != postAuth && postAuth.contains("Bearer "))
-				authorization=postAuth.replace("Bearer ", "");
+			if (null != postAuth && postAuth.contains("Bearer "))
+				authorization = postAuth.replace("Bearer ", "");
 			else
 				authorization = postAuth;
 			logger.debug("RequestURI::" + request.getRequestURI() + " || Authorization ::" + authorization);
-			
+
 			if (authorization != null && !authorization.equals("")) {
 				sessionObject.updateSessionObject(authorization, sessionObject.getSessionObject(authorization));
 			}
@@ -212,8 +235,24 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
 				.anyMatch(pattern -> {
 					String regex = pattern
 							.replace(".", "\\.")
-						    .replace("*", ".*");
+							.replace("*", ".*");
 					return origin.matches(regex);
 				});
 	}
+
+	private String resolveToken(HttpServletRequest request) {
+
+		String jwtToken = request.getHeader("Jwttoken");
+		if (jwtToken != null && !jwtToken.isBlank()) {
+			return jwtToken;
+		}
+
+		String authHeader = request.getHeader("Authorization");
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			return authHeader.substring(7);
+		}
+
+		return CookieUtil.getJwtTokenFromCookie(request);
+	}
+
 }

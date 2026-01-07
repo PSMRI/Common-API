@@ -106,9 +106,7 @@ public class BeneficiaryRegistrationController {
 	private BeneficiaryOccupationService beneficiaryOccupationService;
 	private GovtIdentityTypeService govtIdentityTypeService;
 
-
-
-   	@Autowired
+	@Autowired
 	private JwtUtil jwtUtil;
 
 	@Autowired
@@ -355,7 +353,7 @@ public class BeneficiaryRegistrationController {
 		OutputResponse response = new OutputResponse();
 		try {
 			logger.info("Universal search request received");
-			
+
 			JsonParser parser = new JsonParser();
 			JsonObject requestObj = parser.parse(request).getAsJsonObject();
 
@@ -363,40 +361,37 @@ public class BeneficiaryRegistrationController {
 			if (requestObj.has("search") && !requestObj.get("search").isJsonNull()) {
 				searchQuery = requestObj.get("search").getAsString();
 			}
-			
+
 			if (searchQuery == null || searchQuery.trim().isEmpty()) {
 				response.setError(400, "Search query is required");
 				return response.toString();
 			}
-
-		String jwtToken = httpRequest.getHeader("Jwttoken");
-		String auth=httpRequest.getHeader("Authorization");
-		String cookieToken = CookieUtil.getJwtTokenFromCookie(httpRequest);
-
-			String userId = jwtToken !="" ? jwtUtil.getUserIdFromToken(jwtToken) : jwtUtil.getUserIdFromToken(cookieToken);
-            int userID=Integer.parseInt(userId);
+			
+			String auth = httpRequest.getHeader("Authorization");
+			
+			Integer userID = (Integer) httpRequest.getAttribute("userId");
 
 			Boolean is1097 = false;
 			if (requestObj.has("is1097") && !requestObj.get("is1097").isJsonNull()) {
 				is1097 = requestObj.get("is1097").getAsBoolean();
 			}
-			
+
 			logger.info("Searching with query: {}, userId: {}, is1097: {}", searchQuery, userID, is1097);
 			String result = iemrSearchUserService.searchUser(searchQuery, userID, auth, is1097);
-			
+
 			if (result == null || result.trim().isEmpty()) {
 				response.setError(200, "No beneficiaries found");
 				return response.toString();
 			}
-			
+
 			return result;
-			
+
 		} catch (Exception e) {
 			logger.error("Error in universal search: {}", e.getMessage(), e);
 			response.setError(400, "Error searching beneficiaries: " + e.getMessage());
 			return response.toString();
 		}
-			}
+	}
 
 	@Operation(summary = "Provide the list of beneficiaries based on search criteria")
 	@RequestMapping(value = "/searchBeneficiary", method = RequestMethod.POST, headers = "Authorization")
@@ -420,44 +415,40 @@ public class BeneficiaryRegistrationController {
 		return output.toString();
 	}
 
-/**
- * NEW Elasticsearch-based advanced search endpoint
-*/
-@Operation(summary = "Advanced search beneficiaries using Elasticsearch")
-@RequestMapping(value = "/searchBeneficiaryES", method = RequestMethod.POST, headers = "Authorization")
-public String searchBeneficiaryES(
-        @RequestBody BeneficiaryModel request,
-        HttpServletRequest httpRequest) {
-    
-    logger.info("searchBeneficiaryES request: {}", request);
-    OutputResponse output = new OutputResponse();
-    
-    try {
-           
-		// Get userId from JWT token
+	/**
+	 * Elasticsearch-based advanced search endpoint
+	 */
+	@Operation(summary = "Advanced search beneficiaries using Elasticsearch")
+	@RequestMapping(value = "/searchBeneficiaryES", method = RequestMethod.POST, headers = "Authorization")
+	public String searchBeneficiaryES(
+			@RequestBody BeneficiaryModel request,
+			HttpServletRequest httpRequest) {
 
-		String jwtToken = httpRequest.getHeader("Jwttoken");
-		String auth=httpRequest.getHeader("Authorization");
-        String cookieToken = CookieUtil.getJwtTokenFromCookie(httpRequest);
-		String userId = jwtToken !="" ? jwtUtil.getUserIdFromToken(jwtToken) : jwtUtil.getUserIdFromToken(cookieToken);
-        int userID = Integer.parseInt(userId);
-        
-        logger.info("ES Advanced search for userId: {}", userID);
-        
-        String result = iemrSearchUserService.findBeneficiaryES(request, userID, auth);
-        
-        return result;
-        
-    } catch (NumberFormatException ne) {
-        logger.error("searchBeneficiaryES failed with number format error: {}", ne.getMessage(), ne);
-        output.setError(400, "Invalid number format in search criteria");
-        return output.toString();
-    } catch (Exception e) {
-        logger.error("searchBeneficiaryES failed with error: {}", e.getMessage(), e);
-        output.setError(500, "Error searching beneficiaries: " + e.getMessage());
-        return output.toString();
-    }
-}
+		logger.info("searchBeneficiaryES request: {}", request);
+		OutputResponse output = new OutputResponse();
+
+		try {
+
+			String auth = httpRequest.getHeader("Authorization");
+
+			Integer userID = (Integer) httpRequest.getAttribute("userId");
+
+			logger.info("ES Advanced search for userId: {}", userID);
+
+			String result = iemrSearchUserService.findBeneficiaryES(request, userID, auth);
+
+			return result;
+
+		} catch (NumberFormatException ne) {
+			logger.error("searchBeneficiaryES failed with number format error: {}", ne.getMessage(), ne);
+			output.setError(400, "Invalid number format in search criteria");
+			return output.toString();
+		} catch (Exception e) {
+			logger.error("searchBeneficiaryES failed with error: {}", e.getMessage(), e);
+			output.setError(500, "Error searching beneficiaries: " + e.getMessage());
+			return output.toString();
+		}
+	}
 
 	@Operation(summary = "Provide all common data list needed for beneficiary registration")
 	@RequestMapping(value = "/getRegistrationData", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
