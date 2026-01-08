@@ -79,16 +79,19 @@ public class HealthController {
             components.put("database", "NOT_CONFIGURED");
             return true;
         }
-
-        try (Connection connection = dataSource.getConnection()) {
+        try (Connection connection = dataSource.getConnection();
+                var statement = connection.createStatement()) {
+            statement.execute("SELECT 1");
             components.put("database", "UP");
             return true;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Database health check failed", e);
             components.put("database", "DOWN");
             return false;
         }
     }
+
 
     private boolean checkRedis(Map<String, String> components) {
         if (redisConnectionFactory == null) {
