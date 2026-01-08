@@ -16,7 +16,7 @@ public interface FormMasterService {
     List<FormField> createField(List<FieldDTO> dto);
     FormField updateField(FieldDTO dto);
 
-    FormResponseDTO getStructuredFormByFormId(String formId);
+    FormResponseDTO getStructuredFormByFormId(String formId,String lang);
 
     void deleteField(Long fieldId);
 }

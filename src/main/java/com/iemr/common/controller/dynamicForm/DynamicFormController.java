@@ -83,14 +83,15 @@ public class DynamicFormController {
     }
 
     @GetMapping(value = "form/{formId}/fields")
-    public ResponseEntity<ApiResponse<?>> getStructuredForm(@PathVariable String formId) {
+    public ResponseEntity<ApiResponse<?>> getStructuredForm(@PathVariable String formId, @RequestParam(name = "lang", defaultValue = "en") String lang) {
         try {
-            Object result = formMasterService.getStructuredFormByFormId(formId);
+            Object result = formMasterService.getStructuredFormByFormId(formId,lang);
             return ResponseEntity.status(HttpStatus.OK)
                     .body(ApiResponse.success("Form structure fetched successfully", HttpStatus.OK.value(), result));
         } catch (Exception e) {
+
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Failed to fetch form structure", HttpStatus.INTERNAL_SERVER_ERROR.value(), null));
+                    .body(ApiResponse.error("Failed to fetch form structure:"+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value(), e));
         }
     }
 
