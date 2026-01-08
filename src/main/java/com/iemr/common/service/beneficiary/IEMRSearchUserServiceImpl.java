@@ -328,32 +328,88 @@ public class IEMRSearchUserServiceImpl implements IEMRSearchUserService {
 	}
 
 	/**
-      Universal search using Elasticsearch
-    */
+	 * Universal search using Elasticsearch
+	 */
 	@Override
 	public String searchUser(String searchQuery, Integer userId, String auth, Boolean is1097) throws Exception {
 
-    try {
-        if (searchQuery == null || searchQuery.trim().isEmpty()) {
-            throw new IEMRException("Search query is required");
-        }
+		try {
+			if (searchQuery == null || searchQuery.trim().isEmpty()) {
+				throw new IEMRException("Search query is required");
+			}
 
-        logger.info("Universal search with query: {}, userId: {}", searchQuery, userId);
+			logger.info("Universal search with query: {}, userId: {}", searchQuery, userId);
 
-        Map<String, Object> response =
-                identityBeneficiaryService.searchBeneficiariesUsingES(
-                        searchQuery, userId, auth, is1097
-                );
+			Map<String, Object> response = identityBeneficiaryService.searchBeneficiariesUsingES(
+					searchQuery, userId, auth, is1097);
 
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.writeValueAsString(response);
+			ObjectMapper mapper = new ObjectMapper();
+			return mapper.writeValueAsString(response);
 
-    } catch (Exception e) {
-        logger.error("Error in universal search", e);
-        throw new Exception("Error searching beneficiaries: " + e.getMessage(), e);
-    }
-}
+		} catch (Exception e) {
+			logger.error("Error in universal search", e);
+			throw new Exception("Error searching beneficiaries: " + e.getMessage(), e);
+		}
+	}
 
+	/**
+	 * Advanced search using Elasticsearch with multiple criteria
+	 */
+
+	@Override
+	public String findBeneficiaryES(
+			BeneficiaryModel i_beneficiary,
+			Integer userId,
+			String auth) throws Exception {
+
+		try {
+			IdentitySearchDTO identitySearchDTO = identityBenEditMapper.getidentitysearchModel(i_beneficiary);
+
+			if (i_beneficiary.getDOB() != null) {
+				identitySearchDTO.setDob(i_beneficiary.getDOB());
+			}
+
+			if (i_beneficiary.getHouseHoldID() != null) {
+				identitySearchDTO.setHouseHoldID(i_beneficiary.getHouseHoldID());
+			}
+
+			if (i_beneficiary.getIsD2D() != null) {
+				identitySearchDTO.setIsD2D(i_beneficiary.getIsD2D());
+			}
+
+			if (i_beneficiary.getBenPhoneMaps() != null
+					&& !i_beneficiary.getBenPhoneMaps().isEmpty()) {
+				identitySearchDTO.setContactNumber(
+						i_beneficiary.getBenPhoneMaps().get(0).getPhoneNo());
+			}
+
+			if (i_beneficiary.getBeneficiaryID() != null
+					&& !i_beneficiary.getBeneficiaryID().isEmpty()) {
+				identitySearchDTO.setBeneficiaryId(
+						new BigInteger(i_beneficiary.getBeneficiaryID()));
+			}
+
+			i_beneficiary.setIs1097(Boolean.TRUE.equals(i_beneficiary.getIs1097()));
+
+			Gson gson = new GsonBuilder()
+					.setDateFormat("yyyy-MM-dd")
+					.create();
+
+			String requestJson = gson.toJson(identitySearchDTO);
+
+			Map<String, Object> response = identityBeneficiaryService.searchBeneficiaryListES(
+					requestJson,
+					auth,
+					i_beneficiary.getIs1097());
+
+			ObjectMapper mapper = new ObjectMapper();
+			return mapper.writeValueAsString(response);
+
+		} catch (Exception e) {
+			logger.error("Error in ES advance search", e);
+			throw new Exception("Error searching beneficiaries using ES", e);
+		}
+	}
 
 	// Advance search
 	@Override
