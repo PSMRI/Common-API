@@ -1218,4 +1218,10 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 	        throw new IEMRException("Error fetching user with ID: " + userId, e);
 	    }
 	}
+
+	@Override
+	public List<User> getUserIdbyUserName(String userName) {
+
+		return iEMRUserRepositoryCustom.findByUserName(userName);
+	}
 }

@@ -80,8 +80,8 @@ public class IEMRAdminController {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	private InputMapper inputMapper = new InputMapper();
 
-	@Value("${captcha.enable-captcha}")
-	private boolean enableCaptcha;
+//	@Value("${captcha.enable-captcha}")
+	private boolean enableCaptcha =false;
 
 	@Autowired
 	private CaptchaValidationService captchaValidatorService;
@@ -285,8 +285,9 @@ public class IEMRAdminController {
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
 			}
 
-			if (user.getM_status() == null || !"Active".equalsIgnoreCase(user.getM_status().getStatus())) {
-				logger.warn("Token validation failed: user account is inactive or not in 'Active' status.");
+			if (user.getM_status() == null || !("Active".equalsIgnoreCase(user.getM_status().getStatus())
+					|| "New".equalsIgnoreCase(user.getM_status().getStatus()))) {
+				logger.warn("Token validation failed: user account is neither 'Active' nor 'New'.");
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
 			}
 			// Generate new tokens
@@ -343,9 +344,10 @@ public class IEMRAdminController {
 						deleteSessionObjectByGettingSessionDetails(previousTokenFromRedis);
 						sessionObject.deleteSessionObject(previousTokenFromRedis);
 						response.setResponse("User successfully logged out");
-					} else
+					} else{
 						logger.error("Unable to fetch session from redis");
 					throw new IEMRException("Session error. Please try again later");
+					}
 				}
 			} else {
 				throw new IEMRException("Invalid request object");
@@ -390,6 +392,7 @@ public class IEMRAdminController {
 		resMap.put("agentPassword", mUser.getAgentPassword());
 		resMap.put("m_UserLangMappings", new JSONArray(mUser.getM_UserLangMappings().toString()));
 		resMap.put("designationID", mUser.getDesignationID());
+		resMap.put("dhistoken",mUser.getDhistoken());
 		if (mUser.getDesignation() != null) {
 			resMap.put("designation", new JSONObject(mUser.getDesignation().toString()));
 		}
@@ -1212,4 +1215,19 @@ public class IEMRAdminController {
 		return iemrAdminUserServiceImpl.generateKeyAndValidateIP(responseObj, remoteAddress, remoteHost);
 	}
 
+	@Operation(summary = "Get UserId based on userName")
+	@GetMapping(value = "/userName/{userName}", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+	public ResponseEntity<?> getUserDetails(@PathVariable("userName") String userName) {
+		try {
+			List<User> users = iemrAdminUserServiceImpl.getUserIdbyUserName(userName);
+			if (users.isEmpty()) {
+				return new ResponseEntity<>(Map.of("error", "UserName Not Found"), HttpStatus.NOT_FOUND);
+			}
+			User user = users.get(0);
+			return new ResponseEntity<>(Map.of("userName", user.getUserName(), "userId", user.getUserID()), HttpStatus.OK);
+		} catch (Exception e) {
+			return new ResponseEntity<>(Map.of("error", "Internal server error"), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+	}
 }

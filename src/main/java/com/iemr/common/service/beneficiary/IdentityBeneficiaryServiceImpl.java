@@ -59,11 +59,11 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 	private static final String IDENTITY_BASE_URL = "IDENTITY_BASE_URL";
 
 	@Value("${genben-api}")
-	private static  String BEN_GEN ;
+	private String BEN_GEN ;
 
 
 	@Value("${generateBeneficiaryIDs-api-url}")
-	private static  String BEN_GEN_API_URL ;
+	private String BEN_GEN_API_URL ;
 
 
 	@Override
@@ -151,6 +151,9 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 	// search beneficiaries by phone number
 	public List<BeneficiariesDTO> getBeneficiaryListByPhone(String phoneNo, String auth, Boolean is1097)
 			throws IEMRException {
+	logger.info("Phone no from getBeneficiaryListByPhone: " + phoneNo);
+ 	String cleanedPhoneNo = cleanPhoneNumber(phoneNo);
+    logger.info("Cleaned phone no: " + cleanedPhoneNo);
 
 		List<BeneficiariesDTO> listBenDetailForOutboundDTO = new ArrayList<>();
 
@@ -162,8 +165,12 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 		if (auth != null) {
 			header.put("Authorization", auth);
 		}
+		
+		logger.info("Result="+(ConfigProperties.getPropertyByName("identity-api-url-getByPhoneNum")
+				.replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL))) + cleanedPhoneNo);
+
 		result = httpUtils.post((ConfigProperties.getPropertyByName("identity-api-url-getByPhoneNum")
-				.replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL))) + phoneNo, "", header);
+				.replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL))) + cleanedPhoneNo, "", header);
 
 		OutputResponse identityResponse = InputMapper.gson().fromJson(result, OutputResponse.class);
 		if (identityResponse.getStatusCode() == OutputResponse.USERID_FAILURE) {
@@ -181,6 +188,25 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 
 		}
 		return listBenDetailForOutboundDTO;
+	}
+
+	private String cleanPhoneNumber(String phoneNumber) {
+    	if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+	        return phoneNumber;
+    	}
+    
+    	String cleaned = phoneNumber.trim();
+    
+    	// Remove +91 prefix
+    	if (cleaned.startsWith("+91")) {
+	        cleaned = cleaned.substring(3);
+	    } 
+	    // Remove 91 prefix if it's a 12-digit number (91 + 10 digit mobile)
+	    else if (cleaned.startsWith("91") && cleaned.length() == 12) {
+    	    cleaned = cleaned.substring(2);
+    	}
+    
+    	return cleaned.trim();
 	}
 
 	@Override
@@ -529,8 +555,11 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 		if (auth != null) {
 			header.put("Authorization", auth);
 		}
+		
+		logger.info("Request to generate ben IDs: " + request);
+		logger.info("Generating ben IDs API URL: " + BEN_GEN + BEN_GEN_API_URL);
 		result = httpUtils.post(BEN_GEN + BEN_GEN_API_URL, request, header);
-
+logger.info("Response from generate ben IDs: " + result);
 		OutputResponse identityResponse = inputMapper.gson().fromJson(result, OutputResponse.class);
 
 		if (identityResponse.getStatusCode() == OutputResponse.USERID_FAILURE) {

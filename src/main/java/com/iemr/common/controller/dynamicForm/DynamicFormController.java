@@ -7,6 +7,7 @@ import com.iemr.common.service.dynamicForm.FormMasterService;
 import com.iemr.common.utils.response.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ public class DynamicFormController {
     @Autowired
     private FormMasterService formMasterService;
 
-    @PostMapping(value = "createModule",headers = "Authorization")
+    @PostMapping(value = "createModule")
     public ResponseEntity<ApiResponse<?>> createModule(@Valid @RequestBody ModuleDTO moduleDTO) {
         try {
             Object result = formMasterService.createModule(moduleDTO);
@@ -34,7 +35,7 @@ public class DynamicFormController {
         }
     }
 
-    @PostMapping(value = "createForm",headers = "Authorization")
+    @PostMapping(value = "createForm")
     public ResponseEntity<ApiResponse<?>> createForm(@Valid @RequestBody FormDTO dto) {
         try {
             Object result = formMasterService.createForm(dto);
@@ -46,7 +47,7 @@ public class DynamicFormController {
         }
     }
 
-    @PostMapping(value = "createFields",headers = "Authorization")
+    @PostMapping(value = "createFields")
     public ResponseEntity<ApiResponse<?>> createField(@Valid @RequestBody List<FieldDTO> dto) {
         try {
             Object result = formMasterService.createField(dto);

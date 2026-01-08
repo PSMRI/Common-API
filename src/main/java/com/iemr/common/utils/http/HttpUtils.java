@@ -40,6 +40,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import com.iemr.common.utils.RestTemplateUtil;
 import com.sun.jersey.multipart.FormDataBodyPart;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
@@ -54,9 +55,6 @@ public class HttpUtils {
 	// @Autowired
 	private HttpStatus status;
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
-
-	// @Autowired(required = true)
-	// @Qualifier("hibernateCriteriaBuilder")
 	public HttpUtils() {
 		if (rest == null) {
 			rest = new RestTemplate();
@@ -64,33 +62,22 @@ public class HttpUtils {
 			headers.add("Content-Type", "application/json");
 		}
 	}
-	// public HttpUtils() {
-	// if (rest == null) {
-	// rest = new RestTemplate();
-	// headers = new HttpHeaders();
-	// headers.add("Content-Type", "application/json");
-	// }
-	// }
-
-	// @Bean
-	// public HttpUtils httpUtils() {
-	// return new HttpUtils();
-	// }
-
+	
 	public String get(String uri) {
 		String body;
-		HttpEntity<String> requestEntity = new HttpEntity<String>("", headers);
+		HttpHeaders requestHeaders = new HttpHeaders();
+		requestHeaders.add("Content-Type", "application/json");
+		RestTemplateUtil.getJwttokenFromHeaders(requestHeaders);
+		HttpEntity<String> requestEntity = new HttpEntity<String>("", requestHeaders);
 		ResponseEntity<String> responseEntity = rest.exchange(uri, HttpMethod.GET, requestEntity, String.class);
 		setStatus((HttpStatus) responseEntity.getStatusCode());
-		// if (status == HttpStatus.OK){
 		body = responseEntity.getBody();
-		// }else{
-		// responseEntity
-		// }
+		
 		return body;
 	}
 
 	public ResponseEntity<String> getV1(String uri) throws URISyntaxException, MalformedURLException {
+		RestTemplateUtil.getJwttokenFromHeaders(headers);
 		HttpEntity<String> requestEntity = new HttpEntity<String>("", headers);
 		ResponseEntity<String> responseEntity = rest.exchange(uri, HttpMethod.GET, requestEntity, String.class);
 		return responseEntity;
@@ -107,6 +94,7 @@ public class HttpUtils {
 		} else {
 			headers.add("Content-Type", MediaType.APPLICATION_JSON);
 		}
+		RestTemplateUtil.getJwttokenFromHeaders(headers);
 		HttpEntity<String> requestEntity = new HttpEntity<String>("", headers);
 		ResponseEntity<String> responseEntity = rest.exchange(uri, HttpMethod.GET, requestEntity, String.class);
 		setStatus((HttpStatus) responseEntity.getStatusCode());
@@ -116,6 +104,7 @@ public class HttpUtils {
 
 	public String post(String uri, String json) {
 		String body;
+		RestTemplateUtil.getJwttokenFromHeaders(headers);
 		HttpEntity<String> requestEntity = new HttpEntity<String>(json, headers);
 		ResponseEntity<String> responseEntity = rest.exchange(uri, HttpMethod.POST, requestEntity, String.class);
 		setStatus((HttpStatus) responseEntity.getStatusCode());
@@ -129,9 +118,7 @@ public class HttpUtils {
 		if (header.containsKey(headers.AUTHORIZATION)) {
 			headers.add(headers.AUTHORIZATION, header.get(headers.AUTHORIZATION).toString());
 		}
-
-		// headers.add("Content-Type", MediaType.APPLICATION_JSON);
-
+		RestTemplateUtil.getJwttokenFromHeaders(headers);
 		headers.add("Content-Type", MediaType.APPLICATION_JSON + ";charset=utf-8");
 		ResponseEntity<String> responseEntity = new ResponseEntity(HttpStatus.BAD_REQUEST);
 		HttpEntity<String> requestEntity;

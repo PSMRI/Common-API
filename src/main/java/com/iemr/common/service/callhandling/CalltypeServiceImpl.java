@@ -42,11 +42,14 @@ import com.iemr.common.data.callhandling.CallType;
 import com.iemr.common.data.notification.Notification;
 import com.iemr.common.repository.callhandling.IEMRCalltypeRepositoryImplCustom;
 import com.iemr.common.utils.exception.IEMRException;
+import com.iemr.common.utils.mapper.CallTypeMapper;
 import com.iemr.common.utils.mapper.InputMapper;
 
 @Service
-public class CalltypeServiceImpl implements CalltypeService
-{
+public class CalltypeServiceImpl implements CalltypeService {
+
+	@Autowired
+	private CallTypeMapper callTypeMapper;
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
 	InputMapper inputMapper = new InputMapper();
@@ -55,9 +58,8 @@ public class CalltypeServiceImpl implements CalltypeService
 	private IEMRCalltypeRepositoryImplCustom iEMRCalltypeRepositoryImplCustom;
 
 	@Override
-	public List<CallType> getAllCalltypes(String request) throws IEMRException
-	{
-		CallType provider = inputMapper.gson().fromJson(request, CallType.class);
+	public List<CallType> getAllCalltypes(String request) throws IEMRException {
+		CallType provider = callTypeMapper.fromJson(request, CallType.class);
 		List<CallType> callTypes = new ArrayList<CallType>();
 		Set<Object[]> callTypesArray = new HashSet<Object[]>();
 		if (provider.getIsInbound() != null && provider.getIsOutbound() != null)
