@@ -25,12 +25,9 @@ package com.iemr.common.controller.health;
 import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.sql.DataSource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.http.ResponseEntity;
@@ -49,11 +46,18 @@ public class HealthController {
     private static final Logger logger =
             LoggerFactory.getLogger(HealthController.class);
 
-    @Autowired(required = false)
-    private DataSource dataSource;
+    private static final String COMPONENT_DATABASE = "database";
+    private static final String COMPONENT_REDIS = "redis";
 
-    @Autowired(required = false)
-    private RedisConnectionFactory redisConnectionFactory;
+    private final DataSource dataSource;
+    private final RedisConnectionFactory redisConnectionFactory;
+
+    public HealthController(
+            DataSource dataSource,
+            RedisConnectionFactory redisConnectionFactory) {
+        this.dataSource = dataSource;
+        this.redisConnectionFactory = redisConnectionFactory;
+    }
 
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
@@ -76,37 +80,40 @@ public class HealthController {
 
     private boolean checkDatabase(Map<String, String> components) {
         if (dataSource == null) {
-            components.put("database", "NOT_CONFIGURED");
+            components.put(COMPONENT_DATABASE, "NOT_CONFIGURED");
             return true;
         }
+
         try (Connection connection = dataSource.getConnection();
-                var statement = connection.createStatement()) {
+             var statement = connection.createStatement()) {
+
             statement.execute("SELECT 1");
-            components.put("database", "UP");
+            components.put(COMPONENT_DATABASE, "UP");
             return true;
-        }
-        catch (Exception e) {
+
+        } catch (Exception e) {
             logger.error("Database health check failed", e);
-            components.put("database", "DOWN");
+            components.put(COMPONENT_DATABASE, "DOWN");
             return false;
         }
     }
 
-
     private boolean checkRedis(Map<String, String> components) {
         if (redisConnectionFactory == null) {
-            components.put("redis", "NOT_CONFIGURED");
+            components.put(COMPONENT_REDIS, "NOT_CONFIGURED");
             return true;
         }
 
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
             connection.ping();
-            components.put("redis", "UP");
+            components.put(COMPONENT_REDIS, "UP");
             return true;
+
         } catch (Exception e) {
             logger.error("Redis health check failed", e);
-            components.put("redis", "DOWN");
+            components.put(COMPONENT_REDIS, "DOWN");
             return false;
         }
     }
 }
+
