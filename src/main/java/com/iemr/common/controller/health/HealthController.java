@@ -20,15 +20,6 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 
-/**
- * Health check controller for Common-API.
- * <p>
- * Verifies application liveness and connectivity to underlying
- * runtime dependencies such as Database and Redis.
- * </p>
- *
- * @author vaishnavbhosale
- */
 package com.iemr.common.controller.health;
 
 import java.sql.Connection;
@@ -37,14 +28,26 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Health check controller for Common-API.
+ * Verifies application liveness and dependency health (DB, Redis).
+ *
+ * @author vaishnavbhosale
+ */
 @RestController
 public class HealthController {
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(HealthController.class);
 
     @Autowired(required = false)
     private DataSource dataSource;
@@ -53,7 +56,7 @@ public class HealthController {
     private RedisConnectionFactory redisConnectionFactory;
 
     @GetMapping("/health")
-    public Map<String, Object> health() {
+    public ResponseEntity<Map<String, Object>> health() {
 
         Map<String, Object> response = new HashMap<>();
         Map<String, String> components = new HashMap<>();
@@ -61,10 +64,14 @@ public class HealthController {
         boolean dbUp = checkDatabase(components);
         boolean redisUp = checkRedis(components);
 
-        response.put("status", (dbUp && redisUp) ? "UP" : "DOWN");
+        boolean overallUp = dbUp && redisUp;
+
+        response.put("status", overallUp ? "UP" : "DOWN");
         response.put("components", components);
 
-        return response;
+        return overallUp
+                ? ResponseEntity.ok(response)
+                : ResponseEntity.status(503).body(response);
     }
 
     private boolean checkDatabase(Map<String, String> components) {
@@ -77,6 +84,7 @@ public class HealthController {
             components.put("database", "UP");
             return true;
         } catch (Exception e) {
+            logger.error("Database health check failed", e);
             components.put("database", "DOWN");
             return false;
         }
@@ -93,6 +101,7 @@ public class HealthController {
             components.put("redis", "UP");
             return true;
         } catch (Exception e) {
+            logger.error("Redis health check failed", e);
             components.put("redis", "DOWN");
             return false;
         }
