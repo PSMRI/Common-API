@@ -122,8 +122,11 @@ public class FormMasterServiceImpl implements FormMasterService {
                     if (t != null) {
                         if ("hi".equalsIgnoreCase(lang)) {
                             translatedLabel = t.getHindiTranslation();
-                        } else {
+                        } else if("as".equalsIgnoreCase(lang)){
+                            translatedLabel = t.getAssameseTranslation();
+                        }else if("en".equalsIgnoreCase(lang)){
                             translatedLabel = t.getEnglish();
+
                         }
                     }
 
