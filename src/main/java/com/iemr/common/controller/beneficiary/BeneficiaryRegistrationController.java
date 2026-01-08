@@ -39,6 +39,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -349,7 +350,8 @@ public class BeneficiaryRegistrationController {
 
 	@Operation(summary = "Provide the list of beneficiaries using Elasticsearch")
 	@RequestMapping(value = "/searchUser", method = RequestMethod.POST, headers = "Authorization")
-	public String searchUser(@RequestBody String request, HttpServletRequest httpRequest) {
+	public String searchUser(@RequestBody String request, HttpServletRequest httpRequest, @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "100") int size) {
 		OutputResponse response = new OutputResponse();
 		try {
 			logger.info("Universal search request received");
@@ -379,7 +381,7 @@ public class BeneficiaryRegistrationController {
 			}
 
 			logger.info("Searching with query: {}, userId: {}, is1097: {}", searchQuery, userID, is1097);
-			String result = iemrSearchUserService.searchUser(searchQuery, userID, auth, is1097);
+			String result = iemrSearchUserService.searchUser(searchQuery, userID, auth, is1097, page, size);
 
 			if (result == null || result.trim().isEmpty()) {
 				response.setError(200, "No beneficiaries found");

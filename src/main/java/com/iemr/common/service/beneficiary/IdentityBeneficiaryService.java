@@ -73,7 +73,7 @@ public interface IdentityBeneficiaryService {
 	public List<BeneficiariesDTO> getBeneficiaryListByGovId(String identity, String auth, Boolean is1097)
 			throws IEMRException;
 
-	public Map<String, Object> searchBeneficiariesUsingES(String query, Integer userId, String auth, Boolean is1097) throws IEMRException;
+	public Map<String, Object> searchBeneficiariesUsingES(String query, Integer userId, String auth, Boolean is1097, int page, int size) throws IEMRException;
 
     
 }

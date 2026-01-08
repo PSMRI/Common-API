@@ -100,7 +100,6 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 			String s = data1.get("data").getAsString();
 			JsonArray responseArray = parser.parse(s).getAsJsonArray();
 
-
 			for (JsonElement jsonElement : responseArray) {
 
 				BeneficiariesDTO callRequest = inputMapper.gson().fromJson(jsonElement.toString(),
@@ -116,26 +115,28 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 	 * Call Identity API's Elasticsearch universal search
 	 */
 	@Override
-	public Map<String, Object> searchBeneficiariesUsingES(String query, Integer userId, String auth, Boolean is1097)
+	public Map<String, Object> searchBeneficiariesUsingES(String query, Integer userId, String auth, Boolean is1097,
+			int page, int size)
 			throws IEMRException {
 
 		Map<String, Object> response = new HashMap<>();
 
-    try {
-        HashMap<String, Object> headers = new HashMap<>();
-        if (auth != null && !auth.isEmpty()) {
-            headers.put("Authorization", auth);
-        }
-		
-        String baseUrl = ConfigProperties
-                .getPropertyByName("identity-api-url-searchByES")
-                .replace(
-                        IDENTITY_BASE_URL,
-                        (Boolean.TRUE.equals(is1097)) ? identity1097BaseURL : identityBaseURL
-                );
+		try {
+			HashMap<String, Object> headers = new HashMap<>();
+			if (auth != null && !auth.isEmpty()) {
+				headers.put("Authorization", auth);
+			}
+
+			String baseUrl = ConfigProperties
+					.getPropertyByName("identity-api-url-searchByES")
+					.replace(
+							IDENTITY_BASE_URL,
+							(Boolean.TRUE.equals(is1097)) ? identity1097BaseURL : identityBaseURL);
 
 			StringBuilder url = new StringBuilder(baseUrl)
-					.append("?query=").append(URLEncoder.encode(query, StandardCharsets.UTF_8));
+					.append("?query=").append(URLEncoder.encode(query, StandardCharsets.UTF_8))
+					.append("&page=").append(page) 
+					.append("&size=").append(size); 
 
 			if (userId != null) {
 				url.append("&userId=").append(userId);
@@ -143,15 +144,20 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 
 			logger.info("Calling Identity ES search URL: {}", url);
 
-        String result = httpUtils.get(url.toString());
+			String result = httpUtils.get(url.toString());
 
-			if (result == null || result.isEmpty()) {
-				response.put("data", Collections.emptyList());
-				response.put("statusCode", 200);
-				response.put("status", "Success");
-				response.put("errorMessage", "Success");
-				return response;
-			}
+			 if (result == null || result.isEmpty()) {
+            response.put("data", Collections.emptyList());
+            response.put("totalResults", 0);
+            response.put("currentPage", page);
+            response.put("pageSize", size);
+            response.put("totalPages", 0);
+            response.put("hasMore", false);
+            response.put("statusCode", 200);
+            response.put("status", "Success");
+            response.put("errorMessage", "Success");
+            return response;
+        }
 
 			ObjectMapper mapper = new ObjectMapper();
 
@@ -167,10 +173,18 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 				throw new IEMRException(errMsg);
 			}
 
-			response.put("data", rootNode.path("data"));
-			response.put("statusCode", 200);
-			response.put("status", "Success");
-			response.put("errorMessage", "Success");
+			  response.put("data", rootNode.path("data"));
+        response.put("totalResults", rootNode.path("totalResults").asLong(0));
+        response.put("currentPage", rootNode.path("currentPage").asInt(page));
+        response.put("pageSize", rootNode.path("pageSize").asInt(size));
+        response.put("totalPages", rootNode.path("totalPages").asInt(0));
+        response.put("hasMore", rootNode.path("hasMore").asBoolean(false));
+        response.put("statusCode", 200);
+        response.put("status", "Success");
+        response.put("errorMessage", "Success");
+        
+        logger.info("ES Search completed: {} results on page {} of {}", 
+            rootNode.path("data").size(), page + 1, rootNode.path("totalPages").asInt(0));
 
 			return response;
 
@@ -207,7 +221,6 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 		JsonObject data1 = (JsonObject) responseObj.get("response");
 		String s = data1.get("data").getAsString();
 		JsonArray responseArray = parser.parse(s).getAsJsonArray();
-
 
 		for (JsonElement jsonElement : responseArray) {
 
@@ -572,7 +585,6 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 		JsonObject data1 = (JsonObject) responseObj.get("response");
 		String s = data1.get("data").getAsString();
 		JsonArray responseArray = parser.parse(s).getAsJsonArray();
-
 
 		for (JsonElement jsonElement : responseArray) {
 

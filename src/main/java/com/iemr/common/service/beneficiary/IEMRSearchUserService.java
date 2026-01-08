@@ -38,7 +38,7 @@ public interface IEMRSearchUserService {
 
 	String findBeneficiary(BeneficiaryModel request, String auth) throws Exception;
 
-	String searchUser(String searchQuery, Integer userId, String auth, Boolean is1097) throws Exception;
+	String searchUser(String searchQuery, Integer userId, String auth, Boolean is1097, int page, int size) throws Exception;
 
 	String findBeneficiaryES(BeneficiaryModel i_beneficiary, Integer userId, String auth) throws Exception;
 

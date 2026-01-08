@@ -329,7 +329,7 @@ public class IEMRSearchUserServiceImpl implements IEMRSearchUserService {
 	 * Universal search using Elasticsearch
 	 */
 	@Override
-	public String searchUser(String searchQuery, Integer userId, String auth, Boolean is1097) throws Exception {
+	public String searchUser(String searchQuery, Integer userId, String auth, Boolean is1097, int page, int size) throws Exception {
 
 		try {
 			if (searchQuery == null || searchQuery.trim().isEmpty()) {
@@ -339,7 +339,7 @@ public class IEMRSearchUserServiceImpl implements IEMRSearchUserService {
 			logger.info("Universal search with query: {}, userId: {}", searchQuery, userId);
 
 			Map<String, Object> response = identityBeneficiaryService.searchBeneficiariesUsingES(
-					searchQuery, userId, auth, is1097);
+					searchQuery, userId, auth, is1097, page, size);
 
 			ObjectMapper mapper = new ObjectMapper();
 			return mapper.writeValueAsString(response);
