@@ -1224,7 +1224,25 @@ public class IEMRAdminController {
 				return new ResponseEntity<>(Map.of("error", "UserName Not Found"), HttpStatus.NOT_FOUND);
 			}
 			User user = users.get(0);
-			return new ResponseEntity<>(Map.of("userName", user.getUserName(), "userId", user.getUserID()), HttpStatus.OK);
+			return new ResponseEntity<>(Map.of("userName", user.getUserName(), "userId", user.getUserID()),
+					HttpStatus.OK);
+		} catch (Exception e) {
+			return new ResponseEntity<>(Map.of("error", "Internal server error"), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+	}
+
+	@Operation(summary = "Get UserId based on userName")
+	@GetMapping(value = "/checkUserName/{userName}", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+	public ResponseEntity<?> checkUserDetails(@PathVariable("userName") String userName) {
+		try {
+			List<User> users = iemrAdminUserServiceImpl.findUserIdByUserName(userName);
+			if (users.isEmpty()) {
+				return new ResponseEntity<>(Map.of("error", "UserName Not Found"), HttpStatus.NOT_FOUND);
+			}
+			User user = users.get(0);
+			return new ResponseEntity<>(Map.of("userName", user.getUserName(), "userId", user.getUserID()),
+					HttpStatus.OK);
 		} catch (Exception e) {
 			return new ResponseEntity<>(Map.of("error", "Internal server error"), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
