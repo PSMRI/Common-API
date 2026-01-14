@@ -191,8 +191,30 @@ public class IEMRSearchUserServiceImpl implements IEMRSearchUserService {
 		return beneficiaryList;
 	}
 
+	// private void addCreatedDateToOtherFields(BeneficiaryModel beneficiaryModel) {
+	// if (beneficiaryModel.getCreatedDate() != null) {
+	// ObjectMapper objectMapper = new ObjectMapper();
+	// try {
+	// // Parse the existing otherFields JSON string into a JsonNode
+	// JsonNode otherFieldsNode =
+	// objectMapper.readTree(beneficiaryModel.getOtherFields());
+
+	// // Convert createdDate to a string
+	// String createdDateString = beneficiaryModel.getCreatedDate().toString();
+
+	// // Add createdDate to the JSON node
+	// ((ObjectNode) otherFieldsNode).put("createdDate", createdDateString);
+
+	// // Convert the JsonNode back to a string and set it in the model
+	// beneficiaryModel.setOtherFields(objectMapper.writeValueAsString(otherFieldsNode));
+	// } catch (Exception e) {
+	// logger.error("Error processing otherFields JSON: " + e.getMessage(), e);
+	// }
+	// }
+	// }
+
 	private void addCreatedDateToOtherFields(BeneficiaryModel beneficiaryModel) {
-		if (beneficiaryModel.getCreatedDate() != null) {
+		if (beneficiaryModel.getCreatedDate() != null && beneficiaryModel.getOtherFields() != null) {
 			ObjectMapper objectMapper = new ObjectMapper();
 			try {
 				// Parse the existing otherFields JSON string into a JsonNode
