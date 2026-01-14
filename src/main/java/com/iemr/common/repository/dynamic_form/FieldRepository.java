@@ -9,4 +9,9 @@ import java.util.List;
 @Repository
 public interface FieldRepository extends JpaRepository<FormField, Long> {
     List<FormField> findByForm_FormIdOrderBySequenceAsc(String formId);
+    List<FormField> findByForm_FormIdAndStateCodeOrderBySequenceAsc(
+            String formId,
+            Integer stateCode
+    );
+
 }
