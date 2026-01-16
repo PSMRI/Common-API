@@ -14,4 +14,5 @@ public interface UserServiceRoleRepo extends JpaRepository<UserServiceRole, Inte
     UserServiceRole findByUserId(Integer userId);
 
 
+
 }
