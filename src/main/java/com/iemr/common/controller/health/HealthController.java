@@ -22,14 +22,11 @@
 
 package com.iemr.common.controller.health;
 
-import java.sql.Connection;
-import java.util.HashMap;
+import com.iemr.common.service.health.HealthService;
 import java.util.Map;
-import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -43,77 +40,27 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class HealthController {
 
-    private static final Logger logger =
-            LoggerFactory.getLogger(HealthController.class);
+    private static final Logger logger = LoggerFactory.getLogger(HealthController.class);
 
-    private static final String COMPONENT_DATABASE = "database";
-    private static final String COMPONENT_REDIS = "redis";
+    private final HealthService healthService;
 
-    private final DataSource dataSource;
-    private final RedisConnectionFactory redisConnectionFactory;
-
-    public HealthController(
-            DataSource dataSource,
-            RedisConnectionFactory redisConnectionFactory) {
-        this.dataSource = dataSource;
-        this.redisConnectionFactory = redisConnectionFactory;
+    public HealthController(HealthService healthService) {
+        this.healthService = healthService;
     }
 
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
+        logger.info("Health check endpoint called");
 
-        Map<String, Object> response = new HashMap<>();
-        Map<String, String> components = new HashMap<>();
 
-        boolean dbUp = checkDatabase(components);
-        boolean redisUp = checkRedis(components);
+        Map<String, Object> healthStatus = healthService.checkHealth();
 
-        boolean overallUp = dbUp && redisUp;
+        // Standard HTTP Status logic
+        String status = (String) healthStatus.get("status");
+        HttpStatus httpStatus = "UP".equals(status) ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE;
 
-        response.put("status", overallUp ? "UP" : "DOWN");
-        response.put("components", components);
+        logger.info("Health check completed with status: {}", status);
 
-        return overallUp
-                ? ResponseEntity.ok(response)
-                : ResponseEntity.status(503).body(response);
-    }
-
-    private boolean checkDatabase(Map<String, String> components) {
-        if (dataSource == null) {
-            components.put(COMPONENT_DATABASE, "NOT_CONFIGURED");
-            return true;
-        }
-
-        try (Connection connection = dataSource.getConnection();
-             var statement = connection.createStatement()) {
-
-            statement.execute("SELECT 1");
-            components.put(COMPONENT_DATABASE, "UP");
-            return true;
-
-        } catch (Exception e) {
-            logger.error("Database health check failed", e);
-            components.put(COMPONENT_DATABASE, "DOWN");
-            return false;
-        }
-    }
-
-    private boolean checkRedis(Map<String, String> components) {
-        if (redisConnectionFactory == null) {
-            components.put(COMPONENT_REDIS, "NOT_CONFIGURED");
-            return true;
-        }
-
-        try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            connection.ping();
-            components.put(COMPONENT_REDIS, "UP");
-            return true;
-
-        } catch (Exception e) {
-            logger.error("Redis health check failed", e);
-            components.put(COMPONENT_REDIS, "DOWN");
-            return false;
-        }
+        return ResponseEntity.status(httpStatus).body(healthStatus);
     }
 }
-
