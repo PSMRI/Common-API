@@ -20,8 +20,10 @@
  * along with this program. If not, see https://www.gnu.org/licenses/.
  */
 package com.iemr.common.service.health;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider; // <--- VITAL IMPORT
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Service;
@@ -32,7 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Health check service for Common-API.     <-- Correct
+ * Health check service for Common-API.
  * Verifies application liveness and dependency health (DB, Redis).
  *
  * @author vaishnavbhosale
@@ -42,22 +44,24 @@ public class HealthService {
 
     private static final Logger logger = LoggerFactory.getLogger(HealthService.class);
 
-
     private static final String COMPONENT_DATABASE = "database";
     private static final String COMPONENT_REDIS = "redis";
 
     private final DataSource dataSource;
     private final RedisConnectionFactory redisConnectionFactory;
 
-    public HealthService(DataSource dataSource, RedisConnectionFactory redisConnectionFactory) {
-        this.dataSource = dataSource;
-        this.redisConnectionFactory = redisConnectionFactory;
+    // --- CORRECT CONSTRUCTOR START ---
+    public HealthService(ObjectProvider<DataSource> dataSourceProvider,
+                         ObjectProvider<RedisConnectionFactory> redisProvider) {
+        // This allows them to be null without crashing the app
+        this.dataSource = dataSourceProvider.getIfAvailable();
+        this.redisConnectionFactory = redisProvider.getIfAvailable();
     }
+    // --- CORRECT CONSTRUCTOR END ---
 
     public Map<String, Object> checkHealth() {
         Map<String, Object> response = new HashMap<>();
         Map<String, String> components = new HashMap<>();
-
 
         boolean dbUp = checkDatabase(components);
         boolean redisUp = checkRedis(components);
@@ -69,7 +73,6 @@ public class HealthService {
 
         return response;
     }
-
 
     private boolean checkDatabase(Map<String, String> components) {
         if (dataSource == null) {
@@ -91,7 +94,6 @@ public class HealthService {
         }
     }
 
-    // Exact logic from your original code
     private boolean checkRedis(Map<String, String> components) {
         if (redisConnectionFactory == null) {
             components.put(COMPONENT_REDIS, "NOT_CONFIGURED");
