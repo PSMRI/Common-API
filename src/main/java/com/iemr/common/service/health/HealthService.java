@@ -42,7 +42,7 @@ public class HealthService {
 
     private static final Logger logger = LoggerFactory.getLogger(HealthService.class);
 
-    // Kept your original constants
+
     private static final String COMPONENT_DATABASE = "database";
     private static final String COMPONENT_REDIS = "redis";
 
@@ -58,7 +58,7 @@ public class HealthService {
         Map<String, Object> response = new HashMap<>();
         Map<String, String> components = new HashMap<>();
 
-        // Logic moved exactly from your original controller
+
         boolean dbUp = checkDatabase(components);
         boolean redisUp = checkRedis(components);
 
@@ -70,7 +70,7 @@ public class HealthService {
         return response;
     }
 
-    // Exact logic from your original code
+
     private boolean checkDatabase(Map<String, String> components) {
         if (dataSource == null) {
             components.put(COMPONENT_DATABASE, "NOT_CONFIGURED");
