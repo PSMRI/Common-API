@@ -118,7 +118,10 @@ public class BeneficiaryModel implements Comparable<BeneficiaryModel> {
 	private Boolean isMarried;
 
 	@Expose
-	private Integer doYouHavechildren;
+	private boolean doYouHavechildren;
+
+	@Expose
+	private Integer noOfchildren;
 
 	@Expose
 	private Integer noofAlivechildren;

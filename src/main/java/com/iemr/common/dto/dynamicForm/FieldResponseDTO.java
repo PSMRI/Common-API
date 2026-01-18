@@ -18,6 +18,8 @@ public class FieldResponseDTO {
     private String defaultValue;
     private String placeholder;
     private Integer sequence;
+    private Boolean isEditable;
+    private Integer stateCode;
     private List<String> options;
     private Map<String, Object> validation;
     private Map<String, Object> conditional;
