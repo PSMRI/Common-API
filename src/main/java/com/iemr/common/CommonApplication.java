@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.client.RestTemplate;
 
@@ -40,6 +41,7 @@ import com.iemr.common.utils.IEMRApplBeans;
 
 @SpringBootApplication
 @EnableScheduling
+@EnableAsync
 public class CommonApplication extends SpringBootServletInitializer {
 
 	@Bean
