@@ -125,10 +125,11 @@ public class FormMasterServiceImpl implements FormMasterService {
             FormDefinition form = formRepo.findByFormId(formId)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid form ID"));
 
-            List<FormField> fields = fieldRepo.findByForm_FormIdAndStateCodeOrderBySequenceAsc(formId,stateId);
+            List<FormField> fields = fieldRepo.findByForm_FormIdOrderBySequenceAsc(formId);
             ObjectMapper objectMapper = new ObjectMapper();
 
-            List<FieldResponseDTO> fieldDtos = fields.stream()
+            int finalStateId = stateId;
+            List<FieldResponseDTO> fieldDtos = fields.stream().filter(formField -> formField.getStateCode()== 0 || formField.getStateCode()== finalStateId)
                     .map(field -> {
                         String labelKey = field.getFieldId();  // field label already contains label_key
 
