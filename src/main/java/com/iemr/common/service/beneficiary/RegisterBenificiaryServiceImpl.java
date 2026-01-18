@@ -29,6 +29,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import com.iemr.common.model.beneficiary.RMNCHBeneficiaryDetailsRmnch;
 import com.iemr.common.service.welcomeSms.WelcomeBenificarySmsService;
@@ -234,9 +235,27 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 			} else {
 				return response.toString();
 			}
-			if(beneficiary!=null){
-				if(beneficiary.getBenPhoneMaps().get(0).getPhoneNo()!=null){
-					welcomeBenificarySmsService.sendWelcomeSMStoBenificiary(beneficiary.getBenPhoneMaps().get(0).getPhoneNo(),beneficiary.getFirstName()+" "+beneficiary.getLastName(),beneficiary.getBeneficiaryID());
+			// ========== SEND SMS BUT DON'T FAIL IF IT ERRORS ==========
+			if (beneficiary != null && beneficiary.getBenPhoneMaps() != null && !beneficiary.getBenPhoneMaps().isEmpty()) {
+				String phoneNo = beneficiary.getBenPhoneMaps().get(0).getPhoneNo();
+
+				if (phoneNo != null && !phoneNo.trim().isEmpty()) {
+					String beneficiaryName = (beneficiary.getFirstName() != null ? beneficiary.getFirstName() : "") + " " +
+							(beneficiary.getLastName() != null ? beneficiary.getLastName() : "");
+
+					try {
+						logger.info("[SMS] Attempting to send welcome SMS to: " + phoneNo);
+						String smsResult = welcomeBenificarySmsService.sendWelcomeSMStoBenificiary(
+								phoneNo,
+								beneficiaryName.trim(),
+								beneficiary.getBeneficiaryID()
+						);
+						logger.info("[SMS] Result: " + smsResult);
+					} catch (Exception smsError) {
+						// SMS failed but beneficiary is already created - don't fail the request
+						logger.warn("[SMS] Failed to send SMS: " + smsError.getMessage() +
+								" - But beneficiary already created successfully");
+					}
 				}
 			}
 
