@@ -117,7 +117,6 @@ public class FormMasterServiceImpl implements FormMasterService {
     @Override
     public FormResponseDTO getStructuredFormByFormId(String formId,String lang,String token) {
         int  stateId =0 ;
-
         try {
             if(!token.isEmpty()){
                 List<UserServiceRole> userServiceRole=  userServiceRoleRepo.findByUserName(jwtUtil.getUsernameFromToken(token));
