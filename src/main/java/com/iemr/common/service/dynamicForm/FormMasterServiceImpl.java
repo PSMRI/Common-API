@@ -119,11 +119,14 @@ public class FormMasterServiceImpl implements FormMasterService {
         int  stateId =0 ;
 
         try {
-            UserServiceRole userServiceRole=  userServiceRoleRepo.findByUserName(jwtUtil.getUsernameFromToken(token));
-            if(userServiceRole!=null){
-                stateId = userServiceRole.getStateId();
-                logger.info("State:Id"+stateId);
+            if(!token.isEmpty()){
+                UserServiceRole userServiceRole=  userServiceRoleRepo.findByUserName(jwtUtil.getUsernameFromToken(token));
+                if(userServiceRole!=null){
+                    stateId = userServiceRole.getStateId();
+                    logger.info("State:Id"+stateId);
+                }
             }
+
             if(!token.isEmpty()){
                 logger.info("Token: "+token);
 
