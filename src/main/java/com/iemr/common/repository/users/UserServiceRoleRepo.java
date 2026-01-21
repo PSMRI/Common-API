@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 public interface UserServiceRoleRepo extends JpaRepository<UserServiceRole, Integer> {
-    UserServiceRole findByUserName(String userName);
+    List<UserServiceRole> findByUserName(String userName);
     UserServiceRole findByUserId(Integer userId);
 
 }
