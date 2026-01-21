@@ -129,6 +129,8 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 	private SessionObject sessionObject;
 	@Value("${failedLoginAttempt}")
 	private String failedLoginAttempt;
+	@Value("${account.lock.duration.hours:24}")
+	private int accountLockDurationHours;
 	// @Autowired
 	// private ServiceRoleScreenMappingRepository ;
 
@@ -221,10 +223,108 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 	}
 
 	private void checkUserAccountStatus(User user) throws IEMRException {
-		if (user.getDeleted()) {
-			throw new IEMRException("Your account is locked or de-activated. Please contact administrator");
+		if (user.getDeleted() != null && user.getDeleted()) {
+			if (user.getLockTimestamp() != null) {
+				long lockTimeMillis = user.getLockTimestamp().getTime();
+				long currentTimeMillis = System.currentTimeMillis();
+				long lockDurationMillis = getLockDurationMillis();
+
+				if (currentTimeMillis - lockTimeMillis >= lockDurationMillis) {
+					user.setDeleted(false);
+					user.setFailedAttempt(0);
+					user.setLockTimestamp(null);
+					iEMRUserRepositoryCustom.save(user);
+					logger.info("User account auto-unlocked after {} hours lock period for user: {}",
+							accountLockDurationHours, user.getUserName());
+				} else {
+					throw new IEMRException(generateLockoutErrorMessage(user.getLockTimestamp()));
+				}
+			} else {
+				throw new IEMRException("Your account is locked or de-activated. Please contact administrator");
+			}
 		} else if (user.getStatusID() > 2) {
 			throw new IEMRException("Your account is not active. Please contact administrator");
+		}
+	}
+
+	/**
+	 * Common helper method for password validation and account locking logic.
+	 * Used by both userAuthenticate() and superUserAuthenticate().
+	 */
+	private User handlePasswordValidationAndLocking(User user, String password, int failedAttemptThreshold)
+			throws IEMRException, NoSuchAlgorithmException, InvalidKeySpecException {
+		int validatePassword = securePassword.validatePassword(password, user.getPassword());
+
+		switch (validatePassword) {
+			case 0:
+				// Invalid password - handle failed attempts
+				handleFailedLoginAttempt(user, failedAttemptThreshold);
+				break;
+			case 1:
+				// Valid password with old format - upgrade to new format
+				checkUserAccountStatus(user);
+				clearFailedAttemptState(user);
+				user.setPassword(generateUpgradedPassword(password));
+				iEMRUserRepositoryCustom.save(user);
+				break;
+			case 2, 3:
+				// Valid password
+				checkUserAccountStatus(user);
+				clearFailedAttemptState(user);
+				iEMRUserRepositoryCustom.save(user);
+				break;
+			default:
+				// Successful validation - reset failed attempts if needed
+				checkUserAccountStatus(user);
+				resetFailedAttemptsIfNeeded(user);
+				break;
+		}
+		return user;
+	}
+
+	private void clearFailedAttemptState(User user) {
+		user.setFailedAttempt(0);
+		user.setLockTimestamp(null);
+	}
+
+	private long getLockDurationMillis() {
+		return (long) accountLockDurationHours * 60 * 60 * 1000;
+	}
+
+	private String generateUpgradedPassword(String password)
+			throws NoSuchAlgorithmException, InvalidKeySpecException {
+		int iterations = 1001;
+		char[] chars = password.toCharArray();
+		byte[] salt = getSalt();
+		PBEKeySpec spec = new PBEKeySpec(chars, salt, iterations, 512);
+		SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
+		byte[] hash = skf.generateSecret(spec).getEncoded();
+		return iterations + ":" + toHex(salt) + ":" + toHex(hash);
+	}
+
+	private void handleFailedLoginAttempt(User user, int failedAttemptThreshold) throws IEMRException {
+		int currentAttempts = (user.getFailedAttempt() != null) ? user.getFailedAttempt() : 0;
+		if (currentAttempts + 1 < failedAttemptThreshold) {
+			user.setFailedAttempt(currentAttempts + 1);
+			iEMRUserRepositoryCustom.save(user);
+			logger.warn("User Password Wrong");
+			throw new IEMRException("Invalid username or password");
+		} else {
+			java.sql.Timestamp lockTime = new java.sql.Timestamp(System.currentTimeMillis());
+			user.setFailedAttempt(currentAttempts + 1);
+			user.setDeleted(true);
+			user.setLockTimestamp(lockTime);
+			iEMRUserRepositoryCustom.save(user);
+			logger.warn("User Account has been locked after reaching the limit of {} failed login attempts.",
+					failedAttemptThreshold);
+			throw new IEMRException(generateLockoutErrorMessage(lockTime));
+		}
+	}
+
+	private void resetFailedAttemptsIfNeeded(User user) {
+		if (user.getFailedAttempt() != null && user.getFailedAttempt() != 0) {
+			clearFailedAttemptState(user);
+			iEMRUserRepositoryCustom.save(user);
 		}
 	}
 
@@ -234,66 +334,10 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 		if (users.size() != 1) {
 			throw new IEMRException("Invalid username or password");
 		}
-		int failedAttempt = 0;
-		if (failedLoginAttempt != null)
-			failedAttempt = Integer.parseInt(failedLoginAttempt);
-		else
-			failedAttempt = 5;
+		int failedAttemptThreshold = getFailedAttemptThreshold();
 		User user = users.get(0);
 		try {
-			int validatePassword;
-			validatePassword = securePassword.validatePassword(password, user.getPassword());
-			if (validatePassword == 1) {
-				checkUserAccountStatus(user);
-				int iterations = 1001;
-				char[] chars = password.toCharArray();
-				byte[] salt = getSalt();
-
-				PBEKeySpec spec = new PBEKeySpec(chars, salt, iterations, 512);
-				SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
-				byte[] hash = skf.generateSecret(spec).getEncoded();
-				String updatedPassword = iterations + ":" + toHex(salt) + ":" + toHex(hash);
-				// save operation
-				user.setPassword(updatedPassword);
-				iEMRUserRepositoryCustom.save(user);
-
-			} else if (validatePassword == 2) {
-				checkUserAccountStatus(user);
-				iEMRUserRepositoryCustom.save(user);
-
-			} else if (validatePassword == 3) {
-				checkUserAccountStatus(user);
-				iEMRUserRepositoryCustom.save(user);
-			} else if (validatePassword == 0) {
-				if (user.getFailedAttempt() + 1 < failedAttempt) {
-					user.setFailedAttempt(user.getFailedAttempt() + 1);
-					user = iEMRUserRepositoryCustom.save(user);
-					logger.warn("User Password Wrong");
-					throw new IEMRException("Invalid username or password");
-				} else if (user.getFailedAttempt() + 1 >= failedAttempt) {
-					user.setFailedAttempt(user.getFailedAttempt() + 1);
-					user.setDeleted(true);
-					user = iEMRUserRepositoryCustom.save(user);
-					logger.warn("User Account has been locked after reaching the limit of {} failed login attempts.",
-							ConfigProperties.getInteger("failedLoginAttempt"));
-
-					throw new IEMRException(
-							"Invalid username or password. Please contact administrator.");
-				} else {
-					user.setFailedAttempt(user.getFailedAttempt() + 1);
-					user = iEMRUserRepositoryCustom.save(user);
-					logger.warn("Failed login attempt {} of {} for a user account.",
-							user.getFailedAttempt(), ConfigProperties.getInteger("failedLoginAttempt"));
-					throw new IEMRException(
-							"Invalid username or password. Please contact administrator.");
-				}
-			} else {
-				checkUserAccountStatus(user);
-				if (user.getFailedAttempt() != 0) {
-					user.setFailedAttempt(0);
-					user = iEMRUserRepositoryCustom.save(user);
-				}
-			}
+			handlePasswordValidationAndLocking(user, password, failedAttemptThreshold);
 		} catch (Exception e) {
 			throw new IEMRException(e.getMessage());
 		}
@@ -301,16 +345,37 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 		return users;
 	}
 
-	private void checkUserLoginFailedAttempt(User user) throws IEMRException {
-
+	private int getFailedAttemptThreshold() {
+		if (failedLoginAttempt != null && !failedLoginAttempt.trim().isEmpty()) {
+			try {
+				return Integer.parseInt(failedLoginAttempt.trim());
+			} catch (NumberFormatException e) {
+				logger.warn("Invalid failedLoginAttempt configuration value '{}', using default of 5", failedLoginAttempt);
+			}
+		}
+		return 5;
 	}
 
-	private void updateUserLoginFailedAttempt(User user) throws IEMRException {
+	private String generateLockoutErrorMessage(java.sql.Timestamp lockTimestamp) {
+		if (lockTimestamp == null) {
+			return "Your account has been locked. Please contact the administrator.";
+		}
 
+		long remainingMillis = calculateRemainingLockTime(lockTimestamp);
+
+		if (remainingMillis <= 0) {
+			return "Your account lock has expired. Please try logging in again.";
+		}
+
+		return String.format("Your account has been locked. You can try again in %s, or contact the administrator.",
+				formatRemainingTime(remainingMillis));
 	}
 
-	private void resetUserLoginFailedAttempt(User user) throws IEMRException {
-
+	private long calculateRemainingLockTime(java.sql.Timestamp lockTimestamp) {
+		long lockTimeMillis = lockTimestamp.getTime();
+		long currentTimeMillis = System.currentTimeMillis();
+		long unlockTimeMillis = lockTimeMillis + getLockDurationMillis();
+		return unlockTimeMillis - currentTimeMillis;
 	}
 
 	/**
@@ -319,67 +384,13 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 	@Override
 	public User superUserAuthenticate(String userName, String password) throws Exception {
 		List<User> users = iEMRUserRepositoryCustom.findByUserName(userName);
-
 		if (users.size() != 1) {
 			throw new IEMRException("Invalid username or password");
 		}
-		int failedAttempt = 0;
-		if (failedLoginAttempt != null)
-			failedAttempt = Integer.parseInt(failedLoginAttempt);
-		else
-			failedAttempt = 5;
+		int failedAttemptThreshold = getFailedAttemptThreshold();
 		User user = users.get(0);
 		try {
-			int validatePassword;
-			validatePassword = securePassword.validatePassword(password, user.getPassword());
-			if (validatePassword == 1) {
-				checkUserAccountStatus(user);
-				int iterations = 1001;
-				char[] chars = password.toCharArray();
-				byte[] salt = getSalt();
-
-				PBEKeySpec spec = new PBEKeySpec(chars, salt, iterations, 512);
-				SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
-				byte[] hash = skf.generateSecret(spec).getEncoded();
-				String updatedPassword = iterations + ":" + toHex(salt) + ":" + toHex(hash);
-				// save operation
-				user.setPassword(updatedPassword);
-				iEMRUserRepositoryCustom.save(user);
-
-			} else if (validatePassword == 2) {
-				checkUserAccountStatus(user);
-				iEMRUserRepositoryCustom.save(user);
-
-			} else if (validatePassword == 0) {
-				if (user.getFailedAttempt() + 1 < failedAttempt) {
-					user.setFailedAttempt(user.getFailedAttempt() + 1);
-					user = iEMRUserRepositoryCustom.save(user);
-					logger.warn("User Password Wrong");
-					throw new IEMRException("Invalid username or password");
-				} else if (user.getFailedAttempt() + 1 >= failedAttempt) {
-					user.setFailedAttempt(user.getFailedAttempt() + 1);
-					user.setDeleted(true);
-					user = iEMRUserRepositoryCustom.save(user);
-					logger.warn("User Account has been locked after reaching the limit of {} failed login attempts.",
-							ConfigProperties.getInteger("failedLoginAttempt"));
-
-					throw new IEMRException(
-							"Invalid username or password. Please contact administrator.");
-				} else {
-					user.setFailedAttempt(user.getFailedAttempt() + 1);
-					user = iEMRUserRepositoryCustom.save(user);
-					logger.warn("Failed login attempt {} of {} for a user account.",
-							user.getFailedAttempt(), ConfigProperties.getInteger("failedLoginAttempt"));
-					throw new IEMRException(
-							"Invalid username or password. Please contact administrator.");
-				}
-			} else {
-				checkUserAccountStatus(user);
-				if (user.getFailedAttempt() != 0) {
-					user.setFailedAttempt(0);
-					user = iEMRUserRepositoryCustom.save(user);
-				}
-			}
+			handlePasswordValidationAndLocking(user, password, failedAttemptThreshold);
 		} catch (Exception e) {
 			throw new IEMRException(e.getMessage());
 		}
@@ -1205,12 +1216,12 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 	    try {
 	        // Fetch user from custom repository by userId
 	        User user = iEMRUserRepositoryCustom.findByUserID(userId);
-	        
+
 	        // Check if user is found
 	        if (user == null) {
 	            throw new IEMRException("User not found with ID: " + userId);
 	        }
-	        
+
 	        return user;
 	    } catch (Exception e) {
 	        // Log and throw custom exception in case of errors
@@ -1221,7 +1232,114 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 
 	@Override
 	public List<User> getUserIdbyUserName(String userName) {
-
 		return iEMRUserRepositoryCustom.findByUserName(userName);
+	}
+
+	@Override
+	public boolean unlockUserAccount(Long userId) throws IEMRException {
+		try {
+			User user = iEMRUserRepositoryCustom.findById(userId).orElse(null);
+
+			if (user == null) {
+				throw new IEMRException("User not found with ID: " + userId);
+			}
+
+			if (user.getDeleted() != null && user.getDeleted() && user.getLockTimestamp() != null) {
+				user.setDeleted(false);
+				user.setFailedAttempt(0);
+				user.setLockTimestamp(null);
+				iEMRUserRepositoryCustom.save(user);
+				logger.info("Admin manually unlocked user account for userID: {}", userId);
+				return true;
+			} else if (user.getDeleted() != null && user.getDeleted() && user.getLockTimestamp() == null) {
+				throw new IEMRException("User account is deactivated by administrator. Use user management to reactivate.");
+			} else {
+				logger.info("User account is not locked for userID: {}", userId);
+				return false;
+			}
+		} catch (IEMRException e) {
+			throw e;
+		} catch (Exception e) {
+			logger.error("Error unlocking user account with ID: " + userId, e);
+			throw new IEMRException("Error unlocking user account: " + e.getMessage(), e);
+		}
+	}
+
+	@Override
+	public String getUserLockStatusJson(Long userId) throws IEMRException {
+		try {
+			User user = iEMRUserRepositoryCustom.findById(userId).orElse(null);
+			if (user == null) {
+				throw new IEMRException("User not found with ID: " + userId);
+			}
+
+			org.json.JSONObject status = new org.json.JSONObject();
+			status.put("userId", user.getUserID());
+			status.put("userName", user.getUserName());
+			status.put("failedAttempts", user.getFailedAttempt() != null ? user.getFailedAttempt() : 0);
+			status.put("statusID", user.getStatusID());
+
+			boolean isDeleted = user.getDeleted() != null && user.getDeleted();
+			boolean isLockedDueToFailedAttempts = isDeleted && user.getLockTimestamp() != null;
+
+			status.put("isLocked", isDeleted);
+			status.put("isLockedDueToFailedAttempts", isLockedDueToFailedAttempts);
+
+			if (isLockedDueToFailedAttempts) {
+				long remainingMillis = calculateRemainingLockTime(user.getLockTimestamp());
+				boolean lockExpired = remainingMillis <= 0;
+
+				status.put("lockExpired", lockExpired);
+				status.put("lockTimestamp", user.getLockTimestamp().toString());
+				status.put("remainingTime", lockExpired ? "Lock expired - will unlock on next login" : formatRemainingTime(remainingMillis));
+				if (!lockExpired) {
+					status.put("unlockTime", new java.sql.Timestamp(user.getLockTimestamp().getTime() + getLockDurationMillis()).toString());
+				}
+			} else {
+				status.put("lockExpired", false);
+				status.put("lockTimestamp", org.json.JSONObject.NULL);
+				status.put("remainingTime", org.json.JSONObject.NULL);
+			}
+
+			return status.toString();
+		} catch (IEMRException e) {
+			throw e;
+		} catch (Exception e) {
+			logger.error("Error fetching user lock status with ID: " + userId, e);
+			throw new IEMRException("Error fetching user lock status: " + e.getMessage(), e);
+		}
+	}
+
+	private String formatRemainingTime(long remainingMillis) {
+		long hours = remainingMillis / (60 * 60 * 1000);
+		long minutes = (remainingMillis % (60 * 60 * 1000)) / (60 * 1000);
+		if (hours > 0 && minutes > 0) return String.format("%d hours %d minutes", hours, minutes);
+		if (hours > 0) return String.format("%d hours", hours);
+		return String.format("%d minutes", minutes);
+	}
+
+	private static final Set<String> ADMIN_ROLE_NAMES = Set.of("admin", "supervisor", "provideradmin");
+
+	@Override
+	public boolean hasAdminPrivileges(Long userId) throws IEMRException {
+		try {
+			List<UserServiceRoleMapping> roleMappings = getUserServiceRoleMapping(userId);
+			if (roleMappings == null || roleMappings.isEmpty()) {
+				return false;
+			}
+			for (UserServiceRoleMapping mapping : roleMappings) {
+				Role role = mapping.getM_Role();
+				if (role != null && role.getRoleName() != null) {
+					String roleName = role.getRoleName().trim().toLowerCase();
+					if (ADMIN_ROLE_NAMES.contains(roleName)) {
+						return true;
+					}
+				}
+			}
+			return false;
+		} catch (Exception e) {
+			logger.error("Error checking admin privileges for userId: " + userId, e);
+			return false;
+		}
 	}
 }
