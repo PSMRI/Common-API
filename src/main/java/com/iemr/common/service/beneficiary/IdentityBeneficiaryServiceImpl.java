@@ -555,34 +555,52 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 	}
 
 	public List<BeneficiariesDTO> searchBeneficiaryList(String identitySearchDTO, String auth, Boolean is1097)
-			throws IEMRException {
-		List<BeneficiariesDTO> listBenDetailForOutboundDTO = new ArrayList<>();
+        throws IEMRException {
 
-		JsonParser parser = new JsonParser();
-		String result;
+    List<BeneficiariesDTO> listBenDetailForOutboundDTO = new ArrayList<>();
 
-		HashMap<String, Object> header = new HashMap<>();
-		if (auth != null) {
-			header.put("Authorization", auth);
-		}
-		result = httpUtils.post(ConfigProperties.getPropertyByName("identity-api-url-advancesearch").replace(
-				IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL)), identitySearchDTO, header);
+    JsonParser parser = new JsonParser();
+    String result;
 
-		JsonObject responseObj = (JsonObject) parser.parse(result);
-		JsonObject data1 = (JsonObject) responseObj.get("response");
-		String s = data1.get("data").getAsString();
-		JsonArray responseArray = parser.parse(s).getAsJsonArray();
+    HashMap<String, Object> header = new HashMap<>();
+    if (auth != null) {
+        header.put("Authorization", auth);
+    }
 
+    result = httpUtils.post(
+            ConfigProperties.getPropertyByName("identity-api-url-advancesearch")
+                    .replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL)),
+            identitySearchDTO,
+            header
+    );
 
-		for (JsonElement jsonElement : responseArray) {
+    JsonObject responseObj = (JsonObject) parser.parse(result);
+    JsonObject data1 = (JsonObject) responseObj.get("response");
 
-			BeneficiariesDTO callRequest = inputMapper.gson().fromJson(jsonElement.toString(), BeneficiariesDTO.class);
-			// logger.info("response from identity - neeraj" + callRequest.toString());
-			listBenDetailForOutboundDTO.add(callRequest);
+    JsonArray responseArray = new JsonArray(); 
 
-		}
-		return listBenDetailForOutboundDTO;
-	}
+    if (data1.get("data") != null) {
+
+        if (data1.get("data").isJsonArray()) {
+            responseArray = data1.get("data").getAsJsonArray();
+
+        } else if (data1.get("data").isJsonPrimitive()) {
+            String s = data1.get("data").getAsString();
+            responseArray = parser.parse(s).getAsJsonArray();
+        }
+    }
+
+    for (JsonElement jsonElement : responseArray) {
+
+        BeneficiariesDTO callRequest =
+                inputMapper.gson().fromJson(jsonElement.toString(), BeneficiariesDTO.class);
+
+        listBenDetailForOutboundDTO.add(callRequest);
+    }
+
+    return listBenDetailForOutboundDTO;
+}
+
 
 	@Override
 	public Map<String, Object> searchBeneficiaryListES(String identitySearchDTO, String auth, Boolean is1097)
