@@ -36,3 +36,7 @@ springdoc:
 logging:
   level:
     root: INFO
+
+# CORS configuration for Swagger profile
+cors:
+  allowed-origins: http://localhost:*
