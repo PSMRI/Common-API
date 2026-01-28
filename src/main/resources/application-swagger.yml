@@ -40,3 +40,7 @@ logging:
 # CORS configuration for Swagger profile
 cors:
   allowed-origins: http://localhost:*
+
+# JWT configuration for Swagger profile
+jwt:
+  secret: test-secret-key-for-swagger-profile-only
