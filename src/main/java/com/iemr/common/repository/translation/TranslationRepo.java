@@ -10,5 +10,4 @@ public interface TranslationRepo extends JpaRepository<Translation, Long> {
 
     Optional<Translation> findByLabelKeyAndIsActive(String labelKey, boolean isActive);
 
-
 }

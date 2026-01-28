@@ -117,17 +117,12 @@ public class FormMasterServiceImpl implements FormMasterService {
     @Override
     public FormResponseDTO getStructuredFormByFormId(String formId,String lang,String token) {
         int  stateId =0 ;
+
         try {
-            if(!token.isEmpty()){
-                List<UserServiceRole> userServiceRole=  userServiceRoleRepo.findByUserName(jwtUtil.getUsernameFromToken(token));
-                if(userServiceRole!=null){
-                    stateId = userServiceRole.get(0).getStateId();
-                    logger.info("State:Id"+stateId);
-                }
+            UserServiceRole userServiceRole=  userServiceRoleRepo.findByUserName(jwtUtil.getUsernameFromToken(token));
+            if(userServiceRole!=null){
+                stateId = userServiceRole.getStateId();
             }
-
-
-
             FormDefinition form = formRepo.findByFormId(formId)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid form ID"));
 
@@ -135,7 +130,7 @@ public class FormMasterServiceImpl implements FormMasterService {
             ObjectMapper objectMapper = new ObjectMapper();
 
             int finalStateId = stateId;
-            List<FieldResponseDTO> fieldDtos = fields.stream().filter(formField -> (formField.getStateCode()==0 || formField.getStateCode().equals(finalStateId)))
+            List<FieldResponseDTO> fieldDtos = fields.stream().filter(formField -> formField.getStateCode()== 0 || formField.getStateCode()== finalStateId)
                     .map(field -> {
                         String labelKey = field.getFieldId();  // field label already contains label_key
 

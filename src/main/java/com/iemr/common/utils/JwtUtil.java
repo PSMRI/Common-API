@@ -2,7 +2,6 @@ package com.iemr.common.utils;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -162,58 +161,4 @@ public class JwtUtil {
     public long getRefreshTokenExpiration() {
         return REFRESH_EXPIRATION_TIME;
     }
-
-    /**
- * Extract user ID from JWT token in the request (checks header and cookie)
- * @param request the HTTP request
- * @return the user ID, or null if not found
- */
-public Integer getUserIdFromRequest(HttpServletRequest request) {
-    try {
-        String jwtToken = request.getHeader("Jwttoken");
-        String cookieToken = CookieUtil.getJwtTokenFromCookie(request);
-        
-        // Prefer header token, fallback to cookie
-        String token = (jwtToken != null && !jwtToken.isEmpty()) ? jwtToken : cookieToken;
-        
-        if (token == null || token.isEmpty()) {
-            return null;
-        }
-        
-        Claims claims = validateToken(token);
-        if (claims == null) {
-            return null;
-        }
-        
-        String userId = claims.get("userId", String.class);
-        return userId != null ? Integer.parseInt(userId) : null;
-        
-    } catch (Exception e) {
-        return null;
-    }
-}
-
-/**
- * Extract username from JWT token in the request (checks header and cookie)
- * @param request the HTTP request
- * @return the username, or null if not found
- */
-public String getUsernameFromRequest(HttpServletRequest request) {
-    try {
-        String jwtToken = request.getHeader("Jwttoken");
-        String cookieToken = CookieUtil.getJwtTokenFromCookie(request);
-        
-        String token = (jwtToken != null && !jwtToken.isEmpty()) ? jwtToken : cookieToken;
-        
-        if (token == null || token.isEmpty()) {
-            return null;
-        }
-        
-        Claims claims = validateToken(token);
-        return claims != null ? claims.getSubject() : null;
-        
-    } catch (Exception e) {
-        return null;
-    }
-}
 }
