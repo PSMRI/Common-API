@@ -1,0 +1,39 @@
+server:
+  port: 8083
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:swaggerdb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+
+  flyway:
+    enabled: false
+
+  liquibase:
+    enabled: false
+
+  session:
+    store-type: none
+
+  task:
+    scheduling:
+      enabled: false
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: false
+
+logging:
+  level:
+    root: INFO

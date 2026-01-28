@@ -1,0 +1,98 @@
+name: Export Swagger
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  swagger:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout Common-API (current repo)
+      - uses: actions/checkout@v4
+
+      # Setup Java
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      # Build WAR
+      - name: Build Common-API
+        run: mvn clean package -DskipTests
+
+      # Run application with swagger profile
+      - name: Run application
+        run: |
+          WAR_FILE=$(find target -name "*.war" | grep -v original | head -1)
+          if [ -z "$WAR_FILE" ]; then
+            echo "WAR file not found"
+            exit 1
+          fi
+
+          echo "Starting app using $WAR_FILE"
+          java -jar "$WAR_FILE" --spring.profiles.active=swagger > /tmp/app.log 2>&1 &
+          echo $! > /tmp/app.pid
+
+      # Wait for Swagger to be available
+      - name: Wait for Swagger endpoint
+        run: |
+          for i in {1..40}; do
+            if curl -sf http://localhost:8083/v3/api-docs > /dev/null; then
+              echo "Swagger is available"
+              exit 0
+            fi
+            sleep 2
+          done
+
+          echo "Application failed to start"
+          cat /tmp/app.log
+          exit 1
+
+      # Fetch Swagger JSON
+      - name: Fetch Swagger JSON
+        run: |
+          curl http://localhost:8083/v3/api-docs -o common-api.json
+          test -s common-api.json
+
+      # Clone AMRIT-Docs
+      - name: Clone AMRIT-Docs
+        run: |
+          git clone --depth 1 https://github.com/PSMRI/AMRIT-Docs.git amrit-docs
+
+      # Copy Swagger
+      - name: Copy Swagger JSON
+        run: |
+          mkdir -p amrit-docs/docs/swagger
+          cp common-api.json amrit-docs/docs/swagger/common-api.json
+
+      # Commit & push only if changed
+      - name: Commit and push
+        run: |
+          cd amrit-docs
+
+          if git diff --quiet docs/swagger/common-api.json; then
+            echo "No Swagger changes"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add docs/swagger/common-api.json
+          git commit -m "chore: update Common-API Swagger [skip ci]" \
+                     -m "Source: ${{ github.repository }}@${{ github.sha }}"
+
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/PSMRI/AMRIT-Docs.git HEAD:main
+
+      # Stop app
+      - name: Stop application
+        if: always()
+        run: |
+          if [ -f /tmp/app.pid ]; then
+            kill $(cat /tmp/app.pid) || true
+          fi
