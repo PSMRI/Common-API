@@ -1224,4 +1224,10 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 
 		return iEMRUserRepositoryCustom.findByUserName(userName);
 	}
+
+		@Override
+	public List<User> findUserIdByUserName(String userName) {
+
+		return iEMRUserRepositoryCustom.findUserName(userName);
+	}
 }
