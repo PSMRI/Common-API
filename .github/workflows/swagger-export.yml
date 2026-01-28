@@ -75,9 +75,20 @@ jobs:
         run: |
           cd amrit-docs
 
-          if git diff --quiet docs/swagger/common-api.json; then
-            echo "No Swagger changes"
-            exit 0
+          # Check if file is tracked and detect changes
+          if git ls-files --error-unmatch docs/swagger/common-api.json > /dev/null 2>&1; then
+            # File is tracked, check for changes
+            if git diff --quiet docs/swagger/common-api.json; then
+              echo "No Swagger changes"
+              exit 0
+            fi
+          else
+            # File is untracked, stage it and check if there are staged changes
+            git add docs/swagger/common-api.json
+            if git diff --staged --quiet docs/swagger/common-api.json; then
+              echo "No Swagger changes"
+              exit 0
+            fi
           fi
 
           git config user.name "github-actions[bot]"
@@ -87,7 +98,7 @@ jobs:
           git commit -m "chore: update Common-API Swagger [skip ci]" \
                      -m "Source: ${{ github.repository }}@${{ github.sha }}"
 
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/PSMRI/AMRIT-Docs.git HEAD:main
+          git push https://x-access-token:${{ secrets.AMRIT_DOCS_PAT }}@github.com/PSMRI/AMRIT-Docs.git HEAD:main
 
       # Stop app
       - name: Stop application
