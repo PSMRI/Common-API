@@ -35,10 +35,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 @Configuration
 public class FilterConfig {
 
-    private static final Logger log = LoggerFactory.getLogger(FilterConfig.class);
-
-    @Value("${cors.allowed-origins}")
-    private String allowedOrigins;
+	@Value("${cors.allowed-origins}")
+	private String allowedOrigins;
 
     @Bean
     public FilterRegistrationBean<JwtUserIdValidationFilter> jwtUserIdValidationFilter(
