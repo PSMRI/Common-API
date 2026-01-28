@@ -13,6 +13,4 @@ public interface UserServiceRoleRepo extends JpaRepository<UserServiceRole, Inte
     UserServiceRole findByUserName(String userName);
     UserServiceRole findByUserId(Integer userId);
 
-
-
 }

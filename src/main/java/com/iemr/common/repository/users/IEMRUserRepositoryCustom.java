@@ -78,7 +78,4 @@ public interface IEMRUserRepositoryCustom extends CrudRepository<User, Long> {
 	
 	User findByUserID(Long userID);
 
-	@Query("SELECT u FROM User u WHERE LOWER(u.userName) = LOWER(:userName)")
-	List<User> findUserName(@Param("userName") String username);
-
 }

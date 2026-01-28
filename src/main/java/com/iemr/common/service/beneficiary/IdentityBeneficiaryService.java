@@ -23,7 +23,6 @@ package com.iemr.common.service.beneficiary;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -54,8 +53,6 @@ public interface IdentityBeneficiaryService {
 	List<BeneficiariesDTO> searchBeneficiaryList(String identitySearchDTO, String auth, Boolean is1097)
 			throws IEMRException;
 
-	public Map<String, Object> searchBeneficiaryListES(String identitySearchDTO, String auth, Boolean is1097) throws IEMRException ;
-
 	Integer editIdentityEditDTOCommunityorEducation(IdentityEditDTO identityEditDTO, String auth, Boolean is1097)
 			throws IEMRException;
 
@@ -72,8 +69,4 @@ public interface IdentityBeneficiaryService {
 
 	public List<BeneficiariesDTO> getBeneficiaryListByGovId(String identity, String auth, Boolean is1097)
 			throws IEMRException;
-
-	public Map<String, Object> searchBeneficiariesUsingES(String query, Integer userId, String auth, Boolean is1097) throws IEMRException;
-
-    
 }
