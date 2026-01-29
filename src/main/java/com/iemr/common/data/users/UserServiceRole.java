@@ -7,7 +7,7 @@ import java.util.Objects;
 @Table(name = "v_userservicerolemapping", schema = "db_iemr")
 public class UserServiceRole {
     private Integer userId;
-    private int usrMappingId;
+    private Integer usrMappingId;
     private String name;
     private String userName;
     private Short serviceId;
@@ -359,11 +359,6 @@ public class UserServiceRole {
 
     public void setVillagename(String villagename) {
         this.villagename = villagename;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(userId, usrMappingId, name, userName, serviceId, serviceName, isNational, stateId, stateName, workingDistrictId, workingDistrictName, workingLocationId, serviceProviderId, locationName, workingLocationAddress, roleId, roleName, providerServiceMapId, agentId, psmStatusId, psmStatus, userServciceRoleDeleted, userDeleted, serviceProviderDeleted, roleDeleted, providerServiceMappingDeleted, isInbound, isOutbound, blockid, blockname, villageid, villagename);
     }
 
 }

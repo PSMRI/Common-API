@@ -114,15 +114,16 @@ public class FormMasterServiceImpl implements FormMasterService {
 
     @Override
     public FormResponseDTO getStructuredFormByFormId(String formId, String lang, String token) {
-        int stateId = 0;
+        Integer stateId = 0;
         try {
-            if (!token.isEmpty()) {
-                List<UserServiceRole> userServiceRole = userServiceRoleRepo.findByUserName(jwtUtil.getUsernameFromToken(token));
-                if (userServiceRole != null) {
-                    stateId = userServiceRole.get(0).getStateId();
-                    logger.info("State:Id" + stateId);
-                }
-            }
+            String username = jwtUtil.getUsernameFromToken(token);
+
+            stateId = userServiceRoleRepo.findByUserName(username)
+                    .stream()
+                    .findFirst()
+                    .map(UserServiceRole::getStateId)
+                    .filter(Objects::nonNull)
+                    .orElse(null);
 
 
             FormDefinition form = formRepo.findByFormId(formId)
@@ -131,7 +132,7 @@ public class FormMasterServiceImpl implements FormMasterService {
             List<FormField> fields = fieldRepo.findByForm_FormIdOrderBySequenceAsc(formId);
             ObjectMapper objectMapper = new ObjectMapper();
 
-            int finalStateId = stateId;
+            Integer finalStateId = stateId;
             List<FieldResponseDTO> fieldDtos = fields.stream().filter(formField -> (formField.getStateCode().equals(0) || formField.getStateCode().equals(finalStateId)))
                     .map(field -> {
                         String labelKey = field.getFieldId();  // field label already contains label_key
@@ -215,7 +216,9 @@ public class FormMasterServiceImpl implements FormMasterService {
 
             GroupedFieldResponseDTO singleSection = new GroupedFieldResponseDTO();
             singleSection.setFields(fieldDtos);
-            singleSection.setSectionTitle(singleSection.getSectionTitle()); // your custom section title
+            singleSection.setSectionTitle(
+                    Objects.requireNonNullElse(singleSection.getSectionTitle(), "Section Title")
+            );
             FormResponseDTO response = new FormResponseDTO();
             response.setVersion(form.getVersion());
             response.setFormId(form.getFormId());
