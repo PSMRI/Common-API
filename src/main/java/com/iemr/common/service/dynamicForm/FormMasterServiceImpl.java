@@ -1,6 +1,5 @@
 package com.iemr.common.service.dynamicForm;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.common.data.dynamic_from.FormDefinition;
@@ -8,14 +7,12 @@ import com.iemr.common.data.dynamic_from.FormField;
 import com.iemr.common.data.dynamic_from.FormModule;
 import com.iemr.common.data.translation.Translation;
 import com.iemr.common.data.users.UserServiceRole;
-import com.iemr.common.data.users.UserServiceRoleMapping;
 import com.iemr.common.dto.dynamicForm.*;
 import com.iemr.common.repository.dynamic_form.FieldRepository;
 import com.iemr.common.repository.dynamic_form.FormRepository;
 import com.iemr.common.repository.dynamic_form.ModuleRepository;
 import com.iemr.common.repository.translation.TranslationRepo;
-import com.iemr.common.repository.users.UserRoleMappingRepository;
-import com.iemr.common.service.users.UserServiceRoleRepo;
+import com.iemr.common.repository.users.UserServiceRoleRepo;
 import com.iemr.common.utils.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.type.TypeReference;
 
-import javax.persistence.criteria.CriteriaBuilder;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,8 +29,10 @@ public class FormMasterServiceImpl implements FormMasterService {
 
     @Autowired
     private ModuleRepository moduleRepo;
-    @Autowired private FormRepository formRepo;
-    @Autowired private FieldRepository fieldRepo;
+    @Autowired
+    private FormRepository formRepo;
+    @Autowired
+    private FieldRepository fieldRepo;
 
     @Autowired
     private TranslationRepo translationRepo;
@@ -97,7 +95,7 @@ public class FormMasterServiceImpl implements FormMasterService {
     public FormField updateField(FieldDTO dto) {
         FormField field = fieldRepo.findById(dto.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Field not found: " + dto.getId()));
-         field.setId(dto.getId());
+        field.setId(dto.getId());
         field.setSectionTitle(dto.getSectionTitle());
         field.setLabel(dto.getLabel());
         field.setType(dto.getType());
@@ -115,17 +113,16 @@ public class FormMasterServiceImpl implements FormMasterService {
     }
 
     @Override
-    public FormResponseDTO getStructuredFormByFormId(String formId,String lang,String token) {
-        int  stateId =0 ;
+    public FormResponseDTO getStructuredFormByFormId(String formId, String lang, String token) {
+        int stateId = 0;
         try {
-            if(!token.isEmpty()){
-                List<UserServiceRole> userServiceRole=  userServiceRoleRepo.findByUserName(jwtUtil.getUsernameFromToken(token));
-                if(userServiceRole!=null){
+            if (!token.isEmpty()) {
+                List<UserServiceRole> userServiceRole = userServiceRoleRepo.findByUserName(jwtUtil.getUsernameFromToken(token));
+                if (userServiceRole != null) {
                     stateId = userServiceRole.get(0).getStateId();
-                    logger.info("State:Id"+stateId);
+                    logger.info("State:Id" + stateId);
                 }
             }
-
 
 
             FormDefinition form = formRepo.findByFormId(formId)
@@ -135,7 +132,7 @@ public class FormMasterServiceImpl implements FormMasterService {
             ObjectMapper objectMapper = new ObjectMapper();
 
             int finalStateId = stateId;
-            List<FieldResponseDTO> fieldDtos = fields.stream().filter(formField -> (formField.getStateCode()==0 || formField.getStateCode().equals(finalStateId)))
+            List<FieldResponseDTO> fieldDtos = fields.stream().filter(formField -> (formField.getStateCode().equals(0) || formField.getStateCode().equals(finalStateId)))
                     .map(field -> {
                         String labelKey = field.getFieldId();  // field label already contains label_key
 
@@ -147,9 +144,9 @@ public class FormMasterServiceImpl implements FormMasterService {
                         if (t != null) {
                             if ("hi".equalsIgnoreCase(lang)) {
                                 translatedLabel = t.getHindiTranslation();
-                            } else if("as".equalsIgnoreCase(lang)){
+                            } else if ("as".equalsIgnoreCase(lang)) {
                                 translatedLabel = t.getAssameseTranslation();
-                            }else if("en".equalsIgnoreCase(lang)){
+                            } else if ("en".equalsIgnoreCase(lang)) {
                                 translatedLabel = t.getEnglish();
 
                             }
@@ -176,9 +173,11 @@ public class FormMasterServiceImpl implements FormMasterService {
                                 JsonNode node = objectMapper.readTree(field.getOptions());
                                 List<String> options = null;
                                 if (node.isArray()) {
-                                    options = objectMapper.convertValue(node, new TypeReference<>() {});
+                                    options = objectMapper.convertValue(node, new TypeReference<>() {
+                                    });
                                 } else if (node.has("options")) {
-                                    options = objectMapper.convertValue(node.get("options"), new TypeReference<>() {});
+                                    options = objectMapper.convertValue(node.get("options"), new TypeReference<>() {
+                                    });
                                 }
                                 dto.setOptions(options == null || options.isEmpty() ? null : options);
                             } else {
@@ -187,7 +186,8 @@ public class FormMasterServiceImpl implements FormMasterService {
 
                             // Handle validation
                             if (field.getValidation() != null && !field.getValidation().isBlank()) {
-                                Map<String, Object> validation = objectMapper.readValue(field.getValidation(), new TypeReference<>() {});
+                                Map<String, Object> validation = objectMapper.readValue(field.getValidation(), new TypeReference<>() {
+                                });
                                 dto.setValidation(validation.isEmpty() ? null : validation);
                             } else {
                                 dto.setValidation(null);
@@ -195,7 +195,8 @@ public class FormMasterServiceImpl implements FormMasterService {
 
                             // Handle conditional
                             if (field.getConditional() != null && !field.getConditional().isBlank()) {
-                                Map<String, Object> conditional = objectMapper.readValue(field.getConditional(), new TypeReference<>() {});
+                                Map<String, Object> conditional = objectMapper.readValue(field.getConditional(), new TypeReference<>() {
+                                });
                                 dto.setConditional(conditional.isEmpty() ? null : conditional);
                             } else {
                                 dto.setConditional(null);
@@ -213,9 +214,8 @@ public class FormMasterServiceImpl implements FormMasterService {
 
 
             GroupedFieldResponseDTO singleSection = new GroupedFieldResponseDTO();
-            singleSection.setSectionTitle(singleSection.getSectionTitle()); // your custom section title
             singleSection.setFields(fieldDtos);
-
+            singleSection.setSectionTitle(singleSection.getSectionTitle()); // your custom section title
             FormResponseDTO response = new FormResponseDTO();
             response.setVersion(form.getVersion());
             response.setFormId(form.getFormId());
@@ -223,11 +223,10 @@ public class FormMasterServiceImpl implements FormMasterService {
             response.setSections(List.of(singleSection));
             return response;
 
-        }catch (Exception e){
-         logger.error("Exception:"+e.getMessage());
+        } catch (Exception e) {
+            logger.error("Exception while building form response", e);
+            throw new RuntimeException("Failed to build form structure");
         }
-
-       return  null;
 
     }
 
