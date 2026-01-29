@@ -7,7 +7,7 @@ import java.util.Objects;
 @Table(name = "v_userservicerolemapping", schema = "db_iemr")
 public class UserServiceRole {
     private Integer userId;
-    private Integer usrMappingId;
+    private int usrMappingId;
     private String name;
     private String userName;
     private Short serviceId;
