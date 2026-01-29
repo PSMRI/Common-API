@@ -18,6 +18,8 @@ public class Translation {
     private String english;
     @Column(name = "hindi_translation")
     private String hindiTranslation;
+    @Column(name = "assamese_translation")
+    private String assameseTranslation;
     @Column(name = "is_active")
     private Boolean isActive;
 }
