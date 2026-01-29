@@ -1,37 +1,47 @@
 package com.iemr.common.service.dynamicForm;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.common.data.dynamic_from.FormDefinition;
 import com.iemr.common.data.dynamic_from.FormField;
 import com.iemr.common.data.dynamic_from.FormModule;
 import com.iemr.common.data.translation.Translation;
+import com.iemr.common.data.users.UserServiceRole;
 import com.iemr.common.dto.dynamicForm.*;
 import com.iemr.common.repository.dynamic_form.FieldRepository;
 import com.iemr.common.repository.dynamic_form.FormRepository;
 import com.iemr.common.repository.dynamic_form.ModuleRepository;
 import com.iemr.common.repository.translation.TranslationRepo;
+import com.iemr.common.repository.users.UserServiceRoleRepo;
+import com.iemr.common.utils.JwtUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.type.TypeReference;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class FormMasterServiceImpl implements FormMasterService {
+    final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
     @Autowired
     private ModuleRepository moduleRepo;
-    @Autowired private FormRepository formRepo;
-    @Autowired private FieldRepository fieldRepo;
+    @Autowired
+    private FormRepository formRepo;
+    @Autowired
+    private FieldRepository fieldRepo;
 
     @Autowired
     private TranslationRepo translationRepo;
+
+    @Autowired
+    private UserServiceRoleRepo userServiceRoleRepo;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Override
     public FormModule createModule(ModuleDTO dto) {
@@ -85,7 +95,7 @@ public class FormMasterServiceImpl implements FormMasterService {
     public FormField updateField(FieldDTO dto) {
         FormField field = fieldRepo.findById(dto.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Field not found: " + dto.getId()));
-         field.setId(dto.getId());
+        field.setId(dto.getId());
         field.setSectionTitle(dto.getSectionTitle());
         field.setLabel(dto.getLabel());
         field.setType(dto.getType());
@@ -103,96 +113,121 @@ public class FormMasterServiceImpl implements FormMasterService {
     }
 
     @Override
-    public FormResponseDTO getStructuredFormByFormId(String formId,String lang) {
-        FormDefinition form = formRepo.findByFormId(formId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid form ID"));
+    public FormResponseDTO getStructuredFormByFormId(String formId, String lang, String token) {
+        int stateId = 0;
+        try {
+            if (!token.isEmpty()) {
+                List<UserServiceRole> userServiceRole = userServiceRoleRepo.findByUserName(jwtUtil.getUsernameFromToken(token));
+                if (userServiceRole != null) {
+                    stateId = userServiceRole.get(0).getStateId();
+                    logger.info("State:Id" + stateId);
+                }
+            }
 
-        List<FormField> fields = fieldRepo.findByForm_FormIdOrderBySequenceAsc(formId);
-        ObjectMapper objectMapper = new ObjectMapper();
 
-        List<FieldResponseDTO> fieldDtos = fields.stream()
-                .map(field -> {
-                    String labelKey = field.getFieldId();  // field label already contains label_key
+            FormDefinition form = formRepo.findByFormId(formId)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid form ID"));
 
-                    Translation t = translationRepo.findByLabelKeyAndIsActive(labelKey, true)
-                            .orElse(null);
+            List<FormField> fields = fieldRepo.findByForm_FormIdOrderBySequenceAsc(formId);
+            ObjectMapper objectMapper = new ObjectMapper();
 
-                    String translatedLabel = field.getLabel(); // fallback
+            int finalStateId = stateId;
+            List<FieldResponseDTO> fieldDtos = fields.stream().filter(formField -> (formField.getStateCode().equals(0) || formField.getStateCode().equals(finalStateId)))
+                    .map(field -> {
+                        String labelKey = field.getFieldId();  // field label already contains label_key
 
-                    if (t != null) {
-                        if ("hi".equalsIgnoreCase(lang)) {
-                            translatedLabel = t.getHindiTranslation();
-                        } else {
-                            translatedLabel = t.getEnglish();
-                        }
-                    }
+                        Translation t = translationRepo.findByLabelKeyAndIsActive(labelKey, true)
+                                .orElse(null);
 
-                    FieldResponseDTO dto = new FieldResponseDTO();
-                    dto.setId(field.getId());
-                    dto.setVisible(field.getIsVisible());
-                    dto.setFormId(field.getForm().getFormId());
-                    dto.setSectionTitle(field.getSectionTitle());
-                    dto.setFieldId(field.getFieldId());
-                    dto.setLabel(translatedLabel);
-                    dto.setType(field.getType());
-                    dto.setIsRequired(field.getIsRequired());
-                    dto.setDefaultValue(field.getDefaultValue());
-                    dto.setPlaceholder(field.getPlaceholder());
-                    dto.setSequence(field.getSequence());
+                        String translatedLabel = field.getLabel(); // fallback
 
-                    try {
-                        // Handle options
-                        if (field.getOptions() != null && !field.getOptions().isBlank()) {
-                            JsonNode node = objectMapper.readTree(field.getOptions());
-                            List<String> options = null;
-                            if (node.isArray()) {
-                                options = objectMapper.convertValue(node, new TypeReference<>() {});
-                            } else if (node.has("options")) {
-                                options = objectMapper.convertValue(node.get("options"), new TypeReference<>() {});
+                        if (t != null) {
+                            if ("hi".equalsIgnoreCase(lang)) {
+                                translatedLabel = t.getHindiTranslation();
+                            } else if ("as".equalsIgnoreCase(lang)) {
+                                translatedLabel = t.getAssameseTranslation();
+                            } else if ("en".equalsIgnoreCase(lang)) {
+                                translatedLabel = t.getEnglish();
+
                             }
-                            dto.setOptions(options == null || options.isEmpty() ? null : options);
-                        } else {
-                            dto.setOptions(null);
                         }
 
-                        // Handle validation
-                        if (field.getValidation() != null && !field.getValidation().isBlank()) {
-                            Map<String, Object> validation = objectMapper.readValue(field.getValidation(), new TypeReference<>() {});
-                            dto.setValidation(validation.isEmpty() ? null : validation);
-                        } else {
-                            dto.setValidation(null);
+                        FieldResponseDTO dto = new FieldResponseDTO();
+                        dto.setId(field.getId());
+                        dto.setIsEditable(field.getIsEditable());
+                        dto.setStateCode(field.getStateCode());
+                        dto.setVisible(field.getIsVisible());
+                        dto.setFormId(field.getForm().getFormId());
+                        dto.setSectionTitle(field.getSectionTitle());
+                        dto.setFieldId(field.getFieldId());
+                        dto.setLabel(translatedLabel);
+                        dto.setType(field.getType());
+                        dto.setIsRequired(field.getIsRequired());
+                        dto.setDefaultValue(field.getDefaultValue());
+                        dto.setPlaceholder(field.getPlaceholder());
+                        dto.setSequence(field.getSequence());
+
+                        try {
+                            // Handle options
+                            if (field.getOptions() != null && !field.getOptions().isBlank()) {
+                                JsonNode node = objectMapper.readTree(field.getOptions());
+                                List<String> options = null;
+                                if (node.isArray()) {
+                                    options = objectMapper.convertValue(node, new TypeReference<>() {
+                                    });
+                                } else if (node.has("options")) {
+                                    options = objectMapper.convertValue(node.get("options"), new TypeReference<>() {
+                                    });
+                                }
+                                dto.setOptions(options == null || options.isEmpty() ? null : options);
+                            } else {
+                                dto.setOptions(null);
+                            }
+
+                            // Handle validation
+                            if (field.getValidation() != null && !field.getValidation().isBlank()) {
+                                Map<String, Object> validation = objectMapper.readValue(field.getValidation(), new TypeReference<>() {
+                                });
+                                dto.setValidation(validation.isEmpty() ? null : validation);
+                            } else {
+                                dto.setValidation(null);
+                            }
+
+                            // Handle conditional
+                            if (field.getConditional() != null && !field.getConditional().isBlank()) {
+                                Map<String, Object> conditional = objectMapper.readValue(field.getConditional(), new TypeReference<>() {
+                                });
+                                dto.setConditional(conditional.isEmpty() ? null : conditional);
+                            } else {
+                                dto.setConditional(null);
+                            }
+                        } catch (Exception e) {
+
+                            System.err.println("JSON Parsing Error in field: " + field.getFieldId());
+                            throw new RuntimeException("Failed to parse JSON for field: " + field.getFieldId(), e);
                         }
 
-                        // Handle conditional
-                        if (field.getConditional() != null && !field.getConditional().isBlank()) {
-                            Map<String, Object> conditional = objectMapper.readValue(field.getConditional(), new TypeReference<>() {});
-                            dto.setConditional(conditional.isEmpty() ? null : conditional);
-                        } else {
-                            dto.setConditional(null);
-                        }
-                    } catch (Exception e) {
-
-                        System.err.println("JSON Parsing Error in field: " + field.getFieldId());
-                        throw new RuntimeException("Failed to parse JSON for field: " + field.getFieldId(), e);
-                    }
-
-                    return dto;
-                })
-                .sorted(Comparator.comparing(FieldResponseDTO::getId))
-                .collect(Collectors.toList());
+                        return dto;
+                    })
+                    .sorted(Comparator.comparing(FieldResponseDTO::getId))
+                    .collect(Collectors.toList());
 
 
-        GroupedFieldResponseDTO singleSection = new GroupedFieldResponseDTO();
-        singleSection.setSectionTitle(singleSection.getSectionTitle()); // your custom section title
-        singleSection.setFields(fieldDtos);
+            GroupedFieldResponseDTO singleSection = new GroupedFieldResponseDTO();
+            singleSection.setFields(fieldDtos);
+            singleSection.setSectionTitle(singleSection.getSectionTitle()); // your custom section title
+            FormResponseDTO response = new FormResponseDTO();
+            response.setVersion(form.getVersion());
+            response.setFormId(form.getFormId());
+            response.setFormName(form.getFormName());
+            response.setSections(List.of(singleSection));
+            return response;
 
-        FormResponseDTO response = new FormResponseDTO();
-        response.setVersion(form.getVersion());
-        response.setFormId(form.getFormId());
-        response.setFormName(form.getFormName());
-        response.setSections(List.of(singleSection));
+        } catch (Exception e) {
+            logger.error("Exception while building form response", e);
+            throw new RuntimeException("Failed to build form structure");
+        }
 
-        return response;
     }
 
 
