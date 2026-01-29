@@ -40,6 +40,7 @@ public class FilterConfig {
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
 
+
     @Bean
     public FilterRegistrationBean<JwtUserIdValidationFilter> jwtUserIdValidationFilter(
             JwtAuthenticationUtil jwtAuthenticationUtil) {
