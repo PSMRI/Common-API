@@ -84,7 +84,11 @@ public class DynamicFormController {
     }
 
     @GetMapping(value = "form/{formId}/fields")
+<<<<<<< HEAD
     public ResponseEntity<ApiResponse<?>> getStructuredForm(@PathVariable String formId, @RequestParam(name = "lang", defaultValue = "en") String lang,@RequestHeader(value = "JwtToken") String token) {
+=======
+    public ResponseEntity<ApiResponse<?>> getStructuredForm(@PathVariable String formId, @RequestParam(name = "lang", defaultValue = "en") String lang,@RequestHeader(value = "jwttoken") String token) {
+>>>>>>> c6e42d94 (FLW-713 Remove All File Upload Options (#350))
         try {
             Object result = formMasterService.getStructuredFormByFormId(formId,lang,token);
             return ResponseEntity.status(HttpStatus.OK)

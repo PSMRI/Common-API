@@ -15,10 +15,14 @@ public interface FormMasterService {
     FormDefinition createForm(FormDTO dto);
     List<FormField> createField(List<FieldDTO> dto);
     FormField updateField(FieldDTO dto);
+<<<<<<< HEAD
 
     FormResponseDTO getStructuredFormByFormId(String formId,String lang,String token);
 
 
 
+=======
+    FormResponseDTO getStructuredFormByFormId(String formId,String lang,String token);
+>>>>>>> c6e42d94 (FLW-713 Remove All File Upload Options (#350))
     void deleteField(Long fieldId);
 }

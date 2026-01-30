@@ -361,9 +361,12 @@ public class UserServiceRole {
         this.villagename = villagename;
     }
 
+<<<<<<< HEAD
     @Override
     public int hashCode() {
         return Objects.hash(userId, usrMappingId, name, userName, serviceId, serviceName, isNational, stateId, stateName, workingDistrictId, workingDistrictName, workingLocationId, serviceProviderId, locationName, workingLocationAddress, roleId, roleName, providerServiceMapId, agentId, psmStatusId, psmStatus, userServciceRoleDeleted, userDeleted, serviceProviderDeleted, roleDeleted, providerServiceMappingDeleted, isInbound, isOutbound, blockid, blockname, villageid, villagename);
     }
 
+=======
+>>>>>>> c6e42d94 (FLW-713 Remove All File Upload Options (#350))
 }
