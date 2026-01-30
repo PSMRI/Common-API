@@ -53,7 +53,15 @@ public class FormField {
     @Column(name = "sequence")
     private Integer sequence;
 
+    @Column(name = "is_editable")
+    private Boolean isEditable;
+
+    @Column(name = "state_code")
+    private Integer stateCode;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
+
+
 
 }
