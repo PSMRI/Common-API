@@ -29,6 +29,7 @@ import com.google.gson.annotations.Expose;
 import com.iemr.common.utils.mapper.OutputMapper;
 
 import jakarta.persistence.Column;
+import org.springframework.context.annotation.Profile;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -36,6 +37,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
+@Profile("!swagger")
 @Entity
 @Table(name = "fact_bencall", schema = "db_reporting")
 public class SecondaryCallReport implements Serializable 

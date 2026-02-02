@@ -47,7 +47,8 @@ import jakarta.persistence.EntityManagerFactory;
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(entityManagerFactoryRef = "entityManagerFactory", basePackages = { "com.iemr.common.repository",
-		"com.iemr.common.repo", "com.iemr.common.notification.agent", "com.iemr.common.covidVaccination", "com.iemr.common.repository.everwell.*", "com.iemr.common.data.grievance", "com.iemr.common.repository.users" })
+	"com.iemr.common.repo", "com.iemr.common.notification.agent", "com.iemr.common.covidVaccination", "com.iemr.common.repository.everwell.*", "com.iemr.common.data.grievance", "com.iemr.common.repository.users" })
+@org.springframework.context.annotation.Profile("!swagger")
 public class PrimaryDBConfig {
 
 	Logger logger = LoggerFactory.getLogger(this.getClass().getName());
