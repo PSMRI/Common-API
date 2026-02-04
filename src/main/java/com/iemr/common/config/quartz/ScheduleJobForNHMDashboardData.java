@@ -35,6 +35,7 @@ import org.springframework.context.annotation.Profile;
 
 @Service
 @Transactional
+@Profile("!swagger")
 public class ScheduleJobForNHMDashboardData implements Job {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 

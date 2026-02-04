@@ -39,6 +39,7 @@ import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.context.annotation.Profile;
 
 import com.iemr.common.utils.config.ConfigProperties;
 
@@ -48,7 +49,7 @@ import jakarta.persistence.EntityManagerFactory;
 @EnableTransactionManagement
 @EnableJpaRepositories(entityManagerFactoryRef = "entityManagerFactory", basePackages = { "com.iemr.common.repository",
 	"com.iemr.common.repo", "com.iemr.common.notification.agent", "com.iemr.common.covidVaccination", "com.iemr.common.repository.everwell.*", "com.iemr.common.data.grievance", "com.iemr.common.repository.users" })
-@org.springframework.context.annotation.Profile("!swagger")
+@Profile("!swagger")
 public class PrimaryDBConfig {
 
 	Logger logger = LoggerFactory.getLogger(this.getClass().getName());
