@@ -52,6 +52,8 @@ import com.iemr.common.data.cti.CampaignNames;
 import com.iemr.common.data.cti.CampaignRole;
 import com.iemr.common.data.cti.CampaignSkills;
 import com.iemr.common.data.cti.CustomerLanguage;
+import com.iemr.common.data.cti.DispositionCountRequest;
+import com.iemr.common.data.cti.DispositionCountResponse;
 import com.iemr.common.data.cti.TransferCall;
 import com.iemr.common.repository.callhandling.BeneficiaryCallRepository;
 import com.iemr.common.repository.callhandling.IEMRCalltypeRepositoryImplCustom;
@@ -962,7 +964,9 @@ public class CTIServiceImpl implements CTIService {
 
 	@Override
 	public String callPostUrl(String urlRequest, String Json) {
+		logger.info("From call post URL method.. URL: " + urlRequest + " Json: " + Json);
 		String result = httpUtils.post(urlRequest, Json);
+		logger.info("From call post URL method.. result: " + result);
 		return result;
 	}
 
@@ -1084,4 +1088,32 @@ public class CTIServiceImpl implements CTIService {
 
 		return result;
 	}
+
+	@Override  
+public OutputResponse getDispositionCount(String request, String ipAddress) throws IEMRException, JSONException, JsonMappingException, JsonProcessingException {  
+      
+    OutputResponse output = new OutputResponse();  
+    ObjectMapper objectMapper = new ObjectMapper();  
+    String ctiURI = ConfigProperties.getPropertyByName("get-disposition-count-URL");  
+    String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");  
+    logger.info("Request="+request + ":: CTI URL="+ ctiURI + ":: Server URL="+ serverURL);
+    DispositionCountRequest dispositionRequest = objectMapper.readValue(request, DispositionCountRequest.class);  
+      
+    ctiURI = ctiURI.replace("CTI_SERVER", serverURL);  
+      
+    logger.info("calling disposition count URL: " + ctiURI);  
+	logger.info("disposition Request="+dispositionRequest.toString());
+    String response = this.callPostUrl(ctiURI, dispositionRequest.toString());  
+    logger.info("disposition count API returned: " + response);  
+      
+    DispositionCountResponse result = objectMapper.readValue(response, DispositionCountResponse.class);  
+    CTIResponse ctiResponse = result.getResponse();  
+      
+    if (ctiResponse.getResponse_code().equals(CUSTOM_API_SUCCESS)) {  
+        output.setResponse(result.toString());  
+    } else {  
+        output.setError(OutputResponse.GENERIC_FAILURE, ctiResponse.getReason(), ctiResponse.getStatus());  
+    }  
+    return output;  
+}
 }

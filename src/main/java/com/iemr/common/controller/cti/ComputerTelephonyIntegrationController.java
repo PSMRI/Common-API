@@ -21,7 +21,6 @@
 */
 package com.iemr.common.controller.cti;
 
-
 import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
@@ -520,6 +519,25 @@ public class ComputerTelephonyIntegrationController {
 			response.setError(e);
 		}
 		logger.info("getIVRSPathDetails sending response " + response);
+		return response.toString();
+	}
+
+	@Operation(summary = "Get disposition count for campaign")
+	@RequestMapping(value = "/getDispositionCount", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+	public String getDispositionCount(@RequestBody String request, HttpServletRequest serverRequest) {
+		OutputResponse response = new OutputResponse();
+		logger.info("getDispositionCount received a request " + request);
+		try {
+			String remoteAddress = serverRequest.getHeader("X-FORWARDED-FOR");
+			if (remoteAddress == null || remoteAddress.trim().length() == 0) {
+				remoteAddress = serverRequest.getRemoteAddr();
+			}
+			logger.info("Remote Address: " + remoteAddress);
+			response = ctiService.getDispositionCount(request, remoteAddress);
+		} catch (Exception e) {
+			logger.error("getDispositionCount failed with error " + e.getMessage(), e);
+			response.setError(e);
+		}
 		return response.toString();
 	}
 }
