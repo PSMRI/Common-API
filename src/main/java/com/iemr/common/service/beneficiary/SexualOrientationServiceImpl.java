@@ -31,8 +31,9 @@ import org.springframework.stereotype.Service;
 
 import com.iemr.common.data.beneficiary.SexualOrientation;
 import com.iemr.common.repository.userbeneficiarydata.SexualOrientationRepository;
-
+import org.springframework.context.annotation.Profile;
 @Service
+@Profile("!swagger")
 public class SexualOrientationServiceImpl implements SexualOrientationService {
 	private SexualOrientationRepository sexualOrientationRepository;
 
