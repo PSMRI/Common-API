@@ -92,12 +92,14 @@ jobs:
           mkdir -p amrit-docs/docs/swagger
           cp common-api.json amrit-docs/docs/swagger/common-api.json
 
+      # Use a fixed branch name for PRs to avoid accumulating stale PRs.
+      # This ensures only one open PR is updated per run; delete-branch: true cleans up after merge.
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.DOCS_REPO_TOKEN }}
           path: amrit-docs
-          branch: auto/swagger-update
+          branch: auto/swagger-update-common-api
           base: main
           commit-message: "chore(docs): auto-update Common-API swagger"
           title: "chore(docs): auto-update Common-API swagger"
