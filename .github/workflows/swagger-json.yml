@@ -41,13 +41,13 @@ jobs:
             CODE=$(curl --connect-timeout 2 --max-time 5 -s -o swagger_raw.json -w "%{http_code}" http://localhost:9090/v3/api-docs || true)
 
             if [ "$CODE" = "200" ]; then
-              jq . swagger_raw.json > tm-api.json || {
+              jq . swagger_raw.json > common-api.json || {
                 echo "Swagger JSON invalid"
                 cat swagger_raw.json
                 exit 1
               }
 
-              if [ "$(jq '.paths | length' tm-api.json)" -eq 0 ]; then
+              if [ "$(jq '.paths | length' common-api.json)" -eq 0 ]; then
                 echo "Swagger paths empty – failing"
                 exit 1
               fi
@@ -90,7 +90,7 @@ jobs:
       - name: Copy Swagger JSON
         run: |
           mkdir -p amrit-docs/docs/swagger
-          cp tm-api.json amrit-docs/docs/swagger/tm-api.json
+          cp common-api.json amrit-docs/docs/swagger/common-api.json
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v8
@@ -99,9 +99,9 @@ jobs:
           path: amrit-docs
           branch: auto/swagger-update-${{ github.run_id }}-${{ github.run_attempt }}
           base: main
-          commit-message: "chore(docs): auto-update TM-API swagger"
-          title: "chore(docs): auto-update TM-API swagger"
+          commit-message: "chore(docs): auto-update Common-API swagger"
+          title: "chore(docs): auto-update Common-API swagger"
           delete-branch: true
           body: |
-            This PR automatically updates TM-API Swagger JSON
+            This PR automatically updates Common-API Swagger JSON
             from the latest main branch build.
