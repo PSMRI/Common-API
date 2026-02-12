@@ -12,13 +12,18 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 @Configuration
 public class SwaggerConfig {
 	
-	@Bean
+    @Bean
     public OpenAPI customOpenAPI() {
-        return new OpenAPI().info(new 
-             Info().title("Common API").version("version").description("A microservice for the creation and management of beneficiaries."))
-                .addSecurityItem(new SecurityRequirement().addList("my security"))
-                .components(new Components().addSecuritySchemes("my security",
-                        new SecurityScheme().name("my security").type(SecurityScheme.Type.HTTP).scheme("bearer")));
+        return new OpenAPI()
+            .info(new Info().title("Common API").version("version").description("A microservice for the creation and management of beneficiaries."))
+            .addSecurityItem(new SecurityRequirement().addList("my security"))
+            .components(new Components().addSecuritySchemes("my security",
+                new SecurityScheme().name("my security").type(SecurityScheme.Type.HTTP).scheme("bearer")))
+            .servers(java.util.Arrays.asList(
+                new io.swagger.v3.oas.models.servers.Server().url(System.getenv().getOrDefault("API_DEV_URL", "https://amritwprdev.piramalswasthya.org")).description("Dev"),
+                new io.swagger.v3.oas.models.servers.Server().url(System.getenv().getOrDefault("API_UAT_URL", "https://uatamrit.piramalswasthya.org")).description("UAT"),
+                new io.swagger.v3.oas.models.servers.Server().url(System.getenv().getOrDefault("API_DEMO_URL", "https://amritdemo.piramalswasthya.org")).description("Demo")
+            ));
     }
 
 }
