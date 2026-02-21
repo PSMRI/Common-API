@@ -72,7 +72,6 @@ public class HealthService {
     private static final long RESPONSE_TIME_THRESHOLD_MS = 2000;
     
     private static final String DIAGNOSTIC_LOCK_WAIT = "MYSQL_LOCK_WAIT";
-    private static final String DIAGNOSTIC_DEADLOCK = "MYSQL_DEADLOCK";
     private static final String DIAGNOSTIC_SLOW_QUERIES = "MYSQL_SLOW_QUERIES";
     private static final String DIAGNOSTIC_POOL_EXHAUSTED = "MYSQL_POOL_EXHAUSTED";
     private static final String DIAGNOSTIC_LOG_TEMPLATE = "Diagnostic: {}";
@@ -84,8 +83,6 @@ public class HealthService {
     private volatile long lastAdvancedCheckTime = 0;
     private volatile AdvancedCheckResult cachedAdvancedCheckResult = null;
     private final ReentrantReadWriteLock advancedCheckLock = new ReentrantReadWriteLock();
-    
-    private volatile boolean deadlockCheckDisabled = false;
     
     private static final boolean ADVANCED_HEALTH_CHECKS_ENABLED = true;
 
@@ -348,11 +345,6 @@ public class HealthService {
                 hasIssues = true;
             }
             
-            if (hasDeadlocks(connection)) {
-                logger.warn(DIAGNOSTIC_LOG_TEMPLATE, DIAGNOSTIC_DEADLOCK);
-                hasIssues = true;
-            }
-            
             if (hasSlowQueries(connection)) {
                 logger.warn(DIAGNOSTIC_LOG_TEMPLATE, DIAGNOSTIC_SLOW_QUERIES);
                 hasIssues = true;
@@ -376,7 +368,7 @@ public class HealthService {
                 "WHERE (state = 'Waiting for table metadata lock' " +
                 "   OR state = 'Waiting for row lock' " +
                 "   OR state = 'Waiting for lock') " +
-                "AND user = USER()")) {
+                "AND user = SUBSTRING_INDEX(USER(), '@', 1)")) {
             stmt.setQueryTimeout(2);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -390,31 +382,7 @@ public class HealthService {
         return false;
     }
 
-    private boolean hasDeadlocks(Connection connection) {
-        if (deadlockCheckDisabled) {
-            return false;
-        }
-        
-        try (PreparedStatement stmt = connection.prepareStatement("SHOW ENGINE INNODB STATUS")) {
-            stmt.setQueryTimeout(2);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    String innodbStatus = rs.getString(3);
-                    return innodbStatus != null && innodbStatus.contains("LATEST DETECTED DEADLOCK");
-                }
-            }
-        } catch (java.sql.SQLException e) {
-            if (e.getErrorCode() == 1142 || e.getErrorCode() == 1227) {
-                deadlockCheckDisabled = true;
-                logger.warn("Deadlock check disabled: Insufficient privileges");
-            } else {
-                logger.debug("Could not check for deadlocks");
-            }
-        } catch (Exception e) {
-            logger.debug("Could not check for deadlocks");
-        }
-        return false;
-    }
+
 
     private boolean hasSlowQueries(Connection connection) {
         try (PreparedStatement stmt = connection.prepareStatement(
