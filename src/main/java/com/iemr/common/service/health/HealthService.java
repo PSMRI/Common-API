@@ -47,12 +47,35 @@ public class HealthService {
 
     private static final Logger logger = LoggerFactory.getLogger(HealthService.class);
 
+    // Event log constants
     private static final String LOG_EVENT_STUCK_PROCESS  = "MYSQL_STUCK_PROCESS";
     private static final String LOG_EVENT_LOCK_WAIT      = "MYSQL_LOCK_WAIT";
     private static final String LOG_EVENT_DEADLOCK       = "MYSQL_DEADLOCK";
     private static final String LOG_EVENT_SLOW_QUERIES   = "MYSQL_SLOW_QUERIES";
     private static final String LOG_EVENT_CONN_USAGE     = "MYSQL_CONNECTION_USAGE";
     private static final String LOG_EVENT_POOL_EXHAUSTED = "MYSQL_POOL_EXHAUSTED";
+
+    // Response field constants
+    private static final String FIELD_STATUS   = "status";
+    private static final String FIELD_SEVERITY = "severity";
+    private static final String FIELD_MYSQL    = "mysql";
+    private static final String FIELD_REDIS    = "redis";
+    private static final String FIELD_CHECKED_AT = "checkedAt";
+
+    // Severity constants
+    private static final String SEVERITY_CRITICAL = "CRITICAL";
+    private static final String SEVERITY_WARNING  = "WARNING";
+    private static final String SEVERITY_OK       = "OK";
+    private static final String SEVERITY_INFO     = "INFO";
+
+    // Database query constants
+    private static final String STATUS_VALUE = "Value";
+    private static final String STATUS_UP     = "UP";
+    private static final String STATUS_DOWN   = "DOWN";
+    private static final String STATUS_DEGRADED = "DEGRADED";
+    private static final String STATUS_NOT_CONFIGURED = "NOT_CONFIGURED";
+
+    // Thresholds
     private static final long RESPONSE_TIME_SLOW_MS    = 2000; // > 2s → SLOW
     private static final int  STUCK_PROCESS_THRESHOLD  = 5;    // > 5 stuck → WARNING
     private static final int  STUCK_PROCESS_SECONDS    = 30;   // process age in seconds
@@ -72,8 +95,9 @@ public class HealthService {
 
     private final AtomicLong lastDiagnosticRunAt = new AtomicLong(0);
     private final AtomicReference<String> cachedDbSeverity =
-        new AtomicReference<>("INFO");
+        new AtomicReference<>(SEVERITY_OK);
     private final AtomicLong previousDeadlockCount = new AtomicLong(0);
+    private final AtomicLong previousSlowQueryCount = new AtomicLong(0);
     public HealthService(ObjectProvider<DataSource> dataSourceProvider,
                          ObjectProvider<RedisConnectionFactory> redisProvider) {
         this.dataSource = dataSourceProvider.getIfAvailable();
@@ -115,25 +139,25 @@ public class HealthService {
         Map<String, Object> mysqlResult = checkDatabaseConnectivity();
         Map<String, Object> redisResult = checkRedisConnectivity();
 
-        String mysqlStatus = (String) mysqlResult.get("status");
-        String redisStatus = (String) redisResult.get("status");
+        String mysqlStatus = (String) mysqlResult.get(FIELD_STATUS);
+        String redisStatus = (String) redisResult.get(FIELD_STATUS);
 
-        boolean overallUp = !"DOWN".equals(mysqlStatus) && !"DOWN".equals(redisStatus);
+        boolean overallUp = !STATUS_DOWN.equals(mysqlStatus) && !STATUS_DOWN.equals(redisStatus);
 
-        response.put("status",    overallUp ? "UP" : "DOWN");
-        response.put("checkedAt", Instant.now().toString());
+        response.put(FIELD_STATUS,     overallUp ? STATUS_UP : STATUS_DOWN);
+        response.put(FIELD_CHECKED_AT, Instant.now().toString());
         
         // Expose only status and severity, keep diagnostics internal
         Map<String, Object> mysqlSummary = new LinkedHashMap<>();
-        mysqlSummary.put("status", mysqlResult.get("status"));
-        mysqlSummary.put("severity", mysqlResult.get("severity"));
+        mysqlSummary.put(FIELD_STATUS, mysqlResult.get(FIELD_STATUS));
+        mysqlSummary.put(FIELD_SEVERITY, mysqlResult.get(FIELD_SEVERITY));
         
         Map<String, Object> redisSummary = new LinkedHashMap<>();
-        redisSummary.put("status", redisResult.get("status"));
-        redisSummary.put("severity", redisResult.get("severity"));
+        redisSummary.put(FIELD_STATUS, redisResult.get(FIELD_STATUS));
+        redisSummary.put(FIELD_SEVERITY, redisResult.get(FIELD_SEVERITY));
         
-        response.put("mysql",     mysqlSummary);
-        response.put("redis",     redisSummary);
+        response.put(FIELD_MYSQL,     mysqlSummary);
+        response.put(FIELD_REDIS,     redisSummary);
 
         return response;
     }
@@ -142,8 +166,8 @@ public class HealthService {
         Map<String, Object> result = new LinkedHashMap<>();
 
         if (dataSource == null) {
-            result.put("status",         "NOT_CONFIGURED");
-            result.put("severity",       "INFO");
+            result.put(FIELD_STATUS,   STATUS_NOT_CONFIGURED);
+            result.put(FIELD_SEVERITY, SEVERITY_INFO);
             return result;
         }
 
@@ -155,8 +179,8 @@ public class HealthService {
 
             // If SELECT 1 succeeds, use cached severity from background diagnostics
             String severity = cachedDbSeverity.get();
-            result.put("status",   resolveDatabaseStatus(severity));
-            result.put("severity", severity);
+            result.put(FIELD_STATUS,   resolveDatabaseStatus(severity));
+            result.put(FIELD_SEVERITY, severity);
 
         } catch (Exception e) {
             // Log connection failure as a structured event
@@ -165,8 +189,8 @@ public class HealthService {
                 e.getMessage()
             );
 
-            result.put("status",   "DOWN");
-            result.put("severity", "CRITICAL");
+            result.put(FIELD_STATUS,   STATUS_DOWN);
+            result.put(FIELD_SEVERITY, SEVERITY_CRITICAL);
         }
 
         return result;
@@ -176,15 +200,15 @@ public class HealthService {
         Map<String, Object> result = new LinkedHashMap<>();
 
         if (redisConnectionFactory == null) {
-            result.put("status",   "NOT_CONFIGURED");
-            result.put("severity", "INFO");
+            result.put(FIELD_STATUS,   STATUS_NOT_CONFIGURED);
+            result.put(FIELD_SEVERITY, SEVERITY_INFO);
             return result;
         }
 
         try (RedisConnection conn = redisConnectionFactory.getConnection()) {
             conn.ping();
-            result.put("status",   "UP");
-            result.put("severity", "OK");
+            result.put(FIELD_STATUS,   STATUS_UP);
+            result.put(FIELD_SEVERITY, SEVERITY_OK);
 
         } catch (Exception e) {
             logger.error(
@@ -192,8 +216,8 @@ public class HealthService {
                 e.getMessage()
             );
 
-            result.put("status",   "DOWN");
-            result.put("severity", "CRITICAL");
+            result.put(FIELD_STATUS,   STATUS_DOWN);
+            result.put(FIELD_SEVERITY, SEVERITY_CRITICAL);
         }
 
         return result;
@@ -207,157 +231,169 @@ public class HealthService {
         }
         lastDiagnosticRunAt.set(now);
 
-        String worstSeverity = "INFO"; // Escalates during checks, never descends
+        String worstSeverity = SEVERITY_OK;
 
         try (Connection conn = dataSource.getConnection()) {
-
-            // CHECK 1 — Stuck / Long-Running Processes
-            try (Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(
-                    "SELECT COUNT(*) AS cnt FROM information_schema.PROCESSLIST " +
-                    "WHERE TIME > " + STUCK_PROCESS_SECONDS + " AND COMMAND != 'Sleep'")) {
-                
-                if (rs.next()) {
-                    int stuckCount = rs.getInt("cnt");
-                    if (stuckCount > 0) {
-                        logger.warn(
-                            "[{}] Stuck MySQL processes detected | count={} | thresholdSeconds={}",
-                            LOG_EVENT_STUCK_PROCESS, stuckCount, STUCK_PROCESS_SECONDS
-                        );
-                        if (stuckCount > STUCK_PROCESS_THRESHOLD) {
-                            worstSeverity = escalate(worstSeverity, "WARNING");
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                logger.error("[MYSQL_DIAGNOSTIC_ERROR] Stuck process check failed | error=\"{}\"",
-                    e.getMessage());
-            }
-
-            // CHECK 2 — InnoDB Long-Running Transactions (MYSQL_LONG_TX)
-            // Note: INNODB_TRX shows all active transactions. True lock-wait detection via
-            // INNODB_LOCK_WAITS requires PERFORMANCE_SCHEMA enabled and explicit permissions.
-            // This query flags transactions older than STUCK_PROCESS_SECONDS as potentially problematic.
-            try (Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(
-                    "SELECT COUNT(*) AS cnt FROM information_schema.INNODB_TRX " +
-                    "WHERE TIME_TO_SEC(TIMEDIFF(NOW(), trx_started)) > " + STUCK_PROCESS_SECONDS)) {
-                
-                if (rs.next()) {
-                    int lockCount = rs.getInt("cnt");
-                    if (lockCount > 0) {
-                        logger.error(
-                            "[{}] InnoDB long-running transaction detected | count={} | thresholdSeconds={}",
-                            LOG_EVENT_LOCK_WAIT, lockCount, STUCK_PROCESS_SECONDS
-                        );
-                        worstSeverity = escalate(worstSeverity, "CRITICAL");
-                    }
-                }
-            } catch (Exception e) {
-                logger.error("[MYSQL_DIAGNOSTIC_ERROR] Long transaction check failed | error=\"{}\"",
-                    e.getMessage());
-            }
-
-            // CHECK 3 — InnoDB Deadlocks (Delta Tracking to avoid permanent WARNING)
-            try (Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery("SHOW STATUS LIKE 'Innodb_deadlocks'")) {
-                
-                if (rs.next()) {
-                    long currentDeadlocks = rs.getLong("Value");
-                    long previousDeadlocks = previousDeadlockCount.getAndSet(currentDeadlocks);
-                    
-                    // Only warn if deadlocks have *increased* since last run
-                    if (currentDeadlocks > previousDeadlocks) {
-                        long deltaDeadlocks = currentDeadlocks - previousDeadlocks;
-                        logger.warn(
-                            "[{}] InnoDB deadlocks detected since last run | deltaCount={} | cumulativeCount={}",
-                            LOG_EVENT_DEADLOCK, deltaDeadlocks, currentDeadlocks
-                        );
-                        worstSeverity = escalate(worstSeverity, "WARNING");
-                    }
-                }
-            } catch (Exception e) {
-                logger.error("[MYSQL_DIAGNOSTIC_ERROR] Deadlock check failed | error=\"{}\"",
-                    e.getMessage());
-            }
-
-            // CHECK 4 — Slow Queries
-            try (Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery("SHOW STATUS LIKE 'Slow_queries'")) {
-                
-                if (rs.next()) {
-                    long slowQueries = rs.getLong("Value");
-                    if (slowQueries > 0) {
-                        logger.warn(
-                            "[{}] Slow queries detected | cumulativeCount={}",
-                            LOG_EVENT_SLOW_QUERIES, slowQueries
-                        );
-                        worstSeverity = escalate(worstSeverity, "WARNING");
-                    }
-                }
-            } catch (Exception e) {
-                logger.error("[MYSQL_DIAGNOSTIC_ERROR] Slow query check failed | error=\"{}\"",
-                    e.getMessage());
-            }
-
-            // CHECK 5 — Server Connection Usage
-            try (Statement stmt = conn.createStatement()) {
-                int threadsConnected = 0;
-                int maxConnections   = 0;
-
-                try (ResultSet rs = stmt.executeQuery("SHOW STATUS LIKE 'Threads_connected'")) {
-                    if (rs.next()) threadsConnected = rs.getInt("Value");
-                }
-
-                try (ResultSet rs = stmt.executeQuery("SHOW VARIABLES LIKE 'max_connections'")) {
-                    if (rs.next()) maxConnections = rs.getInt("Value");
-                }
-
-                if (maxConnections > 0) {
-                    int usagePct = (int) ((threadsConnected * 100.0) / maxConnections);
-
-                    if (usagePct >= CONNECTION_USAGE_CRITICAL) {
-                        logger.error(
-                            "[{}] MySQL connection pool near exhaustion | threadsConnected={} | maxConnections={} | usagePercent={}",
-                            LOG_EVENT_POOL_EXHAUSTED, threadsConnected, maxConnections, usagePct
-                        );
-                        worstSeverity = escalate(worstSeverity, "CRITICAL");
-
-                    } else if (usagePct > CONNECTION_USAGE_WARNING) {
-                        logger.warn(
-                            "[{}] MySQL connection usage is high | threadsConnected={} | maxConnections={} | usagePercent={}",
-                            LOG_EVENT_CONN_USAGE, threadsConnected, maxConnections, usagePct
-                        );
-                        worstSeverity = escalate(worstSeverity, "WARNING");
-                    }
-                }
-            } catch (Exception e) {
-                logger.error("[MYSQL_DIAGNOSTIC_ERROR] Connection usage check failed | error=\"{}\"",
-                    e.getMessage());
-            }
+            worstSeverity = escalate(worstSeverity, performStuckProcessCheck(conn));
+            worstSeverity = escalate(worstSeverity, performLongTransactionCheck(conn));
+            worstSeverity = escalate(worstSeverity, performDeadlockCheck(conn));
+            worstSeverity = escalate(worstSeverity, performSlowQueryCheck(conn));
+            worstSeverity = escalate(worstSeverity, performConnectionUsageCheck(conn));
 
         } catch (Exception e) {
-            // Cannot open connection for diagnostics — treat as CRITICAL
             logger.error(
                 "[MYSQL_DIAGNOSTIC_ERROR] Could not open connection for diagnostics | error=\"{}\"",
                 e.getMessage()
             );
-            worstSeverity = "CRITICAL";
+            worstSeverity = SEVERITY_CRITICAL;
         }
 
-        // Persist computed severity so /health can read it instantly
         cachedDbSeverity.set(worstSeverity);
-
         logger.debug(
             "[MYSQL_DIAGNOSTIC_COMPLETE] Background diagnostic cycle complete | severity={}",
             worstSeverity
         );
     }
+
+    private String performStuckProcessCheck(Connection conn) {
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(
+                "SELECT COUNT(*) AS cnt FROM information_schema.PROCESSLIST " +
+                "WHERE TIME > " + STUCK_PROCESS_SECONDS + " AND COMMAND != 'Sleep'")) {
+            
+            if (rs.next()) {
+                int stuckCount = rs.getInt("cnt");
+                if (stuckCount > 0) {
+                    logger.warn(
+                        "[{}] Stuck MySQL processes detected | count={} | thresholdSeconds={}",
+                        LOG_EVENT_STUCK_PROCESS, stuckCount, STUCK_PROCESS_SECONDS
+                    );
+                    if (stuckCount > STUCK_PROCESS_THRESHOLD) {
+                        return SEVERITY_WARNING;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.error("[MYSQL_DIAGNOSTIC_ERROR] Stuck process check failed | error=\"{}\"",
+                e.getMessage());
+        }
+        return SEVERITY_OK;
+    }
+
+    private String performLongTransactionCheck(Connection conn) {
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(
+                "SELECT COUNT(*) AS cnt FROM information_schema.INNODB_TRX " +
+                "WHERE TIME_TO_SEC(TIMEDIFF(NOW(), trx_started)) > " + STUCK_PROCESS_SECONDS)) {
+            
+            if (rs.next()) {
+                int lockCount = rs.getInt("cnt");
+                if (lockCount > 0) {
+                    logger.error(
+                        "[{}] InnoDB long-running transaction detected | count={} | thresholdSeconds={}",
+                        LOG_EVENT_LOCK_WAIT, lockCount, STUCK_PROCESS_SECONDS
+                    );
+                    return SEVERITY_CRITICAL;
+                }
+            }
+        } catch (Exception e) {
+            logger.error("[MYSQL_DIAGNOSTIC_ERROR] Long transaction check failed | error=\"{}\"",
+                e.getMessage());
+        }
+        return SEVERITY_OK;
+    }
+
+    private String performDeadlockCheck(Connection conn) {
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SHOW STATUS LIKE 'Innodb_deadlocks'")) {
+            
+            if (rs.next()) {
+                long currentDeadlocks = rs.getLong(STATUS_VALUE);
+                long previousDeadlocks = previousDeadlockCount.getAndSet(currentDeadlocks);
+                
+                if (currentDeadlocks > previousDeadlocks) {
+                    long deltaDeadlocks = currentDeadlocks - previousDeadlocks;
+                    logger.warn(
+                        "[{}] InnoDB deadlocks detected since last run | deltaCount={} | cumulativeCount={}",
+                        LOG_EVENT_DEADLOCK, deltaDeadlocks, currentDeadlocks
+                    );
+                    return SEVERITY_WARNING;
+                }
+            }
+        } catch (Exception e) {
+            logger.error("[MYSQL_DIAGNOSTIC_ERROR] Deadlock check failed | error=\"{}\"",
+                e.getMessage());
+        }
+        return SEVERITY_OK;
+    }
+
+    private String performSlowQueryCheck(Connection conn) {
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SHOW STATUS LIKE 'Slow_queries'")) {
+            
+            if (rs.next()) {
+                long slowQueries = rs.getLong(STATUS_VALUE);
+                long previousSlow = previousSlowQueryCount.getAndSet(slowQueries);
+                
+                // Only warn if slow queries have *increased* since last run
+                if (slowQueries > previousSlow) {
+                    long delta = slowQueries - previousSlow;
+                    logger.warn(
+                        "[{}] New slow queries detected since last run | deltaCount={} | cumulativeCount={}",
+                        LOG_EVENT_SLOW_QUERIES, delta, slowQueries
+                    );
+                    return SEVERITY_WARNING;
+                }
+            }
+        } catch (Exception e) {
+            logger.error("[MYSQL_DIAGNOSTIC_ERROR] Slow query check failed | error=\"{}\"",
+                e.getMessage());
+        }
+        return SEVERITY_OK;
+    }
+
+    private String performConnectionUsageCheck(Connection conn) {
+        try (Statement stmt = conn.createStatement()) {
+            int threadsConnected = 0;
+            int maxConnections   = 0;
+
+            try (ResultSet rs = stmt.executeQuery("SHOW STATUS LIKE 'Threads_connected'")) {
+                if (rs.next()) threadsConnected = rs.getInt(STATUS_VALUE);
+            }
+
+            try (ResultSet rs = stmt.executeQuery("SHOW VARIABLES LIKE 'max_connections'")) {
+                if (rs.next()) maxConnections = rs.getInt(STATUS_VALUE);
+            }
+
+            if (maxConnections > 0) {
+                int usagePct = (int) ((threadsConnected * 100.0) / maxConnections);
+
+                if (usagePct >= CONNECTION_USAGE_CRITICAL) {
+                    logger.error(
+                        "[{}] MySQL connection pool near exhaustion | threadsConnected={} | maxConnections={} | usagePercent={}",
+                        LOG_EVENT_POOL_EXHAUSTED, threadsConnected, maxConnections, usagePct
+                    );
+                    return SEVERITY_CRITICAL;
+
+                } else if (usagePct > CONNECTION_USAGE_WARNING) {
+                    logger.warn(
+                        "[{}] MySQL connection usage is high | threadsConnected={} | maxConnections={} | usagePercent={}",
+                        LOG_EVENT_CONN_USAGE, threadsConnected, maxConnections, usagePct
+                    );
+                    return SEVERITY_WARNING;
+                }
+            }
+        } catch (Exception e) {
+            logger.error("[MYSQL_DIAGNOSTIC_ERROR] Connection usage check failed | error=\"{}\"",
+                e.getMessage());
+        }
+        return SEVERITY_OK;
+    }
     private String resolveDatabaseStatus(String severity) {
         return switch (severity) {
-            case "CRITICAL" -> "DOWN";
-            case "WARNING"  -> "DEGRADED";
-            default         -> "UP";
+            case SEVERITY_CRITICAL -> STATUS_DOWN;
+            case SEVERITY_WARNING  -> STATUS_DEGRADED;
+            default                -> STATUS_UP;
         };
     }
     private String escalate(String current, String candidate) {
@@ -366,9 +402,9 @@ public class HealthService {
 
     private int severityRank(String severity) {
         return switch (severity) {
-            case "CRITICAL" -> 2;
-            case "WARNING"  -> 1;
-            default         -> 0;
+            case SEVERITY_CRITICAL -> 2;
+            case SEVERITY_WARNING  -> 1;
+            default                -> 0;
         };
     }
 }
