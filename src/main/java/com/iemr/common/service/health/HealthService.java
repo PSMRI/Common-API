@@ -28,7 +28,7 @@ import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PreDestroy;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -164,7 +164,10 @@ public class HealthService {
 
         return response;
     }
-    // Runs only SELECT 1 with a hard 3-second timeout.
+    // Runs only SELECT 1 with a hard 3-second timeout on query execution.
+    // NOTE: getConnection() is NOT bounded by this timeout — it respects the pool's
+    // connectionTimeout (default 30s in HikariCP). For true 3-second /health guarantees,
+    // configure the DataSource connectionTimeout ≤ 3 seconds or wrap in an ExecutorService timeout.
     private Map<String, Object> checkDatabaseConnectivity() {
         Map<String, Object> result = new LinkedHashMap<>();
 
@@ -177,7 +180,7 @@ public class HealthService {
         try (Connection conn = dataSource.getConnection();
              Statement  stmt = conn.createStatement()) {
 
-            stmt.setQueryTimeout(3); // Hard cap — /health must never block > 3s
+            stmt.setQueryTimeout(3); // Bounds only the SELECT 1 execution
             stmt.execute("SELECT 1");
 
             // If SELECT 1 succeeds, use cached severity from background diagnostics
@@ -267,12 +270,17 @@ public class HealthService {
             if (rs.next()) {
                 int stuckCount = rs.getInt("cnt");
                 if (stuckCount > 0) {
-                    logger.warn(
-                        "[{}] Stuck MySQL processes detected | count={} | thresholdSeconds={}",
-                        LOG_EVENT_STUCK_PROCESS, stuckCount, STUCK_PROCESS_SECONDS
-                    );
                     if (stuckCount > STUCK_PROCESS_THRESHOLD) {
+                        logger.warn(
+                            "[{}] Stuck MySQL processes detected above threshold | count={} | threshold={} | thresholdSeconds={}",
+                            LOG_EVENT_STUCK_PROCESS, stuckCount, STUCK_PROCESS_THRESHOLD, STUCK_PROCESS_SECONDS
+                        );
                         return SEVERITY_WARNING;
+                    } else {
+                        logger.info(
+                            "[{}] Stuck MySQL processes below threshold | count={} | threshold={} | thresholdSeconds={}",
+                            LOG_EVENT_STUCK_PROCESS, stuckCount, STUCK_PROCESS_THRESHOLD, STUCK_PROCESS_SECONDS
+                        );
                     }
                 }
             }
