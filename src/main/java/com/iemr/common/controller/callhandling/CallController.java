@@ -618,4 +618,22 @@ public class CallController {
 
 	}
 
+	@Operation(summary = "Create outbound call request")
+	@PostMapping(value = "/createOutboundCallRequest", consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+	public String createOutboundCallRequest(
+			@Param(value = "{\"beneficiaryRegID\":\"Long - beneficiary registration ID\", "
+					+ "\"providerServiceMapID\":\"Integer - provider service map ID\", "
+					+ "\"requestedFor\":\"String - reason for outbound call\", "
+					+ "\"prefferedDateTime\":\"Timestamp - preferred date time for call\", "
+					+ "\"createdBy\":\"String - created by user\"}") @RequestBody String request) {
+		OutputResponse response = new OutputResponse();
+		try {
+			response.setResponse(beneficiaryCallService.createOutboundCallRequest(request).toString());
+		} catch (Exception e) {
+			logger.error("createOutboundCallRequest failed with error " + e.getMessage(), e);
+			response.setError(e);
+		}
+		return response.toString();
+	}
+
 }

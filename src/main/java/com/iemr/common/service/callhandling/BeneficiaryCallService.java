@@ -127,4 +127,6 @@ public interface BeneficiaryCallService {
 
 	String cTIFilePathNew(String request) throws IEMRException, JsonMappingException, JsonProcessingException;
 
+	OutboundCallRequest createOutboundCallRequest(String request) throws IEMRException, JsonMappingException, JsonProcessingException;
+
 }

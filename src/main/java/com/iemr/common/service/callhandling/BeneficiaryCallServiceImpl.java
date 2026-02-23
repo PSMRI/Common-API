@@ -1834,4 +1834,21 @@ public class BeneficiaryCallServiceImpl implements BeneficiaryCallService {
 		return recordingPath;
 	}
 
+	@Override
+	public OutboundCallRequest createOutboundCallRequest(String request) throws IEMRException, JsonMappingException, JsonProcessingException {
+		ObjectMapper objectMapper = new ObjectMapper();
+		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+		OutboundCallRequest outboundCallRequest = objectMapper.readValue(request, OutboundCallRequest.class);
+
+		if (outboundCallRequest.getBeneficiaryRegID() == null) {
+			throw new IEMRException("beneficiaryRegID is required");
+		}
+		if (outboundCallRequest.getProviderServiceMapID() == null) {
+			throw new IEMRException("providerServiceMapID is required");
+		}
+
+		outboundCallRequest = outboundCallRequestRepository.save(outboundCallRequest);
+		return outboundCallRequest;
+	}
+
 }
