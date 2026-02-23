@@ -79,6 +79,9 @@ public class HealthService {
     private static final long RESPONSE_TIME_SLOW_MS    = 2000; // > 2s → SLOW
     private static final int  STUCK_PROCESS_THRESHOLD  = 5;    // > 5 stuck → WARNING
     private static final int  STUCK_PROCESS_SECONDS    = 30;   // process age in seconds
+    private static final int  LONG_TXN_WARNING_THRESHOLD  = 1;  // ≥1 long txn → WARNING
+    private static final int  LONG_TXN_CRITICAL_THRESHOLD = 5;  // ≥5 long txns → CRITICAL
+    private static final int  LONG_TXN_SECONDS         = 60;   // transaction age threshold
     private static final int  CONNECTION_USAGE_WARNING = 80;   // > 80% → WARNING
     private static final int  CONNECTION_USAGE_CRITICAL= 95;   // > 95% → CRITICAL
     private static final long DIAGNOSTIC_INTERVAL_SEC  = 30;   // background run interval
@@ -284,16 +287,18 @@ public class HealthService {
         try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(
                 "SELECT COUNT(*) AS cnt FROM information_schema.INNODB_TRX " +
-                "WHERE TIME_TO_SEC(TIMEDIFF(NOW(), trx_started)) > " + STUCK_PROCESS_SECONDS)) {
+                "WHERE TIME_TO_SEC(TIMEDIFF(NOW(), trx_started)) > " + LONG_TXN_SECONDS)) {
             
             if (rs.next()) {
                 int lockCount = rs.getInt("cnt");
-                if (lockCount > 0) {
-                    logger.error(
-                        "[{}] InnoDB long-running transaction detected | count={} | thresholdSeconds={}",
-                        LOG_EVENT_LOCK_WAIT, lockCount, STUCK_PROCESS_SECONDS
+                if (lockCount >= LONG_TXN_WARNING_THRESHOLD) {
+                    logger.warn(
+                        "[{}] InnoDB long-running transaction(s) detected | count={} | thresholdSeconds={}",
+                        LOG_EVENT_LOCK_WAIT, lockCount, LONG_TXN_SECONDS
                     );
-                    return SEVERITY_CRITICAL;
+                    // Graduated escalation: WARNING for 1-4, CRITICAL for 5+
+                    return lockCount >= LONG_TXN_CRITICAL_THRESHOLD
+                        ? SEVERITY_CRITICAL : SEVERITY_WARNING;
                 }
             }
         } catch (Exception e) {
