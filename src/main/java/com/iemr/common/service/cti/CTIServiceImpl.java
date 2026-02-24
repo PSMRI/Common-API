@@ -1101,18 +1101,15 @@ public OutputResponse getDispositionCount(String request, String ipAddress) thro
       
     ctiURI = ctiURI.replace("CTI_SERVER", serverURL);  
       
-    logger.info("calling disposition count URL: " + ctiURI);  
-	logger.info("disposition Request="+dispositionRequest.toString());
-    String response = this.callPostUrl(ctiURI, dispositionRequest.toString());  
+    String response = this.callPostUrl(ctiURI, objectMapper.writeValueAsString(dispositionRequest));  
     logger.info("disposition count API returned: " + response);  
       
-    DispositionCountResponse result = objectMapper.readValue(response, DispositionCountResponse.class);  
-    CTIResponse ctiResponse = result.getResponse();  
-      
-    if (ctiResponse.getResponse_code().equals(CUSTOM_API_SUCCESS)) {  
-        output.setResponse(result.toString());  
-    } else {  
-        output.setError(OutputResponse.GENERIC_FAILURE, ctiResponse.getReason(), ctiResponse.getStatus());  
+    DispositionCountResponse result = objectMapper.readValue(response, DispositionCountResponse.class);
+
+    if (result.getCode() != null && result.getCode().toString().equals(CUSTOM_API_SUCCESS)) {
+        output.setResponse(objectMapper.writeValueAsString(result));
+    } else {
+        output.setError(OutputResponse.GENERIC_FAILURE, result.getFailure_reason(), result.getStatus());
     }  
     return output;  
 }

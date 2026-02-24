@@ -1,41 +1,43 @@
 package com.iemr.common.data.cti;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.gson.annotations.Expose;
 import java.util.List;
 
-@Data  
-public class DispositionCountResponse {  
-    @Expose  
-    private CTIResponse response;  
-      
-    @Expose  
-    private Integer count;  
-      
-    @Expose  
-    private String campaign_id;  
-      
-    @Expose  
-    private String disposition;  
-      
-    @Expose  
-    private String date;  
-      
-    @Expose  
-    private List<DispositionData> dispositionData;  
-      
-    @Expose  
-    private String encryptedData; // for enc_flag = "1"  
-      
-    // Inner class for detailed disposition data  
-    @Data  
-    public static class DispositionData {  
-        @Expose  
-        private String disposition;  
-          
-        @Expose  
-        private Integer count;  
-          
-        @Expose  
-        private String date;  
-    }  
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class DispositionCountResponse {
+    @Expose
+    private String status;
+
+    @Expose
+    private Integer code;
+
+    @Expose
+    private String failure_reason;
+
+    @Expose
+    private Object data;
+
+    // Inner class for campaign data
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class CampaignData {
+        @Expose
+        private String campaign_name;
+
+        @Expose
+        private List<DispositionDetail> dispositions;
+    }
+
+    // Inner class for disposition detail
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class DispositionDetail {
+        @Expose
+        private String call_status_disposition;
+
+        @Expose
+        private String disposition_count;
+    }
 }
