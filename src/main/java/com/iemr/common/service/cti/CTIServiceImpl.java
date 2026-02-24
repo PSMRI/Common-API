@@ -61,6 +61,7 @@ import com.iemr.common.utils.exception.IEMRException;
 import com.iemr.common.utils.http.HttpUtils;
 import com.iemr.common.utils.mapper.InputMapper;
 import com.iemr.common.utils.response.OutputResponse;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class CTIServiceImpl implements CTIService {
@@ -95,6 +96,10 @@ public class CTIServiceImpl implements CTIService {
 
 	@Autowired
 	private IEMRCalltypeRepositoryImplCustom iemrCalltypeRepositoryImplCustom;
+
+
+	@Value("${cti-server-ip}")
+	private String ctiServerIP;
 
 	public CTIServiceImpl() {
 		if (httpUtils == null) {
@@ -635,7 +640,7 @@ public class CTIServiceImpl implements CTIService {
 		String agentIP = !agentIPResp.equals(DEFAULT_IP) ? agentIPResp : remoteAddr;
 
 		ctiDisconnectURL = ConfigProperties.getPropertyByName("disonnect-api-URL");
-		String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
 		ctiDisconnectURL = ctiDisconnectURL.replace("cti_server", ctiServerIP).replace("AGENT_ID", agentID)
 				.replace("SESSION_ID", callID).replace("AGENT_IP", agentIP)
 				.replace("IS_FEEDBACK", agent.getIsFeedback() + "");
@@ -658,6 +663,7 @@ public class CTIServiceImpl implements CTIService {
 	@Override
 	public OutputResponse switchToInbound(String request, String remoteAddr) throws IEMRException, JSONException, JsonMappingException, JsonProcessingException {
 		OutputResponse output = new OutputResponse();
+		logger.info("Server IP="+ctiServerIP);
 		String ctiDisconnectURL;
 		ObjectMapper objectMapper = new ObjectMapper();
 		CallBeneficiary agent = objectMapper.readValue(request, CallBeneficiary.class);
@@ -668,7 +674,7 @@ public class CTIServiceImpl implements CTIService {
 		String agentIP = !agentIPResp.equals(DEFAULT_IP) ? agentIPResp : remoteAddr;
 
 		ctiDisconnectURL = ConfigProperties.getPropertyByName("switch-to-inbound-URL");
-		String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
 		ctiDisconnectURL = ctiDisconnectURL.replace("CTI_SERVER", ctiServerIP).replace("AGENT_ID", agentID)
 				.replace("AGENT_IP", agentIP);
 
@@ -694,7 +700,7 @@ public class CTIServiceImpl implements CTIService {
 		ObjectMapper objectMapper = new ObjectMapper();
 		CallBeneficiary agent = objectMapper.readValue(request, CallBeneficiary.class);
 		ctiDisconnectURL = ConfigProperties.getPropertyByName("switch-to-outbound-URL");
-		String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
 		String agentID = (agent.getAgent_id() != null) ? agent.getAgent_id() : "";
 
 		String agentIPResp = getAgentIP(agentID);
@@ -724,7 +730,8 @@ public class CTIServiceImpl implements CTIService {
 		AgentState agent = objectMapper.readValue(request, AgentState.class);
 		String agentID = (agent.getAgent_id() != null) ? agent.getAgent_id() : "";
 		String ctiDisconnectURL = ConfigProperties.getPropertyByName("get-agent-ip-address-URL");
-		String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
+
 		ctiDisconnectURL = ctiDisconnectURL.replace("CTI_SERVER", ctiServerIP).replace("AGENT_ID", agentID);
 		// HttpUtils httpUtils = new HttpUtils();
 		logger.info("getAgentIPAddress calls calling url: " + ctiDisconnectURL);
@@ -749,7 +756,7 @@ public class CTIServiceImpl implements CTIService {
 		String agentIP = DEFAULT_IP;
 		ObjectMapper objectMapper = new ObjectMapper();
 		ctiDisconnectURL = ConfigProperties.getPropertyByName("get-agent-ip-address-URL");
-		String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
 		ctiDisconnectURL = ctiDisconnectURL.replace("CTI_SERVER", ctiServerIP).replace("AGENT_ID", agentID);
 		// HttpUtils httpUtils = new HttpUtils();
 		logger.info("getAgentIPAddress calls calling url: " + ctiDisconnectURL);
@@ -771,7 +778,7 @@ public class CTIServiceImpl implements CTIService {
 		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 		BlockUnblockNumber agent = objectMapper.readValue(request, BlockUnblockNumber.class);
 		blockNumberURL = ConfigProperties.getPropertyByName("block-api-URL");
-		String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
 		blockNumberURL = blockNumberURL.replace("CTI_SERVER", ctiServerIP)
 				.replace("MOBILE", (agent.getPhoneNo() != null) ? agent.getPhoneNo() : "")
 				.replace("CAMPAIGN_NAME", (agent.getCampaignName() != null) ? agent.getCampaignName() : "");
@@ -798,7 +805,7 @@ public class CTIServiceImpl implements CTIService {
 		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 		BlockUnblockNumber agent = objectMapper.readValue(request, BlockUnblockNumber.class);
 		unblockNumberURL = ConfigProperties.getPropertyByName("unblock-api-URL");
-		String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
 		unblockNumberURL = unblockNumberURL.replace("CTI_SERVER", ctiServerIP)
 				.replace("MOBILE", (agent.getPhoneNo() != null) ? agent.getPhoneNo() : "")
 				.replace("CAMPAIGN_NAME", (agent.getCampaignName() != null) ? agent.getCampaignName() : "");
@@ -825,7 +832,7 @@ public class CTIServiceImpl implements CTIService {
 		String availableAgentsURL;
 		AgentSkills agent = objectMapper.readValue(request, AgentSkills.class);
 		availableAgentsURL = ConfigProperties.getPropertyByName("get-available-agents-URL");
-		String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
 		availableAgentsURL = availableAgentsURL.replace("CTI_SERVER", ctiServerIP)
 				.replace("SKILL", (agent.getSkill() != null) ? agent.getSkill() : "")
 				.replace("CAMPAIGN_NAME", (agent.getCampaignName() != null) ? agent.getCampaignName() : "");
@@ -873,7 +880,7 @@ public class CTIServiceImpl implements CTIService {
 			availableAgentsURL = ConfigProperties.getPropertyByName("call-transfer-to-campaign-URL");
 			// transfer_from = "";
 		}
-		String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
 		availableAgentsURL = availableAgentsURL.replace("CTI_SERVER", ctiServerIP)
 				.replace("TRANSFER_FROM", transfer_from).replace("TRANSFER_TO", transfer_to)
 				.replace("CAMPAIGN_NAME", transfer_campaign_info).replace("SKILL_NAME", skill)
@@ -918,7 +925,7 @@ public class CTIServiceImpl implements CTIService {
 		String languageName = (custLang.getLanguage() != null) ? custLang.getLanguage().trim() : "";
 		String custPhoneNo = (custLang.getCust_ph_no() != null) ? custLang.getCust_ph_no().trim() : "";
 		String actionName = (custLang.getAction() != null) ? custLang.getAction().trim() : "";
-		String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String ctiServerIP = ConfigProperties.getPropertyByName("cti-server-ip");
 		preferredLanguageURL = preferredLanguageURL.replace("CTI_SERVER", ctiServerIP)
 				.replace("CAMPAIGN_NAME", campaignName).replace("LANGUAGE_NAME", languageName)
 				.replace("CUSTOMER_PHONE", custPhoneNo).replace("ACTION_NAME", actionName);
