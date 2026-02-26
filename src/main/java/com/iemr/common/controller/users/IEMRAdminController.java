@@ -1292,4 +1292,33 @@ public class IEMRAdminController {
 		}
 
 	}
+
+	@Operation(summary = "Get all ASHAs mapped to a supervisor")
+	@GetMapping(value = "/supervisor/{userId}/ashas", produces = MediaType.APPLICATION_JSON)
+	public String getSupervisorAshas(@PathVariable Integer userId) {
+		OutputResponse response = new OutputResponse();
+		try {
+			JSONObject result = ashaSupervisorLoginService.getSupervisorAshas(userId);
+			response.setResponse(result.toString());
+		} catch (Exception e) {
+			logger.error("getSupervisorAshas failed: " + e.getMessage(), e);
+			response.setError(e);
+		}
+		return response.toString();
+	}
+
+	@Operation(summary = "Get ASHAs at a specific facility for a supervisor")
+	@GetMapping(value = "/supervisor/{userId}/facility/{facilityId}/ashas", produces = MediaType.APPLICATION_JSON)
+	public String getAshasAtFacility(@PathVariable Integer userId,
+			@PathVariable Integer facilityId) {
+		OutputResponse response = new OutputResponse();
+		try {
+			JSONObject result = ashaSupervisorLoginService.getAshasAtFacility(userId, facilityId);
+			response.setResponse(result.toString());
+		} catch (Exception e) {
+			logger.error("getAshasAtFacility failed: " + e.getMessage(), e);
+			response.setError(e);
+		}
+		return response.toString();
+	}
 }

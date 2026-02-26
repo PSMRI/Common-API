@@ -45,6 +45,13 @@ public interface FacilityLoginRepo extends CrudRepository<AshaSupervisorMapping,
 	@Query(value = "SELECT GenderName FROM m_gender WHERE GenderID = :genderID", nativeQuery = true)
 	String getGenderName(@Param("genderID") Integer genderID);
 
+	// Villages mapped to facilities
+	@Query(value = "SELECT fvm.FacilityID, fvm.DistrictBranchID, dbm.VillageName "
+			+ "FROM facility_village_mapping fvm "
+			+ "JOIN m_DistrictBranchMapping dbm ON dbm.DistrictBranchID = fvm.DistrictBranchID "
+			+ "WHERE fvm.FacilityID IN :facilityIDs AND fvm.Deleted = false", nativeQuery = true)
+	List<Object[]> getVillagesForFacilities(@Param("facilityIDs") List<Integer> facilityIDs);
+
 	// ASHA login: get peers at same facility (ANM, CHO, etc.)
 	@Query(value = "SELECT DISTINCT usrm.UserID, u.FirstName, u.LastName, r.RoleName "
 			+ "FROM m_UserServiceRoleMapping usrm "
