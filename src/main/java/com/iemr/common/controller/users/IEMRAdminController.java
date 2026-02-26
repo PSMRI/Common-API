@@ -56,6 +56,7 @@ import com.iemr.common.model.user.ChangePasswordModel;
 import com.iemr.common.model.user.ForceLogoutRequestModel;
 import com.iemr.common.model.user.LoginRequestModel;
 import com.iemr.common.service.recaptcha.CaptchaValidationService;
+import com.iemr.common.service.users.AshaSupervisorLoginService;
 import com.iemr.common.service.users.IEMRAdminUserService;
 import com.iemr.common.utils.CookieUtil;
 import com.iemr.common.utils.JwtUtil;
@@ -116,6 +117,9 @@ public class IEMRAdminController {
 
 	@Autowired
 	SecurePassword securePassword;
+
+	@Autowired
+	private AshaSupervisorLoginService ashaSupervisorLoginService;
 
 	@Operation(summary = "New user authentication")
 	@RequestMapping(value = "/userAuthenticateNew", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
@@ -231,6 +235,26 @@ public class IEMRAdminController {
 			}
 			responseObj = iemrAdminUserServiceImpl.generateKeyAndValidateIP(responseObj, remoteAddress,
 					request.getRemoteHost());
+
+			// Facility data for ALL users - common pattern, empty if not applicable
+			try {
+				if (mUser.size() == 1) {
+					String userRoleName = "";
+					if (mUser.get(0).getM_UserServiceRoleMapping() != null) {
+						for (UserServiceRoleMapping usrm : mUser.get(0).getM_UserServiceRoleMapping()) {
+							if (usrm.getM_Role() != null && usrm.getM_Role().getRoleName() != null) {
+								userRoleName = usrm.getM_Role().getRoleName();
+								break;
+							}
+						}
+					}
+					JSONObject facilityData = ashaSupervisorLoginService
+							.buildFacilityLoginData(mUser.get(0).getUserID(), userRoleName);
+					responseObj.put("facilityData", facilityData);
+				}
+			} catch (Exception e) {
+				logger.error("Error fetching facility login data: " + e.getMessage(), e);
+			}
 
 			// Add tokens to response for mobile
 			if (isMobile && !mUser.isEmpty()) {
