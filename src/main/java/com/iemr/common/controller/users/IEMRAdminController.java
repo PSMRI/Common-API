@@ -239,9 +239,10 @@ public class IEMRAdminController {
 			// Facility data for ALL users - common pattern, empty if not applicable
 			try {
 				if (mUser.size() == 1) {
+					User loggedInUser = mUser.get(0);
 					String userRoleName = "";
-					if (mUser.get(0).getM_UserServiceRoleMapping() != null) {
-						for (UserServiceRoleMapping usrm : mUser.get(0).getM_UserServiceRoleMapping()) {
+					if (loggedInUser.getM_UserServiceRoleMapping() != null) {
+						for (UserServiceRoleMapping usrm : loggedInUser.getM_UserServiceRoleMapping()) {
 							if (usrm.getM_Role() != null && usrm.getM_Role().getRoleName() != null) {
 								userRoleName = usrm.getM_Role().getRoleName();
 								break;
@@ -249,7 +250,26 @@ public class IEMRAdminController {
 						}
 					}
 					JSONObject facilityData = ashaSupervisorLoginService
-							.buildFacilityLoginData(mUser.get(0).getUserID(), userRoleName);
+							.buildFacilityLoginData(loggedInUser.getUserID(), userRoleName);
+
+					// User details
+					JSONObject userObj = new JSONObject();
+					userObj.put("userId", loggedInUser.getUserID());
+					userObj.put("employeeId", loggedInUser.getAgentID() != null ? loggedInUser.getAgentID() : JSONObject.NULL);
+					userObj.put("role", userRoleName);
+					String first = loggedInUser.getFirstName() != null ? loggedInUser.getFirstName() : "";
+					String last = loggedInUser.getLastName() != null ? loggedInUser.getLastName() : "";
+					userObj.put("fullName", (first + " " + last).trim());
+
+					JSONObject demographics = new JSONObject();
+					String genderName = ashaSupervisorLoginService.getGenderName(loggedInUser.getGenderID());
+					demographics.put("gender", genderName != null ? genderName : JSONObject.NULL);
+					demographics.put("dob", loggedInUser.getdOB() != null ? loggedInUser.getdOB().toString() : JSONObject.NULL);
+					demographics.put("mobile", loggedInUser.getEmergencyContactNo() != null ? loggedInUser.getEmergencyContactNo() : JSONObject.NULL);
+					demographics.put("email", loggedInUser.getEmailID() != null ? loggedInUser.getEmailID() : JSONObject.NULL);
+					userObj.put("demographics", demographics);
+
+					facilityData.put("user", userObj);
 					responseObj.put("facilityData", facilityData);
 				}
 			} catch (Exception e) {

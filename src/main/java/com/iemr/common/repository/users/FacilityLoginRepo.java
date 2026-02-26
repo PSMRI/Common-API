@@ -34,21 +34,6 @@ public interface FacilityLoginRepo extends CrudRepository<AshaSupervisorMapping,
 			+ "WHERE f.FacilityID IN :facilityIDs AND f.Deleted = false", nativeQuery = true)
 	List<Object[]> getFacilityDetails(@Param("facilityIDs") List<Integer> facilityIDs);
 
-	// Recursive hierarchy: Medical College -> DH -> CHC -> PHC -> SC (all levels)
-	@Query(value = "WITH RECURSIVE facility_tree AS ( "
-			+ "  SELECT FacilityID FROM m_facility WHERE FacilityID IN :facilityIDs AND Deleted = false "
-			+ "  UNION ALL "
-			+ "  SELECT f.FacilityID FROM m_facility f "
-			+ "  INNER JOIN facility_tree ft ON f.ParentFacilityID = ft.FacilityID "
-			+ "  WHERE f.Deleted = false "
-			+ ") "
-			+ "SELECT fvm.FacilityID, fvm.DistrictBranchID, dbm.VillageName "
-			+ "FROM facility_village_mapping fvm "
-			+ "JOIN m_DistrictBranchMapping dbm ON dbm.DistrictBranchID = fvm.DistrictBranchID "
-			+ "WHERE fvm.FacilityID IN (SELECT FacilityID FROM facility_tree) "
-			+ "AND fvm.Deleted = false", nativeQuery = true)
-	List<Object[]> getVillagesWithHierarchy(@Param("facilityIDs") List<Integer> facilityIDs);
-
 	// ASHA login: get supervisor details
 	@Query(value = "SELECT asm.supervisorUserID, u.FirstName, u.LastName, u.ContactNo "
 			+ "FROM asha_supervisor_mapping asm "
@@ -56,6 +41,9 @@ public interface FacilityLoginRepo extends CrudRepository<AshaSupervisorMapping,
 			+ "WHERE asm.ashaUserID = :ashaUserID AND asm.deleted = false "
 			+ "AND u.Deleted = false LIMIT 1", nativeQuery = true)
 	List<Object[]> getSupervisorForAsha(@Param("ashaUserID") Integer ashaUserID);
+
+	@Query(value = "SELECT GenderName FROM m_gender WHERE GenderID = :genderID", nativeQuery = true)
+	String getGenderName(@Param("genderID") Integer genderID);
 
 	// ASHA login: get peers at same facility (ANM, CHO, etc.)
 	@Query(value = "SELECT DISTINCT usrm.UserID, u.FirstName, u.LastName, r.RoleName "
