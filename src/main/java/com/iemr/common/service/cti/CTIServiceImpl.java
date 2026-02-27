@@ -1084,13 +1084,11 @@ public OutputResponse getDispositionCount(String request, String ipAddress) thro
     ObjectMapper objectMapper = new ObjectMapper();  
     String ctiURI = ConfigProperties.getPropertyByName("get-disposition-count-URL");  
     String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");  
-    logger.info("Request="+request + ":: CTI URL="+ ctiURI + ":: Server URL="+ serverURL);
     DispositionCountRequest dispositionRequest = objectMapper.readValue(request, DispositionCountRequest.class);  
       
     ctiURI = ctiURI.replace("CTI_SERVER", serverURL);  
       
     String response = this.callPostUrl(ctiURI, objectMapper.writeValueAsString(dispositionRequest));  
-    logger.info("disposition count API returned: " + response);  
       
     DispositionCountResponse result = objectMapper.readValue(response, DispositionCountResponse.class);
 

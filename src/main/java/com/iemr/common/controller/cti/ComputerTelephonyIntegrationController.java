@@ -526,13 +526,11 @@ public class ComputerTelephonyIntegrationController {
 	@RequestMapping(value = "/getDispositionCount", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
 	public String getDispositionCount(@RequestBody String request, HttpServletRequest serverRequest) {
 		OutputResponse response = new OutputResponse();
-		logger.info("getDispositionCount received a request " + request);
 		try {
 			String remoteAddress = serverRequest.getHeader("X-FORWARDED-FOR");
 			if (remoteAddress == null || remoteAddress.trim().length() == 0) {
 				remoteAddress = serverRequest.getRemoteAddr();
 			}
-			logger.info("Remote Address: " + remoteAddress);
 			response = ctiService.getDispositionCount(request, remoteAddress);
 		} catch (Exception e) {
 			logger.error("getDispositionCount failed with error " + e.getMessage(), e);
