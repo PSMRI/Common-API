@@ -386,29 +386,62 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 		return users.get(0);
 	}
 
+
 	@Override
-	public LoginResponseModel userAuthenticateV1(LoginRequestModel loginRequest, String ipAddress, String hostName)
-			throws Exception {
+
+
+	public LoginResponseModel userAuthenticateV1(LoginRequestModel loginRequest,
+												 String ipAddress, String hostName) throws Exception {
+
 		LoginResponseModel loginResponseModel = null;
-		List<User> users = iEMRUserRepositoryCustom.findByUserName(loginRequest.getUserName());
+
+		List<User> users = iEMRUserRepositoryCustom
+				.findByUserName(loginRequest.getUserName());
+
 		if (users.size() == 1) {
-			User user = users.get(0);
+
+			User user = users.get(0);   // ✅ FIRST declare user
+
+			// ✅ THEN check failed attempts
+			Integer failedAttempt = user.getFailedAttempt();
+
+			if (failedAttempt != null && failedAttempt >= 5) {
+				throw new IEMRException(
+						"Your account has been locked. You can try tomorrow or connect to the administrator."
+				);
+			}
+
 			try {
-				if (!securePassword.validatePasswordExisting(loginRequest.getPassword(), user.getPassword())) {
+				if (!securePassword.validatePasswordExisting(
+						loginRequest.getPassword(),
+						user.getPassword())) {
+
+					int currentAttempt =
+							user.getFailedAttempt() == null ? 0 : user.getFailedAttempt();
+
+					currentAttempt++;
+					user.setFailedAttempt(currentAttempt);
+					iEMRUserRepositoryCustom.save(user);
+
 					throw new IEMRException("Invalid username or password");
 				}
+
 			} catch (Exception e) {
 				throw new IEMRException("Invalid username or password");
 			}
-			loginResponseModel = userMapper.userDataToLoginResponse(user);
-			logger.info("Login response is " + loginResponseModel.toString());
-			List<UserServiceRoleMapping> userServiceRoleMappings = getUserServiceRoleMapping(
-					loginResponseModel.getUserID());
-			loginResponseModel
-					.setUserServiceRoleMappings(userServiceRoleMapper.userRoleToLoginUserRole(userServiceRoleMappings));
 
-			// loginResponseModel.setHostName(hostName);
-			// loginResponseModel.setIpAddress(ipAddress);
+			// ✅ reset on success
+			user.setFailedAttempt(0);
+			iEMRUserRepositoryCustom.save(user);
+
+			loginResponseModel = userMapper.userDataToLoginResponse(user);
+
+			List<UserServiceRoleMapping> userServiceRoleMappings =
+					getUserServiceRoleMapping(loginResponseModel.getUserID());
+
+			loginResponseModel.setUserServiceRoleMappings(
+					userServiceRoleMapper.userRoleToLoginUserRole(userServiceRoleMappings));
+
 		} else {
 			throw new IEMRException("Invalid username or password");
 		}

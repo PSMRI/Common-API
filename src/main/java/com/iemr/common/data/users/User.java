@@ -25,6 +25,7 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Set;
+import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -82,7 +83,7 @@ public class User implements Serializable  {
 	@JoinColumn(updatable = false, insertable = false, name = "userID", referencedColumnName = "userID")
 	private Set<UserLangMapping> m_UserLangMappings;
 
-	@OneToMany(mappedBy = "mUser", fetch = FetchType.EAGER)
+	@OneToMany(mappedBy = "m_User", fetch = FetchType.EAGER)
 	@Transient
 	@Expose
 	private Set<FeedbackDetails> feedbackDetails;
@@ -208,6 +209,10 @@ public class User implements Serializable  {
 	@Expose
 	@Column(name = "failed_attempt")
 	private Integer failedAttempt;
+
+	/* @Expose
+	@Column(name="lock_until")
+	private LocalDateTime lockUntil; */
 
 	@Expose
 	@Column(name = "dhistoken")
