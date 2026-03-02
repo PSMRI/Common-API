@@ -52,6 +52,8 @@ import com.iemr.common.data.cti.CampaignNames;
 import com.iemr.common.data.cti.CampaignRole;
 import com.iemr.common.data.cti.CampaignSkills;
 import com.iemr.common.data.cti.CustomerLanguage;
+import com.iemr.common.data.cti.DispositionCountRequest;
+import com.iemr.common.data.cti.DispositionCountResponse;
 import com.iemr.common.data.cti.TransferCall;
 import com.iemr.common.repository.callhandling.BeneficiaryCallRepository;
 import com.iemr.common.repository.callhandling.IEMRCalltypeRepositoryImplCustom;
@@ -962,7 +964,9 @@ public class CTIServiceImpl implements CTIService {
 
 	@Override
 	public String callPostUrl(String urlRequest, String Json) {
+		logger.info("From call post URL method.. URL: " + urlRequest + " Json: " + Json);
 		String result = httpUtils.post(urlRequest, Json);
+		logger.info("From call post URL method.. result: " + result);
 		return result;
 	}
 
@@ -1084,4 +1088,27 @@ public class CTIServiceImpl implements CTIService {
 
 		return result;
 	}
+
+	@Override  
+public OutputResponse getDispositionCount(String request, String ipAddress) throws IEMRException, JSONException, JsonMappingException, JsonProcessingException {  
+      
+    OutputResponse output = new OutputResponse();  
+    ObjectMapper objectMapper = new ObjectMapper();  
+    String ctiURI = ConfigProperties.getPropertyByName("get-disposition-count-URL");  
+    String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");  
+    DispositionCountRequest dispositionRequest = objectMapper.readValue(request, DispositionCountRequest.class);  
+      
+    ctiURI = ctiURI.replace("CTI_SERVER", serverURL);  
+      
+    String response = this.callPostUrl(ctiURI, objectMapper.writeValueAsString(dispositionRequest));  
+      
+    DispositionCountResponse result = objectMapper.readValue(response, DispositionCountResponse.class);
+
+    if (result.getCode() != null && result.getCode().toString().equals(CUSTOM_API_SUCCESS)) {
+        output.setResponse(objectMapper.writeValueAsString(result));
+    } else {
+        output.setError(OutputResponse.GENERIC_FAILURE, result.getFailure_reason(), result.getStatus());
+    }  
+    return output;  
+}
 }
