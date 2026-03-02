@@ -22,8 +22,8 @@
 /**
  * REST controller exposing application version and build metadata.
  * <p>
- * Provides the <code>/version</code> endpoint which returns the
- * Git commit hash and build timestamp in a standardized JSON format.
+ * Provides the <code>/version</code> endpoint which returns Git metadata
+ * in a standardized JSON format consistent across all AMRIT APIs.
  * </p>
  *
  * @author Vaishnav Bhosale
@@ -31,12 +31,16 @@
 package com.iemr.common.controller.version;
 
 import java.io.InputStream;
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,28 +50,39 @@ public class VersionController {
 
 	private final Logger logger =
 			LoggerFactory.getLogger(this.getClass().getSimpleName());
+	
+	private static final String UNKNOWN_VALUE = "unknown";
 
-	@Operation(summary = "Get version")
-	@RequestMapping(value = "/version", method = { RequestMethod.GET })
-	public VersionInfo versionInformation() {
-
-		Properties properties = new Properties();
-
-		try (InputStream is = getClass()
-				.getClassLoader()
-				.getResourceAsStream("git.properties")) {
-
-			if (is != null) {
-				properties.load(is);
-			}
-
+	@Operation(summary = "Get version information")
+	@GetMapping(value = "/version", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Map<String, String>> versionInformation() {
+		Map<String, String> response = new LinkedHashMap<>();
+		try {
+			logger.info("version Controller Start");
+			Properties gitProperties = loadGitProperties();
+			response.put("buildTimestamp", gitProperties.getProperty("git.build.time", UNKNOWN_VALUE));
+			response.put("version", gitProperties.getProperty("git.build.version", UNKNOWN_VALUE));
+			response.put("branch", gitProperties.getProperty("git.branch", UNKNOWN_VALUE));
+			response.put("commitHash", gitProperties.getProperty("git.commit.id.abbrev", UNKNOWN_VALUE));
 		} catch (Exception e) {
-			logger.error("Error reading git.properties", e);
+			logger.error("Failed to load version information", e);
+			response.put("buildTimestamp", UNKNOWN_VALUE);
+			response.put("version", UNKNOWN_VALUE);
+			response.put("branch", UNKNOWN_VALUE);
+			response.put("commitHash", UNKNOWN_VALUE);
 		}
+		logger.info("version Controller End");
+		return ResponseEntity.ok(response);
+	}
 
-		return new VersionInfo(
-				properties.getProperty("git.commit.id.abbrev", "unknown"),
-				properties.getProperty("git.build.time", "unknown")
-		);
+	private Properties loadGitProperties() throws IOException {
+		Properties properties = new Properties();
+		try (InputStream input = getClass().getClassLoader()
+				.getResourceAsStream("git.properties")) {
+			if (input != null) {
+				properties.load(input);
+			}
+		}
+		return properties;
 	}
 }
