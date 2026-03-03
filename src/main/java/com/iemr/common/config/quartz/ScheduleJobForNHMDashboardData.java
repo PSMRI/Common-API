@@ -42,15 +42,22 @@ public class ScheduleJobForNHMDashboardData implements Job {
 	@Autowired
 	private NHM_DashboardService nhmDashboardService;
 
-	@Override
-	public void execute(JobExecutionContext arg0) throws JobExecutionException {
-		logger.info("Started job for NHM dashboard data pull from cti " + arg0.getClass().getName());
-		try {
-			String s = nhmDashboardService.pull_NHM_Data_CTI();
-			logger.info(s);
-		} catch (Exception e) {
-			logger.error(e.getLocalizedMessage());
-		}
-		logger.info("Completed job for NHM dashboard data pull from cti " + arg0.getClass().getName());
-	}
+	 @Override
+public void execute(JobExecutionContext arg0) throws JobExecutionException {
+
+    logger.info("Started job for NHM dashboard data pull from cti " + arg0.getClass().getName());
+
+    if (nhmDashboardService == null) {
+        logger.error("NHM_DashboardService bean is not initialized. Skipping execution.");
+        return;
+    }
+
+    try {
+        String s = nhmDashboardService.pull_NHM_Data_CTI();
+        logger.info(s);
+    } catch (Exception e) {
+        logger.error("Error while pulling NHM dashboard data", e);
+    }
+
+    logger.info("Completed job for NHM dashboard data pull from cti " + arg0.getClass().getName());
 }
