@@ -19,13 +19,11 @@ jobs:
 
       - name: Validate commit messages
         run: |
-          git log \
-            --no-merges \
-            --pretty=format:"%H" \
-            "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}" \
-          | while IFS= read -r sha; do
-              tmp=$(mktemp)
-              git log -1 --pretty=format:"%B" "$sha" > "$tmp"
-              npx --yes @commitlint/cli@20.4.3 --edit "$tmp" || exit 1
-              rm "$tmp"
-            done
+          set -eo pipefail
+          commits=$(git log --no-merges --pretty=format:"%H" "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}")
+          for sha in $commits; do
+            tmp=$(mktemp)
+            git log -1 --pretty=format:"%B" "$sha" > "$tmp"
+            npx --yes @commitlint/cli@20.4.3 --edit "$tmp"
+            rm "$tmp"
+          done
