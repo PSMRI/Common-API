@@ -255,7 +255,7 @@ public class IEMRAdminController {
 					// User details
 					JSONObject userObj = new JSONObject();
 					userObj.put("userId", loggedInUser.getUserID());
-					userObj.put("employeeId", loggedInUser.getAgentID() != null ? loggedInUser.getAgentID() : JSONObject.NULL);
+					userObj.put("employeeId", loggedInUser.getEmployeeID() != null ? loggedInUser.getEmployeeID() : JSONObject.NULL);
 					userObj.put("role", userRoleName);
 					String first = loggedInUser.getFirstName() != null ? loggedInUser.getFirstName() : "";
 					String last = loggedInUser.getLastName() != null ? loggedInUser.getLastName() : "";

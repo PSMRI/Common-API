@@ -235,6 +235,7 @@ public class AshaSupervisorLoginService {
 			JSONObject asha = new JSONObject();
 			asha.put("userId", row[0]);
 			asha.put("fullName", fullName(row[1], row[2]));
+			asha.put("employeeId", str(row[6]).isEmpty() ? JSONObject.NULL : str(row[6]));
 			asha.put("facilityId", facilityID);
 			asha.put("facilityName", str(row[4]));
 			asha.put("facilityType", str(row[5]));

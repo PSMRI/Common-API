@@ -18,7 +18,8 @@ public interface AshaSupervisorLoginRepo extends CrudRepository<AshaSupervisorMa
 	// API 1: All ASHAs mapped to a supervisor with facility info
 	@Query(value = "SELECT DISTINCT asm.ashaUserID, u.FirstName, u.LastName, "
 			+ "f.FacilityID, f.FacilityName, "
-			+ "COALESCE(ft.FacilityTypeName,'') AS facilityTypeName "
+			+ "COALESCE(ft.FacilityTypeName,'') AS facilityTypeName, "
+			+ "COALESCE(u.EmployeeID,'') AS employeeID "
 			+ "FROM asha_supervisor_mapping asm "
 			+ "JOIN m_User u ON u.UserID = asm.ashaUserID AND u.Deleted = false "
 			+ "JOIN m_facility f ON f.FacilityID = asm.facilityID AND f.Deleted = false "
@@ -29,7 +30,7 @@ public interface AshaSupervisorLoginRepo extends CrudRepository<AshaSupervisorMa
 
 	// API 2: ASHAs at a specific facility for a supervisor with user details
 	@Query(value = "SELECT DISTINCT asm.ashaUserID, u.FirstName, u.LastName, "
-			+ "COALESCE(u.AgentID,'') AS agentID, "
+			+ "COALESCE(u.EmployeeID,'') AS employeeID, "
 			+ "COALESCE(u.EmergencyContactNo,'') AS mobile, "
 			+ "COALESCE(g.GenderName,'') AS gender "
 			+ "FROM asha_supervisor_mapping asm "
