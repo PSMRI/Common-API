@@ -26,6 +26,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -90,6 +91,9 @@ public class CTIServiceImpl implements CTIService {
 	@Autowired
 	private CTIService ctiService;
 
+	@Value("${cti-server-ip}")
+	private String serverURL;
+	
 	@Autowired
 	private IEMRCalltypeRepositoryImplCustom iemrCalltypeRepositoryImplCustom;
 
@@ -1083,7 +1087,8 @@ public OutputResponse getDispositionCount(String request, String ipAddress) thro
     OutputResponse output = new OutputResponse();  
     ObjectMapper objectMapper = new ObjectMapper();  
     String ctiURI = ConfigProperties.getPropertyByName("get-disposition-count-URL");  
-    String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");  
+    // String serverURL = ConfigProperties.getPropertyByName("cti-server-ip"); 
+	 
     DispositionCountRequest dispositionRequest = objectMapper.readValue(request, DispositionCountRequest.class);  
       
     ctiURI = ctiURI.replace("CTI_SERVER", serverURL);  

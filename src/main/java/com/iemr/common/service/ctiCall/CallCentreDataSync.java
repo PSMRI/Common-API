@@ -24,5 +24,5 @@ package com.iemr.common.service.ctiCall;
 public interface CallCentreDataSync {
 	public void ctiDataSync();
 	String callUrl(String urlRequest);
-
+	void syncCZCallData(Long benCallID);
 }

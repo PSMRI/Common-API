@@ -107,6 +107,7 @@ import com.iemr.common.repository.userbeneficiarydata.TitleRepository;
 import com.iemr.common.repository.users.ProviderServiceMapRepository;
 import com.iemr.common.service.beneficiary.IdentityBeneficiaryService;
 import com.iemr.common.service.cti.CTIService;
+import com.iemr.common.service.ctiCall.CallCentreDataSync;
 import com.iemr.common.utils.config.ConfigProperties;
 import com.iemr.common.utils.exception.IEMRException;
 import com.iemr.common.utils.mapper.InputMapper;
@@ -270,6 +271,9 @@ public class BeneficiaryCallServiceImpl implements BeneficiaryCallService {
 	}
 
 	@Autowired
+	private CallCentreDataSync callCentreDataSync;
+
+	@Autowired
 	DialPreferenceManualRepository dialPreferenceManualRepository;
 
 	private InputMapper inputMapper = new InputMapper();
@@ -414,6 +418,9 @@ public class BeneficiaryCallServiceImpl implements BeneficiaryCallService {
 				Thread.sleep(1000);
 				disconnectCallInCTI(benificiaryCall);
 			}
+
+			// Sync CZ call data (duration, start/end times, recording) immediately
+			syncCZCallDataAsync(benificiaryCall.getBenCallID());
 		}
 
 		return updateCounts;
@@ -452,6 +459,9 @@ public class BeneficiaryCallServiceImpl implements BeneficiaryCallService {
 		if (benificiaryCall.getEndCall()) {
 			updateCallDisposition(benificiaryCall, benificiaryCall.getAgentIPAddress());
 			disconnectCallInCTI(benificiaryCall);
+
+			// Sync CZ call data (duration, start/end times, recording) immediately
+			syncCZCallDataAsync(benificiaryCall.getBenCallID());
 		}
 
 		return updateCounts;
@@ -495,6 +505,15 @@ public class BeneficiaryCallServiceImpl implements BeneficiaryCallService {
 //		} catch (Exception e) {
 //			logger.error("updateFileRecordingsPath failed with error " + e.getMessage(), e);
 //		}
+	}
+
+	@Async
+	private void syncCZCallDataAsync(Long benCallID) {
+		try {
+			callCentreDataSync.syncCZCallData(benCallID);
+		} catch (Exception e) {
+			logger.error("syncCZCallDataAsync failed for benCallID " + benCallID + " with error " + e.getMessage(), e);
+		}
 	}
 
 	// @Async

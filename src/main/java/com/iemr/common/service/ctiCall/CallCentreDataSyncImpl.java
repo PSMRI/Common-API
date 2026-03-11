@@ -37,6 +37,7 @@ import org.springframework.stereotype.Service;
 import com.iemr.common.data.callhandling.BeneficiaryCall;
 import com.iemr.common.data.report.CTIData;
 import com.iemr.common.data.report.CTIResponse;
+import com.iemr.common.repository.callhandling.BeneficiaryCallRepository;
 import com.iemr.common.repository.report.CallReportRepo;
 import com.iemr.common.service.cti.CTIService;
 import com.iemr.common.utils.config.ConfigProperties;
@@ -52,6 +53,8 @@ public class CallCentreDataSyncImpl implements CallCentreDataSync {
 
 	@Autowired
 	private CallReportRepo callReportRepo;
+	@Autowired
+	private BeneficiaryCallRepository beneficiaryCallRepository;
 	@Value("${cti-server-ip}")
 	private String ctiServerIP;
 
@@ -154,6 +157,63 @@ public class CallCentreDataSyncImpl implements CallCentreDataSync {
 					}
 				}
 			}
+		}
+	}
+
+	@Override
+	public void syncCZCallData(Long benCallID) {
+		try {
+			BeneficiaryCall call = beneficiaryCallRepository.findByBenCallID(benCallID);
+			if (call == null || call.getCallID() == null || call.getAgentID() == null || call.getPhoneNo() == null) {
+				logger.info("syncCZCallData: insufficient data for benCallID " + benCallID);
+				return;
+			}
+
+			// Fetch recording path
+			String recordingPath = null;
+			try {
+				JSONObject requestFile = new JSONObject();
+				requestFile.put("agent_id", call.getAgentID());
+				requestFile.put("session_id", call.getCallID());
+
+				OutputResponse response1 = ctiService.getVoiceFileNew(requestFile.toString(), "extra parameter");
+				if (response1 != null && response1.getStatusCode() == 200) {
+					CTIResponse ctiResponsePath = InputMapper.gson().fromJson(response1.getData(), CTIResponse.class);
+					String recordingFilePath = ctiResponsePath.getResponse().toString();
+					if (recordingFilePath.length() > 20)
+						recordingPath = recordingFilePath.substring(20);
+				}
+			} catch (Exception e) {
+				logger.error("syncCZCallData: voice file fetch failed for benCallID " + benCallID, e);
+			}
+
+			// Fetch CZ call duration and times from CTI CDR API
+			String url = this.callinfoapiURL.replace("CTI_SERVER", ctiServerIP)
+					.replace("AGENT_ID", call.getAgentID())
+					.replace("SESSION_ID", call.getCallID())
+					.replace("PHONE_NO", call.getPhoneNo());
+
+			logger.info("syncCZCallData: calling CTI API url: " + url);
+			String ctiResponse = this.callUrl(url);
+			logger.info("syncCZCallData: CTI_CDR_CALL_INFO returned " + ctiResponse);
+
+			CTIData data = InputMapper.gson().fromJson(ctiResponse, CTIData.class);
+			CTIResponse model = data.getResponse();
+
+			if (model.getResponse_code().equals("1")) {
+				String callDuration = model.getCall_duration();
+				if (callDuration != null)
+					call.setCZcallDuration(Integer.parseInt(callDuration));
+				call.setCZcallEndTime(model.getCall_end_date_time());
+				call.setCZcallStartTime(model.getCall_start_date_time());
+			}
+			if (recordingPath != null)
+				call.setRecordingPath(recordingPath);
+
+			callReportRepo.save(call);
+			logger.info("syncCZCallData: saved CZ data for benCallID " + benCallID);
+		} catch (Exception e) {
+			logger.error("syncCZCallData failed for benCallID " + benCallID + " with error " + e.getMessage(), e);
 		}
 	}
 }
