@@ -25,6 +25,7 @@ import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import org.slf4j.Logger;
@@ -76,7 +77,7 @@ import com.iemr.common.repository.userbeneficiarydata.GenderRepository;
 import com.iemr.common.repository.userbeneficiarydata.MaritalStatusRepository;
 import com.iemr.common.repository.userbeneficiarydata.SexualOrientationRepository;
 import com.iemr.common.repository.userbeneficiarydata.TitleRepository;
-import com.iemr.common.utils.mapper.OutputMapper;
+import com.iemr.common.utils.exception.IEMRException;
 
 /**
  * 
@@ -198,7 +199,7 @@ public class IEMRSearchUserServiceImpl implements IEMRSearchUserService {
 				JsonNode otherFieldsNode = objectMapper.readTree(beneficiaryModel.getOtherFields());
 
 				// Convert createdDate to a string
-				String createdDateString = beneficiaryModel.getCreatedDate().toString(); 
+				String createdDateString = beneficiaryModel.getCreatedDate().toString();
 
 				// Add createdDate to the JSON node
 				((ObjectNode) otherFieldsNode).put("createdDate", createdDateString);
@@ -219,10 +220,10 @@ public class IEMRSearchUserServiceImpl implements IEMRSearchUserService {
 		List<BeneficiaryModel> beneficiaryList = new ArrayList<BeneficiaryModel>();
 		// search patient by ben id, call Identity API
 		List<BeneficiariesDTO> listBen = null;
-		if(healthID.contains("@")) {
+		if (healthID.contains("@")) {
 			listBen = identityBeneficiaryService.getBeneficiaryListByHealthID_ABHAAddress(healthID,
 					auth, is1097);
-		}else {
+		} else {
 			String healthIdNumber = getHealthId(healthID);
 			listBen = identityBeneficiaryService.getBeneficiaryListByHealthIDNo_ABHAIDNo(healthIdNumber, auth, is1097);
 		}
@@ -232,6 +233,7 @@ public class IEMRSearchUserServiceImpl implements IEMRSearchUserService {
 		}
 		return beneficiaryList;
 	}
+
 	private String getHealthId(String healthID) {
 		String healthIdNumber = null;
 		if (null != healthID) {
@@ -249,6 +251,7 @@ public class IEMRSearchUserServiceImpl implements IEMRSearchUserService {
 		}
 		return healthIdNumber;
 	}
+
 	// search patient by healthidNo / ABHA Id No
 	@Override
 	public List<BeneficiaryModel> userExitsCheckWithHealthIdNo_ABHAIdNo(String healthIDNo, String auth, Boolean is1097)
@@ -322,6 +325,90 @@ public class IEMRSearchUserServiceImpl implements IEMRSearchUserService {
 
 	}
 
+	/**
+	 * Universal search using Elasticsearch
+	 */
+	@Override
+	public String searchUser(String searchQuery, Integer userId, String auth, Boolean is1097) throws Exception {
+
+		try {
+			if (searchQuery == null || searchQuery.trim().isEmpty()) {
+				throw new IEMRException("Search query is required");
+			}
+
+			logger.info("Universal search with query: {}, userId: {}", searchQuery, userId);
+
+			Map<String, Object> response = identityBeneficiaryService.searchBeneficiariesUsingES(
+					searchQuery, userId, auth, is1097);
+
+			ObjectMapper mapper = new ObjectMapper();
+			return mapper.writeValueAsString(response);
+
+		} catch (Exception e) {
+			logger.error("Error in universal search", e);
+			throw new Exception("Error searching beneficiaries: " + e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * Advanced search using Elasticsearch with multiple criteria
+	 */
+
+	@Override
+	public String findBeneficiaryES(
+			BeneficiaryModel i_beneficiary,
+			Integer userId,
+			String auth) throws Exception {
+
+		try {
+			IdentitySearchDTO identitySearchDTO = identityBenEditMapper.getidentitysearchModel(i_beneficiary);
+
+			if (i_beneficiary.getDOB() != null) {
+				identitySearchDTO.setDob(i_beneficiary.getDOB());
+			}
+
+			if (i_beneficiary.getHouseHoldID() != null) {
+				identitySearchDTO.setHouseHoldID(i_beneficiary.getHouseHoldID());
+			}
+
+			if (i_beneficiary.getIsD2D() != null) {
+				identitySearchDTO.setIsD2D(i_beneficiary.getIsD2D());
+			}
+
+			if (i_beneficiary.getBenPhoneMaps() != null
+					&& !i_beneficiary.getBenPhoneMaps().isEmpty()) {
+				identitySearchDTO.setContactNumber(
+						i_beneficiary.getBenPhoneMaps().get(0).getPhoneNo());
+			}
+
+			if (i_beneficiary.getBeneficiaryID() != null
+					&& !i_beneficiary.getBeneficiaryID().isEmpty()) {
+				identitySearchDTO.setBeneficiaryId(
+						new BigInteger(i_beneficiary.getBeneficiaryID()));
+			}
+
+			i_beneficiary.setIs1097(Boolean.TRUE.equals(i_beneficiary.getIs1097()));
+
+			Gson gson = new GsonBuilder()
+					.setDateFormat("yyyy-MM-dd")
+					.create();
+
+			String requestJson = gson.toJson(identitySearchDTO);
+
+			Map<String, Object> response = identityBeneficiaryService.searchBeneficiaryListES(
+					requestJson,
+					auth,
+					i_beneficiary.getIs1097());
+
+			ObjectMapper mapper = new ObjectMapper();
+			return mapper.writeValueAsString(response);
+
+		} catch (Exception e) {
+			logger.error("Error in ES advance search", e);
+			throw new Exception("Error searching beneficiaries using ES", e);
+		}
+	}
+
 	// Advance search
 	@Override
 	public String findBeneficiary(BeneficiaryModel i_beneficiary, String auth) throws Exception {
@@ -364,7 +451,7 @@ public class IEMRSearchUserServiceImpl implements IEMRSearchUserService {
 				+ (beneficiaryList != null ? beneficiaryList.size() : "No Beneficiary Found"));
 		ObjectMapper mapper = new ObjectMapper();
 		return mapper.writeValueAsString(beneficiaryList);
-		
+
 	}
 
 	// get response mapper
@@ -374,7 +461,7 @@ public class IEMRSearchUserServiceImpl implements IEMRSearchUserService {
 		benDetailForOutboundDTOList.forEach(beneficiaryModel -> {
 
 			BeneficiaryModel beneficiary = benCompleteMapper.benDetailForOutboundDTOToIBeneficiary(beneficiaryModel);
-			if(null != beneficiaryModel && null != beneficiaryModel.getBeneficiaryDetails()) {
+			if (null != beneficiaryModel && null != beneficiaryModel.getBeneficiaryDetails()) {
 				beneficiary.setCommunityName(beneficiaryModel.getBeneficiaryDetails().getCommunity());
 				beneficiary.setReligion(beneficiaryModel.getBeneficiaryDetails().getReligion());
 				beneficiary.setReligionName(beneficiaryModel.getBeneficiaryDetails().getReligion());

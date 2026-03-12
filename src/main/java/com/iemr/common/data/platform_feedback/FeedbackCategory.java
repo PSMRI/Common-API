@@ -19,7 +19,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see https://www.gnu.org/licenses/.
  */
-package com.iemr.common.model;
+package com.iemr.common.data.platform_feedback;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;

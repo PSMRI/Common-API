@@ -21,7 +21,9 @@
 */
 package com.iemr.common.mapper.sms;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
+import java.sql.Timestamp;
 
 import org.mapstruct.IterableMapping;
 import org.mapstruct.Mapper;
@@ -33,6 +35,7 @@ import com.iemr.common.data.sms.SMSParameters;
 import com.iemr.common.data.sms.SMSParametersMap;
 import com.iemr.common.data.sms.SMSTemplate;
 import com.iemr.common.data.sms.SMSType;
+import com.iemr.common.dto.sms.SMSTemplateDTO;
 import com.iemr.common.model.sms.CreateSMSRequest;
 import com.iemr.common.model.sms.FullSMSTemplateResponse;
 import com.iemr.common.model.sms.SMSParameterMapModel;
@@ -110,4 +113,25 @@ public interface SMSMapper
 	@IterableMapping(elementTargetType = FullSMSTemplateResponse.class)
 	List<FullSMSTemplateResponse> smsTemplateToFullResponse(List<SMSTemplate> smsTemplate);
 
+	@Mapping(source = "smsTemplateID", target = "smsTemplateID")
+	@Mapping(source = "smsTemplateName", target = "smsTemplateName")
+	@Mapping(source = "smsTemplate", target = "smsTemplate")
+	@Mapping(source = "dltTemplateId", target = "dltTemplateId")
+	@Mapping(source = "smsSenderID", target = "smsSenderID")
+	@Mapping(source = "smsTypeID", target = "smsTypeID")
+	@Mapping(source = "providerServiceMapID", target = "providerServiceMapID")
+	@Mapping(source = "deleted", target = "deleted")
+	@Mapping(source = "createdBy", target = "createdBy")
+	@Mapping(source = "modifiedBy", target = "modifiedBy")
+	@Mapping(target = "createdDate", expression = "java(formatDate(template.getCreatedDate()))")
+	@Mapping(target = "lastModDate", expression = "java(formatDate(template.getLastModDate()))")
+	SMSTemplateDTO smsTemplateToDTO(SMSTemplate template);
+
+	default String formatDate(Timestamp timestamp) {
+		if (timestamp == null) {
+			return null;
+		}
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+		return sdf.format(timestamp);
+	}
 }

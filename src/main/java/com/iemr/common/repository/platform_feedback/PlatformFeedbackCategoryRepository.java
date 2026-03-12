@@ -21,11 +21,11 @@
  */
 package com.iemr.common.repository.platform_feedback;
 
-import com.iemr.common.model.FeedbackCategory;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import com.iemr.common.data.platform_feedback.FeedbackCategory;
 
 @Repository
 public interface PlatformFeedbackCategoryRepository extends JpaRepository<FeedbackCategory, String> {

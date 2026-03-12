@@ -33,8 +33,6 @@ public class EmployeeSignatureServiceImpl implements EmployeeSignatureService {
 	@Autowired
 	EmployeeSignatureRepo employeeSignatureRepo;
 
-	
-
 	@Override
 	public EmployeeSignature fetchSignature(Long userSignID) {
 		// TODO Auto-generated method stub
@@ -44,12 +42,12 @@ public class EmployeeSignatureServiceImpl implements EmployeeSignatureService {
 	@Override
 	public EmployeeSignature fetchActiveSignature(Long userSignID) {
 		// New method - fetches only non-deleted records
-		return employeeSignatureRepo.findOneByUserIDAndDeleted(userSignID, false);
+		return employeeSignatureRepo.findOneByUserID(userSignID);
 	}
 
 	public Boolean existSignature(Long userID) {
 		// TODO Auto-generated method stub
-		return employeeSignatureRepo.countByUserIDAndSignatureNotNull(userID)>0;
+		return employeeSignatureRepo.countByUserIDAndSignatureNotNull(userID) > 0;
 	}
 
 }

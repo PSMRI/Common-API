@@ -123,6 +123,8 @@ public interface IEMRAdminUserService
 
 	List<User> getUserIdbyUserName(String userName) throws IEMRException;
 
+	List<User> findUserIdByUserName(String userName) throws IEMRException;
+
 
 	
 }
