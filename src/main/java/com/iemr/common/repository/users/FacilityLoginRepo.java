@@ -35,7 +35,8 @@ public interface FacilityLoginRepo extends CrudRepository<AshaSupervisorMapping,
 	List<Object[]> getFacilityDetails(@Param("facilityIDs") List<Integer> facilityIDs);
 
 	// ASHA login: get supervisor details
-	@Query(value = "SELECT asm.supervisorUserID, u.FirstName, u.LastName, u.ContactNo "
+	@Query(value = "SELECT asm.supervisorUserID, u.FirstName, u.LastName, u.ContactNo, "
+			+ "COALESCE(u.EmployeeID,'') AS employeeID "
 			+ "FROM asha_supervisor_mapping asm "
 			+ "JOIN m_User u ON u.UserID = asm.supervisorUserID "
 			+ "WHERE asm.ashaUserID = :ashaUserID AND asm.deleted = false "
@@ -53,7 +54,8 @@ public interface FacilityLoginRepo extends CrudRepository<AshaSupervisorMapping,
 	List<Object[]> getVillagesForFacilities(@Param("facilityIDs") List<Integer> facilityIDs);
 
 	// ASHA login: get peers at same facility (ANM, CHO, etc.)
-	@Query(value = "SELECT DISTINCT usrm.UserID, u.FirstName, u.LastName, r.RoleName "
+	@Query(value = "SELECT DISTINCT usrm.UserID, u.FirstName, u.LastName, r.RoleName, "
+			+ "COALESCE(u.EmployeeID,'') AS employeeID "
 			+ "FROM m_UserServiceRoleMapping usrm "
 			+ "JOIN m_User u ON u.UserID = usrm.UserID "
 			+ "JOIN m_Role r ON r.RoleID = usrm.RoleID "

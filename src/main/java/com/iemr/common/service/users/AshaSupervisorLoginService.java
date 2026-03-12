@@ -88,6 +88,7 @@ public class AshaSupervisorLoginService {
 			supervisor.put("userId", sRow[0]);
 			supervisor.put("fullName", fullName(sRow[1], sRow[2]));
 			supervisor.put("mobile", str(sRow[3]));
+			supervisor.put("employeeId", str(sRow[4]).isEmpty() ? JSONObject.NULL : str(sRow[4]));
 			result.put("supervisor", supervisor);
 		} else {
 			result.put("supervisor", JSONObject.NULL);
@@ -102,6 +103,7 @@ public class AshaSupervisorLoginService {
 				peer.put("userId", pRow[0]);
 				peer.put("fullName", fullName(pRow[1], pRow[2]));
 				peer.put("role", str(pRow[3]));
+				peer.put("employeeId", str(pRow[4]).isEmpty() ? JSONObject.NULL : str(pRow[4]));
 				peers.put(peer);
 			}
 		}
