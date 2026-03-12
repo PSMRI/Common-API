@@ -22,6 +22,7 @@
 package com.iemr.common.controller.beneficiaryConsent;
 
 import com.iemr.common.data.beneficiaryConsent.BeneficiaryConsentRequest;
+import com.iemr.common.exception.OtpRateLimitException;
 import com.iemr.common.service.beneficiaryOTPHandler.BeneficiaryOTPHandler;
 import com.iemr.common.utils.mapper.InputMapper;
 import com.iemr.common.utils.response.OutputResponse;
@@ -58,7 +59,9 @@ public class BeneficiaryConsentController {
             logger.info(success.toString());
             response.setResponse(success);
 
-
+        } catch (OtpRateLimitException e) {
+            logger.warn("OTP rate limit hit for sendConsent: " + e.getMessage());
+            response.setError(429, e.getMessage());
         } catch (Exception e) {
             response.setError(500, "error : " + e);
         }
@@ -105,6 +108,9 @@ public class BeneficiaryConsentController {
             else
                 response.setError(500, "failure");
 
+        } catch (OtpRateLimitException e) {
+            logger.warn("OTP rate limit hit for resendConsent: " + e.getMessage());
+            response.setError(429, e.getMessage());
         } catch (Exception e) {
             logger.error("error in re-sending Consent : " + e);
             response.setError(500, "error : " + e);
