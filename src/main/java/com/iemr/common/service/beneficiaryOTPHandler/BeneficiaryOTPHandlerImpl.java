@@ -32,6 +32,7 @@ import com.iemr.common.data.sms.SMSType;
 import com.iemr.common.repository.sms.SMSTemplateRepository;
 import com.iemr.common.repository.sms.SMSTypeRepository;
 import com.iemr.common.service.otp.OTPHandler;
+import com.iemr.common.service.otp.OtpRateLimiterService;
 import com.iemr.common.service.users.IEMRAdminUserServiceImpl;
 import com.iemr.common.utils.config.ConfigProperties;
 import com.iemr.common.utils.http.HttpUtils;
@@ -59,6 +60,8 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
     HttpUtils httpUtils;
     @Autowired
     private IEMRAdminUserServiceImpl iEMRAdminUserServiceImpl;
+    @Autowired
+    private OtpRateLimiterService otpRateLimiterService;
 
     final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
     @Autowired
@@ -107,6 +110,7 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
      */
     @Override
     public String sendOTP(BeneficiaryConsentRequest obj) throws Exception {
+        otpRateLimiterService.checkRateLimit(obj.getMobNo());
         int otp = generateOTP(obj.getMobNo());
         return sendSMS(otp, obj);
     }
@@ -141,6 +145,7 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
      */
     @Override
     public String resendOTP(BeneficiaryConsentRequest obj) throws Exception {
+        otpRateLimiterService.checkRateLimit(obj.getMobNo());
         int otp = generateOTP(obj.getMobNo());
         return sendSMS(otp, obj);
     }
