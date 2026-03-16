@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -903,9 +902,14 @@ public class CTIServiceImpl implements CTIService {
 		return output;
 	}
 
-	@Async
 	private void updateCallDisposition(TransferCall transferCall, String agentIP) {
 		try {
+			Boolean alreadySent = beneficiaryCallRepository.isDispositionAlreadySent(transferCall.getBenCallID());
+			if (Boolean.TRUE.equals(alreadySent)) {
+				logger.info("Disposition already sent to CTI for benCallID: " + transferCall.getBenCallID() + ", skipping duplicate");
+				return;
+			}
+
 			CallType callTypeData = iemrCalltypeRepositoryImplCustom.getCallTypeDetails(transferCall.getCallTypeID());
 			BeneficiaryCall callData = beneficiaryCallRepository.findCallDetails(transferCall.getBenCallID());
 			JSONObject dispRequestObj = new JSONObject();
@@ -913,11 +917,15 @@ public class CTIServiceImpl implements CTIService {
 			dispRequestObj.put("cust_disp", callTypeData.getCallType());
 			dispRequestObj.put("agent_id", callData.getAgentID());
 			dispRequestObj.put("category", callTypeData.getCallGroupType());
-			logger.info("call disposition log : " + ctiService
-					.setCallDisposition(dispRequestObj.toString(), transferCall.getAgentIPAddress()).toString());
 
+			logger.info("Sending disposition to CTI for benCallID: " + transferCall.getBenCallID()
+					+ ", sessionID: " + callData.getCallID() + ", agentID: " + callData.getAgentID());
+			String ctiResponse = ctiService.setCallDisposition(dispRequestObj.toString(), transferCall.getAgentIPAddress()).toString();
+			logger.info("CTI disposition response for benCallID " + transferCall.getBenCallID() + ": " + ctiResponse);
+
+			beneficiaryCallRepository.updateDispositionSentFlag(transferCall.getBenCallID());
 		} catch (Exception e) {
-			logger.error("updateCallDisposition failed with error " + e.getMessage(), e);
+			logger.error("updateCallDisposition failed for benCallID " + transferCall.getBenCallID() + " with error: " + e.getMessage(), e);
 		}
 	}
 

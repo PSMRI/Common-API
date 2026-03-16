@@ -245,6 +245,9 @@ public class BeneficiaryCall {
 	@Transient
 	private Boolean isTransfered;
 
+	@Column(name = "IsDispositionSentToCTI")
+	private Boolean isDispositionSentToCTI = false;
+
 	public BeneficiaryCall() {
 
 	}
