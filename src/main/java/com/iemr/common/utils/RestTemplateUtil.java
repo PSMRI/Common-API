@@ -39,6 +39,8 @@ public class RestTemplateUtil {
 		headers.add(HttpHeaders.AUTHORIZATION, authorization);
 		if (null != requestHeader.getHeader(Constants.JWT_TOKEN)) {
 			headers.add(Constants.JWT_TOKEN, requestHeader.getHeader(Constants.JWT_TOKEN));
+			headers.add(HttpHeaders.COOKIE, "Jwttoken=" + requestHeader.getHeader(Constants.JWT_TOKEN));
+
 		}
 		if (null != jwtTokenFromCookie) {
 			headers.add(HttpHeaders.COOKIE, "Jwttoken=" + jwtTokenFromCookie);
@@ -77,9 +79,10 @@ public class RestTemplateUtil {
 		if (null != jwtTokenFromCookie) {
 			headers.add(HttpHeaders.COOKIE, Constants.JWT_TOKEN + "=" + jwtTokenFromCookie);
 		} else if (null != requestHeader.getHeader(Constants.JWT_TOKEN)) {
-			headers.add(Constants.JWT_TOKEN, requestHeader.getHeader(Constants.JWT_TOKEN));
-		}
+			 headers.add(Constants.JWT_TOKEN, requestHeader.getHeader(Constants.JWT_TOKEN));
+			 headers.add(HttpHeaders.COOKIE, Constants.JWT_TOKEN + "=" + requestHeader.getHeader(Constants.JWT_TOKEN));
 
+		}
 	}
 
 }
