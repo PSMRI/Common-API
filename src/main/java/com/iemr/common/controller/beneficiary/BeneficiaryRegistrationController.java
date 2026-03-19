@@ -40,6 +40,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.context.annotation.Profile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -83,6 +84,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @RequestMapping({ "/beneficiary" })
 @RestController
+@Profile("!swagger")
 public class BeneficiaryRegistrationController {
 
 	private InputMapper inputMapper = new InputMapper();
