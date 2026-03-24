@@ -251,7 +251,9 @@ public class JwtUserIdValidationFilter implements Filter {
 				|| path.startsWith(contextPath + "/user/userLogout")
 				|| path.startsWith(contextPath + "/user/validateSecurityQuestionAndAnswer")
 				|| path.startsWith(contextPath + "/user/logOutUserFromConcurrentSession")
-				|| path.startsWith(contextPath + "/user/refreshToken");
+				|| path.startsWith(contextPath + "/user/refreshToken")
+				|| path.equals(contextPath + "/health")
+				|| path.equals(contextPath + "/version");
 	}
 
 	private String getJwtTokenFromCookies(HttpServletRequest request) {
