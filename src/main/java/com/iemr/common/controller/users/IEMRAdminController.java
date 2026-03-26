@@ -279,6 +279,16 @@ public class IEMRAdminController {
 			String userId = claims.get("userId", String.class);
 			User user = iemrAdminUserServiceImpl.getUserById(Long.parseLong(userId));
 
+			// validate if user account is locked or de-activated
+			if(user.getDeleted()){
+				logger.warn("Your account is locked or de-activated. Please contact administrator");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Your account is locked or de-activated. Please contact administrator.");
+			}
+			if(user.getStatusID()>2){
+				logger.warn("Your account is not active. Please contact administrator");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Your account is not active. Please contact administrator.");
+			}
+
 			// Validate that the user still exists and is active
 			if (user == null) {
 				logger.warn("Token validation failed: user not found for userId in token.");
@@ -1224,7 +1234,25 @@ public class IEMRAdminController {
 				return new ResponseEntity<>(Map.of("error", "UserName Not Found"), HttpStatus.NOT_FOUND);
 			}
 			User user = users.get(0);
-			return new ResponseEntity<>(Map.of("userName", user.getUserName(), "userId", user.getUserID()), HttpStatus.OK);
+			return new ResponseEntity<>(Map.of("userName", user.getUserName(), "userId", user.getUserID()),
+					HttpStatus.OK);
+		} catch (Exception e) {
+			return new ResponseEntity<>(Map.of("error", "Internal server error"), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+	}
+
+	@Operation(summary = "Get UserId based on userName")
+	@GetMapping(value = "/checkUserName/{userName}", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+	public ResponseEntity<?> checkUserDetails(@PathVariable("userName") String userName) {
+		try {
+			List<User> users = iemrAdminUserServiceImpl.findUserIdByUserName(userName);
+			if (users.isEmpty()) {
+				return new ResponseEntity<>(Map.of("error", "UserName Not Found"), HttpStatus.NOT_FOUND);
+			}
+			User user = users.get(0);
+			return new ResponseEntity<>(Map.of("userName", user.getUserName(), "userId", user.getUserID()),
+					HttpStatus.OK);
 		} catch (Exception e) {
 			return new ResponseEntity<>(Map.of("error", "Internal server error"), HttpStatus.INTERNAL_SERVER_ERROR);
 		}

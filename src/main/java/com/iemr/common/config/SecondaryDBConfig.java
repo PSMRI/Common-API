@@ -43,10 +43,13 @@ import com.iemr.common.utils.config.ConfigProperties;
 
 import jakarta.persistence.EntityManagerFactory;
 
+import org.springframework.context.annotation.Profile;
+
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(entityManagerFactoryRef = "secondaryEntityManagerFactory", transactionManagerRef = "secondaryTransactionManager", basePackages = {
-		"com.iemr.common.secondary.repository.callreport" })
+	"com.iemr.common.secondary.repository.callreport" })
+@Profile("!swagger")
 public class SecondaryDBConfig {
 
 	Logger logger = LoggerFactory.getLogger(this.getClass().getName());
