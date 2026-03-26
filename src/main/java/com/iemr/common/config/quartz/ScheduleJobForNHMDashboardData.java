@@ -31,9 +31,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.iemr.common.service.nhm_dashboard.NHM_DashboardService;
+import org.springframework.context.annotation.Profile;
 
 @Service
 @Transactional
+@Profile("!swagger")
 public class ScheduleJobForNHMDashboardData implements Job {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 

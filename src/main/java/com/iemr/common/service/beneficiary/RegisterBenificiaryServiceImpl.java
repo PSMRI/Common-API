@@ -60,12 +60,13 @@ import com.iemr.common.utils.response.OutputResponse;
 import com.iemr.common.utils.validator.Validator;
 
 import jakarta.servlet.http.HttpServletRequest;
-
+import org.springframework.context.annotation.Profile;
 /**
  * @author WA875423
  *
  */
 @Service
+@Profile("!swagger")
 public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryService {
 
 	@Autowired

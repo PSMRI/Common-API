@@ -1,10 +1,8 @@
 package com.iemr.common.service.users;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.json.JSONArray;
@@ -194,121 +192,6 @@ public class AshaSupervisorLoginService {
 
 	private String fullName(Object first, Object last) {
 		return (str(first) + " " + str(last)).trim();
-	}
-
-	/**
-	 * API 1: Get all ASHAs mapped to this supervisor with facility info.
-	 */
-	public JSONObject getSupervisorAshas(Integer supervisorUserID) {
-		JSONObject result = new JSONObject();
-		JSONArray ashas = new JSONArray();
-
-		List<Object[]> rows = ashaSupervisorLoginRepo.getAllMappedAshas(supervisorUserID);
-		if (rows == null || rows.isEmpty()) {
-			result.put("totalAshaCount", 0);
-			result.put("ashas", ashas);
-			return result;
-		}
-
-		// Collect distinct facility IDs and build village map
-		Set<Integer> facilityIDSet = new HashSet<>();
-		for (Object[] row : rows) {
-			if (row[3] != null)
-				facilityIDSet.add((Integer) row[3]);
-		}
-
-		Map<Integer, List<JSONObject>> villageMap = new HashMap<>();
-		if (!facilityIDSet.isEmpty()) {
-			List<Object[]> villageRows = facilityLoginRepo
-					.getVillagesForFacilities(new ArrayList<>(facilityIDSet));
-			if (villageRows != null) {
-				for (Object[] vRow : villageRows) {
-					Integer facID = (Integer) vRow[0];
-					JSONObject village = new JSONObject();
-					village.put("villageId", vRow[1]);
-					village.put("villageName", str(vRow[2]));
-					villageMap.computeIfAbsent(facID, k -> new ArrayList<>()).add(village);
-				}
-			}
-		}
-
-		for (Object[] row : rows) {
-			Integer facilityID = (Integer) row[3];
-			JSONObject asha = new JSONObject();
-			asha.put("userId", row[0]);
-			asha.put("fullName", fullName(row[1], row[2]));
-			asha.put("employeeId", str(row[6]).isEmpty() ? JSONObject.NULL : str(row[6]));
-			asha.put("facilityId", facilityID);
-			asha.put("facilityName", str(row[4]));
-			asha.put("facilityType", str(row[5]));
-
-			JSONArray villages = new JSONArray();
-			List<JSONObject> vList = villageMap.get(facilityID);
-			if (vList != null) {
-				for (JSONObject v : vList)
-					villages.put(v);
-			}
-			asha.put("villages", villages);
-
-			ashas.put(asha);
-		}
-
-		result.put("totalAshaCount", ashas.length());
-		result.put("ashas", ashas);
-		return result;
-	}
-
-	/**
-	 * API 2: Get ASHAs at a specific facility for this supervisor with detailed
-	 * info.
-	 */
-	public JSONObject getAshasAtFacility(Integer supervisorUserID, Integer facilityID) {
-		JSONObject result = new JSONObject();
-		result.put("facilityId", facilityID);
-
-		// Get facility name and type
-		List<Object[]> facilityRows = facilityLoginRepo
-				.getFacilityDetails(List.of(facilityID));
-		if (facilityRows != null && !facilityRows.isEmpty()) {
-			result.put("facilityName", str(facilityRows.get(0)[1]));
-			result.put("facilityType", str(facilityRows.get(0)[9]));
-		} else {
-			result.put("facilityName", "");
-			result.put("facilityType", "");
-		}
-
-		// Villages for this facility (to attach per ASHA)
-		JSONArray facilityVillages = new JSONArray();
-		List<Object[]> villageRows = facilityLoginRepo
-				.getVillagesForFacilities(List.of(facilityID));
-		if (villageRows != null) {
-			for (Object[] vRow : villageRows) {
-				JSONObject village = new JSONObject();
-				village.put("villageId", vRow[1]);
-				village.put("villageName", str(vRow[2]));
-				facilityVillages.put(village);
-			}
-		}
-
-		JSONArray ashas = new JSONArray();
-		List<Object[]> rows = ashaSupervisorLoginRepo
-				.getAshasAtFacility(supervisorUserID, facilityID);
-		if (rows != null) {
-			for (Object[] row : rows) {
-				JSONObject asha = new JSONObject();
-				asha.put("userId", row[0]);
-				asha.put("fullName", fullName(row[1], row[2]));
-				asha.put("employeeId", str(row[3]).isEmpty() ? JSONObject.NULL : str(row[3]));
-				asha.put("mobile", str(row[4]).isEmpty() ? JSONObject.NULL : str(row[4]));
-				asha.put("gender", str(row[5]).isEmpty() ? JSONObject.NULL : str(row[5]));
-				asha.put("villages", facilityVillages);
-				ashas.put(asha);
-			}
-		}
-
-		result.put("ashaCount", ashas.length());
-		result.put("ashas", ashas);
-		return result;
 	}
 
 	public String getGenderName(Integer genderID) {
