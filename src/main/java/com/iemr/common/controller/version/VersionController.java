@@ -75,6 +75,8 @@ public class VersionController {
 		return ResponseEntity.ok(response);
 	}
 
+		
+
 	private Properties loadGitProperties() throws IOException {
 		Properties properties = new Properties();
 		try (InputStream input = getClass().getClassLoader()
