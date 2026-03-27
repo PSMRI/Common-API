@@ -81,10 +81,10 @@ public class CallCentreDataSyncImpl implements CallCentreDataSync {
 	@Override
 	public void ctiDataSync() {
 		LocalDate currentDate = LocalDate.now();
-	       // Calculate three days before the current date
-	       LocalDate startDate = currentDate.minusDays(3);
-	       // Calculate two days before the current date
-	       LocalDate endDate = currentDate.minusDays(2);
+	       // Look back 7 days to retry records that failed in previous runs
+	       LocalDate startDate = currentDate.minusDays(7);
+	       // Up to yesterday
+	       LocalDate endDate = currentDate.minusDays(1);
 	       // Convert LocalDate to LocalDateTime to set time as 00:00:00
 	       LocalDateTime startDateTime = startDate.atTime(0, 0, 0);
 	       LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
@@ -96,64 +96,78 @@ public class CallCentreDataSyncImpl implements CallCentreDataSync {
 		List<BeneficiaryCall> list = callReportRepo.getAllBenCallIDetails(startTimeStamp, endTimeStamp);
 
 		if (!list.isEmpty()) {
-			
-			// List<Long> benList = new ArrayList<>();
-			String callDuartion = null;
-			String filePath = null;
-			String URL = null;
-			String callinfoapiURL = null;
-			String ctiResponse = null;
-			String callEndTime = null;
-			String callStartTime = null;
-			String recordingPath = "";
+			logger.info("Total records to process for CTI data sync: " + list.size());
 			for (BeneficiaryCall call : list) {
-				if (call.getCallID() != null) {
-					recordingPath = null;
-					try {
-						JSONObject requestFile = new JSONObject();
-						requestFile.put("agent_id", call.getAgentID());
-						requestFile.put("session_id", call.getCallID());
+				if (call.getCallID() == null) {
+					logger.warn("Skipping record with null callID, benCallID: " + call.getBenCallID());
+					continue;
+				}
+				String recordingPath = null;
+				String callDuartion = null;
+				String callEndTime = null;
+				String callStartTime = null;
+				try {
+					JSONObject requestFile = new JSONObject();
+					requestFile.put("agent_id", call.getAgentID());
+					requestFile.put("session_id", call.getCallID());
 
-						OutputResponse response1 = ctiService.getVoiceFileNew(requestFile.toString(), "extra parameter");
-						if(response1 != null && response1.getStatusCode() == 200) {
-							
-							CTIResponse ctiResponsePath = InputMapper.gson().fromJson(response1.getData(),
-									CTIResponse.class);
-							String recordingFilePath = ctiResponsePath.getResponse().toString();
-							if(recordingFilePath.length() > 20)
-								recordingPath = recordingFilePath.substring(20);
-							logger.info("recordingPath: " + recordingPath);
-						}
+					OutputResponse response1 = ctiService.getVoiceFileNew(requestFile.toString(), "extra parameter");
+					if(response1 != null && response1.getStatusCode() == 200) {
 
-						callDuartion = null;
-						callinfoapiURL = this.callinfoapiURL;
-						URL = callinfoapiURL.replace("CTI_SERVER", ctiServerIP).replace("AGENT_ID", call.getAgentID())
-								.replace("SESSION_ID", call.getCallID()).replace("PHONE_NO", call.getPhoneNo());
+						CTIResponse ctiResponsePath = InputMapper.gson().fromJson(response1.getData(),
+								CTIResponse.class);
+						String recordingFilePath = ctiResponsePath.getResponse().toString();
+						if(recordingFilePath.length() > 20)
+							recordingPath = recordingFilePath.substring(20);
+						else if (!recordingFilePath.isEmpty())
+							recordingPath = recordingFilePath;
+						logger.info("recordingPath: " + recordingPath);
+					}
 
-						logger.info("calling CTI API url: " + URL);
-						ctiResponse = this.callUrl(URL);
-						logger.info("calling CTI_CDR_CALL_INFO API returned " + ctiResponse);
+					String callInfoURL = this.callinfoapiURL;
+					String URL = callInfoURL.replace("CTI_SERVER", ctiServerIP).replace("AGENT_ID", call.getAgentID())
+							.replace("SESSION_ID", call.getCallID()).replace("PHONE_NO", call.getPhoneNo());
 
-						CTIData data = InputMapper.gson().fromJson(ctiResponse, CTIData.class);
-						CTIResponse model = data.getResponse();
+					logger.info("calling CTI API url: " + URL);
+					String ctiResponse = this.callUrl(URL);
+					logger.info("calling CTI_CDR_CALL_INFO API returned " + ctiResponse);
 
-						if (model.getResponse_code().equals("1")) {
-							callDuartion = model.getCall_duration();
-							callEndTime = model.getCall_end_date_time();
-							callStartTime = model.getCall_start_date_time();
-						}
-						if (callDuartion != null)
-							call.setCZcallDuration(Integer.parseInt(callDuartion));
-						call.setRecordingPath(recordingPath);
+					CTIData data = InputMapper.gson().fromJson(ctiResponse, CTIData.class);
+					CTIResponse model = data.getResponse();
+
+					if (model != null && "1".equals(model.getResponse_code())) {
+						callDuartion = model.getCall_duration();
+						callEndTime = model.getCall_end_date_time();
+						callStartTime = model.getCall_start_date_time();
+					} else {
+						logger.warn("CTI API returned non-success for sessionID: " + call.getCallID()
+								+ ", response_code: " + (model != null ? model.getResponse_code() : "null"));
+					}
+
+					// Only save if we got at least the call duration from CTI
+					if (callDuartion != null) {
+						call.setCZcallDuration(Integer.parseInt(callDuartion));
 						call.setCZcallEndTime(callEndTime);
 						call.setCZcallStartTime(callStartTime);
+						call.setRecordingPath(recordingPath);
 						callReportRepo.save(call);
-						logger.info("calling CTI_CDR_CALL_INFO after API call save response " + call);
-					} catch (Exception e) {
-						logger.error("VoiceFile failed with error " + e.getMessage(), e);
+						logger.info("CTI data sync saved for benCallID: " + call.getBenCallID());
+					} else if (recordingPath != null) {
+						// Duration not available yet, but recording path is — save path only
+						call.setRecordingPath(recordingPath);
+						callReportRepo.save(call);
+						logger.info("Only recordingPath saved (duration pending) for benCallID: " + call.getBenCallID());
+					} else {
+						logger.warn("No CTI data available yet for sessionID: " + call.getCallID()
+								+ ", benCallID: " + call.getBenCallID() + " - will retry next run");
 					}
+				} catch (Exception e) {
+					logger.error("CTI data sync failed for benCallID: " + call.getBenCallID()
+							+ ", sessionID: " + call.getCallID() + " - " + e.getMessage(), e);
 				}
 			}
+		} else {
+			logger.info("No pending records found for CTI data sync");
 		}
 	}
 }

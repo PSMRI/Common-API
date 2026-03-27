@@ -209,22 +209,7 @@ public class NHM_DashboardServiceImpl implements NHM_DashboardService {
 		date = LocalDateTime.now().minusDays(1);
 		String[] dateArr = date.toString().split("T");
 		endDate = dateArr[0].concat(" 23:59:59");
-		fromDate = dateArr[0].concat(" 00:00:01");
-		
-//		if (job != null && job.toLowerCase().contains("hour")) {
-//			String jobVal = job.split(" ")[0];
-//			LocalDateTime nowTime = LocalDateTime.now();
-//			endDate = nowTime.toString().replace("T", " ");
-//			String[] arr = endDate.split("\\.");
-//			endDate = arr[0];
-//
-//			LocalDateTime nowTime_hrs = nowTime.minusHours(Integer.valueOf(jobVal));
-//			fromDate = nowTime_hrs.toString().replace("T", " ");
-//			String[] arr1 = fromDate.split("\\.");
-//			fromDate = arr1[0];
-//
-//		} else
-//			throw new IEMRException("Please pass correct period for schedular - in hours");
+		fromDate = dateArr[0].concat(" 00:00:00");
 
 		String ctiURI = ConfigProperties.getPropertyByName("get-agent-summary-report-URL");
 		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
@@ -254,22 +239,7 @@ public class NHM_DashboardServiceImpl implements NHM_DashboardService {
 		date = LocalDateTime.now().minusDays(1); 
 		String[] dateArr = date.toString().split("T");
 		endDate = dateArr[0].concat(" 23:59:59");
-		fromDate = dateArr[0].concat(" 00:00:01");
-		
-//		if (job != null && job.toLowerCase().contains("hour")) {
-//			String jobVal = job.split(" ")[0];
-//			LocalDateTime nowTime = LocalDateTime.now();
-//			endDate = nowTime.toString().replace("T", " ");
-//			String[] arr = endDate.split("\\.");
-//			endDate = arr[0];
-//
-//			LocalDateTime nowTime_hrs = nowTime.minusHours(Integer.valueOf(jobVal));
-//			fromDate = nowTime_hrs.toString().replace("T", " ");
-//			String[] arr1 = fromDate.split("\\.");
-//			fromDate = arr1[0];
-//
-//		} else
-//			throw new IEMRException("Please pass correct period for schedular - in hours");
+		fromDate = dateArr[0].concat(" 00:00:00");
 
 		String ctiURI = ConfigProperties.getPropertyByName("get-details-call-report-URL");
 		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");

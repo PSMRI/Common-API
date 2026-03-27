@@ -52,7 +52,7 @@ public class NHMDetailCallReportScheduler {
 				date = LocalDateTime.now().minusDays(1);
 				String[] dateArr = date.toString().split("T");
 				endDate = dateArr[0].concat(" 23:59:59");
-				fromDate = dateArr[0].concat(" 00:00:01");
+				fromDate = dateArr[0].concat(" 00:00:00");
 
 				Timestamp fromTime = Timestamp.valueOf(fromDate);
 				Timestamp endTime = Timestamp.valueOf(endDate);
