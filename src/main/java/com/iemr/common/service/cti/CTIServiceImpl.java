@@ -26,6 +26,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -95,6 +96,9 @@ public class CTIServiceImpl implements CTIService {
 
 	@Autowired
 	private IEMRCalltypeRepositoryImplCustom iemrCalltypeRepositoryImplCustom;
+
+	@Value("${cti-server-ip}")
+    private String ctiServerIp;
 
 	public CTIServiceImpl() {
 		if (httpUtils == null) {
