@@ -51,9 +51,9 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-// import org.springframework.context.annotation.Primary;
-// import org.springframework.stereotype.Service;
-// @Service
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Service;
+@Service
 // @Primary
 public class OpenKMServiceImpl implements KMService {
 	
