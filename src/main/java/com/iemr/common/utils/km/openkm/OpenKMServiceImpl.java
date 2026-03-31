@@ -25,6 +25,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+
 import com.iemr.common.utils.config.ConfigProperties;
 import com.iemr.common.utils.km.KMService;
 import com.openkm.sdk4j.OKMWebservices;
@@ -45,44 +47,46 @@ import com.openkm.sdk4j.exception.UserQuotaExceededException;
 import com.openkm.sdk4j.exception.VersionException;
 import com.openkm.sdk4j.exception.VirusDetectedException;
 import com.openkm.sdk4j.exception.WebserviceException;
-
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.client.ClientProperties;
-import org.glassfish.jersey.client.JerseyClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+@Service
 public class OpenKMServiceImpl implements KMService {
-	// private ConfigProperties configProperties;
-	//
-	// @Autowired
-	// public void setConfigProperties(ConfigProperties configProperties)
-	// {
-	// this.configProperties = configProperties;
-	// }
+	
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
-	private static String url;
-	private static String username;
-	private static String password;
-	private static String kmRootPath;
-	private static String guestUser;
-	private static String guestPassword;
+
+	@Value("${km-base-url}")
+    private String url;
+
+    @Value("${km-username}")
+    private String username;
+
+    @Value("${km-password}")
+    private String password;
+	
+	@Value("${km-root-path}")
+	private String kmRootPath;
+
+	@Value("${km-guest-user}")
+	private String guestUser;
+
+	@Value("${km-guest-password}")
+	private String guestPassword;
 
 	public OpenKMServiceImpl() {
 	}
 
-	private static OKMWebservices connector = null;
+	private OKMWebservices connector;
 
+	@PostConstruct
 	public void init() {
-		if (connector == null) {
-			url = ConfigProperties.getPropertyByName("km-base-url");
-			username = ConfigProperties.getPropertyByName("km-username");
-			password = ConfigProperties.getPropertyByName("km-password");
-			kmRootPath = ConfigProperties.getPropertyByName("km-root-path");
-			guestUser = ConfigProperties.getPropertyByName("km-guest-user");
-			guestPassword = ConfigProperties.getPropertyByName("km-guest-password");
-			connector = OpenKMConnector.initialize(url, username, password);
-			
-		}
+		 logger.info("KM URL: " + url);
+   		 logger.info("KM Username: " + username);
+
+		connector = OpenKMConnector.initialize(url, username, password);
+	
 	}
 
 	@Override
