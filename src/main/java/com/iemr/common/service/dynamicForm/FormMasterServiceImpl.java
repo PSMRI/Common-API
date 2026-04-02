@@ -137,18 +137,33 @@ public class FormMasterServiceImpl implements FormMasterService {
                     .map(field -> {
                         String labelKey = field.getFieldId();  // field label already contains label_key
 
-                        Translation t = translationRepo.findByLabelKeyAndIsActive(labelKey, true)
+                        Translation label = translationRepo.findByLabelKeyAndIsActive(labelKey, true)
+                                .orElse(null);
+
+                        Translation placeHolder = translationRepo.findByLabelKeyAndIsActive("placeholder_"+labelKey, true)
                                 .orElse(null);
 
                         String translatedLabel = field.getLabel(); // fallback
+                        String translatedPlaceHolder = field.getPlaceholder(); // fallback
 
-                        if (t != null) {
+                        if (label != null) {
                             if ("hi".equalsIgnoreCase(lang)) {
-                                translatedLabel = t.getHindiTranslation();
+                                translatedLabel = label.getHindiTranslation();
                             } else if ("as".equalsIgnoreCase(lang)) {
-                                translatedLabel = t.getAssameseTranslation();
+                                translatedLabel = label.getAssameseTranslation();
                             } else if ("en".equalsIgnoreCase(lang)) {
-                                translatedLabel = t.getEnglish();
+                                translatedLabel = label.getEnglish();
+
+                            }
+                        }
+
+                        if (placeHolder != null) {
+                            if ("hi".equalsIgnoreCase(lang)) {
+                                translatedPlaceHolder= placeHolder.getHindiTranslation();
+                            } else if ("as".equalsIgnoreCase(lang)) {
+                                translatedPlaceHolder = placeHolder.getAssameseTranslation();
+                            } else if ("en".equalsIgnoreCase(lang)) {
+                                translatedPlaceHolder = placeHolder.getEnglish();
 
                             }
                         }
@@ -165,7 +180,7 @@ public class FormMasterServiceImpl implements FormMasterService {
                         dto.setType(field.getType());
                         dto.setIsRequired(field.getIsRequired());
                         dto.setDefaultValue(field.getDefaultValue());
-                        dto.setPlaceholder(field.getPlaceholder());
+                        dto.setPlaceholder(translatedPlaceHolder);
                         dto.setSequence(field.getSequence());
 
                         try {
