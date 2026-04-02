@@ -163,9 +163,6 @@ public class ConfigProperties
 		{
 			logger.error(propertyName + " retrival failed.", e);
 		}
-		if (propertyName.startsWith("km-")) {
-			logger.info("getPropertyByName - " + propertyName + " = " + (result != null ? result : "null") + " | env=" + (environment != null));
-		}
 		return result;
 	}
 

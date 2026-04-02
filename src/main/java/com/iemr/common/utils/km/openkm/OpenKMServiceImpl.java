@@ -81,12 +81,7 @@ public class OpenKMServiceImpl implements KMService {
 			kmRootPath = ConfigProperties.getPropertyByName("km-root-path");
 			guestUser = ConfigProperties.getPropertyByName("km-guest-user");
 			guestPassword = ConfigProperties.getPropertyByName("km-guest-password");
-			logger.info("OpenKM init - url: " + url);
-			logger.info("OpenKM init - username: " + username);
-			logger.info("OpenKM init - kmRootPath: " + kmRootPath);
-			logger.info("OpenKM init - guestUser: " + guestUser);
 			connector = OpenKMConnector.initialize(url, username, password);
-			logger.info("OpenKM connector initialized successfully");
 		}
 	}
 
