@@ -23,6 +23,7 @@ package com.iemr.common.utils.km.openkm;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import com.iemr.common.utils.config.ConfigProperties;
@@ -169,6 +170,18 @@ public class OpenKMServiceImpl implements KMService {
 		if (!exists) {
 			Folder folder = connector.createFolderSimple(path);
 		}
+	}
+
+	@Override
+	public InputStream getDocumentContent(String uuid) {
+		InputStream is = null;
+		this.init();
+		try {
+			is = connector.getContent("/okm:uuid/" + uuid);
+		} catch (Exception e) {
+			logger.error("Error while getting document content: " + e.getMessage());
+		}
+		return is;
 	}
 
 	public String deleteDocument(String documentID) {

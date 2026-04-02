@@ -21,9 +21,13 @@
 */
 package com.iemr.common.utils.km;
 
+import java.io.InputStream;
+
 public interface KMService
 {
 	String getDocumentRoot();
-	
+
 	String createDocument(String documentPath, String filepath);
+
+	InputStream getDocumentContent(String uuid);
 }

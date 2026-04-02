@@ -41,7 +41,12 @@ import com.iemr.common.mapper.utils.InputMapper;
 import com.iemr.common.service.kmfilemanager.KMFileManagerService;
 import com.iemr.common.service.scheme.SchemeServiceImpl;
 import com.iemr.common.service.services.CommonServiceImpl;
+import com.iemr.common.utils.km.KMService;
 import com.iemr.common.utils.response.OutputResponse;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import io.lettuce.core.dynamic.annotation.Param;
 import io.swagger.v3.oas.annotations.Operation;
@@ -68,6 +73,9 @@ public class KMFileManagerController {
 
 	@Autowired
 	private SchemeServiceImpl schemeServiceImpl;
+
+	@Autowired
+	private KMService kmService;
 	
 	
 	 	
@@ -120,6 +128,29 @@ public class KMFileManagerController {
 		logger.debug("add file response is " + response.toString());
 		logger.info("add file response sent with status code " + response.getStatusCode());
 		return response.toString();
+	}
+
+	@Operation(summary = "Download file content by UUID")
+	@PostMapping(value = "/downloadFileByUID", consumes = "application/json", headers = "Authorization")
+	public ResponseEntity<byte[]> downloadFileByUID(@RequestBody String request) {
+		try {
+			KMFileManager kmFileManager = objectMapper.readValue(request, KMFileManager.class);
+			if (kmFileManager.getFileUID() != null) {
+				java.io.InputStream is = kmService.getDocumentContent(kmFileManager.getFileUID());
+				if (is != null) {
+					byte[] fileBytes = is.readAllBytes();
+					is.close();
+					HttpHeaders headers = new HttpHeaders();
+					headers.set("Content-Disposition", "attachment; filename=download");
+					headers.set("Content-Type", "application/octet-stream");
+					return new ResponseEntity<>(fileBytes, headers, HttpStatus.OK);
+				}
+			}
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		} catch (Exception e) {
+			logger.error("Error while downloading file : " + e);
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	@Operation(summary = "Get KM file download URL")
