@@ -64,7 +64,18 @@ import com.iemr.common.data.kmfilemanager.KMFileManager;
 public class CommonServiceImpl implements CommonService {
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
+	@Value("${km-base-path}")
+	private String dmsPath;
 	
+	@Value("${km-guest-user}")
+	private String userName;
+	
+	@Value("${km-guest-user-password}")
+	private String userPassword;
+	
+	@Value("${km-base-protocol}")
+	private String dmsProtocol;	
+
 	private static final String FILE_PATH = "filePath";  
 
 	/**
@@ -177,13 +188,13 @@ public class CommonServiceImpl implements CommonService {
 	{
 		String fileUIDAsURI = null;
 
-			String dmsPath = ConfigProperties.getPropertyByName("km-base-path");
-			String dmsProtocol = ConfigProperties.getPropertyByName("km-base-protocol");
-			String userName = ConfigProperties.getPropertyByName("km-guest-user");
-			String userPassword = ConfigProperties.getPassword("km-guest-user");
+			// String dmsPath = ConfigProperties.getPropertyByName("km-base-path");
+			// String dmsProtocol = ConfigProperties.getPropertyByName("km-base-protocol");
+			// String userName = ConfigProperties.getPropertyByName("km-guest-user");
+			// String userPassword = ConfigProperties.getPassword("km-guest-user");
 			fileUIDAsURI =
 					dmsProtocol + "://" + userName + ":" + userPassword + "@" + dmsPath + "/Download?uuid=" + fileUID;
-		
+		logger.info("file url="+fileUIDAsURI);
 		return fileUIDAsURI;
 	}
 
