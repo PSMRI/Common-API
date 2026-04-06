@@ -1,9 +1,11 @@
 package com.iemr.common.service.dynamicForm;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.common.data.dynamic_from.FormDefinition;
 import com.iemr.common.data.dynamic_from.FormField;
+import com.iemr.common.data.dynamic_from.FormFieldOption;
 import com.iemr.common.data.dynamic_from.FormModule;
 import com.iemr.common.data.translation.Translation;
 import com.iemr.common.data.users.UserServiceRole;
@@ -42,6 +44,9 @@ public class FormMasterServiceImpl implements FormMasterService {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private FormFieldOptionRepository formFieldOptionRepo ;
 
     @Override
     public FormModule createModule(ModuleDTO dto) {
@@ -168,6 +173,7 @@ public class FormMasterServiceImpl implements FormMasterService {
                             }
                         }
 
+
                         FieldResponseDTO dto = new FieldResponseDTO();
                         dto.setId(field.getId());
                         dto.setIsEditable(field.getIsEditable());
@@ -183,23 +189,29 @@ public class FormMasterServiceImpl implements FormMasterService {
                         dto.setPlaceholder(translatedPlaceHolder);
                         dto.setSequence(field.getSequence());
 
+
                         try {
-                            // Handle options
-                            if (field.getOptions() != null && !field.getOptions().isBlank()) {
-                                JsonNode node = objectMapper.readTree(field.getOptions());
-                                List<String> options = null;
-                                if (node.isArray()) {
-                                    options = objectMapper.convertValue(node, new TypeReference<>() {
-                                    });
-                                } else if (node.has("options")) {
-                                    options = objectMapper.convertValue(node.get("options"), new TypeReference<>() {
-                                    });
-                                }
-                                dto.setOptions(options == null || options.isEmpty() ? null : options);
+                            if (field.getOptionKey() != null && !field.getOptionKey().isBlank()) {
+                                // NEW: option_key column se directly fetch karo
+                                List<FormFieldOption> dbOptions = formFieldOptionRepo
+                                        .findByOptionKeyOrderBySortOrderAsc(field.getOptionKey());
+
+                                List<Map<String, String>> translatedOptions = dbOptions.stream()
+                                        .map(opt -> {
+                                            Map<String, String> map = new LinkedHashMap<>();
+                                            map.put("value", opt.getValue());
+                                            if ("hi".equalsIgnoreCase(lang))      map.put("label", opt.getLabelHi());
+                                            else if ("as".equalsIgnoreCase(lang)) map.put("label", opt.getLabelAs());
+                                            else                                   map.put("label", opt.getLabelEn());
+                                            return map;
+                                        })
+                                        .collect(Collectors.toList());
+
+                                dto.setOptions(translatedOptions.isEmpty() ? null : translatedOptions);
+
                             } else {
                                 dto.setOptions(null);
                             }
-
                             // Handle validation
                             if (field.getValidation() != null && !field.getValidation().isBlank()) {
                                 Map<String, Object> validation = objectMapper.readValue(field.getValidation(), new TypeReference<>() {
