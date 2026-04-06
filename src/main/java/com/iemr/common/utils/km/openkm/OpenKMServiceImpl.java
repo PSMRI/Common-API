@@ -83,7 +83,7 @@ public class OpenKMServiceImpl implements KMService {
 
 	@PostConstruct
 	public void init() {
-		logger.info("KM URL=",url);
+		logger.info("KM URL={}",url);
 		connector = OpenKMConnector.initialize(url, username, password);
 			
 			}
