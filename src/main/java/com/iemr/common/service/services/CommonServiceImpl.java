@@ -70,7 +70,7 @@ public class CommonServiceImpl implements CommonService {
 	@Value("${km-guest-user}")
 	private String userName;
 	
-	@Value("${km-guest-user-password}")
+	@Value("${km-guest-password}")
 	private String userPassword;
 	
 	@Value("${km-base-protocol}")
