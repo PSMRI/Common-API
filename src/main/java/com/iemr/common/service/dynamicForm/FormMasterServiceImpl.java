@@ -192,7 +192,6 @@ public class FormMasterServiceImpl implements FormMasterService {
 
                         try {
                             if (field.getOptionKey() != null && !field.getOptionKey().isBlank()) {
-                                // NEW: option_key column se directly fetch karo
                                 List<FormFieldOption> dbOptions = formFieldOptionRepo
                                         .findByOptionKeyOrderBySortOrderAsc(field.getOptionKey());
 
