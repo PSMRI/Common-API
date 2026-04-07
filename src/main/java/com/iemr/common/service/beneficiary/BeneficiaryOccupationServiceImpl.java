@@ -31,8 +31,10 @@ import org.springframework.stereotype.Service;
 
 import com.iemr.common.data.beneficiary.BeneficiaryOccupation;
 import com.iemr.common.repository.beneficiary.BeneficiaryOccupationRepository;
+import org.springframework.context.annotation.Profile;
 
 @Service
+@Profile("!swagger")
 public class BeneficiaryOccupationServiceImpl implements BeneficiaryOccupationService {
 
 	private BeneficiaryOccupationRepository beneficiaryOccupationRepository;

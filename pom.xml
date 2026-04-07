@@ -6,7 +6,7 @@
 
 	<groupId>com.iemr.common-API</groupId>
 	<artifactId>common-api</artifactId>
-	<version>3.6.2</version>
+	<version>3.8.1</version>
 	<packaging>war</packaging>
 
 	<name>Common-API</name>
@@ -54,6 +54,12 @@
 		</repository>
 	</repositories>
 	<dependencies>
+        
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -520,6 +526,32 @@
 	<build>
 		<finalName>${artifactId}-${version}</finalName>
 		<plugins>
+			<plugin>
+				<groupId>io.github.git-commit-id</groupId>
+				<artifactId>git-commit-id-maven-plugin</artifactId>
+				<version>9.0.2</version>
+				<executions>
+					<execution>
+						<id>get-the-git-infos</id>
+						<goals>
+							<goal>revision</goal>
+						</goals>
+						<phase>initialize</phase>
+					</execution>
+				</executions>
+				<configuration>
+					<generateGitPropertiesFile>true</generateGitPropertiesFile>
+					<generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+					<includeOnlyProperties>
+						<property>^git.branch$</property>
+						<property>^git.commit.id.abbrev$</property>
+						<property>^git.build.version$</property>
+						<property>^git.build.time$</property>
+					</includeOnlyProperties>
+					<failOnNoGitDirectory>false</failOnNoGitDirectory>
+					<failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>

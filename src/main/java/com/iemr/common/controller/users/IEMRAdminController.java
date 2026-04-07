@@ -56,6 +56,7 @@ import com.iemr.common.model.user.ChangePasswordModel;
 import com.iemr.common.model.user.ForceLogoutRequestModel;
 import com.iemr.common.model.user.LoginRequestModel;
 import com.iemr.common.service.recaptcha.CaptchaValidationService;
+import com.iemr.common.service.users.AshaSupervisorLoginService;
 import com.iemr.common.service.users.IEMRAdminUserService;
 import com.iemr.common.utils.CookieUtil;
 import com.iemr.common.utils.JwtUtil;
@@ -116,6 +117,9 @@ public class IEMRAdminController {
 
 	@Autowired
 	SecurePassword securePassword;
+
+	@Autowired
+	private AshaSupervisorLoginService ashaSupervisorLoginService;
 
 	@Operation(summary = "New user authentication")
 	@RequestMapping(value = "/userAuthenticateNew", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON)
@@ -231,6 +235,46 @@ public class IEMRAdminController {
 			}
 			responseObj = iemrAdminUserServiceImpl.generateKeyAndValidateIP(responseObj, remoteAddress,
 					request.getRemoteHost());
+
+			// Facility data for ALL users - common pattern, empty if not applicable
+			try {
+				if (mUser.size() == 1) {
+					User loggedInUser = mUser.get(0);
+					String userRoleName = "";
+					if (loggedInUser.getM_UserServiceRoleMapping() != null) {
+						for (UserServiceRoleMapping usrm : loggedInUser.getM_UserServiceRoleMapping()) {
+							if (usrm.getM_Role() != null && usrm.getM_Role().getRoleName() != null) {
+								userRoleName = usrm.getM_Role().getRoleName();
+								break;
+							}
+						}
+					}
+					JSONObject facilityData = ashaSupervisorLoginService
+							.buildFacilityLoginData(loggedInUser.getUserID(), userRoleName);
+
+					// User details
+					JSONObject userObj = new JSONObject();
+					userObj.put("userId", loggedInUser.getUserID());
+					userObj.put("employeeId", loggedInUser.getEmployeeID() != null ? loggedInUser.getEmployeeID() : JSONObject.NULL);
+					userObj.put("role", userRoleName);
+					String first = loggedInUser.getFirstName() != null ? loggedInUser.getFirstName() : "";
+					String last = loggedInUser.getLastName() != null ? loggedInUser.getLastName() : "";
+					userObj.put("fullName", (first + " " + last).trim());
+
+					JSONObject demographics = new JSONObject();
+					String genderName = ashaSupervisorLoginService.getGenderName(loggedInUser.getGenderID());
+					demographics.put("gender", genderName != null ? genderName : JSONObject.NULL);
+					demographics.put("dob", loggedInUser.getdOB() != null ? loggedInUser.getdOB().toString() : JSONObject.NULL);
+					demographics.put("mobile", loggedInUser.getEmergencyContactNo() != null ? loggedInUser.getEmergencyContactNo() : JSONObject.NULL);
+					demographics.put("email", loggedInUser.getEmailID() != null ? loggedInUser.getEmailID() : JSONObject.NULL);
+					userObj.put("demographics", demographics);
+
+					facilityData.put("user", userObj);
+					responseObj.put("facilityData", facilityData);
+				}
+			} catch (Exception e) {
+				logger.error("Error fetching facility login data: " + e.getMessage(), e);
+			}
 
 			// Add tokens to response for mobile
 			if (isMobile && !mUser.isEmpty()) {

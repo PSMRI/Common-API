@@ -133,6 +133,9 @@ public class User implements Serializable  {
 	private Status m_status;
 
 	@Expose
+	@Column(name = "EmployeeID")
+	private String employeeID;
+	@Expose
 	@Column(name = "AadhaarNo")
 	private String aadhaarNo;
 	@Expose
@@ -513,6 +516,10 @@ public class User implements Serializable  {
 
 	public String getAgentID() {
 		return agentID;
+	}
+
+	public String getEmployeeID() {
+		return employeeID;
 	}
 
 	public String getAgentPassword() {
