@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 
 import com.iemr.common.data.users.User;
 import com.iemr.common.repository.users.IEMRUserRepositoryCustom;
-import com.iemr.common.service.users.IEMRAdminUserServiceImpl;
 import com.iemr.common.utils.exception.IEMRException;
 
 import io.jsonwebtoken.Claims;
@@ -31,9 +30,6 @@ public class JwtAuthenticationUtil {
 	@Autowired
 	private IEMRUserRepositoryCustom iEMRUserRepositoryCustom;
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
-
-	@Autowired
-	private IEMRAdminUserServiceImpl iEMRAdminUserServiceImpl;
 
 	public JwtAuthenticationUtil(CookieUtil cookieUtil, JwtUtil jwtUtil) {
 		this.cookieUtil = cookieUtil;
