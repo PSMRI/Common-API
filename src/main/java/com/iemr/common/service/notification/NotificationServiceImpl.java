@@ -38,6 +38,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -70,6 +71,19 @@ public class NotificationServiceImpl implements NotificationService
 
 	private EmailService emailService;
 
+
+	@Value("${km-base-path}")
+	private String dmsPath;
+	
+	@Value("${km-guest-user}")
+	private String userName;
+	
+	@Value("${km-guest-password}")
+	private String userPassword;
+	
+	@Value("${km-base-protocol}")
+	private String dmsProtocol;	
+	
 	@Autowired
 	public void setEmailService(EmailService emailService)
 	{
@@ -415,10 +429,7 @@ public class NotificationServiceImpl implements NotificationService
 		if (kmFileManager != null && kmFileManager.getFileUID() != null)
 		{
 			String fileUID = kmFileManager.getFileUID();
-			String dmsPath = ConfigProperties.getPropertyByName("km-base-path");
-			String dmsProtocol = ConfigProperties.getPropertyByName("km-base-protocol");
-			String userName = ConfigProperties.getPropertyByName("km-guest-user");
-			String userPassword = ConfigProperties.getPassword("km-guest-user");
+			
 			fileUIDAsURI =
 					dmsProtocol + "://" + userName + ":" + userPassword + "@" + dmsPath + "/Download?uuid=" + fileUID;
 		}
