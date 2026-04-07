@@ -239,6 +239,11 @@ public class CommonServiceImpl implements CommonService {
 				String userPassword = ConfigProperties.getPassword("km-guest-user");
 				String fileUIDAsURI = dmsProtocol + "://" + userName + ":" + userPassword + "@" + dmsPath
 						+ "/Download?uuid=" + subCategory.getSubCatFilePath();
+						logger.info("file url="+fileUIDAsURI);
+						logger.info("file path="+subCategory.getSubCatFilePath());
+						logger.info("dms Path="+dmsPath);
+						logger.info("subcatfilePath="+subCatFilePath);
+						
 				subCategory.setSubCatFilePath(fileUIDAsURI);
 				subCategoriesList.get(index).setFileManger(kmFileManagerRepository
 						.getKMFileLists(subCategoryDetails.getProviderServiceMapID(), subCatFilePath));
