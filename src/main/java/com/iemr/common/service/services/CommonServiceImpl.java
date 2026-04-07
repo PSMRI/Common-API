@@ -168,16 +168,16 @@ public class CommonServiceImpl implements CommonService {
 	            String fileNameWithExtension = null;
 
 	            if (!fileList.isEmpty()) {
-	                KMFileManager firstFile = fileList.get(0); // Just for representative file URL and name
-	                fileURL = getFilePath(firstFile.getFileUID());
-	                fileNameWithExtension = firstFile.getFileName() + firstFile.getFileExtension();
+	                KMFileManager latestFile = fileList.get(fileList.size() - 1);
+	                fileURL = getFilePath(latestFile.getFileUID());
+	                fileNameWithExtension = latestFile.getFileName() + latestFile.getFileExtension();
 	            }
 
 	            SubCategoryDetails subCategory = new SubCategoryDetails(subCatId, subCatName);
-	            subCategory.setFileManger(fileList);  // Attach all files here
-	            subCategory.setFileURL(fileURL);      // Representative file URL
-	            subCategory.setFileNameWithExtension(fileNameWithExtension); // Representative file name+ext
-	            subCategory.setSubCatFilePath(fileURL); // Set subCatFilePath for frontend visibility check
+	            subCategory.setFileManger(fileList);
+	            subCategory.setFileURL(fileURL);
+	            subCategory.setFileNameWithExtension(fileNameWithExtension);
+	            subCategory.setSubCatFilePath(fileURL);
 
 	            subCategoriesList.add(subCategory);
 	        }
