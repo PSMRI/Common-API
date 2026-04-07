@@ -122,7 +122,7 @@ public class FormMasterServiceImpl implements FormMasterService {
     public FormResponseDTO getStructuredFormByFormId(String formId, String lang, String token) {
         Integer stateId = 0;
         try {
-            String username = "moon";
+            String username = jwtUtil.getUsernameFromToken(token);
 
             stateId = userServiceRoleRepo.findByUserName(username)
                     .stream()
