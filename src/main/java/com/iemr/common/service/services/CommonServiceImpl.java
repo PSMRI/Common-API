@@ -177,6 +177,7 @@ public class CommonServiceImpl implements CommonService {
 	            subCategory.setFileManger(fileList);  // Attach all files here
 	            subCategory.setFileURL(fileURL);      // Representative file URL
 	            subCategory.setFileNameWithExtension(fileNameWithExtension); // Representative file name+ext
+	            subCategory.setSubCatFilePath(fileURL); // Set subCatFilePath for frontend visibility check
 
 	            subCategoriesList.add(subCategory);
 	        }
