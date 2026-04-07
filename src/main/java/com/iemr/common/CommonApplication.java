@@ -41,7 +41,7 @@ import com.iemr.common.utils.IEMRApplBeans;
 
 @SpringBootApplication
 @EnableScheduling
-@EnableAsync
+@EnableAsync(proxyTargetClass = true)
 public class CommonApplication extends SpringBootServletInitializer {
 
 	@Bean
