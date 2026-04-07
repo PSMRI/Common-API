@@ -189,10 +189,6 @@ public class CommonServiceImpl implements CommonService {
 	{
 		String fileUIDAsURI = null;
 
-			// String dmsPath = ConfigProperties.getPropertyByName("km-base-path");
-			// String dmsProtocol = ConfigProperties.getPropertyByName("km-base-protocol");
-			// String userName = ConfigProperties.getPropertyByName("km-guest-user");
-			// String userPassword = ConfigProperties.getPassword("km-guest-user");
 			fileUIDAsURI =
 					dmsProtocol + "://" + userName + ":" + userPassword + "@" + dmsPath + "/Download?uuid=" + fileUID;
 		
@@ -245,10 +241,6 @@ public class CommonServiceImpl implements CommonService {
 			SubCategoryDetails subCategory = subCategoriesList.get(index);
 			if (subCategory.getSubCatFilePath() != null && subCategory.getSubCatFilePath().length() > 0) {
 				String subCatFilePath = subCategory.getSubCatFilePath();
-				// String dmsPath = ConfigProperties.getPropertyByName("km-base-path");
-				// String dmsProtocol = ConfigProperties.getPropertyByName("km-base-protocol");
-				// String userName = ConfigProperties.getPropertyByName("km-guest-user");
-				// String userPassword = ConfigProperties.getPassword("km-guest-user");
 				String fileUIDAsURI = dmsProtocol + "://" + userName + ":" + userPassword + "@" + dmsPath
 						+ "/Download?uuid=" + subCategory.getSubCatFilePath();
 						logger.info("file url="+fileUIDAsURI);

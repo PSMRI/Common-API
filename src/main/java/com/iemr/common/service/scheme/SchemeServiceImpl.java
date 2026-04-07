@@ -117,10 +117,7 @@ public class SchemeServiceImpl implements SchemeService {
 		String fileUIDAsURI = null;
 		if (kmFileManager != null && kmFileManager.getFileUID() != null) {
 			String fileUID = kmFileManager.getFileUID();
-			// String dmsPath = ConfigProperties.getPropertyByName("km-base-path");
-			// String dmsProtocol = ConfigProperties.getPropertyByName("km-base-protocol");
-			// String userName = ConfigProperties.getPropertyByName("km-guest-user");
-			// String userPassword = ConfigProperties.getPassword("km-guest-user");
+			
 			fileUIDAsURI = dmsProtocol + "://" + userName + ":" + userPassword + "@" + dmsPath + "/Download?uuid="
 					+ fileUID;
 		}
