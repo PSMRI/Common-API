@@ -20,7 +20,7 @@ public class FieldResponseDTO {
     private Integer sequence;
     private Boolean isEditable;
     private Integer stateCode;
-    public List<Map<String, String>> options;
+    public List<Map<String, Object>> options;
     private Map<String, Object> validation;
     private Map<String, Object> conditional;
 }

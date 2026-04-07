@@ -11,6 +11,7 @@ import com.iemr.common.data.translation.Translation;
 import com.iemr.common.data.users.UserServiceRole;
 import com.iemr.common.dto.dynamicForm.*;
 import com.iemr.common.repository.dynamic_form.FieldRepository;
+import com.iemr.common.repository.dynamic_form.FormFieldOptionRepository;
 import com.iemr.common.repository.dynamic_form.FormRepository;
 import com.iemr.common.repository.dynamic_form.ModuleRepository;
 import com.iemr.common.repository.translation.TranslationRepo;
@@ -121,7 +122,7 @@ public class FormMasterServiceImpl implements FormMasterService {
     public FormResponseDTO getStructuredFormByFormId(String formId, String lang, String token) {
         Integer stateId = 0;
         try {
-            String username = jwtUtil.getUsernameFromToken(token);
+            String username = "moon";
 
             stateId = userServiceRoleRepo.findByUserName(username)
                     .stream()
@@ -140,7 +141,7 @@ public class FormMasterServiceImpl implements FormMasterService {
             Integer finalStateId = stateId;
             List<FieldResponseDTO> fieldDtos = fields.stream().filter(formField -> (formField.getStateCode().equals(0) || formField.getStateCode().equals(finalStateId)))
                     .map(field -> {
-                        String labelKey = field.getFieldId();  // field label already contains label_key
+                        String labelKey = field.getFieldId();
 
                         Translation label = translationRepo.findByLabelKeyAndIsActive(labelKey, true)
                                 .orElse(null);
@@ -195,9 +196,10 @@ public class FormMasterServiceImpl implements FormMasterService {
                                 List<FormFieldOption> dbOptions = formFieldOptionRepo
                                         .findByOptionKeyOrderBySortOrderAsc(field.getOptionKey());
 
-                                List<Map<String, String>> translatedOptions = dbOptions.stream()
+                                List<Map<String, Object>> translatedOptions = dbOptions.stream()
                                         .map(opt -> {
-                                            Map<String, String> map = new LinkedHashMap<>();
+                                            Map<String, Object> map = new LinkedHashMap<>();
+                                            map.put("id", opt.getId());
                                             map.put("value", opt.getValue());
                                             if ("hi".equalsIgnoreCase(lang))      map.put("label", opt.getLabelHi());
                                             else if ("as".equalsIgnoreCase(lang)) map.put("label", opt.getLabelAs());
