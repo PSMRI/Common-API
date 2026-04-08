@@ -121,7 +121,7 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 		}
 	}
 
-	@Async
+	// @Async
 	@Override
 	public Integer updateBenificiary(BeneficiaryModel benificiaryDetails, String auth) throws IEMRException {
 		Integer updatedRows = 0;
