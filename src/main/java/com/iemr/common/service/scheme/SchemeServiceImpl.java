@@ -30,6 +30,7 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -58,6 +59,18 @@ public class SchemeServiceImpl implements SchemeService {
 	// }
 
 	private KMFileManagerService kmFileManagerService;
+
+	@Value("${km-api-base-protocol}")
+	private String dmsProtocol;
+
+	@Value("${km-api-base-url}")
+	private String dmsPath;
+
+	@Value("${km-guest-user}")
+	private String userName;
+
+	@Value("${km-guest-password}")
+	private String userPassword;
 
 	@Autowired
 	public void setKmFileManagerService(KMFileManagerService kmFileManagerService) {
@@ -104,16 +117,13 @@ public class SchemeServiceImpl implements SchemeService {
 		String fileUIDAsURI = null;
 		if (kmFileManager != null && kmFileManager.getFileUID() != null) {
 			String fileUID = kmFileManager.getFileUID();
-			String dmsPath = ConfigProperties.getPropertyByName("km-base-path");
-			String dmsProtocol = ConfigProperties.getPropertyByName("km-base-protocol");
-			String userName = ConfigProperties.getPropertyByName("km-guest-user");
-			String userPassword = ConfigProperties.getPassword("km-guest-user");
+			
 			fileUIDAsURI = dmsProtocol + "://" + userName + ":" + userPassword + "@" + dmsPath + "/Download?uuid="
 					+ fileUID;
 		}
-		// return fileUIDAsURI;
-		String message = kmFileManager.getFileUID() ;
-		return message;
+		return fileUIDAsURI;
+		// String message = kmFileManager.getFileUID() ;
+		// return message;
 	}
 
 	@Override

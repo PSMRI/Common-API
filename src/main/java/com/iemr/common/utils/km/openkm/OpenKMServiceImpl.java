@@ -48,6 +48,8 @@ import com.openkm.sdk4j.exception.WebserviceException;
 
 import jakarta.annotation.PostConstruct;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,7 +60,6 @@ import org.springframework.stereotype.Service;
 public class OpenKMServiceImpl implements KMService {
 	
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
-
 	@Value("${km-base-url}")
     private String url;
 
@@ -84,12 +85,10 @@ public class OpenKMServiceImpl implements KMService {
 
 	@PostConstruct
 	public void init() {
-		 logger.info("KM URL: " + url);
-   		 logger.info("KM Username: " + username);
-
+		logger.info("KM URL=",url);
 		connector = OpenKMConnector.initialize(url, username, password);
-	
-	}
+			
+			}
 
 	@Override
 	public String getDocumentRoot() {
