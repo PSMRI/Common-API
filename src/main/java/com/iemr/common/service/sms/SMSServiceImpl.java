@@ -436,10 +436,15 @@ public class SMSServiceImpl implements SMSService {
 				variableValue = videoCall.getCallerPhoneNumber() !=null ? videoCall.getCallerPhoneNumber().toString() : "";
 				break;
 	        default:
-	            Method method = videoCall.getClass().getDeclaredMethod("get" + capitalize(methodName));
-	            method.setAccessible(true);
-	            Object result = method.invoke(videoCall);
-	            variableValue = result != null ? result.toString() : "";
+	            try {
+	                Method method = videoCall.getClass().getDeclaredMethod("get" + capitalize(methodName));
+	                method.setAccessible(true);
+	                Object result = method.invoke(videoCall);
+	                variableValue = result != null ? result.toString() : "";
+	            } catch (NoSuchMethodException e) {
+	                logger.warn("No getter found for methodName: " + methodName + " on VideoCallParameters");
+	                variableValue = "";
+	            }
 	            break;
 	    }
 	    return variableValue.trim();
@@ -875,9 +880,16 @@ public class SMSServiceImpl implements SMSService {
 			variableValue = imrName;
 			break;
 		default:
-			Class clazz = Class.forName(className);
-			Method method = clazz.getDeclaredMethod("get" + methodName, null);
-			variableValue = method.invoke(beneficiary, null).toString();
+			if ("com.iemr.common.data.videocall.VideoCallParameters".equals(className)) {
+				VideoCallParameters vcParams = getVideoCallParameters(request.getSmsAdvice());
+				if (vcParams != null) {
+					variableValue = getVideoCallData(methodName, vcParams);
+				}
+			} else {
+				Class clazz = Class.forName(className);
+				Method method = clazz.getDeclaredMethod("get" + methodName, null);
+				variableValue = method.invoke(beneficiary, null).toString();
+			}
             break;
 		}
 
