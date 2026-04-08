@@ -391,8 +391,8 @@ public class SMSServiceImpl implements SMSService {
             String variable = smsParametersMap.getSmsParameterName();
             String methodName = smsParametersMap.getSmsParameter().getDataName();
             String variableValue = "";
-			variableValue = getVideoCallData(methodName, vcParams);
- 			smsToSend = smsToSend.replace("$$" + variable + "$$", variableValue);
+			// variableValue = getVideoCallData(methodName, vcParams);
+ 			// smsToSend = smsToSend.replace("$$" + variable + "$$", variableValue);
 
             if ("VideoCall".equalsIgnoreCase(smsParametersMap.getSmsParameter().getSmsParameterType())) {
                 variableValue = getVideoCallData(methodName, vcParams);
