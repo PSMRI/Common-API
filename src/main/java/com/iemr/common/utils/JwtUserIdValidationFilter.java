@@ -251,7 +251,11 @@ public class JwtUserIdValidationFilter implements Filter {
 				|| path.startsWith(contextPath + "/user/userLogout")
 				|| path.startsWith(contextPath + "/user/validateSecurityQuestionAndAnswer")
 				|| path.startsWith(contextPath + "/user/logOutUserFromConcurrentSession")
-				|| path.startsWith(contextPath + "/user/refreshToken");
+				|| path.startsWith(contextPath + "/user/refreshToken")
+				// Public Jitsi short-link redirect: hit by SMS recipients on phone
+				// browsers that have no app session. Access control is the JWT minted
+				// inside the redirect handler + the unguessable slug.
+				|| path.equals(contextPath + "/video-consultation/resolve");
 	}
 
 	private String getJwtTokenFromCookies(HttpServletRequest request) {

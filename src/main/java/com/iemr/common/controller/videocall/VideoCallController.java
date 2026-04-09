@@ -22,6 +22,7 @@
 
 package com.iemr.common.controller.videocall;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,8 +33,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.iemr.common.model.videocall.UpdateCallRequest;
@@ -113,6 +116,35 @@ public ResponseEntity<String> updateCallStatus(@RequestBody UpdateCallRequest re
     return ResponseEntity.ok(response.toString());
 }
 
-    
-    
+/**
+ * Public redirect endpoint hit when a beneficiary clicks the short SMS link.
+ *
+ * Flow:
+ *   1. Jitsi host nginx receives "https://vc.piramalswasthya.org/?m=&lt;slug&gt;"
+ *      and proxies/redirects it to this endpoint.
+ *   2. This endpoint looks up the slug, mints a fresh Jitsi JWT bound to the
+ *      room and the agent, and 302-redirects the browser to the full Jitsi URL
+ *      "https://vc.piramalswasthya.org/&lt;room&gt;?jwt=&lt;token&gt;".
+ *   3. The Jitsi server enforces the JWT (prosody token-auth) and admits the user.
+ *
+ * Intentionally NOT guarded by Authorization header - the SMS recipient is on
+ * a phone browser and has no app session. Access control is the JWT itself
+ * plus the slug being unguessable and the meeting row existing.
+ */
+@GetMapping(value = "/resolve")
+public ResponseEntity<Void> resolveMeetingLink(@RequestParam("m") String slug) {
+    try {
+        String redirectUrl = videoCallService.resolveMeetingLink(slug);
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create(redirectUrl))
+                .build();
+    } catch (IllegalArgumentException e) {
+        logger.warn("resolveMeetingLink rejected: {}", e.getMessage());
+        return ResponseEntity.badRequest().build();
+    } catch (Exception e) {
+        logger.error("resolveMeetingLink failed for slug={}: {}", slug, e.getMessage(), e);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+}
+
 }
