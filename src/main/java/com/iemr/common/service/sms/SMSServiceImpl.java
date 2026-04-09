@@ -683,7 +683,7 @@ public class SMSServiceImpl implements SMSService {
 		sms.setReceivingUserID(request.getUserID());
 		String smsToSend = "";
 		BeneficiaryModel beneficiary = null;
-		if (request.getBeneficiaryRegID() != null) {
+		if (request.getBeneficiaryRegID() != null && !request.getBeneficiaryRegID().toString().isEmpty()) {
 			List<BeneficiaryModel> beneficiaries = searchBeneficiary.userExitsCheckWithId(request.getBeneficiaryRegID(),
 					authToken, request.getIs1097());
 			if (beneficiaries.size() == 1)
@@ -849,6 +849,12 @@ public class SMSServiceImpl implements SMSService {
 	private String getBeneficiaryData(String className, String methodName, SMSRequest request,
 			BeneficiaryModel beneficiary) throws Exception {
 		String variableValue = "";
+		if (beneficiary == null) {
+        if ("phoneno".equalsIgnoreCase(methodName)) {
+            return request.getBenPhoneNo() != null ? request.getBenPhoneNo() : "";
+        }
+        return "";
+    }
 		switch (methodName.toLowerCase()) {
 		case "name":
 			String fname = beneficiary.getFirstName() != null ? beneficiary.getFirstName() + " " : "";
