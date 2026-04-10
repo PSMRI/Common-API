@@ -96,13 +96,13 @@ public class JitsiJwtUtil {
         context.put("user", user);
 
         return Jwts.builder()
-                .audience().add(appId).and()
+                .claim("aud", appId)
                 .issuer(appId)
                 .subject(sub)
                 .claim("room", room)
                 .claim("context", context)
                 .expiration(expiry)
-                .signWith(getSigningKey())
+                .signWith(getSigningKey(), Jwts.SIG.HS256)
                 .compact();
     }
 }
