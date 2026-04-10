@@ -255,7 +255,7 @@ public class JwtUserIdValidationFilter implements Filter {
 				// Public Jitsi short-link redirect: hit by SMS recipients on phone
 				// browsers that have no app session. Access control is the JWT minted
 				// inside the redirect handler + the unguessable slug.
-				|| path.equals(contextPath + "/video-consultation/resolve");
+				|| path.endsWith("/video-consultation/resolve");
 	}
 
 	private String getJwtTokenFromCookies(HttpServletRequest request) {
