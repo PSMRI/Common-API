@@ -96,6 +96,7 @@ public class JitsiJwtUtil {
         context.put("user", user);
 
         return Jwts.builder()
+                .header().add("typ", "JWT").and()
                 .claim("aud", appId)
                 .issuer(appId)
                 .subject(sub)
