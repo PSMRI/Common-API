@@ -1,14 +1,17 @@
 package com.iemr.common.service.dynamicForm;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.common.data.dynamic_from.FormDefinition;
 import com.iemr.common.data.dynamic_from.FormField;
+import com.iemr.common.data.dynamic_from.FormFieldOption;
 import com.iemr.common.data.dynamic_from.FormModule;
 import com.iemr.common.data.translation.Translation;
 import com.iemr.common.data.users.UserServiceRole;
 import com.iemr.common.dto.dynamicForm.*;
 import com.iemr.common.repository.dynamic_form.FieldRepository;
+import com.iemr.common.repository.dynamic_form.FormFieldOptionRepository;
 import com.iemr.common.repository.dynamic_form.FormRepository;
 import com.iemr.common.repository.dynamic_form.ModuleRepository;
 import com.iemr.common.repository.translation.TranslationRepo;
@@ -42,6 +45,9 @@ public class FormMasterServiceImpl implements FormMasterService {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private FormFieldOptionRepository formFieldOptionRepo ;
 
     @Override
     public FormModule createModule(ModuleDTO dto) {
@@ -135,23 +141,39 @@ public class FormMasterServiceImpl implements FormMasterService {
             Integer finalStateId = stateId;
             List<FieldResponseDTO> fieldDtos = fields.stream().filter(formField -> (formField.getStateCode().equals(0) || formField.getStateCode().equals(finalStateId)))
                     .map(field -> {
-                        String labelKey = field.getFieldId();  // field label already contains label_key
+                        String labelKey = field.getFieldId();
 
-                        Translation t = translationRepo.findByLabelKeyAndIsActive(labelKey, true)
+                        Translation label = translationRepo.findByLabelKeyAndIsActive(labelKey, true)
                                 .orElse(null);
 
-                        String translatedLabel = field.getLabel(); // fallback
+                        Translation placeHolder = translationRepo.findByLabelKeyAndIsActive("placeholder_"+labelKey, true)
+                                .orElse(null);
 
-                        if (t != null) {
+                        String translatedLabel = field.getLabel();
+                        String translatedPlaceHolder = field.getPlaceholder();
+
+                        if (label != null) {
                             if ("hi".equalsIgnoreCase(lang)) {
-                                translatedLabel = t.getHindiTranslation();
+                                translatedLabel = label.getHindiTranslation();
                             } else if ("as".equalsIgnoreCase(lang)) {
-                                translatedLabel = t.getAssameseTranslation();
+                                translatedLabel = label.getAssameseTranslation();
                             } else if ("en".equalsIgnoreCase(lang)) {
-                                translatedLabel = t.getEnglish();
+                                translatedLabel = label.getEnglish();
 
                             }
                         }
+
+                        if (placeHolder != null) {
+                            if ("hi".equalsIgnoreCase(lang)) {
+                                translatedPlaceHolder= placeHolder.getHindiTranslation();
+                            } else if ("as".equalsIgnoreCase(lang)) {
+                                translatedPlaceHolder = placeHolder.getAssameseTranslation();
+                            } else if ("en".equalsIgnoreCase(lang)) {
+                                translatedPlaceHolder = placeHolder.getEnglish();
+
+                            }
+                        }
+
 
                         FieldResponseDTO dto = new FieldResponseDTO();
                         dto.setId(field.getId());
@@ -165,27 +187,32 @@ public class FormMasterServiceImpl implements FormMasterService {
                         dto.setType(field.getType());
                         dto.setIsRequired(field.getIsRequired());
                         dto.setDefaultValue(field.getDefaultValue());
-                        dto.setPlaceholder(field.getPlaceholder());
+                        dto.setPlaceholder(translatedPlaceHolder);
                         dto.setSequence(field.getSequence());
 
+
                         try {
-                            // Handle options
-                            if (field.getOptions() != null && !field.getOptions().isBlank()) {
-                                JsonNode node = objectMapper.readTree(field.getOptions());
-                                List<String> options = null;
-                                if (node.isArray()) {
-                                    options = objectMapper.convertValue(node, new TypeReference<>() {
-                                    });
-                                } else if (node.has("options")) {
-                                    options = objectMapper.convertValue(node.get("options"), new TypeReference<>() {
-                                    });
-                                }
-                                dto.setOptions(options == null || options.isEmpty() ? null : options);
+                            if (field.getOptionKey() != null && !field.getOptionKey().isBlank()) {
+                                List<FormFieldOption> dbOptions = formFieldOptionRepo
+                                        .findByOptionKeyOrderBySortOrderAsc(field.getOptionKey());
+
+                                List<Map<String, Object>> translatedOptions = dbOptions.stream()
+                                        .map(opt -> {
+                                            Map<String, Object> map = new LinkedHashMap<>();
+                                            map.put("id", opt.getId());
+                                            map.put("value", opt.getValue());
+                                            if ("hi".equalsIgnoreCase(lang))      map.put("label", opt.getLabelHi());
+                                            else if ("as".equalsIgnoreCase(lang)) map.put("label", opt.getLabelAs());
+                                            else                                   map.put("label", opt.getLabelEn());
+                                            return map;
+                                        })
+                                        .collect(Collectors.toList());
+
+                                dto.setOptions(translatedOptions.isEmpty() ? null : translatedOptions);
+
                             } else {
                                 dto.setOptions(null);
                             }
-
-                            // Handle validation
                             if (field.getValidation() != null && !field.getValidation().isBlank()) {
                                 Map<String, Object> validation = objectMapper.readValue(field.getValidation(), new TypeReference<>() {
                                 });
@@ -194,7 +221,6 @@ public class FormMasterServiceImpl implements FormMasterService {
                                 dto.setValidation(null);
                             }
 
-                            // Handle conditional
                             if (field.getConditional() != null && !field.getConditional().isBlank()) {
                                 Map<String, Object> conditional = objectMapper.readValue(field.getConditional(), new TypeReference<>() {
                                 });
