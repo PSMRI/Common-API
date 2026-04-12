@@ -224,17 +224,17 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 		if (user.getDeleted()) {
 			// check if account was locked due to failed attempts and lock has expired
 			if (user.getLockTimestamp() != null) {
-				long lockTime = user.getLockTimestamp().getTime();
-				long now = System.currentTimeMillis();
-				long twentyFourHoursMs = 24 * 60 * 60 * 1000L;
+				java.time.LocalDate lockDate = user.getLockTimestamp().toLocalDateTime().toLocalDate();
+				java.time.LocalDate today = java.time.LocalDate.now();
 
-				if (now - lockTime >= twentyFourHoursMs) {
-					// auto-unlock: lock period expired
+				if (today.isAfter(lockDate)) {
+					// auto-unlock: it's a new day after the lock date
 					user.setDeleted(false);
 					user.setFailedAttempt(0);
 					user.setLockTimestamp(null);
 					iEMRUserRepositoryCustom.save(user);
-					logger.info("Account auto-unlocked for user {} after 24h lock period expired", user.getUserName());
+					logger.info("Account auto-unlocked for user {} (locked on {}, unlocked on {})",
+							user.getUserName(), lockDate, today);
 					return;
 				} else {
 					throw new IEMRException(
@@ -285,6 +285,10 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 				checkUserAccountStatus(user);
 				iEMRUserRepositoryCustom.save(user);
 			} else if (validatePassword == 0) {
+				// if already locked/deleted, don't overwrite lock timestamp
+				if (Boolean.TRUE.equals(user.getDeleted())) {
+					checkUserAccountStatus(user);
+				}
 				if (user.getFailedAttempt() + 1 < failedAttempt) {
 					user.setFailedAttempt(user.getFailedAttempt() + 1);
 					user = iEMRUserRepositoryCustom.save(user);
@@ -340,7 +344,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 	 */
 	@Override
 	public User superUserAuthenticate(String userName, String password) throws Exception {
-		List<User> users = iEMRUserRepositoryCustom.findByUserName(userName);
+		List<User> users = iEMRUserRepositoryCustom.findByUserNameNew(userName);
 
 		if (users.size() != 1) {
 			throw new IEMRException("Invalid username or password");
@@ -373,6 +377,10 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 				iEMRUserRepositoryCustom.save(user);
 
 			} else if (validatePassword == 0) {
+				// if already locked/deleted, don't overwrite lock timestamp
+				if (Boolean.TRUE.equals(user.getDeleted())) {
+					checkUserAccountStatus(user);
+				}
 				if (user.getFailedAttempt() + 1 < failedAttempt) {
 					user.setFailedAttempt(user.getFailedAttempt() + 1);
 					user = iEMRUserRepositoryCustom.save(user);
@@ -400,6 +408,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 				checkUserAccountStatus(user);
 				if (user.getFailedAttempt() != 0) {
 					user.setFailedAttempt(0);
+					user.setLockTimestamp(null);
 					user = iEMRUserRepositoryCustom.save(user);
 				}
 			}
