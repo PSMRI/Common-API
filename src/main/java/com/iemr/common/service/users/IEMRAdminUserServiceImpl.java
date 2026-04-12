@@ -222,7 +222,27 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 
 	private void checkUserAccountStatus(User user) throws IEMRException {
 		if (user.getDeleted()) {
-			throw new IEMRException("Your account is locked or de-activated. Please contact administrator");
+			// check if account was locked due to failed attempts and lock has expired
+			if (user.getLockTimestamp() != null) {
+				long lockTime = user.getLockTimestamp().getTime();
+				long now = System.currentTimeMillis();
+				long twentyFourHoursMs = 24 * 60 * 60 * 1000L;
+
+				if (now - lockTime >= twentyFourHoursMs) {
+					// auto-unlock: lock period expired
+					user.setDeleted(false);
+					user.setFailedAttempt(0);
+					user.setLockTimestamp(null);
+					iEMRUserRepositoryCustom.save(user);
+					logger.info("Account auto-unlocked for user {} after 24h lock period expired", user.getUserName());
+					return;
+				} else {
+					throw new IEMRException(
+							"Your account has been locked. You can try tomorrow or connect to the administrator.");
+				}
+			}
+			throw new IEMRException(
+					"Your account is locked or de-activated. Please contact administrator");
 		} else if (user.getStatusID() > 2) {
 			throw new IEMRException("Your account is not active. Please contact administrator");
 		}
@@ -273,24 +293,26 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 				} else if (user.getFailedAttempt() + 1 >= failedAttempt) {
 					user.setFailedAttempt(user.getFailedAttempt() + 1);
 					user.setDeleted(true);
+					user.setLockTimestamp(new java.sql.Timestamp(System.currentTimeMillis()));
 					user = iEMRUserRepositoryCustom.save(user);
 					logger.warn("User Account has been locked after reaching the limit of {} failed login attempts.",
 							ConfigProperties.getInteger("failedLoginAttempt"));
 
 					throw new IEMRException(
-							"Invalid username or password. Please contact administrator.");
+							"Your account has been locked. You can try tomorrow or connect to the administrator.");
 				} else {
 					user.setFailedAttempt(user.getFailedAttempt() + 1);
 					user = iEMRUserRepositoryCustom.save(user);
 					logger.warn("Failed login attempt {} of {} for a user account.",
 							user.getFailedAttempt(), ConfigProperties.getInteger("failedLoginAttempt"));
 					throw new IEMRException(
-							"Invalid username or password. Please contact administrator.");
+							"Invalid username or password.");
 				}
 			} else {
 				checkUserAccountStatus(user);
 				if (user.getFailedAttempt() != 0) {
 					user.setFailedAttempt(0);
+					user.setLockTimestamp(null);
 					user = iEMRUserRepositoryCustom.save(user);
 				}
 			}
@@ -359,19 +381,20 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 				} else if (user.getFailedAttempt() + 1 >= failedAttempt) {
 					user.setFailedAttempt(user.getFailedAttempt() + 1);
 					user.setDeleted(true);
+					user.setLockTimestamp(new java.sql.Timestamp(System.currentTimeMillis()));
 					user = iEMRUserRepositoryCustom.save(user);
 					logger.warn("User Account has been locked after reaching the limit of {} failed login attempts.",
 							ConfigProperties.getInteger("failedLoginAttempt"));
 
 					throw new IEMRException(
-							"Invalid username or password. Please contact administrator.");
+							"Your account has been locked. You can try tomorrow or connect to the administrator.");
 				} else {
 					user.setFailedAttempt(user.getFailedAttempt() + 1);
 					user = iEMRUserRepositoryCustom.save(user);
 					logger.warn("Failed login attempt {} of {} for a user account.",
 							user.getFailedAttempt(), ConfigProperties.getInteger("failedLoginAttempt"));
 					throw new IEMRException(
-							"Invalid username or password. Please contact administrator.");
+							"Invalid username or password.");
 				}
 			} else {
 				checkUserAccountStatus(user);

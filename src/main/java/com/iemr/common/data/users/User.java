@@ -210,6 +210,10 @@ public class User implements Serializable  {
 	private Integer failedAttempt;
 
 	@Expose
+	@Column(name = "lock_timestamp")
+	private Timestamp lockTimestamp;
+
+	@Expose
 	@Column(name = "dhistoken")
 	private String dhistoken;
 
