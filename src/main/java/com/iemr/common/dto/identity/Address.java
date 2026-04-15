@@ -53,6 +53,11 @@ public @Data class Address {
 	private Integer servicePointID;
 	private String servicePointName;
 
+	private Integer areaId;
+	private String area;
+	private String otherResidentialArea;
+	private String coordinate;
+
 	public static Address bendemographicsAddressMapper(BeneficiaryDemographicsModel i_bendemographics) {
 		Address address = new Address();
 		if (i_bendemographics == null) {
@@ -87,6 +92,14 @@ public @Data class Address {
 		address.setSubDistrictId(i_bendemographics.getBlockID());
 		address.setVillageId(i_bendemographics.getDistrictBranchID());
 		address.setPinCode(i_bendemographics.getPinCode());
+
+		address.setAreaId(i_bendemographics.getResidentialAreaId());
+		address.setArea(i_bendemographics.getResidentialArea());
+		address.setOtherResidentialArea(i_bendemographics.getOtherResidentialArea());
+		if (i_bendemographics.getLatitude() != null && i_bendemographics.getLongitude() != null
+				&& !(i_bendemographics.getLatitude() == 0.0 && i_bendemographics.getLongitude() == 0.0)) {
+			address.setCoordinate(i_bendemographics.getLatitude() + "," + i_bendemographics.getLongitude());
+		}
 
 		return address;
 	}

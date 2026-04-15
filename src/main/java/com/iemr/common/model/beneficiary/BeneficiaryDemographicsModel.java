@@ -182,6 +182,22 @@ public class BeneficiaryDemographicsModel {
 	@Expose
 	private String monthlyFamilyIncome;
 
+	// new fields added to support extended registration payload
+	@Expose
+	private Double latitude;
+	@Expose
+	private Double longitude;
+	@Expose
+	private Integer residentialAreaId;
+	@Expose
+	private String residentialArea;
+	@Expose
+	private String otherResidentialArea;
+	@Expose
+	private Integer economicStatusId;
+	@Expose
+	private String economicStatus;
+
 	public BeneficiaryDemographicsModel() {
 
 	}

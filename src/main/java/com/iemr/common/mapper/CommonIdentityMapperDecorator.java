@@ -249,6 +249,17 @@ public abstract class CommonIdentityMapperDecorator implements CommonIdentityMap
 					blockMapper.districtBlockToModelByID(beneficiaryDemographicsModel.getBlockID()).getBlockName());
 		}
 
+		address.setAreaId(beneficiaryDemographicsModel.getResidentialAreaId());
+		address.setArea(beneficiaryDemographicsModel.getResidentialArea());
+		address.setOtherResidentialArea(beneficiaryDemographicsModel.getOtherResidentialArea());
+		if (beneficiaryDemographicsModel.getLatitude() != null
+				&& beneficiaryDemographicsModel.getLongitude() != null
+				&& !(beneficiaryDemographicsModel.getLatitude() == 0.0
+						&& beneficiaryDemographicsModel.getLongitude() == 0.0)) {
+			address.setCoordinate(beneficiaryDemographicsModel.getLatitude() + ","
+					+ beneficiaryDemographicsModel.getLongitude());
+		}
+
 		return address;
 	}
 }

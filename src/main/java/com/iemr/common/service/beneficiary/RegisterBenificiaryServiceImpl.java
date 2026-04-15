@@ -266,8 +266,14 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 
 			if(null != beneficiaryModel.getIncomeStatus())
 				identityDTO.setIncomeStatus(beneficiaryModel.getIncomeStatus());
-			else
+			else if (null != beneficiaryModel.getI_bendemographics().getIncomeStatus())
 				identityDTO.setIncomeStatus(beneficiaryModel.getI_bendemographics().getIncomeStatus());
+			else if (null != beneficiaryModel.getI_bendemographics().getEconomicStatus())
+				identityDTO.setIncomeStatus(beneficiaryModel.getI_bendemographics().getEconomicStatus());
+
+			if (null != beneficiaryModel.getI_bendemographics().getEconomicStatusId()
+					&& identityDTO.getIncomeStatusId() == null)
+				identityDTO.setIncomeStatusId(beneficiaryModel.getI_bendemographics().getEconomicStatusId());
 		}
 		if(beneficiaryModel!=null){
 		//	updateDeathOfBenificiary(beneficiaryModel);
