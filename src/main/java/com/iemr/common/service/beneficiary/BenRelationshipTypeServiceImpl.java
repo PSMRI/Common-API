@@ -31,7 +31,9 @@ import org.springframework.stereotype.Service;
 
 import com.iemr.common.data.beneficiary.BenRelationshipType;
 import com.iemr.common.repository.beneficiary.BeneficiaryRelationshipTypeRepository;
+import org.springframework.context.annotation.Profile;
 @Service
+@Profile("!swagger")
 public class BenRelationshipTypeServiceImpl implements BenRelationshipTypeService {
 
 	private BeneficiaryRelationshipTypeRepository beneficiaryRelationshipTypeRepository;

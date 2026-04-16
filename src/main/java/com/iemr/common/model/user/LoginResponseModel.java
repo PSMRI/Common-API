@@ -50,6 +50,7 @@ public @Data class LoginResponseModel
 	private MaritalStatusModel maritalstatus;
 	private Integer statusID;
 	private StatusModel status;
+	private String employeeID;
 	private String aadhaarNo;
 	private String pAN;
 	private Timestamp dOB;
