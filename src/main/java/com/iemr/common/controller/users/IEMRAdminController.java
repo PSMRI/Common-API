@@ -323,6 +323,16 @@ public class IEMRAdminController {
 			String userId = claims.get("userId", String.class);
 			User user = iemrAdminUserServiceImpl.getUserById(Long.parseLong(userId));
 
+			// validate if user account is locked or de-activated
+			if(user.getDeleted()){
+				logger.warn("Your account is locked or de-activated. Please contact administrator");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Your account is locked or de-activated. Please contact administrator.");
+			}
+			if(user.getStatusID()>2){
+				logger.warn("Your account is not active. Please contact administrator");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Your account is not active. Please contact administrator.");
+			}
+
 			// Validate that the user still exists and is active
 			if (user == null) {
 				logger.warn("Token validation failed: user not found for userId in token.");
