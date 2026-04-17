@@ -32,9 +32,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.iemr.common.model.beneficiary.RMNCHBeneficiaryDetailsRmnch;
-import com.iemr.common.repository.beneficiary.BeneficiaryRepo;
 import com.iemr.common.service.welcomeSms.WelcomeBenificarySmsService;
-import com.iemr.common.service.welcomeSms.WelcomeBenificarySmsServiceImpl;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,8 +83,6 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
     Validator validator;
 
     @Autowired
-    private BeneficiaryRepo beneficiaryRepo;
-    @Autowired
     OutboundHistoryRepository outboundHistoryRepository;
 
     /**
@@ -134,7 +130,6 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
         updatedRows = identityBeneficiaryService.editIdentityEditDTO(identityEditDTO, auth,
                 benificiaryDetails.getIs1097());
         logger.info("updateBen");
-        //updateDeathOfBenificiary(benificiaryDetails);
         return updatedRows;
     }
 
@@ -170,9 +165,7 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
             else
                 identityEditDTO.setIncomeStatus(benificiaryDetails.getI_bendemographics().getIncomeStatus());
         }
-        if (benificiaryDetails != null) {
-            //updateDeathOfBenificiary(benificiaryDetails);
-        }
+
 
     }
 
@@ -229,15 +222,13 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 
                     try {
                         logger.info("[SMS] Attempting to send welcome SMS to: " + phoneNo);
-                        Optional<RMNCHBeneficiaryDetailsRmnch> rmnchBeneficiaryDetailsRmnch = beneficiaryRepo.findById(beneficiary.getBeneficiaryRegID());
-                        if (rmnchBeneficiaryDetailsRmnch.isPresent()) {
-                            String smsResult = welcomeBenificarySmsService.sendWelcomeSMStoBenificiary(
-                                    phoneNo,
-                                    beneficiaryName.trim(),
-                                    beneficiary.getBeneficiaryID()
-                            );
-                            logger.info("[SMS] Result: " + smsResult);
-                        }
+                        String smsResult = welcomeBenificarySmsService.sendWelcomeSMStoBenificiary(
+                                phoneNo,
+                                beneficiaryName.trim(),
+                                beneficiary.getBeneficiaryID()
+
+                        );
+                        logger.info("[SMS]: "+ smsResult);
 
                     } catch (Exception smsError) {
                         // SMS failed but beneficiary is already created - don't fail the request
