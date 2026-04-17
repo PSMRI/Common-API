@@ -35,6 +35,7 @@ public class UpdateCallResponse {
     private String callDuration;
     private String modifiedBy;
     private boolean isLinkUsed;
+    private String recordingFileName;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     private Timestamp lastModified;
 

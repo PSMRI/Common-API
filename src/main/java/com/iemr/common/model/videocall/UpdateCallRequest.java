@@ -26,9 +26,10 @@ import lombok.Data;
 
 @Data
 public class UpdateCallRequest {
-	
+
 	private String meetingLink;
-	 private String callStatus; 
-	 private String callDuration; 
+	 private String callStatus;
+	 private String callDuration;
 	 private String modifiedBy;
+	 private Boolean isLinkUsed;
 }

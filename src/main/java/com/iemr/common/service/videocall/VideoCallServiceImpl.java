@@ -66,15 +66,13 @@ public class VideoCallServiceImpl implements VideoCallService {
     @Value("${videocall.url}")
     private String jitsiLink;
 
-    // Fallback chains let either dot-form or JITSI_*-form work in any property
-    // source (.properties files do NOT get Spring relaxed binding for @Value).
-    @Value("${jitsi.domain:${JITSI_DOMAIN:vc.piramalswasthya.org}}")
+    @Value("${jitsi.domain}")
     private String jitsiDomain;
 
-    @Value("${jitsi.room.prefix:${JITSI_ROOM_PREFIX:piramal-meeting-}}")
+    @Value("${jitsi.room.prefix}")
     private String roomPrefix;
 
-    @Value("${jitsi.default.user.email:${JITSI_DEFAULT_USER_EMAIL:admin@piramalswasthya.org}}")
+    @Value("${jitsi.default.user.email}")
     private String defaultUserEmail;
 
     public VideoCallServiceImpl() {
@@ -134,15 +132,40 @@ public String updateCallStatus(UpdateCallRequest callRequest) throws Exception {
     );
 
     if (updateCount > 0) {
-        videoCall.setLinkUsed(true);
-        videoCallRepository.save(videoCall); 
-      
+        // End-consultation: UI sends isLinkUsed=true; fall back to true for
+        // backwards compatibility with older callers that didn't send the flag.
+        boolean linkUsed = callRequest.getIsLinkUsed() == null || callRequest.getIsLinkUsed();
+        videoCall.setLinkUsed(linkUsed);
+        videoCall.setRecordingFileName(buildRecordingFileName(requestEntity.getMeetingLink()));
+        videoCallRepository.save(videoCall);
+
     } else {
         throw new Exception("Failed to update the call status");
     }
 
     return OutputMapper.gsonWithoutExposeRestriction()
         .toJson(videoCallMapper.videoCallToResponse(videoCall));
+}
+
+/**
+ * Jibri records each Jitsi room into a directory named after the room, with
+ * the MP4 file sharing the same name — e.g. piramal-meeting-Ab3xQ9pK/piramal-meeting-Ab3xQ9pK.mp4.
+ * The short SMS link is "<videocall.url>m=<slug>", so derive the room from the slug.
+ */
+private String buildRecordingFileName(String meetingLink) {
+    if (meetingLink == null) {
+        return null;
+    }
+    int idx = meetingLink.lastIndexOf("m=");
+    if (idx < 0) {
+        return null;
+    }
+    String slug = meetingLink.substring(idx + 2);
+    if (slug.isEmpty()) {
+        return null;
+    }
+    String roomName = roomPrefix + slug;
+    return roomName + "/" + roomName + ".mp4";
 }
 
 @Override

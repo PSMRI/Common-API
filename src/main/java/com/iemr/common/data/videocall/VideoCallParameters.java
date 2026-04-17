@@ -79,6 +79,9 @@ public class VideoCallParameters {
 		@Column(name = "IsLinkUsed")
 		private boolean linkUsed;
 
+		@Column(name = "RecordingFileName")
+		private String recordingFileName;
+
 	    @Column(name = "Deleted", insertable = false, updatable = true)
 		private Boolean deleted;
 
