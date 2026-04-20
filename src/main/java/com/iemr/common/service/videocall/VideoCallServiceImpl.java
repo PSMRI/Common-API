@@ -76,9 +76,7 @@ public class VideoCallServiceImpl implements VideoCallService {
 
     @Override
     public String generateMeetingLink() {
-        logger.info("Jitsi Link: " + jitsiLink);
         meetingLink=jitsiLink+"m="+RandomStringUtils.randomAlphanumeric(8);
-        logger.info("Meeting link: " + meetingLink);
         return meetingLink;
     }
 
@@ -112,7 +110,6 @@ public class VideoCallServiceImpl implements VideoCallService {
 @Override
 public String updateCallStatus(UpdateCallRequest callRequest) throws Exception {
     String meetingLink = callRequest.getMeetingLink();
-    logger.info("[updateCallStatus] START — meetingLink={}, callStatus={}, callDuration={}, modifiedBy={}, isLinkUsed={}",
         meetingLink,
         callRequest.getCallStatus(),
         callRequest.getCallDuration(),
@@ -125,7 +122,6 @@ public String updateCallStatus(UpdateCallRequest callRequest) throws Exception {
         logger.error("[updateCallStatus] No row found in t_videocallparameter for meetingLink={}", meetingLink);
         throw new Exception("No meeting found for link: " + meetingLink);
     }
-    logger.info("[updateCallStatus] Found existing row — meetingID={}, currentStatus={}, currentLinkUsed={}, currentRecording={}",
         existing.getMeetingID(),
         existing.getCallStatus(),
         existing.isLinkUsed(),
@@ -134,7 +130,6 @@ public String updateCallStatus(UpdateCallRequest callRequest) throws Exception {
     // 2. Derive the two fields 
     boolean linkUsed = callRequest.getIsLinkUsed() == null || callRequest.getIsLinkUsed();
     String recordingFileName = buildRecordingFileName(meetingLink);
-    logger.info("[updateCallStatus] Computed — linkUsed={}, recordingFileName={}", linkUsed, recordingFileName);
 
     // 3. Single atomic JPQL UPDATE — sets ALL five fields in one DB round-trip
     int updateCount = videoCallRepository.updateCallStatusAndRecording(
@@ -154,7 +149,6 @@ public String updateCallStatus(UpdateCallRequest callRequest) throws Exception {
 
     // 4. Re-fetch AFTER the update so the returned JSON reflects what is now in the DB
     VideoCallParameters updated = videoCallRepository.findByMeetingLink(meetingLink);
-    logger.info("[updateCallStatus] Post-update state — callStatus={}, callDuration={}, linkUsed={}, recordingFileName={}",
         updated.getCallStatus(),
         updated.getCallDuration(),
         updated.isLinkUsed(),
@@ -170,7 +164,6 @@ public String updateCallStatus(UpdateCallRequest callRequest) throws Exception {
  * The short SMS link is "<videocall.url>m=<slug>", so derive the room from the slug.
  */
 private String buildRecordingFileName(String meetingLink) {
-    logger.info("[buildRecordingFileName] Input meetingLink={}", meetingLink);
 
     if (meetingLink == null) {
         logger.warn("[buildRecordingFileName] meetingLink is null — returning null");
@@ -191,7 +184,6 @@ private String buildRecordingFileName(String meetingLink) {
 
     String roomName = roomPrefix + slug;
     String fileName = roomName + "/" + roomName + ".mp4";
-    logger.info("[buildRecordingFileName] slug={}, roomName={}, fileName={}", slug, roomName, fileName);
     return fileName;
 }
 
@@ -208,7 +200,6 @@ public String resolveMeetingLink(String slug) throws Exception {
         throw new Exception("No meeting found for slug: " + slug);
     }
 
-    // ✅ ADD THIS — block re-entry after call ends
     if (params.isLinkUsed()) {
         throw new Exception("This meeting link has already been used and is no longer active.");
     }
@@ -221,7 +212,6 @@ public String resolveMeetingLink(String slug) throws Exception {
     String token = jitsiJwtUtil.generateRoomToken(roomName, userName, defaultUserEmail);
     String redirectUrl = "https://" + jitsiDomain + "/" + roomName + "?jwt=" + token;
 
-    logger.info("Resolved slug {} -> room {}", slug, roomName);
     return redirectUrl;
 }
 
