@@ -150,17 +150,32 @@ public class VideoCallServiceImpl implements VideoCallService {
 
 @Override
 public String updateCallStatus(UpdateCallRequest callRequest) throws Exception {
-
     String meetingLink = callRequest.getMeetingLink();
+    logger.info("[updateCallStatus] START — meetingLink={}, callStatus={}, callDuration={}, modifiedBy={}, isLinkUsed={}",
+        meetingLink,
+        callRequest.getCallStatus(),
+        callRequest.getCallDuration(),
+        callRequest.getModifiedBy(),
+        callRequest.getIsLinkUsed());
 
-    VideoCallParameters videoCall = videoCallRepository.findByMeetingLink(meetingLink);
-    if (videoCall == null) {
+    // 1. Verify the row actually exists before attempting update
+    VideoCallParameters existing = videoCallRepository.findByMeetingLink(meetingLink);
+    if (existing == null) {
+        logger.error("[updateCallStatus] No row found in t_videocallparameter for meetingLink={}", meetingLink);
         throw new Exception("No meeting found for link: " + meetingLink);
     }
+    logger.info("[updateCallStatus] Found existing row — meetingID={}, currentStatus={}, currentLinkUsed={}, currentRecording={}",
+        existing.getMeetingID(),
+        existing.getCallStatus(),
+        existing.isLinkUsed(),
+        existing.getRecordingFileName());
 
+    // 2. Derive the two fields the old query was missing
     boolean linkUsed = callRequest.getIsLinkUsed() == null || callRequest.getIsLinkUsed();
     String recordingFileName = buildRecordingFileName(meetingLink);
+    logger.info("[updateCallStatus] Computed — linkUsed={}, recordingFileName={}", linkUsed, recordingFileName);
 
+    // 3. Single atomic JPQL UPDATE — sets ALL five fields in one DB round-trip
     int updateCount = videoCallRepository.updateCallStatusAndRecording(
         meetingLink,
         callRequest.getCallStatus(),
@@ -169,19 +184,23 @@ public String updateCallStatus(UpdateCallRequest callRequest) throws Exception {
         linkUsed,
         recordingFileName
     );
+    logger.info("[updateCallStatus] JPQL updateCallStatusAndRecording affected {} row(s)", updateCount);
 
     if (updateCount == 0) {
-        throw new Exception("Failed to update the call status");
+        logger.error("[updateCallStatus] Update affected 0 rows — possible meetingLink mismatch. meetingLink={}", meetingLink);
+        throw new Exception("Failed to update the call status — 0 rows affected");
     }
 
-    // Refresh the entity to reflect DB state before serialising
-    videoCall = videoCallRepository.findByMeetingLink(meetingLink);
-
-    logger.info("Call ended — link={}, isLinkUsed={}, recording={}",
-                meetingLink, linkUsed, recordingFileName);
+    // 4. Re-fetch AFTER the update so the returned JSON reflects what is now in the DB
+    VideoCallParameters updated = videoCallRepository.findByMeetingLink(meetingLink);
+    logger.info("[updateCallStatus] Post-update state — callStatus={}, callDuration={}, linkUsed={}, recordingFileName={}",
+        updated.getCallStatus(),
+        updated.getCallDuration(),
+        updated.isLinkUsed(),
+        updated.getRecordingFileName());
 
     return OutputMapper.gsonWithoutExposeRestriction()
-        .toJson(videoCallMapper.videoCallToResponse(videoCall));
+        .toJson(videoCallMapper.videoCallToResponse(updated));
 }
 
 /**
@@ -190,19 +209,29 @@ public String updateCallStatus(UpdateCallRequest callRequest) throws Exception {
  * The short SMS link is "<videocall.url>m=<slug>", so derive the room from the slug.
  */
 private String buildRecordingFileName(String meetingLink) {
+    logger.info("[buildRecordingFileName] Input meetingLink={}", meetingLink);
+
     if (meetingLink == null) {
+        logger.warn("[buildRecordingFileName] meetingLink is null — returning null");
         return null;
     }
+
     int idx = meetingLink.lastIndexOf("m=");
     if (idx < 0) {
+        logger.warn("[buildRecordingFileName] 'm=' marker not found in meetingLink={} — returning null", meetingLink);
         return null;
     }
+
     String slug = meetingLink.substring(idx + 2);
     if (slug.isEmpty()) {
+        logger.warn("[buildRecordingFileName] slug is empty after 'm=' in meetingLink={} — returning null", meetingLink);
         return null;
     }
+
     String roomName = roomPrefix + slug;
-    return roomName + "/" + roomName + ".mp4";
+    String fileName = roomName + "/" + roomName + ".mp4";
+    logger.info("[buildRecordingFileName] slug={}, roomName={}, fileName={}", slug, roomName, fileName);
+    return fileName;
 }
 
 // @Override
