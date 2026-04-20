@@ -89,33 +89,6 @@ public String sendVideoLink(@RequestBody String requestModel, HttpServletRequest
     }
 }
 
-// @PostMapping(value = "/update-call-status", produces = MediaType.APPLICATION_JSON_VALUE, headers = "Authorization")
-// public ResponseEntity<String> updateCallStatus(@RequestBody UpdateCallRequest requestModel, HttpServletRequest request) {
-//     OutputResponse response = new OutputResponse();
-
-//     try {
-//         if (requestModel.getMeetingLink() == null || requestModel.getCallStatus() == null) {
-//             throw new IllegalArgumentException("Meeting Link and Status are required");
-//         }
-
-//         String result = videoCallService.updateCallStatus(requestModel);
-
-//         JSONObject responseObj = new JSONObject();
-//         responseObj.put("status", "success");
-//         responseObj.put("message", result);
-//         response.setResponse(responseObj.toString());
-
-//     } catch (IllegalArgumentException e) {
-//         logger.error("Validation error: " + e.getMessage(), e);
-//         return ResponseEntity.badRequest().body("{\"status\":\"error\",\"message\":\"" + e.getMessage() + "\"}");
-//     } catch (Exception e) {
-//         logger.error("updateCallStatus failed with error: " + e.getMessage(), e);
-//         response.setError(e);
-//     }
-
-//     return ResponseEntity.ok(response.toString());
-// }
-
 @PostMapping(value = "/update-call-status", produces = MediaType.APPLICATION_JSON_VALUE, headers = "Authorization")
 public ResponseEntity<String> updateCallStatus(@RequestBody UpdateCallRequest requestModel,
                                                HttpServletRequest request) {
