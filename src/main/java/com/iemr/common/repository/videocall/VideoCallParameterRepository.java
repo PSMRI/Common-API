@@ -33,7 +33,6 @@ import com.iemr.common.model.videocall.VideoCallRequest;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.transaction.annotation.Transactional;
 
-
 @Repository
 public interface VideoCallParameterRepository extends CrudRepository<VideoCallParameters, Integer> {
 
@@ -41,14 +40,28 @@ public interface VideoCallParameterRepository extends CrudRepository<VideoCallPa
 	@Modifying
 	@Query("UPDATE VideoCallParameters v SET v.callStatus = :callStatus, v.callDuration = :callDuration, v.modifiedBy = :modifiedBy WHERE v.meetingLink = :meetingLink")
 	int updateCallStatusByMeetingLink(@Param("meetingLink") String meetingLink,
-	                                  @Param("callStatus") String callStatus,
-	                                  @Param("callDuration") String callDuration,
-	                                  @Param("modifiedBy") String modifiedBy);
+			@Param("callStatus") String callStatus,
+			@Param("callDuration") String callDuration,
+			@Param("modifiedBy") String modifiedBy);
 
 	@Query("SELECT v FROM VideoCallParameters v WHERE v.meetingLink = :meetingLink")
 	VideoCallParameters findByMeetingLink(@Param("meetingLink") String meetingLink);
 
+	@Modifying
+	@Transactional
+	@Query("UPDATE VideoCallParameters v SET " +
+			"v.callStatus = :callStatus, " +
+			"v.callDuration = :callDuration, " +
+			"v.modifiedBy = :modifiedBy, " +
+			"v.linkUsed = :linkUsed, " +
+			"v.recordingFileName = :recordingFileName " +
+			"WHERE v.meetingLink = :meetingLink")
+	int updateCallStatusAndRecording(
+			@Param("meetingLink") String meetingLink,
+			@Param("callStatus") String callStatus,
+			@Param("callDuration") String callDuration,
+			@Param("modifiedBy") String modifiedBy,
+			@Param("linkUsed") boolean linkUsed,
+			@Param("recordingFileName") String recordingFileName);
+
 }
-
-
-

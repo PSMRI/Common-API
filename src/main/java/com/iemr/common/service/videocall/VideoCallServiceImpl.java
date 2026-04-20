@@ -116,32 +116,69 @@ public class VideoCallServiceImpl implements VideoCallService {
     .replace("\\u0026", "&");
     }
 
+// @Override
+// public String updateCallStatus(UpdateCallRequest callRequest) throws Exception {
+//     VideoCallParameters videoCall = null;
+
+//     VideoCallParameters requestEntity = videoCallMapper.updateRequestToVideoCall(callRequest);
+
+//     videoCall = videoCallRepository.findByMeetingLink(requestEntity.getMeetingLink());
+
+//     int updateCount = videoCallRepository.updateCallStatusByMeetingLink(
+//         requestEntity.getMeetingLink(),
+//         requestEntity.getCallStatus(),
+//         requestEntity.getCallDuration(),
+//         requestEntity.getModifiedBy()
+//     );
+
+//     if (updateCount > 0) {
+//         // End-consultation: UI sends isLinkUsed=true; fall back to true for
+//         // backwards compatibility with older callers that didn't send the flag.
+//         boolean linkUsed = callRequest.getIsLinkUsed() == null || callRequest.getIsLinkUsed();
+//         videoCall.setLinkUsed(linkUsed);
+//         videoCall.setRecordingFileName(buildRecordingFileName(requestEntity.getMeetingLink()));
+//         videoCallRepository.save(videoCall);
+
+//     } else {
+//         throw new Exception("Failed to update the call status");
+//     }
+
+//     return OutputMapper.gsonWithoutExposeRestriction()
+//         .toJson(videoCallMapper.videoCallToResponse(videoCall));
+// }
+
+
 @Override
 public String updateCallStatus(UpdateCallRequest callRequest) throws Exception {
-    VideoCallParameters videoCall = null;
 
-    VideoCallParameters requestEntity = videoCallMapper.updateRequestToVideoCall(callRequest);
+    String meetingLink = callRequest.getMeetingLink();
 
-    videoCall = videoCallRepository.findByMeetingLink(requestEntity.getMeetingLink());
+    VideoCallParameters videoCall = videoCallRepository.findByMeetingLink(meetingLink);
+    if (videoCall == null) {
+        throw new Exception("No meeting found for link: " + meetingLink);
+    }
 
-    int updateCount = videoCallRepository.updateCallStatusByMeetingLink(
-        requestEntity.getMeetingLink(),
-        requestEntity.getCallStatus(),
-        requestEntity.getCallDuration(),
-        requestEntity.getModifiedBy()
+    boolean linkUsed = callRequest.getIsLinkUsed() == null || callRequest.getIsLinkUsed();
+    String recordingFileName = buildRecordingFileName(meetingLink);
+
+    int updateCount = videoCallRepository.updateCallStatusAndRecording(
+        meetingLink,
+        callRequest.getCallStatus(),
+        callRequest.getCallDuration(),
+        callRequest.getModifiedBy(),
+        linkUsed,
+        recordingFileName
     );
 
-    if (updateCount > 0) {
-        // End-consultation: UI sends isLinkUsed=true; fall back to true for
-        // backwards compatibility with older callers that didn't send the flag.
-        boolean linkUsed = callRequest.getIsLinkUsed() == null || callRequest.getIsLinkUsed();
-        videoCall.setLinkUsed(linkUsed);
-        videoCall.setRecordingFileName(buildRecordingFileName(requestEntity.getMeetingLink()));
-        videoCallRepository.save(videoCall);
-
-    } else {
+    if (updateCount == 0) {
         throw new Exception("Failed to update the call status");
     }
+
+    // Refresh the entity to reflect DB state before serialising
+    videoCall = videoCallRepository.findByMeetingLink(meetingLink);
+
+    logger.info("Call ended — link={}, isLinkUsed={}, recording={}",
+                meetingLink, linkUsed, recordingFileName);
 
     return OutputMapper.gsonWithoutExposeRestriction()
         .toJson(videoCallMapper.videoCallToResponse(videoCall));
@@ -168,14 +205,44 @@ private String buildRecordingFileName(String meetingLink) {
     return roomName + "/" + roomName + ".mp4";
 }
 
+// @Override
+// public String resolveMeetingLink(String slug) throws Exception {
+//     if (slug == null || slug.isEmpty()) {
+//         throw new IllegalArgumentException("Meeting slug is required");
+//     }
+
+//     // The persisted meetingLink is the short URL produced by generateMeetingLink(),
+//     // i.e. "<videocall.url>m=<slug>". Reconstruct it to look up the row.
+//     String shortLink = jitsiLink + "m=" + slug;
+//     VideoCallParameters params = videoCallRepository.findByMeetingLink(shortLink);
+
+//     if (params == null) {
+//         throw new Exception("No meeting found for slug: " + slug);
+//     }
+
+//     // Note: we deliberately do NOT block on linkUsed=true here, because real
+//     // calls drop and the agent/beneficiary often have to rejoin. The linkUsed
+//     // flag is for reporting in updateCallStatus, not access control. Access
+//     // control comes from the JWT exp + the room claim.
+
+//     String roomName = roomPrefix + slug;
+//     String userName = params.getAgentName() != null && !params.getAgentName().isEmpty()
+//             ? params.getAgentName()
+//             : "Guest";
+
+//     String token = jitsiJwtUtil.generateRoomToken(roomName, userName, defaultUserEmail);
+
+//     String redirectUrl = "https://" + jitsiDomain + "/" + roomName + "?jwt=" + token;
+//     logger.info("Resolved slug {} -> room {}", slug, roomName);
+//     return redirectUrl;
+// }
+
 @Override
 public String resolveMeetingLink(String slug) throws Exception {
     if (slug == null || slug.isEmpty()) {
         throw new IllegalArgumentException("Meeting slug is required");
     }
 
-    // The persisted meetingLink is the short URL produced by generateMeetingLink(),
-    // i.e. "<videocall.url>m=<slug>". Reconstruct it to look up the row.
     String shortLink = jitsiLink + "m=" + slug;
     VideoCallParameters params = videoCallRepository.findByMeetingLink(shortLink);
 
@@ -183,10 +250,10 @@ public String resolveMeetingLink(String slug) throws Exception {
         throw new Exception("No meeting found for slug: " + slug);
     }
 
-    // Note: we deliberately do NOT block on linkUsed=true here, because real
-    // calls drop and the agent/beneficiary often have to rejoin. The linkUsed
-    // flag is for reporting in updateCallStatus, not access control. Access
-    // control comes from the JWT exp + the room claim.
+    // ✅ ADD THIS — block re-entry after call ends
+    if (params.isLinkUsed()) {
+        throw new Exception("This meeting link has already been used and is no longer active.");
+    }
 
     String roomName = roomPrefix + slug;
     String userName = params.getAgentName() != null && !params.getAgentName().isEmpty()
@@ -194,8 +261,8 @@ public String resolveMeetingLink(String slug) throws Exception {
             : "Guest";
 
     String token = jitsiJwtUtil.generateRoomToken(roomName, userName, defaultUserEmail);
-
     String redirectUrl = "https://" + jitsiDomain + "/" + roomName + "?jwt=" + token;
+
     logger.info("Resolved slug {} -> room {}", slug, roomName);
     return redirectUrl;
 }

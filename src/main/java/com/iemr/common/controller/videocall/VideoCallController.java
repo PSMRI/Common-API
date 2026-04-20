@@ -35,19 +35,19 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iemr.common.model.videocall.UpdateCallRequest;
 import com.iemr.common.model.videocall.VideoCallRequest;
 import com.iemr.common.service.videocall.VideoCallService;
 import com.iemr.common.utils.response.OutputResponse;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
 
-import org.springframework.web.bind.annotation.RequestBody;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping(value = "/video-consultation")
@@ -142,9 +142,13 @@ public ResponseEntity<Void> resolveMeetingLink(@RequestParam("m") String slug) {
         logger.warn("resolveMeetingLink rejected: {}", e.getMessage());
         return ResponseEntity.badRequest().build();
     } catch (Exception e) {
-        logger.error("resolveMeetingLink failed for slug={}: {}", slug, e.getMessage(), e);
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    logger.error("resolveMeetingLink failed for slug={}: {}", slug, e.getMessage(), e);
+    
+    // Distinguish "link expired" from "not found" with a 410 Gone
+    if (e.getMessage() != null && e.getMessage().contains("already been used")) {
+        return ResponseEntity.status(HttpStatus.GONE).build(); // 410
     }
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 }
-
+}
 }
