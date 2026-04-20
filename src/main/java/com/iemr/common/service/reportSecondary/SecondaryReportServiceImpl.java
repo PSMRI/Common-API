@@ -35,6 +35,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.iemr.common.data.callhandling.CallType;
@@ -53,6 +54,7 @@ import com.iemr.common.utils.exception.IEMRException;
 import com.iemr.common.utils.mapper.InputMapper;
 
 
+@Profile("!swagger")
 @Service
 public class SecondaryReportServiceImpl implements SecondaryReportService {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());

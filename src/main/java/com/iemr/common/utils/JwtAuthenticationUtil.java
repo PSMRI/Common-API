@@ -19,6 +19,7 @@ import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Component
+@org.springframework.context.annotation.Profile("!swagger")
 public class JwtAuthenticationUtil {
 
 	@Autowired

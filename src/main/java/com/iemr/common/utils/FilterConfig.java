@@ -33,6 +33,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 @Configuration
+@org.springframework.context.annotation.Profile("!swagger")
 public class FilterConfig {
 
     private static final Logger log = LoggerFactory.getLogger(FilterConfig.class);
