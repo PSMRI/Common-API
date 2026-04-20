@@ -92,6 +92,9 @@ public class KMFileManagerServiceImpl implements KMFileManagerService {
 	@Value("${tempFilePath}")
 	private String tempFilePath;
 	
+	@Value("${tempFilePath}")
+	private String tempFilePath;
+	
 	@Override
 	public String getKMFileLists(String request) throws Exception {
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -186,6 +189,7 @@ public class KMFileManagerServiceImpl implements KMFileManagerService {
 							.replace("}", "").replace("[", "").replace("]", "").replace("|", "").replace("\\", "")
 							.replace(":", "").replace(";", "").replace("-", "").replace("_", "").replace("+", "")
 							.replace("=", "").replace("\"", "").replace("'", ""));
+					// String tempFilePath = ConfigProperties.getPropertyByName("tempFilePath");
 					newFile = new FileOutputStream(tempFilePath + "/" + kmFileManager.getFileName());
 					newFile.write(Base64.getDecoder().decode(kmFileManager.getFileContent()));
 					newFile.flush();

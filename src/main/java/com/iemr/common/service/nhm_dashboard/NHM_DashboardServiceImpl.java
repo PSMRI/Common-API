@@ -32,6 +32,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.google.gson.Gson;
@@ -60,6 +61,9 @@ public class NHM_DashboardServiceImpl implements NHM_DashboardService {
 	private AgentSummaryReportRepo agentSummaryReportRepo;
 	@Autowired
 	private DetailedCallReportRepo detailedCallReportRepo;
+
+	@Value("${cti-server-ip}")
+    private String serverURL;
 
 	public String pushAbandonCalls(AbandonCallSummary abandonCallSummary) throws Exception {
 
@@ -227,7 +231,7 @@ public class NHM_DashboardServiceImpl implements NHM_DashboardService {
 //			throw new IEMRException("Please pass correct period for schedular - in hours");
 
 		String ctiURI = ConfigProperties.getPropertyByName("get-agent-summary-report-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		ctiURI = ctiURI.replace("CTI_SERVER", serverURL);
 		ctiURI = ctiURI.replace("END_DATE", endDate);
 		ctiURI = ctiURI.replace("START_DATE", fromDate);
@@ -272,7 +276,7 @@ public class NHM_DashboardServiceImpl implements NHM_DashboardService {
 //			throw new IEMRException("Please pass correct period for schedular - in hours");
 
 		String ctiURI = ConfigProperties.getPropertyByName("get-details-call-report-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		ctiURI = ctiURI.replace("CTI_SERVER", serverURL);
 		ctiURI = ctiURI.replace("END_DATE", endDate);
 		ctiURI = ctiURI.replace("START_DATE", fromDate);

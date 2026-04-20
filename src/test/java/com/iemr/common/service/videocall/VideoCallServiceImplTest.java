@@ -26,6 +26,7 @@ import com.iemr.common.mapper.videocall.VideoCallMapper;
 import com.iemr.common.model.videocall.UpdateCallRequest;
 import com.iemr.common.model.videocall.VideoCallRequest;
 import com.iemr.common.repository.videocall.VideoCallParameterRepository;
+import com.iemr.common.utils.JitsiJwtUtil;
 import com.iemr.common.utils.config.ConfigProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -59,10 +60,15 @@ public class VideoCallServiceImplTest {
     UpdateCallRequest updateCallRequest;
     @Mock
     VideoCallParameters videoCallParameters;
+    @Mock
+    JitsiJwtUtil jitsiJwtUtil;
 
     @BeforeEach
     public void setup() throws Exception {
         ReflectionTestUtils.setField(service, "jitsiLink", "https://meet.jit.si/");
+        ReflectionTestUtils.setField(service, "jitsiDomain", "meet.jit.si");
+        ReflectionTestUtils.setField(service, "roomPrefix", "piramal-meeting-");
+        ReflectionTestUtils.setField(service, "defaultUserEmail", "admin@piramalswasthya.org");
     }
 
     @Test
@@ -173,6 +179,69 @@ public class VideoCallServiceImplTest {
                 ReflectionTestUtils.invokeMethod(service, "saveRecordingFile", "meeting123");
             }
         }
+    }
+
+    @Test
+    public void testResolveMeetingLink_success() throws Exception {
+        when(videoCallRepository.findByMeetingLink("https://meet.jit.si/m=Ab3xQ9pK"))
+                .thenReturn(videoCallParameters);
+        when(videoCallParameters.getAgentName()).thenReturn("Dr. Asha");
+        when(jitsiJwtUtil.generateRoomToken(
+                eq("piramal-meeting-Ab3xQ9pK"),
+                eq("Dr. Asha"),
+                eq("admin@piramalswasthya.org"))).thenReturn("FAKE.JWT.TOKEN");
+
+        String result = service.resolveMeetingLink("Ab3xQ9pK");
+
+        assertEquals(
+                "https://meet.jit.si/piramal-meeting-Ab3xQ9pK?jwt=FAKE.JWT.TOKEN",
+                result);
+        verify(jitsiJwtUtil).generateRoomToken(
+                "piramal-meeting-Ab3xQ9pK", "Dr. Asha", "admin@piramalswasthya.org");
+    }
+
+    @Test
+    public void testResolveMeetingLink_emptySlug() {
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.resolveMeetingLink(""));
+        assertEquals("Meeting slug is required", ex.getMessage());
+    }
+
+    @Test
+    public void testResolveMeetingLink_nullSlug() {
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.resolveMeetingLink(null));
+        assertEquals("Meeting slug is required", ex.getMessage());
+    }
+
+    @Test
+    public void testResolveMeetingLink_notFound() {
+        when(videoCallRepository.findByMeetingLink("https://meet.jit.si/m=missing"))
+                .thenReturn(null);
+
+        Exception ex = assertThrows(
+                Exception.class,
+                () -> service.resolveMeetingLink("missing"));
+        assertTrue(ex.getMessage().contains("No meeting found"));
+    }
+
+    @Test
+    public void testResolveMeetingLink_fallbackUserNameWhenAgentMissing() throws Exception {
+        when(videoCallRepository.findByMeetingLink("https://meet.jit.si/m=Ab3xQ9pK"))
+                .thenReturn(videoCallParameters);
+        when(videoCallParameters.getAgentName()).thenReturn(null);
+        when(jitsiJwtUtil.generateRoomToken(
+                eq("piramal-meeting-Ab3xQ9pK"),
+                eq("Guest"),
+                eq("admin@piramalswasthya.org"))).thenReturn("FAKE.JWT.TOKEN");
+
+        String result = service.resolveMeetingLink("Ab3xQ9pK");
+
+        assertTrue(result.endsWith("?jwt=FAKE.JWT.TOKEN"));
+        verify(jitsiJwtUtil).generateRoomToken(
+                "piramal-meeting-Ab3xQ9pK", "Guest", "admin@piramalswasthya.org");
     }
 
     @Test
