@@ -408,12 +408,9 @@ public class BeneficiaryCallServiceImpl implements BeneficiaryCallService {
 							benificiaryCallAtClose.getCallReceivedUserID(), benificiaryCallAtClose.getCallID())
 					+ " rows where session ID was " + benificiaryCallAtClose.getCallID());
 
-			if (benificiaryCall.getIsTransfered() == null || benificiaryCall.getIsTransfered() == false) {
-				updateCallDisposition(benificiaryCall, benificiaryCall.getAgentIPAddress());
-
-				Thread.sleep(1000);
-				disconnectCallInCTI(benificiaryCall);
-			}
+			updateCallDisposition(benificiaryCall, benificiaryCall.getAgentIPAddress());
+			Thread.sleep(1000);
+			disconnectCallInCTI(benificiaryCall);
 		}
 
 		return updateCounts;
@@ -518,9 +515,14 @@ public class BeneficiaryCallServiceImpl implements BeneficiaryCallService {
 		}
 	}
 
-	@Async
 	private void updateCallDisposition(BeneficiaryCall benCall, String agentIP) {
 		try {
+			Boolean alreadySent = beneficiaryCallRepository.isDispositionAlreadySent(benCall.getBenCallID());
+			if (Boolean.TRUE.equals(alreadySent)) {
+				logger.info("Disposition already sent to CTI for benCallID: " + benCall.getBenCallID() + ", skipping duplicate");
+				return;
+			}
+
 			BeneficiaryCall callData = beneficiaryCallRepository.findCallDetails(benCall.getBenCallID());
 			JSONObject dispRequestObj = new JSONObject();
 			dispRequestObj.put("session_id", callData.getCallID());
@@ -531,11 +533,15 @@ public class BeneficiaryCallServiceImpl implements BeneficiaryCallService {
 			if (null != callData.getCallTypeObj() && null != callData.getCallTypeObj().getCallGroupType()) {
 				dispRequestObj.put("category", callData.getCallTypeObj().getCallGroupType());
 			}
-			logger.info(
-					ctiService.setCallDisposition(dispRequestObj.toString(), benCall.getAgentIPAddress()).toString());
 
+			logger.info("Sending disposition to CTI for benCallID: " + benCall.getBenCallID()
+					+ ", sessionID: " + callData.getCallID() + ", agentID: " + callData.getAgentID());
+			String ctiResponse = ctiService.setCallDisposition(dispRequestObj.toString(), benCall.getAgentIPAddress()).toString();
+			logger.info("CTI disposition response for benCallID " + benCall.getBenCallID() + ": " + ctiResponse);
+
+			beneficiaryCallRepository.updateDispositionSentFlag(benCall.getBenCallID());
 		} catch (Exception e) {
-			logger.error("updateCallDisposition failed with error " + e.getMessage(), e);
+			logger.error("updateCallDisposition failed for benCallID " + benCall.getBenCallID() + " with error: " + e.getMessage(), e);
 		}
 	}
 

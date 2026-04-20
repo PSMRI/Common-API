@@ -194,4 +194,12 @@ public interface BeneficiaryCallRepository extends CrudRepository<BeneficiaryCal
 	@Query("SELECT b.remarks FROM BeneficiaryCall b WHERE b.benCallID = :benCallID")
 	List<Object[]> fetchBenCallRemarks(@Param("benCallID") Long benCallID);
 
+	@Transactional
+	@Modifying
+	@Query("update BeneficiaryCall set isDispositionSentToCTI = true where benCallID = :benCallID")
+	int updateDispositionSentFlag(@Param("benCallID") Long benCallID);
+
+	@Query("SELECT b.isDispositionSentToCTI FROM BeneficiaryCall b WHERE b.benCallID = :benCallID")
+	Boolean isDispositionAlreadySent(@Param("benCallID") Long benCallID);
+
 }
