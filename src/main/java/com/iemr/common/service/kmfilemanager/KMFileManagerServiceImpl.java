@@ -92,9 +92,6 @@ public class KMFileManagerServiceImpl implements KMFileManagerService {
 	@Value("${tempFilePath}")
 	private String tempFilePath;
 	
-	@Value("${tempFilePath}")
-	private String tempFilePath;
-	
 	@Override
 	public String getKMFileLists(String request) throws Exception {
 		ObjectMapper objectMapper = new ObjectMapper();
