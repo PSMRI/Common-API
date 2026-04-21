@@ -110,23 +110,14 @@ public class VideoCallServiceImpl implements VideoCallService {
 @Override
 public String updateCallStatus(UpdateCallRequest callRequest) throws Exception {
     String meetingLink = callRequest.getMeetingLink();
-        meetingLink,
-        callRequest.getCallStatus(),
-        callRequest.getCallDuration(),
-        callRequest.getModifiedBy(),
-        callRequest.getIsLinkUsed());
-
+      
     // 1. Verify the row actually exists before attempting update
     VideoCallParameters existing = videoCallRepository.findByMeetingLink(meetingLink);
     if (existing == null) {
         logger.error("[updateCallStatus] No row found in t_videocallparameter for meetingLink={}", meetingLink);
         throw new Exception("No meeting found for link: " + meetingLink);
     }
-        existing.getMeetingID(),
-        existing.getCallStatus(),
-        existing.isLinkUsed(),
-        existing.getRecordingFileName());
-
+      
     // 2. Derive the two fields 
     boolean linkUsed = callRequest.getIsLinkUsed() == null || callRequest.getIsLinkUsed();
     String recordingFileName = buildRecordingFileName(meetingLink);
@@ -149,11 +140,7 @@ public String updateCallStatus(UpdateCallRequest callRequest) throws Exception {
 
     // 4. Re-fetch AFTER the update so the returned JSON reflects what is now in the DB
     VideoCallParameters updated = videoCallRepository.findByMeetingLink(meetingLink);
-        updated.getCallStatus(),
-        updated.getCallDuration(),
-        updated.isLinkUsed(),
-        updated.getRecordingFileName());
-
+       
     return OutputMapper.gsonWithoutExposeRestriction()
         .toJson(videoCallMapper.videoCallToResponse(updated));
 }
