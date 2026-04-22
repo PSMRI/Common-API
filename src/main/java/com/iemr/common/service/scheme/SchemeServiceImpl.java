@@ -60,10 +60,10 @@ public class SchemeServiceImpl implements SchemeService {
 
 	private KMFileManagerService kmFileManagerService;
 
-	@Value("${km-api-base-protocol}")
+	@Value("${km-base-protocol}")
 	private String dmsProtocol;
 
-	@Value("${km-api-base-url}")
+	@Value("${km-base-url}")
 	private String dmsPath;
 
 	@Value("${km-guest-user}")
