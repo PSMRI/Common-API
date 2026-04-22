@@ -119,7 +119,7 @@ public abstract class CommonIdentityMapperDecorator implements CommonIdentityMap
 			commonIdentityDTO.setOccupationName(occupationMapper.occupationToModelByID(occupationID).getOccupationType());
 		}
 		Integer communityID = beneficiary.getI_bendemographics().getCommunityID();
-		if (communityID != null) {
+		if (communityID != null && communityID>0) {
 			commonIdentityDTO.setCommunityId(communityID);
 			commonIdentityDTO
 					.setCommunity(communityMapper.communityToLoginResponseByID(communityID).getCommunityType());
