@@ -318,7 +318,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 	 */
 	@Override
 	public User superUserAuthenticate(String userName, String password) throws Exception {
-		List<User> users = iEMRUserRepositoryCustom.findByUserName(userName);
+		List<User> users = iEMRUserRepositoryCustom.findByUserNameOrContactNo(userName);
 
 		if (users.size() != 1) {
 			throw new IEMRException("Invalid username or password");
@@ -390,7 +390,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 	public LoginResponseModel userAuthenticateV1(LoginRequestModel loginRequest, String ipAddress, String hostName)
 			throws Exception {
 		LoginResponseModel loginResponseModel = null;
-		List<User> users = iEMRUserRepositoryCustom.findByUserName(loginRequest.getUserName());
+		List<User> users = iEMRUserRepositoryCustom.findByUserNameOrContactNo(loginRequest.getUserName());
 		if (users.size() == 1) {
 			User user = users.get(0);
 			try {
@@ -437,7 +437,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 
 	@Override
 	public List<User> userExitsCheck(String userName) {
-		return iEMRUserRepositoryCustom.findByUserName(userName);
+		return iEMRUserRepositoryCustom.findByUserNameOrContactNo(userName);
 	}
 
 	@Override
@@ -965,7 +965,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 
 	@Override
 	public void forceLogout(ForceLogoutRequestModel request) throws Exception {
-		List<User> users = iEMRUserRepositoryCustom.findByUserName(request.getUserName());
+		List<User> users = iEMRUserRepositoryCustom.findByUserNameOrContactNo(request.getUserName());
 		if (users.size() != 1) {
 			throw new Exception("Force logout failed due to incorrect username");
 		}
@@ -974,7 +974,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 
 	@Override
 	public void userForceLogout(ForceLogoutRequestModel request) throws Exception {
-		List<User> users = iEMRUserRepositoryCustom.findByUserName(request.getUserName());
+		List<User> users = iEMRUserRepositoryCustom.findByUserNameOrContactNo(request.getUserName());
 		if (users.size() != 1) {
 			throw new Exception("Force logout failed due to incorrect username");
 		}
@@ -1069,7 +1069,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 		LoginRequestModel m_user2 = InputMapper.gson().fromJson(req, LoginRequestModel.class);
 		String jsonreq = RSAUtil.encryptUserDetails(m_user2.getUserName());
 		LoginRequestModel m_user = InputMapper.gson().fromJson(jsonreq, LoginRequestModel.class);
-		List<User> users = iEMRUserRepositoryCustom.findByUserName(m_user.getUserName());
+		List<User> users = iEMRUserRepositoryCustom.findByUserNameOrContactNo(m_user.getUserName());
 		if (users.size() != 1) {
 			throw new IEMRException("Invalid username or password");
 		}
@@ -1125,7 +1125,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 
 		try {
 			if (request.has("userName") && request.get("userName") != null) {
-				List<User> users = iEMRUserRepositoryCustom.findByUserName(request.get("userName").getAsString());
+				List<User> users = iEMRUserRepositoryCustom.findByUserNameOrContactNo(request.get("userName").getAsString());
 				if (users.size() != 1) {
 					logger.warn("User validation failed: not found or duplicate entries for username '{}'",
 							request.get("userName").getAsString());
@@ -1222,7 +1222,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 	@Override
 	public List<User> getUserIdbyUserName(String userName) {
 
-		return iEMRUserRepositoryCustom.findByUserName(userName);
+		return iEMRUserRepositoryCustom.findByUserNameOrContactNo(userName);
 	}
 
 		@Override

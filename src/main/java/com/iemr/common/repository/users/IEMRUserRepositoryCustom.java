@@ -46,6 +46,11 @@ public interface IEMRUserRepositoryCustom extends CrudRepository<User, Long> {
 			+ "u.statusID in (1, 2)")
 	List<User> findByUserName(@Param("userName") String username);
 
+	@Query("SELECT u FROM User u WHERE " +
+			"(LOWER(u.userName) = LOWER(:input) OR u.contactNo = :input) " +
+			"AND u.deleted = false AND u.statusID IN (1, 2)")
+	List<User> findByUserNameOrContactNo(@Param("input") String input);
+
 	@Query("SELECT u FROM User u WHERE LOWER(u.userName) = LOWER(:userName) ")
 	List<User> findByUserNameNew(@Param("userName") String username);
 
