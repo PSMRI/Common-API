@@ -138,6 +138,10 @@ public class User implements Serializable  {
 	@Expose
 	@Column(name = "AadhaarNo")
 	private String aadhaarNo;
+
+	@Expose
+	@Column(name = "ContactNo")
+	private String ContactNo;
 	@Expose
 	@JsonProperty("pan")
 	@Column(name = "PAN")
