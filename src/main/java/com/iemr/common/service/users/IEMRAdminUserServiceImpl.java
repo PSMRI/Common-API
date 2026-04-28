@@ -230,7 +230,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 
 	@Override
 	public List<User> userAuthenticate(String userName, String password) throws Exception {
-		List<User> users = iEMRUserRepositoryCustom.findByUserNameNew(userName);
+		List<User> users = iEMRUserRepositoryCustom.findByUserNameOrContactNo(userName);
 		if (users.size() != 1) {
 			throw new IEMRException("Invalid username or password");
 		}
