@@ -21,8 +21,6 @@
 */
 package com.iemr.common.config;
 
-
-
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
@@ -48,12 +46,12 @@ import jakarta.persistence.EntityManagerFactory;
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(entityManagerFactoryRef = "entityManagerFactory", basePackages = { "com.iemr.common.repository",
-	"com.iemr.common.repo", "com.iemr.common.notification.agent", "com.iemr.common.covidVaccination", "com.iemr.common.repository.everwell.*", "com.iemr.common.data.grievance", "com.iemr.common.repository.users" })
+		"com.iemr.common.repo", "com.iemr.common.notification.agent", "com.iemr.common.covidVaccination",
+		"com.iemr.common.repository.everwell.*", "com.iemr.common.data.grievance", "com.iemr.common.repository.users" })
 @Profile("!swagger")
 public class PrimaryDBConfig {
 
 	Logger logger = LoggerFactory.getLogger(this.getClass().getName());
-
 
 	@Primary
 	@Bean(name = "dataSource")
@@ -74,8 +72,19 @@ public class PrimaryDBConfig {
 		org.apache.tomcat.jdbc.pool.DataSource datasource = new org.apache.tomcat.jdbc.pool.DataSource();
 		datasource.setPoolProperties(p);
 
-		datasource.setUsername(ConfigProperties.getPropertyByName("spring.datasource.username"));
-		datasource.setPassword(ConfigProperties.getPropertyByName("spring.datasource.password"));
+		
+		String dbUser = ConfigProperties.getPropertyByName("spring.datasource.username");
+		String dbPass = ConfigProperties.getPropertyByName("spring.datasource.password");
+
+		
+		if (dbUser == null) {
+			logger.error("Critical Error: 'spring.datasource.username' is missing from configuration!");
+			
+			dbUser = "root";
+		}
+
+		datasource.setUsername(dbUser);
+		datasource.setPassword(dbPass != null ? dbPass : "password");
 
 		return datasource;
 	}
@@ -85,7 +94,8 @@ public class PrimaryDBConfig {
 	public LocalContainerEntityManagerFactoryBean entityManagerFactory(EntityManagerFactoryBuilder builder,
 			@Qualifier("dataSource") DataSource dataSource) {
 		return builder.dataSource(dataSource).packages("com.iemr.common.data", "com.iemr.common.notification",
-				"com.iemr.common.model", "com.iemr.common.covidVaccination", "com.iemr.common.data.everwell", "com.iemr.common.data.grievance", "com.iemr.common.data.users").persistenceUnit("db_iemr").build();
+				"com.iemr.common.model", "com.iemr.common.covidVaccination", "com.iemr.common.data.everwell",
+				"com.iemr.common.data.grievance", "com.iemr.common.data.users").persistenceUnit("db_iemr").build();
 	}
 
 	@Primary

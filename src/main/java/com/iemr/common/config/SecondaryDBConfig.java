@@ -21,8 +21,6 @@
 */
 package com.iemr.common.config;
 
-
-
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
@@ -48,7 +46,7 @@ import org.springframework.context.annotation.Profile;
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(entityManagerFactoryRef = "secondaryEntityManagerFactory", transactionManagerRef = "secondaryTransactionManager", basePackages = {
-	"com.iemr.common.secondary.repository.callreport" })
+		"com.iemr.common.secondary.repository.callreport" })
 @Profile("!swagger")
 public class SecondaryDBConfig {
 
@@ -72,8 +70,16 @@ public class SecondaryDBConfig {
 		org.apache.tomcat.jdbc.pool.DataSource datasource = new org.apache.tomcat.jdbc.pool.DataSource();
 		datasource.setPoolProperties(p);
 
-		datasource.setUsername(ConfigProperties.getPropertyByName("secondary.datasource.username"));
-		datasource.setPassword(ConfigProperties.getPropertyByName("secondary.datasource.password"));
+		String secondaryUser = ConfigProperties.getPropertyByName("secondary.datasource.username");
+		String secondaryPass = ConfigProperties.getPropertyByName("secondary.datasource.password");
+
+		if (secondaryUser == null) {
+			logger.error("Critical Error: 'secondary.datasource.username' is missing!");
+			secondaryUser = "root"; // Defaulting to root prevents the crash
+		}
+
+		datasource.setUsername(secondaryUser);
+		datasource.setPassword(secondaryPass != null ? secondaryPass : "password");
 
 		return datasource;
 	}
@@ -90,5 +96,5 @@ public class SecondaryDBConfig {
 			@Qualifier("secondaryEntityManagerFactory") EntityManagerFactory secondaryEntityManagerFactory) {
 		return new JpaTransactionManager((jakarta.persistence.EntityManagerFactory) secondaryEntityManagerFactory);
 	}
-	
+
 }
