@@ -212,6 +212,7 @@ public class BeneficiaryRegistrationController {
 		OutputResponse response = new OutputResponse();
 
 		logger.info("Create beneficiary request " + beneficiaryModel);
+		logger.info("Common-api Call: Create bene");
 		try {
 
 			response.setResponse(registerBenificiaryService.save(beneficiaryModel, httpRequest));
