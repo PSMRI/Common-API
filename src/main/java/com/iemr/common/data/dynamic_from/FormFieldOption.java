@@ -27,6 +27,9 @@ public class FormFieldOption {
     @Column(name = "label_as")
     private String labelAs;
 
+    @Column(name = "label_bn")
+    private String labelBn;
+
     @Column(name = "sort_order")
     private Integer sortOrder;
 
