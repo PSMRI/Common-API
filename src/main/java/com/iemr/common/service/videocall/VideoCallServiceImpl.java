@@ -208,15 +208,11 @@ public String generateAgentToken(String slug, String agentName, String agentEmai
         throw new IllegalArgumentException("Meeting slug is required");
     }
 
-    String shortLink = jitsiLink + "m=" + slug;
-    VideoCallParameters params = videoCallRepository.findByMeetingLink(shortLink);
-
-    if (params == null) {
-        throw new Exception("No meeting found for slug: " + slug);
-    }
-
+    // Room name is deterministic from the slug — no DB lookup needed.
+    // This avoids a race condition where the frontend calls this endpoint
+    // before /send-link has written the row.
     String roomName = roomPrefix + slug;
-    String displayName = (agentName != null && !agentName.isEmpty()) ? agentName : params.getAgentName();
+    String displayName = (agentName != null && !agentName.isEmpty()) ? agentName : "Agent";
     String email = (agentEmail != null && !agentEmail.isEmpty()) ? agentEmail : defaultUserEmail;
 
     String token = jitsiJwtUtil.generateRoomToken(roomName, displayName, email, true);
