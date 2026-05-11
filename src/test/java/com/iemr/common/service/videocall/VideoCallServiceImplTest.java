@@ -189,7 +189,8 @@ public class VideoCallServiceImplTest {
         when(jitsiJwtUtil.generateRoomToken(
                 eq("piramal-meeting-Ab3xQ9pK"),
                 eq("Dr. Asha"),
-                eq("admin@piramalswasthya.org"))).thenReturn("FAKE.JWT.TOKEN");
+                eq("admin@piramalswasthya.org"),
+                eq(false))).thenReturn("FAKE.JWT.TOKEN");
 
         String result = service.resolveMeetingLink("Ab3xQ9pK");
 
@@ -197,7 +198,7 @@ public class VideoCallServiceImplTest {
                 "https://meet.jit.si/piramal-meeting-Ab3xQ9pK?jwt=FAKE.JWT.TOKEN",
                 result);
         verify(jitsiJwtUtil).generateRoomToken(
-                "piramal-meeting-Ab3xQ9pK", "Dr. Asha", "admin@piramalswasthya.org");
+                "piramal-meeting-Ab3xQ9pK", "Dr. Asha", "admin@piramalswasthya.org", false);
     }
 
     @Test
@@ -235,13 +236,14 @@ public class VideoCallServiceImplTest {
         when(jitsiJwtUtil.generateRoomToken(
                 eq("piramal-meeting-Ab3xQ9pK"),
                 eq("Guest"),
-                eq("admin@piramalswasthya.org"))).thenReturn("FAKE.JWT.TOKEN");
+                eq("admin@piramalswasthya.org"),
+                eq(false))).thenReturn("FAKE.JWT.TOKEN");
 
         String result = service.resolveMeetingLink("Ab3xQ9pK");
 
         assertTrue(result.endsWith("?jwt=FAKE.JWT.TOKEN"));
         verify(jitsiJwtUtil).generateRoomToken(
-                "piramal-meeting-Ab3xQ9pK", "Guest", "admin@piramalswasthya.org");
+                "piramal-meeting-Ab3xQ9pK", "Guest", "admin@piramalswasthya.org", false);
     }
 
     @Test

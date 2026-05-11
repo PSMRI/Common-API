@@ -127,6 +127,36 @@ public ResponseEntity<String> updateCallStatus(@RequestBody UpdateCallRequest re
 }
 
 /**
+ * Returns a moderator JWT URL for the agent so they can use "End Meeting for All".
+ * Called by the frontend after the meeting link is generated.
+ */
+@PostMapping(value = "/agent-token", produces = MediaType.APPLICATION_JSON_VALUE, headers = "Authorization")
+public ResponseEntity<Map<String, String>> generateAgentToken(@RequestBody Map<String, String> body) {
+    Map<String, String> response = new HashMap<>();
+    try {
+        String slug = body.get("slug");
+        String agentName = body.get("agentName");
+        String agentEmail = body.get("agentEmail");
+
+        if (slug == null || slug.isEmpty()) {
+            response.put("error", "slug is required");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        String agentUrl = videoCallService.generateAgentToken(slug, agentName, agentEmail);
+        response.put("agentMeetingUrl", agentUrl);
+        return ResponseEntity.ok(response);
+    } catch (IllegalArgumentException e) {
+        response.put("error", e.getMessage());
+        return ResponseEntity.badRequest().body(response);
+    } catch (Exception e) {
+        logger.error("generateAgentToken failed: {}", e.getMessage(), e);
+        response.put("error", e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+}
+
+/**
  * Public redirect endpoint hit when a beneficiary clicks the short SMS link.
  *
  * Flow:

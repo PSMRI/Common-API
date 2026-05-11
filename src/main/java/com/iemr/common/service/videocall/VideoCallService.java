@@ -44,4 +44,15 @@ public interface VideoCallService {
 	  *         https://&lt;jitsi.domain&gt;/&lt;jitsi.room.prefix&gt;&lt;slug&gt;?jwt=&lt;token&gt;
 	  */
 	 public String resolveMeetingLink(String slug) throws Exception;
+
+	 /**
+	  * Generate a moderator JWT URL for the agent/associate so they can join
+	  * the Jitsi room with "End Meeting for All" privileges.
+	  *
+	  * @param slug      the meeting slug (value after "m=" in the meeting link)
+	  * @param agentName display name for the agent in the Jitsi UI
+	  * @param agentEmail agent email (used for Jitsi avatar / gravatar)
+	  * @return absolute Jitsi URL with moderator JWT appended
+	  */
+	 public String generateAgentToken(String slug, String agentName, String agentEmail) throws Exception;
 }

@@ -196,10 +196,33 @@ public String resolveMeetingLink(String slug) throws Exception {
             ? params.getAgentName()
             : "Guest";
 
-    String token = jitsiJwtUtil.generateRoomToken(roomName, userName, defaultUserEmail);
+    String token = jitsiJwtUtil.generateRoomToken(roomName, userName, defaultUserEmail, false);
     String redirectUrl = "https://" + jitsiDomain + "/" + roomName + "?jwt=" + token;
 
     return redirectUrl;
+}
+
+}
+
+@Override
+public String generateAgentToken(String slug, String agentName, String agentEmail) throws Exception {
+    if (slug == null || slug.isEmpty()) {
+        throw new IllegalArgumentException("Meeting slug is required");
+    }
+
+    String shortLink = jitsiLink + "m=" + slug;
+    VideoCallParameters params = videoCallRepository.findByMeetingLink(shortLink);
+
+    if (params == null) {
+        throw new Exception("No meeting found for slug: " + slug);
+    }
+
+    String roomName = roomPrefix + slug;
+    String displayName = (agentName != null && !agentName.isEmpty()) ? agentName : params.getAgentName();
+    String email = (agentEmail != null && !agentEmail.isEmpty()) ? agentEmail : defaultUserEmail;
+
+    String token = jitsiJwtUtil.generateRoomToken(roomName, displayName, email, true);
+    return "https://" + jitsiDomain + "/" + roomName + "?jwt=" + token;
 }
 
 }

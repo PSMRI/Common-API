@@ -75,12 +75,13 @@ public class JitsiJwtUtil {
     /**
      * Build a Jitsi room JWT.
      *
-     * @param room      the exact room name the bearer will join (must match the URL path)
-     * @param userName  display name shown in the Jitsi UI
-     * @param userEmail email shown in the Jitsi UI (used for gravatar etc.)
+     * @param room        the exact room name the bearer will join (must match the URL path)
+     * @param userName    display name shown in the Jitsi UI
+     * @param userEmail   email shown in the Jitsi UI (used for gravatar etc.)
+     * @param isModerator when true, grants prosody moderator role — required for "End Meeting for All"
      * @return signed compact JWT string
      */
-    public String generateRoomToken(String room, String userName, String userEmail) {
+    public String generateRoomToken(String room, String userName, String userEmail, boolean isModerator) {
         if (room == null || room.isEmpty()) {
             throw new IllegalArgumentException("room is required to mint a Jitsi token");
         }
@@ -91,6 +92,7 @@ public class JitsiJwtUtil {
         Map<String, Object> user = new HashMap<>();
         user.put("name", userName != null ? userName : "Guest");
         user.put("email", userEmail != null ? userEmail : "");
+        user.put("moderator", isModerator);
 
         Map<String, Object> context = new HashMap<>();
         context.put("user", user);
