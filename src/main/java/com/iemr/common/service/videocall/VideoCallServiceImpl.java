@@ -202,8 +202,6 @@ public String resolveMeetingLink(String slug) throws Exception {
     return redirectUrl;
 }
 
-}
-
 @Override
 public String generateAgentToken(String slug, String agentName, String agentEmail) throws Exception {
     if (slug == null || slug.isEmpty()) {
