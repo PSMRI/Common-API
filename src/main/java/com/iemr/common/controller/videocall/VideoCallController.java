@@ -145,6 +145,19 @@ public ResponseEntity<Map<String, String>> generateAgentToken(@RequestBody Map<S
 
         String agentUrl = videoCallService.generateAgentToken(slug, agentName, agentEmail);
         response.put("agentMeetingUrl", agentUrl);
+
+        // Parse roomName and jwt out of the URL so the frontend can pass them
+        // directly to JitsiMeetExternalAPI without re-parsing the URL itself.
+        // URL format: https://<domain>/<roomName>?jwt=<token>
+        int jwtIdx = agentUrl.lastIndexOf("?jwt=");
+        if (jwtIdx > 0) {
+            String jwt = agentUrl.substring(jwtIdx + 5);
+            String pathPart = agentUrl.substring(0, jwtIdx);
+            String roomName = pathPart.substring(pathPart.lastIndexOf('/') + 1);
+            response.put("roomName", roomName);
+            response.put("jwt", jwt);
+        }
+
         return ResponseEntity.ok(response);
     } catch (IllegalArgumentException e) {
         response.put("error", e.getMessage());
