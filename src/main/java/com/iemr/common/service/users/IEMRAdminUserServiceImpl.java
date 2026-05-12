@@ -1252,4 +1252,36 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 
 		return iEMRUserRepositoryCustom.findUserName(userName);
 	}
+
+	/**
+	 * Manually unlock a user account by resetting failed login attempts and lock timestamp
+	 * @param userID - The ID of the user to unlock
+	 * @return - Success message
+	 * @throws IEMRException - If user is not found or operation fails
+	 */
+	@Override
+	public String manuallyUnlockUserAccount(Long userID) throws IEMRException {
+		try {
+			User user = iEMRUserRepositoryCustom.findByUserID(userID);
+			
+			if (user == null) {
+				throw new IEMRException("User not found with ID: " + userID);
+			}
+			
+			// Reset the account lock
+			user.setDeleted(false);
+			user.setFailedAttempt(0);
+			user.setLockedAt(null);
+			
+			iEMRUserRepositoryCustom.save(user);
+			logger.info("User account manually unlocked. User ID: {}, User Name: {}", userID, user.getUserName());
+			
+			return "User account with ID " + userID + " has been successfully unlocked.";
+		} catch (IEMRException e) {
+			throw e;
+		} catch (Exception e) {
+			logger.error("Error unlocking user account with ID: " + userID, e);
+			throw new IEMRException("Error unlocking user account: " + e.getMessage(), e);
+		}
+	}
 }

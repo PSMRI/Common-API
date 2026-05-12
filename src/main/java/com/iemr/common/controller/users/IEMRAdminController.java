@@ -1248,4 +1248,20 @@ public class IEMRAdminController {
 		}
 
 	}
+
+	@Operation(summary = "Manually unlock a user account")
+	@RequestMapping(value = "/unlockUserAccount", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+	public String unlockUserAccount(
+			@RequestParam("userID") Long userID) {
+		OutputResponse response = new OutputResponse();
+		try {
+			logger.info("Unlocking user account for userID: {}", userID);
+			String resultMessage = iemrAdminUserServiceImpl.manuallyUnlockUserAccount(userID);
+			response.setResponse(resultMessage);
+		} catch (Exception e) {
+			logger.error("Error unlocking user account with ID: " + userID, e);
+			response.setError(e);
+		}
+		return response.toString();
+	}
 }
