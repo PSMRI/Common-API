@@ -57,7 +57,7 @@ class JitsiJwtUtilTest {
 
     @Test
     void generateRoomToken_producesAllRequiredClaims() {
-        String token = util.generateRoomToken("piramal-meeting-Ab3xQ9pK", "Dr. Asha", "asha@piramalswasthya.org");
+        String token = util.generateRoomToken("piramal-meeting-Ab3xQ9pK", "Dr. Asha", "asha@piramalswasthya.org", false);
 
         assertNotNull(token);
         assertTrue(token.split("\\.").length == 3, "JWT should have 3 dot-separated parts");
@@ -81,6 +81,7 @@ class JitsiJwtUtilTest {
         assertNotNull(user);
         assertEquals("Dr. Asha", user.get("name"));
         assertEquals("asha@piramalswasthya.org", user.get("email"));
+        assertEquals(false, user.get("moderator"));
 
         Date exp = claims.getExpiration();
         assertNotNull(exp);
@@ -88,8 +89,25 @@ class JitsiJwtUtilTest {
     }
 
     @Test
+    void generateRoomToken_moderatorClaimTrueForAgent() {
+        String token = util.generateRoomToken("piramal-meeting-Ab3xQ9pK", "Dr. Asha", "asha@piramalswasthya.org", true);
+
+        Claims claims = Jwts.parser()
+                .verifyWith(Keys.hmacShaKeyFor(APP_SECRET.getBytes()))
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> context = claims.get("context", Map.class);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> user = (Map<String, Object>) context.get("user");
+        assertEquals(true, user.get("moderator"));
+    }
+
+    @Test
     void generateRoomToken_fallsBackToGuestWhenUserNameNull() {
-        String token = util.generateRoomToken("piramal-meeting-xyz", null, null);
+        String token = util.generateRoomToken("piramal-meeting-xyz", null, null, false);
 
         Claims claims = Jwts.parser()
                 .verifyWith(Keys.hmacShaKeyFor(APP_SECRET.getBytes()))
@@ -108,19 +126,19 @@ class JitsiJwtUtilTest {
     @Test
     void generateRoomToken_rejectsEmptyRoom() {
         assertThrows(IllegalArgumentException.class,
-                () -> util.generateRoomToken("", "Dr. Asha", "asha@piramalswasthya.org"));
+                () -> util.generateRoomToken("", "Dr. Asha", "asha@piramalswasthya.org", false));
     }
 
     @Test
     void generateRoomToken_rejectsNullRoom() {
         assertThrows(IllegalArgumentException.class,
-                () -> util.generateRoomToken(null, "Dr. Asha", "asha@piramalswasthya.org"));
+                () -> util.generateRoomToken(null, "Dr. Asha", "asha@piramalswasthya.org", false));
     }
 
     @Test
     void generateRoomToken_failsWhenAppSecretMissing() {
         ReflectionTestUtils.setField(util, "appSecret", "");
         assertThrows(IllegalStateException.class,
-                () -> util.generateRoomToken("piramal-meeting-xyz", "Dr. Asha", "asha@piramalswasthya.org"));
+                () -> util.generateRoomToken("piramal-meeting-xyz", "Dr. Asha", "asha@piramalswasthya.org", false));
     }
 }
