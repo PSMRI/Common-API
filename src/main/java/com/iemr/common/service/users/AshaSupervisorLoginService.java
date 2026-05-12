@@ -141,13 +141,11 @@ public class AshaSupervisorLoginService {
 		}
 		result.put("facilities", facilitiesArray);
 
-		// Count distinct ASHAs mapped to this supervisor
-		Set<Integer> ashaUserIDs = new HashSet<>();
-		for (AshaSupervisorMapping m : mappings) {
-			if (m.getAshaUserID() != null)
-				ashaUserIDs.add(m.getAshaUserID());
-		}
-		result.put("totalAshaCount", ashaUserIDs.size());
+		// Fetch mapped ASHAs with facility details
+		List<Object[]> ashaRows = facilityLoginRepo.getMappedAshasBySupervisor(supervisorUserID);
+		JSONArray ashaList = buildAshaList(ashaRows);
+		result.put("ashaList", ashaList);
+		result.put("totalAshaCount", ashaList.length());
 	}
 
 	// ==================== General Facility User (CHO, ANM, etc.)
@@ -173,9 +171,32 @@ public class AshaSupervisorLoginService {
 			facilitiesArray.put(facility);
 		}
 		result.put("facilities", facilitiesArray);
+
+		// ASHAs at same facilities
+		List<Object[]> ashaRows = facilityLoginRepo.getAshaListByFacilities(facilityIDs);
+		JSONArray ashaList = buildAshaList(ashaRows);
+		result.put("ashaList", ashaList);
+		result.put("totalAshaCount", ashaList.length());
 	}
 
 	// ==================== Shared Helpers ====================
+
+	private JSONArray buildAshaList(List<Object[]> rows) {
+		JSONArray list = new JSONArray();
+		if (rows == null)
+			return list;
+		for (Object[] row : rows) {
+			JSONObject asha = new JSONObject();
+			asha.put("userId", row[0]);
+			asha.put("fullName", fullName(row[1], row[2]));
+			asha.put("employeeId", str(row[3]).isEmpty() ? JSONObject.NULL : str(row[3]));
+			asha.put("facilityId", row[4]);
+			asha.put("facilityName", str(row[5]));
+			asha.put("facilityType", str(row[6]));
+			list.put(asha);
+		}
+		return list;
+	}
 
 	private void populateLocation(JSONObject result, Object[] facilityRow) {
 		JSONObject location = new JSONObject();

@@ -64,4 +64,32 @@ public interface FacilityLoginRepo extends CrudRepository<AshaSupervisorMapping,
 			+ "AND usrm.Deleted = false AND u.Deleted = false", nativeQuery = true)
 	List<Object[]> getPeersAtFacility(@Param("facilityIDs") List<Integer> facilityIDs,
 			@Param("currentUserID") Integer currentUserID);
+
+	// Supervisor login: get mapped ASHAs with facility details
+	@Query(value = "SELECT DISTINCT u.UserID, u.FirstName, u.LastName, "
+			+ "COALESCE(u.EmployeeID,'') AS employeeID, "
+			+ "f.FacilityID, f.FacilityName, "
+			+ "COALESCE(ft.FacilityTypeName,'') AS facilityTypeName "
+			+ "FROM asha_supervisor_mapping asm "
+			+ "JOIN m_User u ON u.UserID = asm.ashaUserID "
+			+ "JOIN m_facility f ON f.FacilityID = asm.facilityID "
+			+ "LEFT JOIN m_facilitytype ft ON ft.FacilityTypeID = f.FacilityTypeID "
+			+ "WHERE asm.supervisorUserID = :supervisorUserID "
+			+ "AND asm.deleted = false AND u.Deleted = false AND f.Deleted = false", nativeQuery = true)
+	List<Object[]> getMappedAshasBySupervisor(@Param("supervisorUserID") Integer supervisorUserID);
+
+	// CHO/ANM login: get ASHAs at same facilities
+	@Query(value = "SELECT DISTINCT u.UserID, u.FirstName, u.LastName, "
+			+ "COALESCE(u.EmployeeID,'') AS employeeID, "
+			+ "f.FacilityID, f.FacilityName, "
+			+ "COALESCE(ft.FacilityTypeName,'') AS facilityTypeName "
+			+ "FROM m_UserServiceRoleMapping usrm "
+			+ "JOIN m_User u ON u.UserID = usrm.UserID "
+			+ "JOIN m_Role r ON r.RoleID = usrm.RoleID "
+			+ "JOIN m_facility f ON f.FacilityID = usrm.FacilityID "
+			+ "LEFT JOIN m_facilitytype ft ON ft.FacilityTypeID = f.FacilityTypeID "
+			+ "WHERE usrm.FacilityID IN :facilityIDs "
+			+ "AND r.RoleName = 'ASHA' "
+			+ "AND usrm.Deleted = false AND u.Deleted = false AND f.Deleted = false", nativeQuery = true)
+	List<Object[]> getAshaListByFacilities(@Param("facilityIDs") List<Integer> facilityIDs);
 }
