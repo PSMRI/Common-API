@@ -302,15 +302,52 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 	}
 
 	private void checkUserLoginFailedAttempt(User user) throws IEMRException {
+		if (user.getDeleted() != null && user.getDeleted() && user.getLockedAt() != null) {
+			long lockedTime = user.getLockedAt().getTime();
+			long currentTime = System.currentTimeMillis();
+			long diffInMillis = currentTime - lockedTime;
+			long diffInHours = diffInMillis / (1000 * 60 * 60);
 
+			// If 24 hours have passed, auto-unlock the account
+			if (diffInHours >= 24) {
+				user.setDeleted(false);
+				user.setFailedAttempt(0);
+				user.setLockedAt(null);
+				iEMRUserRepositoryCustom.save(user);
+				logger.info("User account auto-unlocked after 24 hours. User ID: {}", user.getUserID());
+			}
+		}
 	}
 
 	private void updateUserLoginFailedAttempt(User user) throws IEMRException {
+		int failedAttempt = 0;
+		if (failedLoginAttempt != null)
+			failedAttempt = Integer.parseInt(failedLoginAttempt);
+		else
+			failedAttempt = 5;
 
+		user.setFailedAttempt(user.getFailedAttempt() != null ? user.getFailedAttempt() + 1 : 1);
+
+		if (user.getFailedAttempt() >= failedAttempt) {
+			user.setDeleted(true);
+			user.setLockedAt(new java.sql.Timestamp(System.currentTimeMillis()));
+			logger.warn("User Account has been locked after reaching the limit of {} failed login attempts. User ID: {}, Lock time: {}",
+					failedAttempt, user.getUserID(), user.getLockedAt());
+		} else {
+			logger.warn("Failed login attempt {} of {} for user ID: {}",
+					user.getFailedAttempt(), failedAttempt, user.getUserID());
+		}
+
+		iEMRUserRepositoryCustom.save(user);
 	}
 
 	private void resetUserLoginFailedAttempt(User user) throws IEMRException {
-
+		if (user.getFailedAttempt() != null && user.getFailedAttempt() > 0) {
+			user.setFailedAttempt(0);
+			user.setLockedAt(null);
+			iEMRUserRepositoryCustom.save(user);
+			logger.info("User failed login attempts reset. User ID: {}", user.getUserID());
+		}
 	}
 
 	/**
@@ -323,17 +360,20 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 		if (users.size() != 1) {
 			throw new IEMRException("Invalid username or password");
 		}
-		int failedAttempt = 0;
-		if (failedLoginAttempt != null)
-			failedAttempt = Integer.parseInt(failedLoginAttempt);
-		else
-			failedAttempt = 5;
+		
 		User user = users.get(0);
+		
+		// Check if user account should be auto-unlocked after 24 hours
+		checkUserLoginFailedAttempt(user);
+		
 		try {
 			int validatePassword;
 			validatePassword = securePassword.validatePassword(password, user.getPassword());
 			if (validatePassword == 1) {
 				checkUserAccountStatus(user);
+				// Reset failed login attempts on successful password validation
+				resetUserLoginFailedAttempt(user);
+				
 				int iterations = 1001;
 				char[] chars = password.toCharArray();
 				byte[] salt = getSalt();
@@ -348,37 +388,19 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 
 			} else if (validatePassword == 2) {
 				checkUserAccountStatus(user);
+				// Reset failed login attempts on successful password validation
+				resetUserLoginFailedAttempt(user);
 				iEMRUserRepositoryCustom.save(user);
 
 			} else if (validatePassword == 0) {
-				if (user.getFailedAttempt() + 1 < failedAttempt) {
-					user.setFailedAttempt(user.getFailedAttempt() + 1);
-					user = iEMRUserRepositoryCustom.save(user);
-					logger.warn("User Password Wrong");
-					throw new IEMRException("Invalid username or password");
-				} else if (user.getFailedAttempt() + 1 >= failedAttempt) {
-					user.setFailedAttempt(user.getFailedAttempt() + 1);
-					user.setDeleted(true);
-					user = iEMRUserRepositoryCustom.save(user);
-					logger.warn("User Account has been locked after reaching the limit of {} failed login attempts.",
-							ConfigProperties.getInteger("failedLoginAttempt"));
-
-					throw new IEMRException(
-							"Invalid username or password. Please contact administrator.");
-				} else {
-					user.setFailedAttempt(user.getFailedAttempt() + 1);
-					user = iEMRUserRepositoryCustom.save(user);
-					logger.warn("Failed login attempt {} of {} for a user account.",
-							user.getFailedAttempt(), ConfigProperties.getInteger("failedLoginAttempt"));
-					throw new IEMRException(
-							"Invalid username or password. Please contact administrator.");
-				}
+				// Update failed login attempts and lock account if threshold reached
+				updateUserLoginFailedAttempt(user);
+				logger.warn("User Password Wrong. Failed attempts: {}", user.getFailedAttempt());
+				throw new IEMRException("Invalid username or password");
 			} else {
 				checkUserAccountStatus(user);
-				if (user.getFailedAttempt() != 0) {
-					user.setFailedAttempt(0);
-					user = iEMRUserRepositoryCustom.save(user);
-				}
+				// Reset failed login attempts on successful login
+				resetUserLoginFailedAttempt(user);
 			}
 		} catch (Exception e) {
 			throw new IEMRException(e.getMessage());

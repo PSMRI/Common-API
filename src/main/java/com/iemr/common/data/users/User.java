@@ -210,6 +210,10 @@ public class User implements Serializable  {
 	private Integer failedAttempt;
 
 	@Expose
+	@Column(name = "locked_at")
+	private Timestamp lockedAt;
+
+	@Expose
 	@Column(name = "dhistoken")
 	private String dhistoken;
 
@@ -538,6 +542,14 @@ public class User implements Serializable  {
 	}
 	public String getDhistoken() {
 		return dhistoken;
+	}
+
+	public Timestamp getLockedAt() {
+		return lockedAt;
+	}
+
+	public void setLockedAt(Timestamp lockedAt) {
+		this.lockedAt = lockedAt;
 	}
 
 	/*
