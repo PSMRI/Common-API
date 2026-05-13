@@ -197,6 +197,19 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 		setSaveDemographicDetails(identityDTO,beneficiaryModel);
 //		 identityDTO.setOtherFields(beneficiaryModel.getOtherFields());
 		identityDTO.setIsConsent(beneficiaryModel.getIsConsent());
+		if(beneficiaryModel.getI_bendemographics().getEconomicStatusId()!=null){
+			identityDTO.setEconomicStatusId(beneficiaryModel.getI_bendemographics().getEconomicStatusId());
+		}
+
+		if(beneficiaryModel.getI_bendemographics().getResidentialArea()!=null){
+			identityDTO.setResidentialArea(beneficiaryModel.getI_bendemographics().getResidentialArea());
+		}
+		if(beneficiaryModel.getI_bendemographics().getResidentialAreaId()!=null){
+			identityDTO.setResidentialAreaId(beneficiaryModel.getI_bendemographics().getResidentialAreaId());
+		}
+		if(beneficiaryModel.getI_bendemographics().getAddress()!=null){
+			identityDTO.setAddress(beneficiaryModel.getI_bendemographics().getAddress());
+		}
 
 		identityDTO.setFaceEmbedding(beneficiaryModel.getFaceEmbedding());
 		identityDTO.setEmergencyRegistration(beneficiaryModel.isEmergencyRegistration());
@@ -273,19 +286,7 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 			} else {
     			identityDTO.setOccupationName(beneficiaryModel.getOccupationName());
 			}
-			if(beneficiaryModel.getI_bendemographics().getEconomicStatusId()!=null){
-				identityDTO.setEconomicStatusId(beneficiaryModel.getI_bendemographics().getEconomicStatusId());
-			}
 
-			if(beneficiaryModel.getI_bendemographics().getResidentialArea()!=null){
-				identityDTO.setResidentialArea(beneficiaryModel.getI_bendemographics().getResidentialArea());
-			}
-			if(beneficiaryModel.getI_bendemographics().getResidentialAreaId()!=null){
-				identityDTO.setResidentialAreaId(beneficiaryModel.getI_bendemographics().getResidentialAreaId());
-			}
-			if(beneficiaryModel.getI_bendemographics().getAddress()!=null){
-				identityDTO.setAddress(beneficiaryModel.getI_bendemographics().getAddress());
-			}
 
 			if (null != beneficiaryModel.getEducation()) {
     			identityDTO.setEducation(beneficiaryModel.getEducation());
