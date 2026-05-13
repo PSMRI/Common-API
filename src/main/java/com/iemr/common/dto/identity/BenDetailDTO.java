@@ -25,6 +25,7 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 
+import com.google.gson.annotations.Expose;
 import lombok.Data;
 
 @Data
@@ -87,6 +88,21 @@ public class BenDetailDTO implements Serializable {
 	private String other;
 	private String headOfFamily_Relation;
 	private String otherFields;
+
+	@Expose
+	private String economicStatus;
+
+	@Expose
+	private Integer economicStatusId;
+
+	@Expose
+	private String  residentialArea;
+
+	@Expose
+	private Integer  residentialAreaId;
+
+	@Expose
+	private String address;
 
 
 }
