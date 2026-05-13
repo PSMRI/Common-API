@@ -182,6 +182,22 @@ public class BeneficiaryDemographicsModel {
 	@Expose
 	private String monthlyFamilyIncome;
 
+	@Expose
+	private String economicStatus;
+
+	@Expose
+	private Integer economicStatusId;
+
+	@Expose
+	private String  residentialArea;
+
+	@Expose
+	private Integer  residentialAreaId;
+
+	@Expose
+	private String address;
+
+
 	public BeneficiaryDemographicsModel() {
 
 	}

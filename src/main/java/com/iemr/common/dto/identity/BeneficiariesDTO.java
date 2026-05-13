@@ -25,6 +25,7 @@ import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.util.List;
 
+import com.google.gson.annotations.Expose;
 import com.iemr.common.model.beneficiary.AbhaAddressDTO;
 
 import lombok.Data;
@@ -87,4 +88,14 @@ public class BeneficiariesDTO {
 
 	// ABHA address
 	List<AbhaAddressDTO> abhaDetails;
+
+	private String economicStatus;
+
+	private Integer economicStatusId;
+
+	private String  residentialArea;
+
+	private Integer  residentialAreaId;
+
+	private String address;
 }

@@ -120,6 +120,8 @@ public abstract class BenCompleteDetailMapperDecorator implements BenCompleteDet
 			demographicsModel.setM_community(communityMapper.communityToLoginResponseByID(benDetails.getCommunityId()));
 			demographicsModel.setCommunityName(demographicsModel.getM_community().getCommunityType());
 		}
+
+
 		if (benDetails.getOccupationId() != null)
 		{
 			demographicsModel.setOccupationID(benDetails.getOccupationId());
