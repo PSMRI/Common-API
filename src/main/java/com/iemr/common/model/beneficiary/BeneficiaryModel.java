@@ -31,6 +31,7 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 
+import jakarta.persistence.Column;
 import org.json.JSONObject;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -340,6 +341,16 @@ public class BeneficiaryModel implements Comparable<BeneficiaryModel> {
 	private String otherFields;
 	@Expose
 	private String religionName;
+
+	private String economicStatus;
+
+	private Integer economicStatusId;
+
+	private String  residentialArea;
+
+	private Integer  residentialAreaId;
+
+	private String address;
 	
 //	private Object otherFields;
 

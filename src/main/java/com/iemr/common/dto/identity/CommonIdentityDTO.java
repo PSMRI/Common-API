@@ -28,6 +28,7 @@ import java.util.Set;
 
 import com.google.gson.annotations.Expose;
 
+import jakarta.persistence.Column;
 import lombok.Data;
 
 @Data
@@ -102,6 +103,16 @@ public class CommonIdentityDTO {
 	private Boolean isEmerAddrSameAsCurrAddr;
 	private Boolean isEmerAddrSameAsPermAddr;
 	private String addressType;
+
+	private String economicStatus;
+
+	private Integer economicStatusId;
+
+	private String  residentialArea;
+
+	private Integer  residentialAreaId;
+
+	private String address;
 
 	// contacts
 	private String preferredEmailId;
