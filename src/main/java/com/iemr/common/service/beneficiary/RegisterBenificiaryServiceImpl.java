@@ -155,20 +155,25 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 				identityEditDTO.setReligion(benificiaryDetails.getI_bendemographics().getReligionName());
 
 			if (null != benificiaryDetails.getOccupation()) {
-   				identityEditDTO.setOccupationName(benificiaryDetails.getOccupation());
-			} else if (null != benificiaryDetails.getI_bendemographics()  &&
-         		null != benificiaryDetails.getI_bendemographics().getOccupation()) {
-    			identityEditDTO.setOccupationName(benificiaryDetails.getI_bendemographics().getOccupation());
-			} else {
-    			identityEditDTO.setOccupationName(benificiaryDetails.getOccupationName());
+				identityEditDTO.setOccupationName(benificiaryDetails.getOccupation());
+			} else if (null != benificiaryDetails.getI_bendemographics().getOccupation()) {
+				identityEditDTO.setOccupationName(benificiaryDetails.getI_bendemographics().getOccupation());
+			} else if (null != benificiaryDetails.getOccupationName()) {
+				identityEditDTO.setOccupationName(benificiaryDetails.getOccupationName());
+			}
+			if (null != benificiaryDetails.getI_bendemographics().getOccupationID()) {
+				identityEditDTO.setOccupationId(benificiaryDetails.getI_bendemographics().getOccupationID());
 			}
 
 			if (null != benificiaryDetails.getEducation()) {
-    			identityEditDTO.setEducation(benificiaryDetails.getEducation());
+				identityEditDTO.setEducation(benificiaryDetails.getEducation());
 			} else if (null != benificiaryDetails.getI_bendemographics() &&
-           		null != benificiaryDetails.getI_bendemographics().getEducationName()) {
-    			identityEditDTO.setEducation(benificiaryDetails.getI_bendemographics().getEducationName());
-			} 
+					null != benificiaryDetails.getI_bendemographics().getEducationName()) {
+				identityEditDTO.setEducation(benificiaryDetails.getI_bendemographics().getEducationName());
+			}
+			if (null != benificiaryDetails.getI_bendemographics().getEducationID()) {
+				identityEditDTO.setEducationId(benificiaryDetails.getI_bendemographics().getEducationID());
+			}
 			if(null != benificiaryDetails.getIncomeStatus())
 				identityEditDTO.setIncomeStatus(benificiaryDetails.getIncomeStatus());
 			else
