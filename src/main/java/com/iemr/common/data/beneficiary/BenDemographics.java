@@ -223,6 +223,21 @@ public class BenDemographics
 	// @Column(name = "ModifiedBy")
 	private String modifiedBy;
 
+	@Expose
+	private String economicStatus;
+
+	@Expose
+	private Integer economicStatusId;
+
+	@Expose
+	private String  residentialArea;
+
+	@Expose
+	private Integer  residentialAreaId;
+
+	@Expose
+	private String address;
+
 	@Transient
 	private OutputMapper outputMapper = new OutputMapper();
 
