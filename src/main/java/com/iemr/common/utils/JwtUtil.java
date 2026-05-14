@@ -163,6 +163,10 @@ public class JwtUtil {
         return REFRESH_EXPIRATION_TIME;
     }
 
+    public long getAccessTokenExpiration() {
+        return ACCESS_EXPIRATION_TIME;
+    }
+
     /**
  * Extract user ID from JWT token in the request (checks header and cookie)
  * @param request the HTTP request

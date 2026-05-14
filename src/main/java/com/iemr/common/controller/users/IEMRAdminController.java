@@ -197,6 +197,15 @@ public class IEMRAdminController {
 				user.setUserName(mUser.get(0).getUserName());
 				logger.info("UserAgentUtil isMobile : " + isMobile);
 
+				// Store username → JTI mapping so concurrent-session logout can denylist this token
+				String accessJti = jwtUtil.getJtiFromToken(jwtToken);
+				redisTemplate.opsForValue().set(
+						"jti:" + m_User.getUserName().trim().toLowerCase(),
+						accessJti + "|" + mUser.get(0).getUserID(),
+						jwtUtil.getAccessTokenExpiration(),
+						TimeUnit.MILLISECONDS
+				);
+
 				if (isMobile) {
 					refreshToken = jwtUtil.generateRefreshToken(m_User.getUserName(), user.getUserID().toString());
 					logger.debug("Refresh token generated successfully for user: {}", user.getUserName());
@@ -387,6 +396,20 @@ public class IEMRAdminController {
 					if (previousTokenFromRedis != null) {
 						deleteSessionObjectByGettingSessionDetails(previousTokenFromRedis);
 						sessionObject.deleteSessionObject(previousTokenFromRedis);
+
+						// Denylist the active JWT so the first system's requests are immediately rejected
+						String usernameKey = mUsers.get(0).getUserName().trim().toLowerCase();
+						String jtiData = (String) redisTemplate.opsForValue().get("jti:" + usernameKey);
+						if (jtiData != null) {
+							String[] parts = jtiData.split("\\|", 2);
+							String jti = parts[0];
+							tokenDenylist.addTokenToDenylist(jti, jwtUtil.getAccessTokenExpiration());
+							if (parts.length > 1) {
+								redisTemplate.delete("user_" + parts[1]);
+							}
+							redisTemplate.delete("jti:" + usernameKey);
+						}
+
 						response.setResponse("User successfully logged out");
 					} else{
 						logger.error("Unable to fetch session from redis");
@@ -521,6 +544,15 @@ public class IEMRAdminController {
 				String userAgent = request.getHeader("User-Agent");
 				isMobile = UserAgentUtil.isMobileDevice(userAgent);
 				logger.info("UserAgentUtil isMobile : " + isMobile);
+
+				// Store username → JTI mapping so concurrent-session logout can denylist this token
+				String accessJti = jwtUtil.getJtiFromToken(jwtToken);
+				redisTemplate.opsForValue().set(
+						"jti:" + m_User.getUserName().trim().toLowerCase(),
+						accessJti + "|" + mUser.getUserID(),
+						jwtUtil.getAccessTokenExpiration(),
+						TimeUnit.MILLISECONDS
+				);
 
 				if (isMobile) {
 					refreshToken = jwtUtil.generateRefreshToken(m_User.getUserName(), user.getUserID().toString());
