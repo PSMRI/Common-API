@@ -180,6 +180,9 @@ public String resolveMeetingLink(String slug) throws Exception {
         throw new IllegalArgumentException("Meeting slug is required");
     }
 
+    // SMS clients sometimes include trailing punctuation when linkifying URLs
+    slug = slug.replaceAll("[.,:;!?]+$", "");
+
     String shortLink = jitsiLink + "m=" + slug;
     VideoCallParameters params = videoCallRepository.findByMeetingLink(shortLink);
 
