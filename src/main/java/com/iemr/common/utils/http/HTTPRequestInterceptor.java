@@ -125,6 +125,7 @@ public class HTTPRequestInterceptor implements HandlerInterceptor {
 					case "validateSecurityQuestionAndAnswer":
 					case "logOutUserFromConcurrentSession":
 					case "refreshToken":
+					case "resolve":
 						break;
 					case "error":
 						status = false;

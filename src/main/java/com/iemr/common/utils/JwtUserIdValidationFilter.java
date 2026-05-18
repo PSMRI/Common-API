@@ -120,6 +120,15 @@ public class JwtUserIdValidationFilter implements Filter {
 
 		logger.info("JwtUserIdValidationFilter invoked for path: " + path);
 
+        // Public video-consultation resolve endpoint: hit by SMS recipients on
+        // phone browsers that have no app session. Skip ALL auth — the JWT minted
+        // inside the handler + the unguessable slug provide access control.
+        if (isVideoConsultationResolvePath(path, contextPath)) {
+            logger.info("Video-consultation resolve path detected - skipping authentication: {}", path);
+            filterChain.doFilter(servletRequest, servletResponse);
+            return;
+        }
+
         // NEW: if this is a platform-feedback endpoint, treat it as public (skip auth)
         // and also ensure we don't clear any user cookies for these requests.
         if (isPlatformFeedbackPath(path, contextPath)) {
@@ -206,6 +215,17 @@ public class JwtUserIdValidationFilter implements Filter {
         return normalized.startsWith(base + "/platform-feedback");
     }
 
+    /**
+     * Identifies the public video-consultation resolve endpoint.
+     * Uses multiple matching strategies to be resilient against
+     * context-path mismatches between reverse-proxy and Wildfly.
+     */
+    private boolean isVideoConsultationResolvePath(String path, String contextPath) {
+        if (path == null) return false;
+        String normalized = path.toLowerCase();
+        return normalized.endsWith("/video-consultation/resolve")
+                || normalized.contains("/video-consultation/resolve");
+    }
 
 	private boolean isOriginAllowed(String origin) {
 		if (origin == null || allowedOrigins == null || allowedOrigins.trim().isEmpty()) {
@@ -253,7 +273,11 @@ public class JwtUserIdValidationFilter implements Filter {
 				|| path.startsWith(contextPath + "/user/logOutUserFromConcurrentSession")
 				|| path.startsWith(contextPath + "/user/refreshToken")
 				|| path.equals(contextPath + "/health")
-				|| path.equals(contextPath + "/version");
+				|| path.equals(contextPath + "/version")
+				// Public Jitsi short-link redirect: hit by SMS recipients on phone
+				// browsers that have no app session. Access control is the JWT minted
+				// inside the redirect handler + the unguessable slug.
+				|| path.endsWith("/video-consultation/resolve");
 	}
 
 	private String getJwtTokenFromCookies(HttpServletRequest request) {

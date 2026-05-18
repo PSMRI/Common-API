@@ -64,7 +64,19 @@ import com.iemr.common.data.kmfilemanager.KMFileManager;
 public class CommonServiceImpl implements CommonService {
 
 	private Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
+
+	@Value("${km-base-path}")
+	private String dmsPath;
 	
+	@Value("${km-guest-user}")
+	private String userName;
+	
+	@Value("${km-guest-password}")
+	private String userPassword;
+	
+	@Value("${km-base-protocol}")
+	private String dmsProtocol;	
+
 	private static final String FILE_PATH = "filePath";  
 
 	/**
@@ -177,10 +189,6 @@ public class CommonServiceImpl implements CommonService {
 	{
 		String fileUIDAsURI = null;
 
-			String dmsPath = ConfigProperties.getPropertyByName("km-base-path");
-			String dmsProtocol = ConfigProperties.getPropertyByName("km-base-protocol");
-			String userName = ConfigProperties.getPropertyByName("km-guest-user");
-			String userPassword = ConfigProperties.getPassword("km-guest-user");
 			fileUIDAsURI =
 					dmsProtocol + "://" + userName + ":" + userPassword + "@" + dmsPath + "/Download?uuid=" + fileUID;
 		
@@ -233,12 +241,13 @@ public class CommonServiceImpl implements CommonService {
 			SubCategoryDetails subCategory = subCategoriesList.get(index);
 			if (subCategory.getSubCatFilePath() != null && subCategory.getSubCatFilePath().length() > 0) {
 				String subCatFilePath = subCategory.getSubCatFilePath();
-				String dmsPath = ConfigProperties.getPropertyByName("km-base-path");
-				String dmsProtocol = ConfigProperties.getPropertyByName("km-base-protocol");
-				String userName = ConfigProperties.getPropertyByName("km-guest-user");
-				String userPassword = ConfigProperties.getPassword("km-guest-user");
 				String fileUIDAsURI = dmsProtocol + "://" + userName + ":" + userPassword + "@" + dmsPath
 						+ "/Download?uuid=" + subCategory.getSubCatFilePath();
+						logger.info("file url="+fileUIDAsURI);
+						logger.info("file path="+subCategory.getSubCatFilePath());
+						logger.info("dms Path="+dmsPath);
+						logger.info("subcatfilePath="+subCatFilePath);
+						
 				subCategory.setSubCatFilePath(fileUIDAsURI);
 				subCategoriesList.get(index).setFileManger(kmFileManagerRepository
 						.getKMFileLists(subCategoryDetails.getProviderServiceMapID(), subCatFilePath));
