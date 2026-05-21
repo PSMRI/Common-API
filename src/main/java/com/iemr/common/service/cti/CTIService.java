@@ -94,4 +94,6 @@ public interface CTIService
 	OutputResponse getIVRSPathDetails(String request, String remoteAddress)throws Exception;
 
 	OutputResponse getVoiceFileNew(String request, String remoteAddr) throws IEMRException, JSONException;	
+
+	OutputResponse getDispositionCount(String request, String ipAddress) throws IEMRException, JSONException, JsonMappingException, JsonProcessingException;
 }

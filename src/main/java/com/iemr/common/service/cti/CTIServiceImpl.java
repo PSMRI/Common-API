@@ -26,6 +26,8 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -52,6 +54,8 @@ import com.iemr.common.data.cti.CampaignNames;
 import com.iemr.common.data.cti.CampaignRole;
 import com.iemr.common.data.cti.CampaignSkills;
 import com.iemr.common.data.cti.CustomerLanguage;
+import com.iemr.common.data.cti.DispositionCountRequest;
+import com.iemr.common.data.cti.DispositionCountResponse;
 import com.iemr.common.data.cti.TransferCall;
 import com.iemr.common.repository.callhandling.BeneficiaryCallRepository;
 import com.iemr.common.repository.callhandling.IEMRCalltypeRepositoryImplCustom;
@@ -90,8 +94,12 @@ public class CTIServiceImpl implements CTIService {
 	@Autowired
 	private BeneficiaryCallRepository beneficiaryCallRepository;
 
+	@Lazy
 	@Autowired
 	private CTIService ctiService;
+
+	@Value("${cti-server-ip}")
+	private String serverURL;
 
 	@Autowired
 	private IEMRCalltypeRepositoryImplCustom iemrCalltypeRepositoryImplCustom;
@@ -114,7 +122,7 @@ public class CTIServiceImpl implements CTIService {
 		ObjectMapper objectMapper = new ObjectMapper();
 		logger.debug("addUpdateAgentSkills input is " + request);
 		String ctiURI = ConfigProperties.getPropertyByName("add-update-agent-skills-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		AgentSkills agentSkills = objectMapper.readValue(request, AgentSkills.class);
 
 		String agentID = (agentSkills.getAgentID() != null) ? agentSkills.getAgentID() : "";
@@ -146,7 +154,7 @@ public class CTIServiceImpl implements CTIService {
 		OutputResponse output = new OutputResponse();
 		ObjectMapper objectMapper = new ObjectMapper();
 		String ctiURI = ConfigProperties.getPropertyByName("get-campaign-skills-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		CampaignSkills agentState = objectMapper.readValue(request, CampaignSkills.class);
 		ctiURI = ctiURI.replace("CTI_SERVER", serverURL);
 		ctiURI = ctiURI.replace("CAMPAIGN_NAME",
@@ -173,7 +181,7 @@ public class CTIServiceImpl implements CTIService {
 		OutputResponse output = new OutputResponse();
 		ObjectMapper objectMapper = new ObjectMapper();
 		String ctiURI = ConfigProperties.getPropertyByName("get-agent-status-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		AgentState agentState = objectMapper.readValue(request, AgentState.class);
 
 		String agentID = (agentState.getAgent_id() != null) ? agentState.getAgent_id() : "";
@@ -203,7 +211,7 @@ public class CTIServiceImpl implements CTIService {
 		OutputResponse output = new OutputResponse();
 		ObjectMapper objectMapper = new ObjectMapper();
 		String ctiURI = ConfigProperties.getPropertyByName("get-agent-call-stats-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		AgentCallStats agentState = objectMapper.readValue(request, AgentCallStats.class);
 
 		String agentID = (agentState.getAgentID() != null) ? agentState.getAgentID() : "";
@@ -235,7 +243,7 @@ public class CTIServiceImpl implements CTIService {
 		OutputResponse output = new OutputResponse();
 		ObjectMapper objectMapper = new ObjectMapper();
 		String ctiURI = ConfigProperties.getPropertyByName("get-campaign-name-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		CampaignNames agentState = objectMapper.readValue(request, CampaignNames.class);
 		ctiURI = ctiURI.replace("CTI_SERVER", serverURL);
 		ctiURI = ctiURI.replace("SEARCH_KEY", (agentState.getServiceName() != null) ? agentState.getServiceName() : "");
@@ -262,7 +270,7 @@ public class CTIServiceImpl implements CTIService {
 		OutputResponse output = new OutputResponse();
 		ObjectMapper objectMapper = new ObjectMapper();
 		String ctiURI = ConfigProperties.getPropertyByName("do-agent-login-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		AgentState agentState = objectMapper.readValue(request, AgentState.class);
 
 		String agentID = (agentState.getAgent_id() != null) ? agentState.getAgent_id() : "";
@@ -292,7 +300,7 @@ public class CTIServiceImpl implements CTIService {
 		OutputResponse output = new OutputResponse();
 		ObjectMapper objectMapper = new ObjectMapper();
 		String ctiURI = ConfigProperties.getPropertyByName("get-login-key-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		AgentLoginKey agentState = objectMapper.readValue(request, AgentLoginKey.class);
 
 		String decryptPassword = null;
@@ -325,7 +333,7 @@ public class CTIServiceImpl implements CTIService {
 		OutputResponse output = new OutputResponse();
 		ObjectMapper objectMapper = new ObjectMapper();
 		String ctiURI = ConfigProperties.getPropertyByName("do-agent-logout-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		AgentState agentState = objectMapper.readValue(request, AgentState.class);
 
 		String agentID = (agentState.getAgent_id() != null) ? agentState.getAgent_id() : "";
@@ -357,7 +365,7 @@ public class CTIServiceImpl implements CTIService {
 		OutputResponse output = new OutputResponse();
 		ObjectMapper objectMapper = new ObjectMapper();
 		String ctiURI = ConfigProperties.getPropertyByName("do-online-agent-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		AgentState agentState = objectMapper.readValue(request, AgentState.class);
 
 		String agentID = (agentState.getAgent_id() != null) ? agentState.getAgent_id() : "";
@@ -388,7 +396,7 @@ public class CTIServiceImpl implements CTIService {
 		OutputResponse output = new OutputResponse();
 		ObjectMapper objectMapper = new ObjectMapper();
 		String ctiURI = ConfigProperties.getPropertyByName("call-beneficiary-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		CallBeneficiary agentState = objectMapper.readValue(request, CallBeneficiary.class);
 
 		String agentID = (agentState.getAgent_id() != null) ? agentState.getAgent_id() : "";
@@ -429,7 +437,7 @@ public class CTIServiceImpl implements CTIService {
 		 * SESSION_TIMEOUT&designation=DESIGNATION&resFormat=3
 		 */
 
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		CTIUser ctiUser = objectMapper.readValue(request, CTIUser.class);
 		ctiURI = ctiURI.replace("CTI_SERVER", serverURL);
 		ctiURI = ctiURI.replace("USERNAME", (ctiUser.getUsername() != null) ? ctiUser.getUsername() : "");
@@ -461,7 +469,7 @@ public class CTIServiceImpl implements CTIService {
 		OutputResponse output = new OutputResponse();
 		ObjectMapper objectMapper = new ObjectMapper();
 		String ctiURI = ConfigProperties.getPropertyByName("fetch-transferrable-campaigns-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		CTICampaigns agentState = objectMapper.readValue(request, CTICampaigns.class);
 
 		String agentID = (agentState.getAgent_id() != null) ? agentState.getAgent_id() : "";
@@ -493,7 +501,7 @@ public class CTIServiceImpl implements CTIService {
 		OutputResponse output = new OutputResponse();
 		ObjectMapper objectMapper = new ObjectMapper();
 		String ctiURI = ConfigProperties.getPropertyByName("get-campaign-roles-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		CampaignRole campaign = objectMapper.readValue(request, CampaignRole.class);
 		ctiURI = ctiURI.replace("CTI_SERVER", serverURL);
 		ctiURI = ctiURI.replace("CAMPAIGN_NAME", (campaign.getCampaign() != null) ? campaign.getCampaign() : "");
@@ -525,7 +533,7 @@ public class CTIServiceImpl implements CTIService {
 		String agentIP = !agentIPResp.equals(DEFAULT_IP) ? agentIPResp : remoteAddr;
 
 		String ctiURI = ConfigProperties.getPropertyByName("update-call-disposition-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		ctiURI = ctiURI.replace("CTI_SERVER", serverURL);
 		ctiURI = ctiURI.replace("AGENT_ID", agentID);
 		ctiURI = ctiURI.replace("AGENT_IP", agentIP);
@@ -553,7 +561,7 @@ public class CTIServiceImpl implements CTIService {
 		ObjectMapper objectMapper = new ObjectMapper();
 		CTIVoiceFile disposition = objectMapper.readValue(request, CTIVoiceFile.class);
 		String ctiURI = ConfigProperties.getPropertyByName("mix-voice-file-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		ctiURI = ctiURI.replace("CTI_SERVER", serverURL);
 		ctiURI = ctiURI.replace("AGENT_ID", (disposition.getAgent_id() != null) ? disposition.getAgent_id() : "");
 		// ctiURI = ctiURI.replace("AGENT_IP", remoteAddr);
@@ -578,7 +586,7 @@ public class CTIServiceImpl implements CTIService {
 		ObjectMapper objectMapper = new ObjectMapper();
 		CTIVoiceFile disposition = objectMapper.readValue(request, CTIVoiceFile.class);
 		String ctiURI = ConfigProperties.getPropertyByName("get-voice-file-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		ctiURI = ctiURI.replace("CTI_SERVER", serverURL);
 		ctiURI = ctiURI.replace("AGENT_ID", (disposition.getAgent_id() != null) ? disposition.getAgent_id() : "");
 		// ctiURI = ctiURI.replace("AGENT_IP", remoteAddr);
@@ -604,7 +612,7 @@ public class CTIServiceImpl implements CTIService {
 		OutputResponse output = new OutputResponse();
 		CTIVoiceFile disposition = InputMapper.gson().fromJson(request, CTIVoiceFile.class);
 		String ctiURI = ConfigProperties.getPropertyByName("get-voice-file-URL-New");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		ctiURI = ctiURI.replace("CTI_SERVER", serverURL);
 		ctiURI = ctiURI.replace("AGENT_ID", (disposition.getAgent_id() != null) ? disposition.getAgent_id() : "");
 		// ctiURI = ctiURI.replace("AGENT_IP", remoteAddr);
@@ -962,7 +970,9 @@ public class CTIServiceImpl implements CTIService {
 
 	@Override
 	public String callPostUrl(String urlRequest, String Json) {
+		logger.info("From call post URL method.. URL: " + urlRequest + " Json: " + Json);
 		String result = httpUtils.post(urlRequest, Json);
+		logger.info("From call post URL method.. result: " + result);
 		return result;
 	}
 
@@ -971,7 +981,7 @@ public class CTIServiceImpl implements CTIService {
 		OutputResponse result = new OutputResponse();
 		logger.debug("addUpdateAgentSkills input is " + request);
 		String ctiURI = ConfigProperties.getPropertyByName("add-auto-dail-numbers-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		ObjectMapper objectMapper = new ObjectMapper();
 		AutoPreviewDial[] autoPreviewDialArray = objectMapper.readValue(request, AutoPreviewDial[].class);
 
@@ -1012,7 +1022,7 @@ public class CTIServiceImpl implements CTIService {
 		OutputResponse result = new OutputResponse();
 		logger.debug("setAutoDialNumbers input is " + request);
 		String ctiURI = ConfigProperties.getPropertyByName("set-auto-dail-numbers-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		ObjectMapper objectMapper = new ObjectMapper();
 		AutoPreviewDial autoPreviewDial = objectMapper.readValue(request, AutoPreviewDial.class);
 
@@ -1055,7 +1065,7 @@ public class CTIServiceImpl implements CTIService {
 		OutputResponse result = new OutputResponse();
 		logger.debug("getZoneDetails input is " + request);
 		String ctiURI = ConfigProperties.getPropertyByName("agent-ivrs-path-URL");
-		String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
 		ObjectMapper objectMapper = new ObjectMapper();
 		AgentState zoneData = objectMapper.readValue(request, AgentState.class);
 
@@ -1084,4 +1094,28 @@ public class CTIServiceImpl implements CTIService {
 
 		return result;
 	}
+
+	@Override  
+public OutputResponse getDispositionCount(String request, String ipAddress) throws IEMRException, JSONException, JsonMappingException, JsonProcessingException {  
+      
+    OutputResponse output = new OutputResponse();  
+    ObjectMapper objectMapper = new ObjectMapper();  
+    String ctiURI = ConfigProperties.getPropertyByName("get-disposition-count-URL");  
+    // 		// String serverURL = ConfigProperties.getPropertyByName("cti-server-ip");
+  
+    DispositionCountRequest dispositionRequest = objectMapper.readValue(request, DispositionCountRequest.class);  
+      
+    ctiURI = ctiURI.replace("CTI_SERVER", serverURL);  
+      
+    String response = this.callPostUrl(ctiURI, objectMapper.writeValueAsString(dispositionRequest));  
+      
+    DispositionCountResponse result = objectMapper.readValue(response, DispositionCountResponse.class);
+
+    if (result.getCode() != null && result.getCode().toString().equals(CUSTOM_API_SUCCESS)) {
+        output.setResponse(objectMapper.writeValueAsString(result));
+    } else {
+        output.setError(OutputResponse.GENERIC_FAILURE, result.getFailure_reason(), result.getStatus());
+    }  
+    return output;  
+}
 }

@@ -29,6 +29,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import com.iemr.common.model.beneficiary.RMNCHBeneficiaryDetailsRmnch;
 import com.iemr.common.service.welcomeSms.WelcomeBenificarySmsService;
@@ -120,7 +121,7 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 		}
 	}
 
-	@Async
+	// @Async
 	@Override
 	public Integer updateBenificiary(BeneficiaryModel benificiaryDetails, String auth) throws IEMRException {
 		Integer updatedRows = 0;
@@ -155,20 +156,25 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 				identityEditDTO.setReligion(benificiaryDetails.getI_bendemographics().getReligionName());
 
 			if (null != benificiaryDetails.getOccupation()) {
-   				identityEditDTO.setOccupationName(benificiaryDetails.getOccupation());
-			} else if (null != benificiaryDetails.getI_bendemographics()  &&
-         		null != benificiaryDetails.getI_bendemographics().getOccupation()) {
-    			identityEditDTO.setOccupationName(benificiaryDetails.getI_bendemographics().getOccupation());
-			} else {
-    			identityEditDTO.setOccupationName(benificiaryDetails.getOccupationName());
+				identityEditDTO.setOccupationName(benificiaryDetails.getOccupation());
+			} else if (null != benificiaryDetails.getI_bendemographics().getOccupation()) {
+				identityEditDTO.setOccupationName(benificiaryDetails.getI_bendemographics().getOccupation());
+			} else if (null != benificiaryDetails.getOccupationName()) {
+				identityEditDTO.setOccupationName(benificiaryDetails.getOccupationName());
+			}
+			if (null != benificiaryDetails.getI_bendemographics().getOccupationID()) {
+				identityEditDTO.setOccupationId(benificiaryDetails.getI_bendemographics().getOccupationID());
 			}
 
 			if (null != benificiaryDetails.getEducation()) {
-    			identityEditDTO.setEducation(benificiaryDetails.getEducation());
+				identityEditDTO.setEducation(benificiaryDetails.getEducation());
 			} else if (null != benificiaryDetails.getI_bendemographics() &&
-           		null != benificiaryDetails.getI_bendemographics().getEducationName()) {
-    			identityEditDTO.setEducation(benificiaryDetails.getI_bendemographics().getEducationName());
-			} 
+					null != benificiaryDetails.getI_bendemographics().getEducationName()) {
+				identityEditDTO.setEducation(benificiaryDetails.getI_bendemographics().getEducationName());
+			}
+			if (null != benificiaryDetails.getI_bendemographics().getEducationID()) {
+				identityEditDTO.setEducationId(benificiaryDetails.getI_bendemographics().getEducationID());
+			}
 			if(null != benificiaryDetails.getIncomeStatus())
 				identityEditDTO.setIncomeStatus(benificiaryDetails.getIncomeStatus());
 			else
@@ -224,9 +230,27 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 			} else {
 				return response.toString();
 			}
-			if(beneficiary!=null){
-				if(beneficiary.getBenPhoneMaps().get(0).getPhoneNo()!=null){
-					welcomeBenificarySmsService.sendWelcomeSMStoBenificiary(beneficiary.getBenPhoneMaps().get(0).getPhoneNo(),beneficiary.getFirstName()+" "+beneficiary.getLastName(),beneficiary.getBeneficiaryID());
+			// ========== SEND SMS BUT DON'T FAIL IF IT ERRORS ==========
+			if (beneficiary != null && beneficiary.getBenPhoneMaps() != null && !beneficiary.getBenPhoneMaps().isEmpty()) {
+				String phoneNo = beneficiary.getBenPhoneMaps().get(0).getPhoneNo();
+
+				if (phoneNo != null && !phoneNo.trim().isEmpty()) {
+					String beneficiaryName = (beneficiary.getFirstName() != null ? beneficiary.getFirstName() : "") + " " +
+							(beneficiary.getLastName() != null ? beneficiary.getLastName() : "");
+
+					try {
+						logger.info("[SMS] Attempting to send welcome SMS to: " + phoneNo);
+						String smsResult = welcomeBenificarySmsService.sendWelcomeSMStoBenificiary(
+								phoneNo,
+								beneficiaryName.trim(),
+								beneficiary.getBeneficiaryID()
+						);
+						logger.info("[SMS] Result: " + smsResult);
+					} catch (Exception smsError) {
+						// SMS failed but beneficiary is already created - don't fail the request
+						logger.warn("[SMS] Failed to send SMS: " + smsError.getMessage() +
+								" - But beneficiary already created successfully");
+					}
 				}
 			}
 

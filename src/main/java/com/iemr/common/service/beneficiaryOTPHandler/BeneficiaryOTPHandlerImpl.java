@@ -70,8 +70,7 @@ public class BeneficiaryOTPHandlerImpl implements BeneficiaryOTPHandler {
 
     @Autowired
     SMSTypeRepository smsTypeRepository;
-   @Value("${sms-template-name}")
-   private String  smsTemplateName ;
+   private String  smsTemplateName = "otp_consent" ;
 
    private String smsTemplate;
     @Value("${sms-username}")

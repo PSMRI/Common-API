@@ -46,6 +46,27 @@ public class JwtUtil {
         return buildToken(username, userId, "access", ACCESS_EXPIRATION_TIME);
     }
 
+    // Mobile login: token without PII in sub
+    public String generateSecureToken(String userId) {
+        return buildSecureToken(userId, "access", ACCESS_EXPIRATION_TIME);
+    }
+
+    public String generateSecureRefreshToken(String userId) {
+        return buildSecureToken(userId, "refresh", REFRESH_EXPIRATION_TIME);
+    }
+
+    private String buildSecureToken(String userId, String tokenType, long expiration) {
+        return Jwts.builder()
+                .subject(userId)
+                .claim("userId", userId)
+                .claim("token_type", tokenType)
+                .id(UUID.randomUUID().toString())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
     /**
      * Generate a refresh token.
      *
@@ -161,6 +182,10 @@ public class JwtUtil {
      */
     public long getRefreshTokenExpiration() {
         return REFRESH_EXPIRATION_TIME;
+    }
+
+    public long getAccessTokenExpiration() {
+        return ACCESS_EXPIRATION_TIME;
     }
 
     /**
