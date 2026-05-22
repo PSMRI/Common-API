@@ -81,7 +81,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public class IEMRAdminController {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	private InputMapper inputMapper = new InputMapper();
-	private static final Set<String> CONCURRENT_SESSION_EXEMPT_ROLES = Set.of("admin", "superadmin");
+	private static final Set<String> CONCURRENT_SESSION_EXEMPT_ROLES = Set.of("provideradmin", "superadmin");
 
 //	@Value("${captcha.enable-captcha}")
 	private boolean enableCaptcha =false;
@@ -560,11 +560,13 @@ public class IEMRAdminController {
 			String refreshToken = null;
 			boolean isMobile = false;
 			if (m_User.getUserName() != null && (m_User.getDoLogout() == null || m_User.getDoLogout() == false)) {
-				String tokenFromRedis = getConcurrentCheckSessionObjectAgainstUser(
-						m_User.getUserName().trim().toLowerCase());
-				if (tokenFromRedis != null) {
-					throw new IEMRException(
-							"You are already logged in,please confirm to logout from other device and login again");
+				if (!CONCURRENT_SESSION_EXEMPT_ROLES.contains(m_User.getUserName().trim().toLowerCase())) {
+					String tokenFromRedis = getConcurrentCheckSessionObjectAgainstUser(
+							m_User.getUserName().trim().toLowerCase());
+					if (tokenFromRedis != null) {
+						throw new IEMRException(
+								"You are already logged in,please confirm to logout from other device and login again");
+					}
 				}
 			} else if (m_User.getUserName() != null && m_User.getDoLogout() != null && m_User.getDoLogout() == true) {
 				deleteSessionObject(m_User.getUserName().trim().toLowerCase());
