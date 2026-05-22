@@ -80,7 +80,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public class IEMRAdminController {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	private InputMapper inputMapper = new InputMapper();
-	private static final Set<String> CONCURRENT_SESSION_EXEMPT_ROLES = Set.of("admin", "superadmin", "supervisor");
+	private static final Set<String> CONCURRENT_SESSION_EXEMPT_ROLES = Set.of("admin", "superadmin");
 
 //	@Value("${captcha.enable-captcha}")
 	private boolean enableCaptcha =false;
