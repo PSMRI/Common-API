@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -72,6 +73,8 @@ import com.iemr.common.service.userbeneficiarydata.LanguageService;
 import com.iemr.common.service.userbeneficiarydata.MaritalStatusService;
 import com.iemr.common.service.userbeneficiarydata.StatusService;
 import com.iemr.common.service.userbeneficiarydata.TitleService;
+import com.iemr.common.utils.CookieUtil;
+import com.iemr.common.utils.JwtUtil;
 import com.iemr.common.utils.CookieUtil;
 import com.iemr.common.utils.JwtUtil;
 import com.iemr.common.utils.mapper.InputMapper;
@@ -212,6 +215,7 @@ public class BeneficiaryRegistrationController {
 		OutputResponse response = new OutputResponse();
 
 		logger.info("Create beneficiary request " + beneficiaryModel);
+		logger.info("Common-api Call: Create bene");
 		try {
 
 			response.setResponse(registerBenificiaryService.save(beneficiaryModel, httpRequest));

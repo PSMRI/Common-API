@@ -391,8 +391,8 @@ public class SMSServiceImpl implements SMSService {
             String variable = smsParametersMap.getSmsParameterName();
             String methodName = smsParametersMap.getSmsParameter().getDataName();
             String variableValue = "";
-			variableValue = getVideoCallData(methodName, vcParams);
- 			smsToSend = smsToSend.replace("$$" + variable + "$$", variableValue);
+			// variableValue = getVideoCallData(methodName, vcParams);
+ 			// smsToSend = smsToSend.replace("$$" + variable + "$$", variableValue);
 
             if ("VideoCall".equalsIgnoreCase(smsParametersMap.getSmsParameter().getSmsParameterType())) {
                 variableValue = getVideoCallData(methodName, vcParams);
@@ -436,10 +436,15 @@ public class SMSServiceImpl implements SMSService {
 				variableValue = videoCall.getCallerPhoneNumber() !=null ? videoCall.getCallerPhoneNumber().toString() : "";
 				break;
 	        default:
-	            Method method = videoCall.getClass().getDeclaredMethod("get" + capitalize(methodName));
-	            method.setAccessible(true);
-	            Object result = method.invoke(videoCall);
-	            variableValue = result != null ? result.toString() : "";
+	            try {
+	                Method method = videoCall.getClass().getDeclaredMethod("get" + capitalize(methodName));
+	                method.setAccessible(true);
+	                Object result = method.invoke(videoCall);
+	                variableValue = result != null ? result.toString() : "";
+	            } catch (NoSuchMethodException e) {
+	                logger.warn("No getter found for methodName: " + methodName + " on VideoCallParameters");
+	                variableValue = "";
+	            }
 	            break;
 	    }
 	    return variableValue.trim();
@@ -678,7 +683,7 @@ public class SMSServiceImpl implements SMSService {
 		sms.setReceivingUserID(request.getUserID());
 		String smsToSend = "";
 		BeneficiaryModel beneficiary = null;
-		if (request.getBeneficiaryRegID() != null) {
+		if (request.getBeneficiaryRegID() != null && !request.getBeneficiaryRegID().toString().isEmpty()) {
 			List<BeneficiaryModel> beneficiaries = searchBeneficiary.userExitsCheckWithId(request.getBeneficiaryRegID(),
 					authToken, request.getIs1097());
 			if (beneficiaries.size() == 1)
@@ -844,6 +849,12 @@ public class SMSServiceImpl implements SMSService {
 	private String getBeneficiaryData(String className, String methodName, SMSRequest request,
 			BeneficiaryModel beneficiary) throws Exception {
 		String variableValue = "";
+		if (beneficiary == null) {
+        if ("phoneno".equalsIgnoreCase(methodName)) {
+            return request.getBenPhoneNo() != null ? request.getBenPhoneNo() : "";
+        }
+        return "";
+    }
 		switch (methodName.toLowerCase()) {
 		case "name":
 			String fname = beneficiary.getFirstName() != null ? beneficiary.getFirstName() + " " : "";
@@ -875,9 +886,16 @@ public class SMSServiceImpl implements SMSService {
 			variableValue = imrName;
 			break;
 		default:
-			Class clazz = Class.forName(className);
-			Method method = clazz.getDeclaredMethod("get" + methodName, null);
-			variableValue = method.invoke(beneficiary, null).toString();
+			if ("com.iemr.common.data.videocall.VideoCallParameters".equals(className)) {
+				VideoCallParameters vcParams = getVideoCallParameters(request.getSmsAdvice());
+				if (vcParams != null) {
+					variableValue = getVideoCallData(methodName, vcParams);
+				}
+			} else {
+				Class clazz = Class.forName(className);
+				Method method = clazz.getDeclaredMethod("get" + methodName, null);
+				variableValue = method.invoke(beneficiary, null).toString();
+			}
             break;
 		}
 

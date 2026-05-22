@@ -40,12 +40,12 @@ import com.iemr.common.utils.validator.Validator;
 @Configuration
 public class IEMRApplBeans
 {
-	@Bean
-	public KMService getOpenKMService()
-	{
-		KMService kmService = new OpenKMServiceImpl();
-		return kmService;
-	}
+	// @Bean
+	// public KMService getOpenKMService()
+	// {
+	// 	KMService kmService = new OpenKMServiceImpl();
+	// 	return kmService;
+	// }
 
 	@Bean
 	public Validator getVaidator()

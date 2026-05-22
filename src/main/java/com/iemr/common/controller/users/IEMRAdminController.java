@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -96,6 +97,8 @@ public class IEMRAdminController {
 	private CookieUtil cookieUtil;
 	@Autowired
 	private RedisTemplate<String, Object> redisTemplate;
+	@Autowired
+	private StringRedisTemplate stringRedisTemplate;
 
 	private AESUtil aesUtil;
 
@@ -202,24 +205,26 @@ public class IEMRAdminController {
 			String jwtToken = null;
 			String refreshToken = null;
 			if (mUser.size() == 1) {
-				jwtToken = jwtUtil.generateToken(m_User.getUserName(), mUser.get(0).getUserID().toString());
+				String userIdStr = mUser.get(0).getUserID().toString();
+				jwtToken = isMobile
+						? jwtUtil.generateSecureToken(userIdStr)
+						: jwtUtil.generateToken(m_User.getUserName(), userIdStr);
 
 				User user = new User(); // Assuming the Users class exists
 				user.setUserID(mUser.get(0).getUserID());
 				user.setUserName(mUser.get(0).getUserName());
 				logger.info("UserAgentUtil isMobile : " + isMobile);
 
-				// Store username → JTI mapping so concurrent-session logout can denylist this token
-				String accessJti = jwtUtil.getJtiFromToken(jwtToken);
-				redisTemplate.opsForValue().set(
+				// Store username -> JTI mapping so concurrent-session logout can denylist this token
+				stringRedisTemplate.opsForValue().set(
 						"jti:" + m_User.getUserName().trim().toLowerCase(),
-						accessJti + "|" + mUser.get(0).getUserID(),
+						jwtUtil.getJtiFromToken(jwtToken) + "|" + mUser.get(0).getUserID(),
 						jwtUtil.getAccessTokenExpiration(),
 						TimeUnit.MILLISECONDS
 				);
 
 				if (isMobile) {
-					refreshToken = jwtUtil.generateRefreshToken(m_User.getUserName(), user.getUserID().toString());
+					refreshToken = jwtUtil.generateSecureRefreshToken(user.getUserID().toString());
 					logger.debug("Refresh token generated successfully for user: {}", user.getUserName());
 					String jti = jwtUtil.getJtiFromToken(refreshToken);
 					redisTemplate.opsForValue().set(
@@ -343,6 +348,16 @@ public class IEMRAdminController {
 			// Get user details
 			String userId = claims.get("userId", String.class);
 			User user = iemrAdminUserServiceImpl.getUserById(Long.parseLong(userId));
+
+			// validate if user account is locked or de-activated
+			if(user.getDeleted()){
+				logger.warn("Your account is locked or de-activated. Please contact administrator");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Your account is locked or de-activated. Please contact administrator.");
+			}
+			if(user.getStatusID()>2){
+				logger.warn("Your account is not active. Please contact administrator");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Your account is not active. Please contact administrator.");
+			}
 
 			// Validate that the user still exists and is active
 			if (user == null) {
@@ -568,17 +583,16 @@ public class IEMRAdminController {
 				isMobile = UserAgentUtil.isMobileDevice(userAgent);
 				logger.info("UserAgentUtil isMobile : " + isMobile);
 
-				// Store username → JTI mapping so concurrent-session logout can denylist this token
-				String accessJti = jwtUtil.getJtiFromToken(jwtToken);
-				redisTemplate.opsForValue().set(
+				// Store username -> JTI mapping so concurrent-session logout can denylist this token
+				stringRedisTemplate.opsForValue().set(
 						"jti:" + m_User.getUserName().trim().toLowerCase(),
-						accessJti + "|" + mUser.getUserID(),
+						jwtUtil.getJtiFromToken(jwtToken) + "|" + mUser.getUserID(),
 						jwtUtil.getAccessTokenExpiration(),
 						TimeUnit.MILLISECONDS
 				);
 
 				if (isMobile) {
-					refreshToken = jwtUtil.generateRefreshToken(m_User.getUserName(), user.getUserID().toString());
+					refreshToken = jwtUtil.generateSecureRefreshToken(user.getUserID().toString());
 					logger.debug("Refresh token generated successfully for user: {}", user.getUserName());
 					String jti = jwtUtil.getJtiFromToken(refreshToken);
 					redisTemplate.opsForValue().set(
