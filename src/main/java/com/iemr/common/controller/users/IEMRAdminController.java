@@ -436,7 +436,7 @@ public class IEMRAdminController {
 						if (!CONCURRENT_SESSION_EXEMPT_ROLES.contains(userRole.trim().toLowerCase())) {
 							// Denylist the active JWT so the first system's requests are immediately rejected
 							String usernameKey = mUsers.get(0).getUserName().trim().toLowerCase();
-							String jtiData = (String) redisTemplate.opsForValue().get("jti:" + usernameKey);
+							String jtiData = stringRedisTemplate.opsForValue().get("jti:" + usernameKey);
 							if (jtiData != null) {
 								String[] parts = jtiData.split("\\|", 2);
 								String jti = parts[0];
@@ -444,7 +444,7 @@ public class IEMRAdminController {
 								if (parts.length > 1) {
 									redisTemplate.delete("user_" + parts[1]);
 								}
-								redisTemplate.delete("jti:" + usernameKey);
+								stringRedisTemplate.delete("jti:" + usernameKey);
 							}
 						}
 
