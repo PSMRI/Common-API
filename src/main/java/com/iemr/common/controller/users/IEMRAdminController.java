@@ -81,7 +81,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public class IEMRAdminController {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	private InputMapper inputMapper = new InputMapper();
-	private static final Set<String> CONCURRENT_SESSION_EXEMPT_ROLES = Set.of("admin", "superadmin");
+	private static final Set<String> CONCURRENT_SESSION_EXEMPT_ROLES = Set.of("provideradmin", "superadmin");
 
 //	@Value("${captcha.enable-captcha}")
 	private boolean enableCaptcha =false;
@@ -436,7 +436,7 @@ public class IEMRAdminController {
 						if (!CONCURRENT_SESSION_EXEMPT_ROLES.contains(userRole.trim().toLowerCase())) {
 							// Denylist the active JWT so the first system's requests are immediately rejected
 							String usernameKey = mUsers.get(0).getUserName().trim().toLowerCase();
-							String jtiData = (String) redisTemplate.opsForValue().get("jti:" + usernameKey);
+							String jtiData = stringRedisTemplate.opsForValue().get("jti:" + usernameKey);
 							if (jtiData != null) {
 								String[] parts = jtiData.split("\\|", 2);
 								String jti = parts[0];
@@ -444,7 +444,7 @@ public class IEMRAdminController {
 								if (parts.length > 1) {
 									redisTemplate.delete("user_" + parts[1]);
 								}
-								redisTemplate.delete("jti:" + usernameKey);
+								stringRedisTemplate.delete("jti:" + usernameKey);
 							}
 						}
 
@@ -560,11 +560,13 @@ public class IEMRAdminController {
 			String refreshToken = null;
 			boolean isMobile = false;
 			if (m_User.getUserName() != null && (m_User.getDoLogout() == null || m_User.getDoLogout() == false)) {
-				String tokenFromRedis = getConcurrentCheckSessionObjectAgainstUser(
-						m_User.getUserName().trim().toLowerCase());
-				if (tokenFromRedis != null) {
-					throw new IEMRException(
-							"You are already logged in,please confirm to logout from other device and login again");
+				if (!CONCURRENT_SESSION_EXEMPT_ROLES.contains(m_User.getUserName().trim().toLowerCase())) {
+					String tokenFromRedis = getConcurrentCheckSessionObjectAgainstUser(
+							m_User.getUserName().trim().toLowerCase());
+					if (tokenFromRedis != null) {
+						throw new IEMRException(
+								"You are already logged in,please confirm to logout from other device and login again");
+					}
 				}
 			} else if (m_User.getUserName() != null && m_User.getDoLogout() != null && m_User.getDoLogout() == true) {
 				deleteSessionObject(m_User.getUserName().trim().toLowerCase());
