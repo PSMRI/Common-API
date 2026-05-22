@@ -80,6 +80,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public class IEMRAdminController {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	private InputMapper inputMapper = new InputMapper();
+	private static final Set<String> CONCURRENT_SESSION_EXEMPT_ROLES = Set.of("admin", "superadmin", "supervisor");
 
 //	@Value("${captcha.enable-captcha}")
 	private boolean enableCaptcha =false;
@@ -177,11 +178,22 @@ public class IEMRAdminController {
 			if (m_User.getUserName() != null
 					    && (m_User.getDoLogout() == null || !m_User.getDoLogout())
 					    && (m_User.getWithCredentials() != null && m_User.getWithCredentials())) {
-				String tokenFromRedis = getConcurrentCheckSessionObjectAgainstUser(
-						m_User.getUserName().trim().toLowerCase());
-				if (tokenFromRedis != null) {
-					throw new IEMRException(
-							"You are already logged in,please confirm to logout from other device and login again");
+				String userRole = "";
+				if (mUser.size() == 1 && mUser.get(0).getM_UserServiceRoleMapping() != null) {
+					for (UserServiceRoleMapping usrm : mUser.get(0).getM_UserServiceRoleMapping()) {
+						if (usrm.getM_Role() != null && usrm.getM_Role().getRoleName() != null) {
+							userRole = usrm.getM_Role().getRoleName();
+							break;
+						}
+					}
+				}
+				if (!CONCURRENT_SESSION_EXEMPT_ROLES.contains(userRole.trim().toLowerCase())) {
+					String tokenFromRedis = getConcurrentCheckSessionObjectAgainstUser(
+							m_User.getUserName().trim().toLowerCase());
+					if (tokenFromRedis != null) {
+						throw new IEMRException(
+								"You are already logged in,please confirm to logout from other device and login again");
+					}
 				}
 			} else if (m_User.getUserName() != null && m_User.getDoLogout() != null && m_User.getDoLogout() == true) {
 				deleteSessionObject(m_User.getUserName().trim().toLowerCase());
@@ -397,17 +409,28 @@ public class IEMRAdminController {
 						deleteSessionObjectByGettingSessionDetails(previousTokenFromRedis);
 						sessionObject.deleteSessionObject(previousTokenFromRedis);
 
-						// Denylist the active JWT so the first system's requests are immediately rejected
-						String usernameKey = mUsers.get(0).getUserName().trim().toLowerCase();
-						String jtiData = (String) redisTemplate.opsForValue().get("jti:" + usernameKey);
-						if (jtiData != null) {
-							String[] parts = jtiData.split("\\|", 2);
-							String jti = parts[0];
-							tokenDenylist.addTokenToDenylist(jti, jwtUtil.getAccessTokenExpiration());
-							if (parts.length > 1) {
-								redisTemplate.delete("user_" + parts[1]);
+						String userRole = "";
+						if (mUsers.get(0).getM_UserServiceRoleMapping() != null) {
+							for (UserServiceRoleMapping usrm : mUsers.get(0).getM_UserServiceRoleMapping()) {
+								if (usrm.getM_Role() != null && usrm.getM_Role().getRoleName() != null) {
+									userRole = usrm.getM_Role().getRoleName();
+									break;
+								}
 							}
-							redisTemplate.delete("jti:" + usernameKey);
+						}
+						if (!CONCURRENT_SESSION_EXEMPT_ROLES.contains(userRole.trim().toLowerCase())) {
+							// Denylist the active JWT so the first system's requests are immediately rejected
+							String usernameKey = mUsers.get(0).getUserName().trim().toLowerCase();
+							String jtiData = (String) redisTemplate.opsForValue().get("jti:" + usernameKey);
+							if (jtiData != null) {
+								String[] parts = jtiData.split("\\|", 2);
+								String jti = parts[0];
+								tokenDenylist.addTokenToDenylist(jti, jwtUtil.getAccessTokenExpiration());
+								if (parts.length > 1) {
+									redisTemplate.delete("user_" + parts[1]);
+								}
+								redisTemplate.delete("jti:" + usernameKey);
+							}
 						}
 
 						response.setResponse("User successfully logged out");
