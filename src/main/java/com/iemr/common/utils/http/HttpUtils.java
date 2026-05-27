@@ -77,8 +77,10 @@ public class HttpUtils {
 	}
 
 	public ResponseEntity<String> getV1(String uri) throws URISyntaxException, MalformedURLException {
-		RestTemplateUtil.getJwttokenFromHeaders(headers);
-		HttpEntity<String> requestEntity = new HttpEntity<String>("", headers);
+		HttpHeaders requestHeaders = new HttpHeaders();
+		requestHeaders.add("Content-Type", "application/json");
+		RestTemplateUtil.getJwttokenFromHeaders(requestHeaders);
+		HttpEntity<String> requestEntity = new HttpEntity<String>("", requestHeaders);
 		ResponseEntity<String> responseEntity = rest.exchange(uri, HttpMethod.GET, requestEntity, String.class);
 		return responseEntity;
 	}
@@ -104,8 +106,10 @@ public class HttpUtils {
 
 	public String post(String uri, String json) {
 		String body;
-		RestTemplateUtil.getJwttokenFromHeaders(headers);
-		HttpEntity<String> requestEntity = new HttpEntity<String>(json, headers);
+		HttpHeaders requestHeaders = new HttpHeaders();
+		requestHeaders.add("Content-Type", "application/json");
+		RestTemplateUtil.getJwttokenFromHeaders(requestHeaders);
+		HttpEntity<String> requestEntity = new HttpEntity<String>(json, requestHeaders);
 		ResponseEntity<String> responseEntity = rest.exchange(uri, HttpMethod.POST, requestEntity, String.class);
 		setStatus((HttpStatus) responseEntity.getStatusCode());
 		body = responseEntity.getBody();
