@@ -104,8 +104,10 @@ public class HttpUtils {
 
 	public String post(String uri, String json) {
 		String body;
-		RestTemplateUtil.getJwttokenFromHeaders(headers);
-		HttpEntity<String> requestEntity = new HttpEntity<String>(json, headers);
+		HttpHeaders requestHeaders = new HttpHeaders();
+		requestHeaders.add("Content-Type", "application/json");
+		RestTemplateUtil.getJwttokenFromHeaders(requestHeaders);
+		HttpEntity<String> requestEntity = new HttpEntity<String>(json, requestHeaders);
 		ResponseEntity<String> responseEntity = rest.exchange(uri, HttpMethod.POST, requestEntity, String.class);
 		setStatus((HttpStatus) responseEntity.getStatusCode());
 		body = responseEntity.getBody();
