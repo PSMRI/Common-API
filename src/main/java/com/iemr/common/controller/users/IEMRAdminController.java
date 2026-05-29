@@ -198,54 +198,49 @@ public class IEMRAdminController {
 			 * FAILED LOGIN ATTEMPT LOGIC
 			 * =========================================
 			 */
-			if (mUser == null || mUser.isEmpty()) {
-                 if(!existingUser.isEmpty()){
-					 if (existingUser != null) {
+			if(!existingUser.isEmpty()){
+				if (existingUser != null) {
 
-						 Integer failedAttempt = existingUser.get(0).getFailedAttempt() != null
-								 ? existingUser.get(0).getFailedAttempt()
-								 : 0;
+					Integer failedAttempt = existingUser.get(0).getFailedAttempt() != null
+							? existingUser.get(0).getFailedAttempt()
+							: 0;
 
-						 failedAttempt++;
+					failedAttempt++;
 
-						 existingUser.get(0).setFailedAttempt(failedAttempt);
+					existingUser.get(0).setFailedAttempt(failedAttempt);
 
-						 iemrAdminUserServiceImpl.save(existingUser.get(0));
+					iemrAdminUserServiceImpl.save(existingUser.get(0));
 
-						 int remainingAttempts = 5 - failedAttempt;
+					int remainingAttempts = 5 - failedAttempt;
 
-						 // Lock account on 5th attempt
-						 if (failedAttempt >= 5) {
-
+					// Lock account on 5th attempt
+					if (failedAttempt >= 5) {
 
 
-							 response.setError(new IEMRException(
-									 "Your account has been locked due to multiple failed login attempts."));
-							 return response.toString();
-						 }
 
-						 // Warning on 3rd attempt
-						 if (failedAttempt == 4) {
+						response.setError(new IEMRException(
+								"Your account has been locked due to multiple failed login attempts."));
+						return response.toString();
+					}
 
-
-							 response.setError(new IEMRException(
-									 "Invalid username or password. Remaining attempts: "
-											 + remainingAttempts
-											 + ". If you enter wrong username or password again, your account will be locked."));
-							 return response.toString();
-						 }
+					// Warning on 3rd attempt
+					if (failedAttempt == 4) {
 
 
-						 response.setError(new IEMRException(
-								 "Invalid username or password. Remaining attempts: "
-										 + remainingAttempts));
-						 return response.toString();
+						response.setError(new IEMRException(
+								"Invalid username or password. Remaining attempts: "
+										+ remainingAttempts
+										+ ". If you enter wrong username or password again, your account will be locked."));
+						return response.toString();
+					}
 
-					 }
-				 }
 
+					response.setError(new IEMRException(
+							"Invalid username or password. Remaining attempts: "
+									+ remainingAttempts));
+					return response.toString();
 
-				throw new IEMRException("Invalid username or password.");
+				}
 			}
 
 			/*
