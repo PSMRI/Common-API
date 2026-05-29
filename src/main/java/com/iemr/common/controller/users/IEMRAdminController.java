@@ -171,7 +171,93 @@ public class IEMRAdminController {
 			}
 
 			String decryptPassword = aesUtil.decrypt("Piramal12Piramal", m_User.getPassword());
-			List<User> mUser = iemrAdminUserServiceImpl.userAuthenticate(m_User.getUserName(), decryptPassword);
+			// Fetch user
+			List<User> existingUser = iemrAdminUserServiceImpl.userExitsCheck(m_User.getUserName());
+
+			/*
+			 * =========================================
+			 * ACCOUNT LOCK CHECK
+			 * =========================================
+			 */
+			if(!existingUser.isEmpty()){
+				if (existingUser.get(0) != null
+						&& existingUser.get(0).getFailedAttempt() != null
+						&& existingUser.get(0).getFailedAttempt() >= 5) {
+
+					throw new IEMRException(
+							"Your account has been locked due to multiple failed login attempts. Please contact administrator.");
+				}
+			}
+
+
+			List<User> mUser = iemrAdminUserServiceImpl
+					.userAuthenticate(m_User.getUserName(), decryptPassword);
+
+			/*
+			 * =========================================
+			 * FAILED LOGIN ATTEMPT LOGIC
+			 * =========================================
+			 */
+			if (mUser == null || mUser.isEmpty()) {
+                 if(!existingUser.isEmpty()){
+					 if (existingUser != null) {
+
+						 Integer failedAttempt = existingUser.get(0).getFailedAttempt() != null
+								 ? existingUser.get(0).getFailedAttempt()
+								 : 0;
+
+						 failedAttempt++;
+
+						 existingUser.get(0).setFailedAttempt(failedAttempt);
+
+						 iemrAdminUserServiceImpl.save(existingUser.get(0));
+
+						 int remainingAttempts = 5 - failedAttempt;
+
+						 // Lock account on 5th attempt
+						 if (failedAttempt >= 5) {
+
+
+
+							 response.setError(new IEMRException(
+									 "Your account has been locked due to multiple failed login attempts."));
+							 return response.toString();
+						 }
+
+						 // Warning on 3rd attempt
+						 if (failedAttempt == 4) {
+
+
+							 response.setError(new IEMRException(
+									 "Invalid username or password. Remaining attempts: "
+											 + remainingAttempts
+											 + ". If you enter wrong username or password again, your account will be locked."));
+							 return response.toString();
+						 }
+
+
+						 response.setError(new IEMRException(
+								 "Invalid username or password. Remaining attempts: "
+										 + remainingAttempts));
+						 return response.toString();
+
+					 }
+				 }
+
+
+				throw new IEMRException("Invalid username or password.");
+			}
+
+			/*
+			 * =========================================
+			 * RESET FAILED ATTEMPTS ON SUCCESS LOGIN
+			 * =========================================
+			 */
+			User loggedInUser = mUser.get(0);
+
+			loggedInUser.setFailedAttempt(0);
+
+			iemrAdminUserServiceImpl.save(loggedInUser);
 			JSONObject resMap = new JSONObject();
 			JSONObject serviceRoleMultiMap = new JSONObject();
 			JSONObject serviceRoleMap = new JSONObject();
@@ -253,7 +339,6 @@ public class IEMRAdminController {
 			// Facility data for ALL users - common pattern, empty if not applicable
 			try {
 				if (mUser.size() == 1) {
-					User loggedInUser = mUser.get(0);
 					String userRoleName = "";
 					if (loggedInUser.getM_UserServiceRoleMapping() != null) {
 						for (UserServiceRoleMapping usrm : loggedInUser.getM_UserServiceRoleMapping()) {

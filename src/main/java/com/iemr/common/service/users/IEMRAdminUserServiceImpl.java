@@ -1230,4 +1230,9 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 
 		return iEMRUserRepositoryCustom.findUserName(userName);
 	}
+
+	@Override
+	public User save(User loggedInUser) {
+		return iEMRUserRepositoryCustom.save(loggedInUser);
+	}
 }
