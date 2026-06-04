@@ -126,5 +126,5 @@ public interface IEMRAdminUserService
 	List<User> findUserIdByUserName(String userName) throws IEMRException;
 
 
-	
+	User save(User loggedInUser);
 }

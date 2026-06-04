@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -95,6 +96,8 @@ public class IEMRAdminController {
 	private CookieUtil cookieUtil;
 	@Autowired
 	private RedisTemplate<String, Object> redisTemplate;
+	@Autowired
+	private StringRedisTemplate stringRedisTemplate;
 
 	private AESUtil aesUtil;
 
@@ -168,7 +171,88 @@ public class IEMRAdminController {
 			}
 
 			String decryptPassword = aesUtil.decrypt("Piramal12Piramal", m_User.getPassword());
-			List<User> mUser = iemrAdminUserServiceImpl.userAuthenticate(m_User.getUserName(), decryptPassword);
+			// Fetch user
+			List<User> existingUser = iemrAdminUserServiceImpl.userExitsCheck(m_User.getUserName());
+
+			/*
+			 * =========================================
+			 * ACCOUNT LOCK CHECK
+			 * =========================================
+			 */
+			if(!existingUser.isEmpty()){
+				if (existingUser.get(0) != null
+						&& existingUser.get(0).getFailedAttempt() != null
+						&& existingUser.get(0).getFailedAttempt() >= 5) {
+
+					throw new IEMRException(
+							"Your account has been locked due to multiple failed login attempts. Please contact administrator.");
+				}
+			}
+
+
+			List<User> mUser = iemrAdminUserServiceImpl
+					.userAuthenticate(m_User.getUserName(), decryptPassword);
+
+			/*
+			 * =========================================
+			 * FAILED LOGIN ATTEMPT LOGIC
+			 * =========================================
+			 */
+			if(!existingUser.isEmpty()){
+				if (existingUser != null) {
+
+					Integer failedAttempt = existingUser.get(0).getFailedAttempt() != null
+							? existingUser.get(0).getFailedAttempt()
+							: 0;
+
+					failedAttempt++;
+
+					existingUser.get(0).setFailedAttempt(failedAttempt);
+
+					iemrAdminUserServiceImpl.save(existingUser.get(0));
+
+					int remainingAttempts = 5 - failedAttempt;
+
+					// Lock account on 5th attempt
+					if (failedAttempt >= 5) {
+
+
+
+						response.setError(new IEMRException(
+								"Your account has been locked due to multiple failed login attempts."));
+						return response.toString();
+					}
+
+					// Warning on 3rd attempt
+					if (failedAttempt == 4) {
+
+
+						response.setError(new IEMRException(
+								"Invalid username or password. Remaining attempts: "
+										+ remainingAttempts
+										+ ". If you enter wrong username or password again, your account will be locked."));
+						return response.toString();
+					}
+
+
+					response.setError(new IEMRException(
+							"Invalid username or password. Remaining attempts: "
+									+ remainingAttempts));
+					return response.toString();
+
+				}
+			}
+
+			/*
+			 * =========================================
+			 * RESET FAILED ATTEMPTS ON SUCCESS LOGIN
+			 * =========================================
+			 */
+			User loggedInUser = mUser.get(0);
+
+			loggedInUser.setFailedAttempt(0);
+
+			iemrAdminUserServiceImpl.save(loggedInUser);
 			JSONObject resMap = new JSONObject();
 			JSONObject serviceRoleMultiMap = new JSONObject();
 			JSONObject serviceRoleMap = new JSONObject();
@@ -190,15 +274,26 @@ public class IEMRAdminController {
 			String jwtToken = null;
 			String refreshToken = null;
 			if (mUser.size() == 1) {
-				jwtToken = jwtUtil.generateToken(m_User.getUserName(), mUser.get(0).getUserID().toString());
+				String userIdStr = mUser.get(0).getUserID().toString();
+				jwtToken = isMobile
+						? jwtUtil.generateSecureToken(userIdStr)
+						: jwtUtil.generateToken(m_User.getUserName(), userIdStr);
 
 				User user = new User(); // Assuming the Users class exists
 				user.setUserID(mUser.get(0).getUserID());
 				user.setUserName(mUser.get(0).getUserName());
 				logger.info("UserAgentUtil isMobile : " + isMobile);
 
+				// Store username -> JTI mapping so concurrent-session logout can denylist this token
+				stringRedisTemplate.opsForValue().set(
+						"jti:" + m_User.getUserName().trim().toLowerCase(),
+						jwtUtil.getJtiFromToken(jwtToken) + "|" + mUser.get(0).getUserID(),
+						jwtUtil.getAccessTokenExpiration(),
+						TimeUnit.MILLISECONDS
+				);
+
 				if (isMobile) {
-					refreshToken = jwtUtil.generateRefreshToken(m_User.getUserName(), user.getUserID().toString());
+					refreshToken = jwtUtil.generateSecureRefreshToken(user.getUserID().toString());
 					logger.debug("Refresh token generated successfully for user: {}", user.getUserName());
 					String jti = jwtUtil.getJtiFromToken(refreshToken);
 					redisTemplate.opsForValue().set(
@@ -239,7 +334,6 @@ public class IEMRAdminController {
 			// Facility data for ALL users - common pattern, empty if not applicable
 			try {
 				if (mUser.size() == 1) {
-					User loggedInUser = mUser.get(0);
 					String userRoleName = "";
 					if (loggedInUser.getM_UserServiceRoleMapping() != null) {
 						for (UserServiceRoleMapping usrm : loggedInUser.getM_UserServiceRoleMapping()) {
@@ -387,6 +481,19 @@ public class IEMRAdminController {
 					if (previousTokenFromRedis != null) {
 						deleteSessionObjectByGettingSessionDetails(previousTokenFromRedis);
 						sessionObject.deleteSessionObject(previousTokenFromRedis);
+
+						// Denylist the active JWT so System 1's requests are immediately rejected
+						String usernameKey = mUsers.get(0).getUserName().trim().toLowerCase();
+						String jtiData = stringRedisTemplate.opsForValue().get("jti:" + usernameKey);
+						if (jtiData != null) {
+							String[] parts = jtiData.split("\\|", 2);
+							tokenDenylist.addTokenToDenylist(parts[0], jwtUtil.getAccessTokenExpiration());
+							if (parts.length > 1) {
+								redisTemplate.delete("user_" + parts[1]);
+							}
+							stringRedisTemplate.delete("jti:" + usernameKey);
+						}
+
 						response.setResponse("User successfully logged out");
 					} else{
 						logger.error("Unable to fetch session from redis");
@@ -522,8 +629,16 @@ public class IEMRAdminController {
 				isMobile = UserAgentUtil.isMobileDevice(userAgent);
 				logger.info("UserAgentUtil isMobile : " + isMobile);
 
+				// Store username -> JTI mapping so concurrent-session logout can denylist this token
+				stringRedisTemplate.opsForValue().set(
+						"jti:" + m_User.getUserName().trim().toLowerCase(),
+						jwtUtil.getJtiFromToken(jwtToken) + "|" + mUser.getUserID(),
+						jwtUtil.getAccessTokenExpiration(),
+						TimeUnit.MILLISECONDS
+				);
+
 				if (isMobile) {
-					refreshToken = jwtUtil.generateRefreshToken(m_User.getUserName(), user.getUserID().toString());
+					refreshToken = jwtUtil.generateSecureRefreshToken(user.getUserID().toString());
 					logger.debug("Refresh token generated successfully for user: {}", user.getUserName());
 					String jti = jwtUtil.getJtiFromToken(refreshToken);
 					redisTemplate.opsForValue().set(
