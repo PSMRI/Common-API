@@ -1018,6 +1018,13 @@ public class IEMRAdminController {
 		try {
 			deleteSessionObjectByGettingSessionDetails(request.getHeader("Authorization"));
 			sessionObject.deleteSessionObject(request.getHeader("Authorization"));
+			try {
+				stringRedisTemplate.delete("camp:vanID");
+				stringRedisTemplate.delete("camp:parkingPlaceID");
+				logger.info("Camp config cleared from Redis on MMU logout");
+			} catch (Exception redisEx) {
+				logger.warn("Failed to clear camp Redis keys on logout: {}", redisEx.getMessage());
+			}
 			response.setResponse("Success");
 		} catch (Exception e) {
 			response.setError(e);
