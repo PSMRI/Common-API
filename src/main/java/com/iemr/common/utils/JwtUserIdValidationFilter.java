@@ -159,7 +159,7 @@ public class JwtUserIdValidationFilter implements Filter {
 				logger.info("Validating JWT token from cookie");
 				if (jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtFromCookie)) {
 					AuthorizationHeaderRequestWrapper authorizationHeaderRequestWrapper = new AuthorizationHeaderRequestWrapper(
-							request, "");
+							request, authHeader != null ? authHeader : "");
 					filterChain.doFilter(authorizationHeaderRequestWrapper, servletResponse);
 					return;
 				}
@@ -167,7 +167,7 @@ public class JwtUserIdValidationFilter implements Filter {
 				logger.info("Validating JWT token from header");
 				if (jwtAuthenticationUtil.validateUserIdAndJwtToken(jwtFromHeader)) {
 					AuthorizationHeaderRequestWrapper authorizationHeaderRequestWrapper = new AuthorizationHeaderRequestWrapper(
-							request, "");
+							request, authHeader != null ? authHeader : "");
 					filterChain.doFilter(authorizationHeaderRequestWrapper, servletResponse);
 					return;
 				}
