@@ -72,7 +72,6 @@ public class HealthService {
     private static final String STATUS_VALUE = "Value";
     private static final String STATUS_UP     = "UP";
     private static final String STATUS_DOWN   = "DOWN";
-    private static final String STATUS_DEGRADED = "DEGRADED";
     private static final String STATUS_NOT_CONFIGURED = "NOT_CONFIGURED";
 
     // Thresholds
@@ -183,9 +182,11 @@ public class HealthService {
             stmt.setQueryTimeout(3); // Bounds only the SELECT 1 execution
             stmt.execute("SELECT 1");
 
-            // If SELECT 1 succeeds, use cached severity from background diagnostics
+            // SELECT 1 succeeded, so connectivity is UP regardless of background severity.
+            // Severity is a separate capacity/performance signal (pool usage, long transactions,
+            // etc.) — it must not be reported as a connectivity outage.
             String severity = cachedDbSeverity.get();
-            result.put(FIELD_STATUS,   resolveDatabaseStatus(severity));
+            result.put(FIELD_STATUS,   STATUS_UP);
             result.put(FIELD_SEVERITY, severity);
 
         } catch (Exception e) {
@@ -401,13 +402,6 @@ public class HealthService {
                 e.getMessage());
         }
         return SEVERITY_OK;
-    }
-    private String resolveDatabaseStatus(String severity) {
-        return switch (severity) {
-            case SEVERITY_CRITICAL -> STATUS_DOWN;
-            case SEVERITY_WARNING  -> STATUS_DEGRADED;
-            default                -> STATUS_UP;
-        };
     }
     private String escalate(String current, String candidate) {
         return severityRank(candidate) > severityRank(current) ? candidate : current;
