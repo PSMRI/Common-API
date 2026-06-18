@@ -158,6 +158,12 @@ public abstract class BenCompleteDetailMapperDecorator implements BenCompleteDet
 		demographicsModel.setServicePointID(address.getServicePointID());
 		demographicsModel.setServicePointName(address.getServicePointName());
 		demographicsModel.setHabitation(address.getHabitation());
+		demographicsModel.setLatitude(address.getGpsLatitude());
+		demographicsModel.setLongitude(address.getGpsLongitude());
+		demographicsModel.setDigipin(address.getDigipin());
+		demographicsModel.setGpsTimestamp(address.getGpsTimestamp());
+		demographicsModel.setIsGpsUnavailable(address.getIsGpsUnavailable());
+		demographicsModel.setGpsUnavailableReason(address.getGpsUnavailableReason());
 		}
 		demographicsModel.setHealthCareWorkerID(benDetails.getHealthCareWorkerId());
 		demographicsModel.setPreferredLangID(beneficiariesDTO.getBeneficiaryDetails().getPreferredLanguageId());
@@ -216,6 +222,12 @@ public abstract class BenCompleteDetailMapperDecorator implements BenCompleteDet
 			address.setSubDistrict(
 					blockMapper.districtBlockToModelByID(beneficiaryDemographicsModel.getBlockID()).getBlockName());
 		}
+		address.setGpsLatitude(beneficiaryDemographicsModel.getLatitude());
+		address.setGpsLongitude(beneficiaryDemographicsModel.getLongitude());
+		address.setDigipin(beneficiaryDemographicsModel.getDigipin());
+		address.setGpsTimestamp(beneficiaryDemographicsModel.getGpsTimestamp());
+		address.setIsGpsUnavailable(beneficiaryDemographicsModel.getIsGpsUnavailable());
+		address.setGpsUnavailableReason(beneficiaryDemographicsModel.getGpsUnavailableReason());
 
 		return address;
 	}

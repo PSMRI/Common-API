@@ -361,4 +361,9 @@ public class UserServiceRole {
         this.villagename = villagename;
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(userId, usrMappingId, name, userName, serviceId, serviceName, isNational, stateId, stateName, workingDistrictId, workingDistrictName, workingLocationId, serviceProviderId, locationName, workingLocationAddress, roleId, roleName, providerServiceMapId, agentId, psmStatusId, psmStatus, userServciceRoleDeleted, userDeleted, serviceProviderDeleted, roleDeleted, providerServiceMappingDeleted, isInbound, isOutbound, blockid, blockname, villageid, villagename);
+    }
+
 }

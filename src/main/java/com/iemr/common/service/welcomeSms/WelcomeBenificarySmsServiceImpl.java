@@ -1,3 +1,4 @@
+
 package com.iemr.common.service.welcomeSms;
 
 import com.google.common.cache.LoadingCache;
@@ -35,7 +36,7 @@ public class WelcomeBenificarySmsServiceImpl implements WelcomeBenificarySmsServ
 
     @Value("${sms-consent-source-address}")
     private String smsSourceAddress;
-    
+
     @Value("${send-message-url}")
     private String SMS_GATEWAY_URL;
 
@@ -49,6 +50,7 @@ public class WelcomeBenificarySmsServiceImpl implements WelcomeBenificarySmsServ
 
     private String smsTemplate =null;
 
+    @Override
     @Async
     public String sendWelcomeSMStoBenificiary(String contactNo, String beneficiaryName, String beneficiaryId) {
 
@@ -77,7 +79,6 @@ public class WelcomeBenificarySmsServiceImpl implements WelcomeBenificarySmsServ
                 String auth = smsUserName + ":" + smsPassword;
                 headers.add("Authorization",
                         "Basic " + Base64.getEncoder().encodeToString(auth.getBytes()));
-            
 
                 headers.setContentType(MediaType.APPLICATION_JSON);
                 logger.info("payload: " + payload);
@@ -99,6 +100,5 @@ public class WelcomeBenificarySmsServiceImpl implements WelcomeBenificarySmsServ
             return "Error sending SMS: " + e.getMessage().toString();
         }
         return null;
-
     }
 }
