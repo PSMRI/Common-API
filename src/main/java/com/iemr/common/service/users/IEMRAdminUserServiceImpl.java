@@ -265,28 +265,12 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 				checkUserAccountStatus(user);
 				iEMRUserRepositoryCustom.save(user);
 			} else if (validatePassword == 0) {
-				int currentFailedAttempt =
-						user.getFailedAttempt() != null ? user.getFailedAttempt() : 0;
-
-				int newFailedAttempt = currentFailedAttempt + 1;
-				int remainingAttempts = failedAttempt - newFailedAttempt;
-				if (newFailedAttempt < failedAttempt) {
-
-					user.setFailedAttempt(newFailedAttempt);
+				if (user.getFailedAttempt() + 1 < failedAttempt) {
+					user.setFailedAttempt(user.getFailedAttempt() + 1);
 					user = iEMRUserRepositoryCustom.save(user);
-
 					logger.warn("User Password Wrong");
-
-					if (remainingAttempts == 1) {
-						throw new IEMRException(
-								"Invalid username or password. Remaining attempts: 1. "
-										+ "If you enter wrong username or password again, your account will be locked.");
-					}
-
-					throw new IEMRException(
-							"Invalid username or password. Remaining attempts: "
-									+ remainingAttempts);
-				}else if (user.getFailedAttempt() + 1 >= failedAttempt) {
+					throw new IEMRException("Invalid username or password");
+				} else if (user.getFailedAttempt() + 1 >= failedAttempt) {
 					user.setFailedAttempt(user.getFailedAttempt() + 1);
 					user.setDeleted(true);
 					user = iEMRUserRepositoryCustom.save(user);
@@ -294,14 +278,14 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 							ConfigProperties.getInteger("failedLoginAttempt"));
 
 					throw new IEMRException(
-							"Your account has been locked due to multiple failed login attempts. Please contact administrator.");
+							"Invalid username or password. Please contact administrator.");
 				} else {
 					user.setFailedAttempt(user.getFailedAttempt() + 1);
 					user = iEMRUserRepositoryCustom.save(user);
 					logger.warn("Failed login attempt {} of {} for a user account.",
 							user.getFailedAttempt(), ConfigProperties.getInteger("failedLoginAttempt"));
 					throw new IEMRException(
-							"Your account has been locked due to multiple failed login attempts. Please contact administrator.");
+							"Invalid username or password. Please contact administrator.");
 				}
 			} else {
 				checkUserAccountStatus(user);
