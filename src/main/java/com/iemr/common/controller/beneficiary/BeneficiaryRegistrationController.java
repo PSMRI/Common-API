@@ -668,9 +668,16 @@ public class BeneficiaryRegistrationController {
 	}
 
 	private void setBeneficiaryGender(List<BeneficiaryModel> iBeneficiary) {
+		if (iBeneficiary == null || iBeneficiary.isEmpty()) {
+			return;
+		}
 		for (BeneficiaryModel beneficiaryModel : iBeneficiary) {
-			if (null != beneficiaryModel.getM_gender() && beneficiaryModel.getM_gender().getGenderName() != null)
+			if (beneficiaryModel == null) {
+				continue;
+			}
+			if (beneficiaryModel.getM_gender() != null && beneficiaryModel.getM_gender().getGenderName() != null) {
 				beneficiaryModel.setGenderName(beneficiaryModel.getM_gender().getGenderName());
+			}
 		}
 
 	}
