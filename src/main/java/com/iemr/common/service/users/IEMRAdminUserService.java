@@ -133,4 +133,5 @@ public interface IEMRAdminUserService
 
 	boolean hasAdminPrivileges(Long userId) throws IEMRException;
 
+	User save(User loggedInUser);
 }

@@ -1377,4 +1377,9 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 			return false;
 		}
 	}
+
+	@Override
+	public User save(User loggedInUser) {
+		return iEMRUserRepositoryCustom.save(loggedInUser);
+	}
 }

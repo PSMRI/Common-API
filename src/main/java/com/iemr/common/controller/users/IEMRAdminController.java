@@ -173,7 +173,17 @@ public class IEMRAdminController {
 			}
 
 			String decryptPassword = aesUtil.decrypt("Piramal12Piramal", m_User.getPassword());
-			List<User> mUser = iemrAdminUserServiceImpl.userAuthenticate(m_User.getUserName(), decryptPassword);
+
+
+			List<User> mUser = iemrAdminUserServiceImpl
+					.userAuthenticate(m_User.getUserName(), decryptPassword);
+
+
+			User loggedInUser = mUser.get(0);
+
+			loggedInUser.setFailedAttempt(0);
+
+			iemrAdminUserServiceImpl.save(loggedInUser);
 			JSONObject resMap = new JSONObject();
 			JSONObject serviceRoleMultiMap = new JSONObject();
 			JSONObject serviceRoleMap = new JSONObject();
@@ -266,7 +276,6 @@ public class IEMRAdminController {
 			// Facility data for ALL users - common pattern, empty if not applicable
 			try {
 				if (mUser.size() == 1) {
-					User loggedInUser = mUser.get(0);
 					String userRoleName = "";
 					if (loggedInUser.getM_UserServiceRoleMapping() != null) {
 						for (UserServiceRoleMapping usrm : loggedInUser.getM_UserServiceRoleMapping()) {
