@@ -24,4 +24,5 @@ public class Translation {
     private String bengaliTranslation;
     @Column(name = "is_active")
     private Boolean isActive;
+
 }

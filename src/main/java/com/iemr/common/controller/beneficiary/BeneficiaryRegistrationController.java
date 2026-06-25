@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -72,6 +73,8 @@ import com.iemr.common.service.userbeneficiarydata.LanguageService;
 import com.iemr.common.service.userbeneficiarydata.MaritalStatusService;
 import com.iemr.common.service.userbeneficiarydata.StatusService;
 import com.iemr.common.service.userbeneficiarydata.TitleService;
+import com.iemr.common.utils.CookieUtil;
+import com.iemr.common.utils.JwtUtil;
 import com.iemr.common.utils.CookieUtil;
 import com.iemr.common.utils.JwtUtil;
 import com.iemr.common.utils.mapper.InputMapper;
@@ -665,9 +668,16 @@ public class BeneficiaryRegistrationController {
 	}
 
 	private void setBeneficiaryGender(List<BeneficiaryModel> iBeneficiary) {
+		if (iBeneficiary == null || iBeneficiary.isEmpty()) {
+			return;
+		}
 		for (BeneficiaryModel beneficiaryModel : iBeneficiary) {
-			if (null != beneficiaryModel.getM_gender() && beneficiaryModel.getM_gender().getGenderName() != null)
+			if (beneficiaryModel == null) {
+				continue;
+			}
+			if (beneficiaryModel.getM_gender() != null && beneficiaryModel.getM_gender().getGenderName() != null) {
 				beneficiaryModel.setGenderName(beneficiaryModel.getM_gender().getGenderName());
+			}
 		}
 
 	}

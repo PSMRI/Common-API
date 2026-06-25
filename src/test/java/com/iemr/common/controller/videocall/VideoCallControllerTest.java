@@ -36,7 +36,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -194,5 +196,40 @@ class VideoCallControllerTest {
                 .andExpect(content().json(expectedOutputResponse.toString()));
 
         verify(videoCallService, times(1)).updateCallStatus(any(UpdateCallRequest.class));
+    }
+
+    // Tests for resolveMeetingLink() - public redirect endpoint hit by SMS recipients
+    @Test
+    void shouldReturn302WithJitsiUrl_whenResolveMeetingLinkSucceeds() throws Exception {
+        String fullJitsiUrl = "https://vc.piramalswasthya.org/piramal-meeting-Ab3xQ9pK?jwt=FAKE.JWT.TOKEN";
+        when(videoCallService.resolveMeetingLink(eq("Ab3xQ9pK"))).thenReturn(fullJitsiUrl);
+
+        mockMvc.perform(get("/video-consultation/resolve").param("m", "Ab3xQ9pK"))
+                .andExpect(status().isFound())
+                .andExpect(header().string("Location", fullJitsiUrl));
+
+        verify(videoCallService, times(1)).resolveMeetingLink("Ab3xQ9pK");
+    }
+
+    @Test
+    void shouldReturn400_whenResolveMeetingLinkSlugIsInvalid() throws Exception {
+        when(videoCallService.resolveMeetingLink(eq("")))
+                .thenThrow(new IllegalArgumentException("Meeting slug is required"));
+
+        mockMvc.perform(get("/video-consultation/resolve").param("m", ""))
+                .andExpect(status().isBadRequest());
+
+        verify(videoCallService, times(1)).resolveMeetingLink("");
+    }
+
+    @Test
+    void shouldReturn404_whenResolveMeetingLinkSlugUnknown() throws Exception {
+        when(videoCallService.resolveMeetingLink(eq("missing")))
+                .thenThrow(new Exception("No meeting found for slug: missing"));
+
+        mockMvc.perform(get("/video-consultation/resolve").param("m", "missing"))
+                .andExpect(status().isNotFound());
+
+        verify(videoCallService, times(1)).resolveMeetingLink("missing");
     }
 }

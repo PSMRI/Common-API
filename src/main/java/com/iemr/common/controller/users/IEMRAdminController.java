@@ -79,8 +79,10 @@ import jakarta.servlet.http.HttpServletResponse;
 @RequestMapping("/user")
 @RestController
 public class IEMRAdminController {
+	private static final String USER_ID_FIELD = "userId";
 	private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 	private InputMapper inputMapper = new InputMapper();
+	private static final Set<String> CONCURRENT_SESSION_EXEMPT_ROLES = Set.of("provideradmin", "superadmin");
 
 //	@Value("${captcha.enable-captcha}")
 	private boolean enableCaptcha =false;
@@ -190,11 +192,22 @@ public class IEMRAdminController {
 			if (m_User.getUserName() != null
 					    && (m_User.getDoLogout() == null || !m_User.getDoLogout())
 					    && (m_User.getWithCredentials() != null && m_User.getWithCredentials())) {
-				String tokenFromRedis = getConcurrentCheckSessionObjectAgainstUser(
-						m_User.getUserName().trim().toLowerCase());
-				if (tokenFromRedis != null) {
-					throw new IEMRException(
-							"You are already logged in,please confirm to logout from other device and login again");
+				String userRole = "";
+				if (mUser.size() == 1 && mUser.get(0).getM_UserServiceRoleMapping() != null) {
+					for (UserServiceRoleMapping usrm : mUser.get(0).getM_UserServiceRoleMapping()) {
+						if (usrm.getM_Role() != null && usrm.getM_Role().getRoleName() != null) {
+							userRole = usrm.getM_Role().getRoleName();
+							break;
+						}
+					}
+				}
+				if (!CONCURRENT_SESSION_EXEMPT_ROLES.contains(userRole.trim().toLowerCase())) {
+					String tokenFromRedis = getConcurrentCheckSessionObjectAgainstUser(
+							m_User.getUserName().trim().toLowerCase());
+					if (tokenFromRedis != null) {
+						throw new IEMRException(
+								"You are already logged in,please confirm to logout from other device and login again");
+					}
 				}
 			} else if (m_User.getUserName() != null && m_User.getDoLogout() != null && m_User.getDoLogout() == true) {
 				deleteSessionObject(m_User.getUserName().trim().toLowerCase());
@@ -346,6 +359,16 @@ public class IEMRAdminController {
 			String userId = claims.get("userId", String.class);
 			User user = iemrAdminUserServiceImpl.getUserById(Long.parseLong(userId));
 
+			// validate if user account is locked or de-activated
+			if(user.getDeleted()){
+				logger.warn("Your account is locked or de-activated. Please contact administrator");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Your account is locked or de-activated. Please contact administrator.");
+			}
+			if(user.getStatusID()>2){
+				logger.warn("Your account is not active. Please contact administrator");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Your account is not active. Please contact administrator.");
+			}
+
 			// Validate that the user still exists and is active
 			if (user == null) {
 				logger.warn("Token validation failed: user not found for userId in token.");
@@ -411,16 +434,28 @@ public class IEMRAdminController {
 						deleteSessionObjectByGettingSessionDetails(previousTokenFromRedis);
 						sessionObject.deleteSessionObject(previousTokenFromRedis);
 
-						// Denylist the active JWT so System 1's requests are immediately rejected
-						String usernameKey = mUsers.get(0).getUserName().trim().toLowerCase();
-						String jtiData = stringRedisTemplate.opsForValue().get("jti:" + usernameKey);
-						if (jtiData != null) {
-							String[] parts = jtiData.split("\\|", 2);
-							tokenDenylist.addTokenToDenylist(parts[0], jwtUtil.getAccessTokenExpiration());
-							if (parts.length > 1) {
-								redisTemplate.delete("user_" + parts[1]);
+						String userRole = "";
+						if (mUsers.get(0).getM_UserServiceRoleMapping() != null) {
+							for (UserServiceRoleMapping usrm : mUsers.get(0).getM_UserServiceRoleMapping()) {
+								if (usrm.getM_Role() != null && usrm.getM_Role().getRoleName() != null) {
+									userRole = usrm.getM_Role().getRoleName();
+									break;
+								}
 							}
-							stringRedisTemplate.delete("jti:" + usernameKey);
+						}
+						if (!CONCURRENT_SESSION_EXEMPT_ROLES.contains(userRole.trim().toLowerCase())) {
+							// Denylist the active JWT so the first system's requests are immediately rejected
+							String usernameKey = mUsers.get(0).getUserName().trim().toLowerCase();
+							String jtiData = stringRedisTemplate.opsForValue().get("jti:" + usernameKey);
+							if (jtiData != null) {
+								String[] parts = jtiData.split("\\|", 2);
+								String jti = parts[0];
+								tokenDenylist.addTokenToDenylist(jti, jwtUtil.getAccessTokenExpiration());
+								if (parts.length > 1) {
+									redisTemplate.delete("user_" + parts[1]);
+								}
+								stringRedisTemplate.delete("jti:" + usernameKey);
+							}
 						}
 
 						response.setResponse("User successfully logged out");
@@ -535,11 +570,13 @@ public class IEMRAdminController {
 			String refreshToken = null;
 			boolean isMobile = false;
 			if (m_User.getUserName() != null && (m_User.getDoLogout() == null || m_User.getDoLogout() == false)) {
-				String tokenFromRedis = getConcurrentCheckSessionObjectAgainstUser(
-						m_User.getUserName().trim().toLowerCase());
-				if (tokenFromRedis != null) {
-					throw new IEMRException(
-							"You are already logged in,please confirm to logout from other device and login again");
+				if (!CONCURRENT_SESSION_EXEMPT_ROLES.contains(m_User.getUserName().trim().toLowerCase())) {
+					String tokenFromRedis = getConcurrentCheckSessionObjectAgainstUser(
+							m_User.getUserName().trim().toLowerCase());
+					if (tokenFromRedis != null) {
+						throw new IEMRException(
+								"You are already logged in,please confirm to logout from other device and login again");
+					}
 				}
 			} else if (m_User.getUserName() != null && m_User.getDoLogout() != null && m_User.getDoLogout() == true) {
 				deleteSessionObject(m_User.getUserName().trim().toLowerCase());
@@ -668,6 +705,13 @@ public class IEMRAdminController {
 
 				if (jwtToken == null) {
 					logger.warn("Authentication failed: no token found in header or cookies.");
+					throw new IEMRException("Authentication failed. Please log in again.");
+				}
+
+				// Validate the token first
+				Claims claims = jwtUtil.validateToken(jwtToken);
+				if (claims == null) {
+					logger.warn("Authentication failed: invalid or expired token.");
 					throw new IEMRException("Authentication failed. Please log in again.");
 				}
 
@@ -991,6 +1035,13 @@ public class IEMRAdminController {
 		try {
 			deleteSessionObjectByGettingSessionDetails(request.getHeader("Authorization"));
 			sessionObject.deleteSessionObject(request.getHeader("Authorization"));
+			try {
+				stringRedisTemplate.delete("camp:vanID");
+				stringRedisTemplate.delete("camp:parkingPlaceID");
+				logger.info("Camp config cleared from Redis on MMU logout");
+			} catch (Exception redisEx) {
+				logger.warn("Failed to clear camp Redis keys on logout: {}", redisEx.getMessage());
+			}
 			response.setResponse("Success");
 		} catch (Exception e) {
 			response.setError(e);
@@ -1335,5 +1386,105 @@ public class IEMRAdminController {
 			return new ResponseEntity<>(Map.of("error", "Internal server error"), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
+	}
+
+	@Operation(summary = "Lock user account")
+	@PostMapping(value = "/lockUserAccount", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+	public String lockUserAccount(@RequestBody String request, HttpServletRequest httpRequest) {
+		OutputResponse response = new OutputResponse();
+		try {
+			Long authenticatedUserId = getAuthenticatedUserId(httpRequest);
+			validateAdminPrivileges(authenticatedUserId);
+			Long userId = parseUserIdFromRequest(request);
+			boolean locked = iemrAdminUserServiceImpl.lockUserAccount(userId);
+			response.setResponse(locked ? "User account successfully locked" : "User account was already locked");
+		} catch (Exception e) {
+			logger.error("Error locking user account: " + e.getMessage(), e);
+			response.setError(e);
+		}
+		return response.toString();
+	}
+
+	@Operation(summary = "Unlock user account locked due to failed login attempts")
+	@PostMapping(value = "/unlockUserAccount", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+	public String unlockUserAccount(@RequestBody String request, HttpServletRequest httpRequest) {
+		OutputResponse response = new OutputResponse();
+		try {
+			Long authenticatedUserId = getAuthenticatedUserId(httpRequest);
+			validateAdminPrivileges(authenticatedUserId);
+			Long userId = parseUserIdFromRequest(request);
+			boolean unlocked = iemrAdminUserServiceImpl.unlockUserAccount(userId);
+			response.setResponse(unlocked ? "User account successfully unlocked" : "User account was not locked");
+		} catch (Exception e) {
+			logger.error("Error unlocking user account: " + e.getMessage(), e);
+			response.setError(e);
+		}
+		return response.toString();
+	}
+
+	@Operation(summary = "Get user account lock status")
+	@PostMapping(value = "/getUserLockStatus", produces = MediaType.APPLICATION_JSON, headers = "Authorization")
+	public String getUserLockStatus(@RequestBody String request, HttpServletRequest httpRequest) {
+		OutputResponse response = new OutputResponse();
+		try {
+			Long authenticatedUserId = getAuthenticatedUserId(httpRequest);
+			validateAdminPrivileges(authenticatedUserId);
+			Long userId = parseUserIdFromRequest(request);
+			String lockStatusJson = iemrAdminUserServiceImpl.getUserLockStatusJson(userId);
+			response.setResponse(lockStatusJson);
+		} catch (Exception e) {
+			logger.error("Error getting user lock status: " + e.getMessage(), e);
+			response.setError(e);
+		}
+		return response.toString();
+	}
+
+	private Long parseUserIdFromRequest(String request) throws IEMRException {
+		try {
+			JsonObject requestObj = JsonParser.parseString(request).getAsJsonObject();
+			if (!requestObj.has(USER_ID_FIELD) || requestObj.get(USER_ID_FIELD).isJsonNull()) {
+				throw new IEMRException(USER_ID_FIELD + " is required");
+			}
+			JsonElement userIdElement = requestObj.get(USER_ID_FIELD);
+			if (!userIdElement.isJsonPrimitive() || !userIdElement.getAsJsonPrimitive().isNumber()) {
+				throw new IEMRException(USER_ID_FIELD + " must be a number");
+			}
+			return userIdElement.getAsLong();
+		} catch (IEMRException e) {
+			throw e;
+		} catch (Exception e) {
+			logger.error("Failed to parse {} from request: {}", USER_ID_FIELD, e.getMessage());
+			throw new IEMRException("Invalid request body");
+		}
+	}
+
+	private Long getAuthenticatedUserId(HttpServletRequest httpRequest) throws IEMRException {
+		String authorization = httpRequest.getHeader("Authorization");
+		if (authorization != null && authorization.contains("Bearer ")) {
+			authorization = authorization.replace("Bearer ", "");
+		}
+		if (authorization == null || authorization.isEmpty()) {
+			throw new IEMRException("Authentication required");
+		}
+		try {
+			String sessionJson = sessionObject.getSessionObject(authorization);
+			if (sessionJson == null || sessionJson.isEmpty()) {
+				throw new IEMRException("Session expired. Please log in again.");
+			}
+			JSONObject session = new JSONObject(sessionJson);
+			return session.getLong("userID");
+		} catch (IEMRException e) {
+			throw e;
+		} catch (Exception e) {
+			logger.error("Authentication failed while extracting user ID: {}", e.getMessage());
+			throw new IEMRException("Authentication failed");
+		}
+	}
+
+	private void validateAdminPrivileges(Long userId) throws IEMRException {
+		if (!iemrAdminUserServiceImpl.hasAdminPrivileges(userId)) {
+			logger.warn("Unauthorized access attempt by userId: {}", userId);
+			throw new IEMRException("Access denied. Admin privileges required.");
+		}
 	}
 }

@@ -23,14 +23,19 @@ package com.iemr.common.service.beneficiary;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map;
 
 import com.google.gson.*;
+
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +51,12 @@ import com.iemr.common.utils.http.HttpUtils;
 import com.iemr.common.utils.mapper.InputMapper;
 import com.iemr.common.utils.mapper.OutputMapper;
 import com.iemr.common.utils.response.OutputResponse;
+
+import org.springframework.beans.factory.annotation.Value;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.beans.factory.annotation.Value;
 
@@ -276,6 +287,9 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 		// Remove 91 prefix if it's a 12-digit number (91 + 10 digit mobile)
 		else if (cleaned.startsWith("91") && cleaned.length() == 12) {
 			cleaned = cleaned.substring(2);
+		} else if (cleaned.startsWith("0") && cleaned.length() == 11) {
+			// Handle case where number starts with 0 and is 11 digits long
+			cleaned = cleaned.substring(1);
 		}
 
 		return cleaned.trim();

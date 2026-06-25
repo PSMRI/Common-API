@@ -77,6 +77,7 @@ public class WelcomeBenificarySmsServiceImpl implements WelcomeBenificarySmsServ
                 String auth = smsUserName + ":" + smsPassword;
                 headers.add("Authorization",
                         "Basic " + Base64.getEncoder().encodeToString(auth.getBytes()));
+            
 
                 headers.setContentType(MediaType.APPLICATION_JSON);
                 logger.info("payload: " + payload);
@@ -93,8 +94,8 @@ public class WelcomeBenificarySmsServiceImpl implements WelcomeBenificarySmsServ
                 }
             }
 
-
-        } catch (Exception e) {
+                }
+            catch (Exception e) {
             return "Error sending SMS: " + e.getMessage().toString();
         }
         return null;

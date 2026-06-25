@@ -29,6 +29,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import com.iemr.common.model.beneficiary.RMNCHBeneficiaryDetailsRmnch;
 import com.iemr.common.service.welcomeSms.WelcomeBenificarySmsService;
@@ -120,7 +121,7 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 		}
 	}
 
-	@Async
+	// @Async
 	@Override
 	public Integer updateBenificiary(BeneficiaryModel benificiaryDetails, String auth) throws IEMRException {
 		Integer updatedRows = 0;
@@ -229,12 +230,13 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 			} else {
 				return response.toString();
 			}
+			// ========== SEND SMS BUT DON'T FAIL IF IT ERRORS ==========
 			if (beneficiary != null && beneficiary.getBenPhoneMaps() != null && !beneficiary.getBenPhoneMaps().isEmpty()) {
 				String phoneNo = beneficiary.getBenPhoneMaps().get(0).getPhoneNo();
 
 				if (phoneNo != null && !phoneNo.trim().isEmpty()) {
 					String beneficiaryName = (beneficiary.getFirstName() != null ? beneficiary.getFirstName() : "") + " " +
-							(beneficiaryModel.getLastName() != null ? beneficiaryModel.getLastName() : "");
+							(beneficiary.getLastName() != null ? beneficiary.getLastName() : "");
 
 					try {
 						logger.info("[SMS] Attempting to send welcome SMS to: " + phoneNo);
@@ -242,10 +244,8 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 								phoneNo,
 								beneficiaryName.trim(),
 								beneficiary.getBeneficiaryID()
-
 						);
-						logger.info("[SMS]: "+ smsResult);
-
+						logger.info("[SMS] Result: " + smsResult);
 					} catch (Exception smsError) {
 						// SMS failed but beneficiary is already created - don't fail the request
 						logger.warn("[SMS] Failed to send SMS: " + smsError.getMessage() +

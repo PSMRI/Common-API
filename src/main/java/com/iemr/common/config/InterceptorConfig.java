@@ -36,7 +36,8 @@ public class InterceptorConfig implements WebMvcConfigurer {
 
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
-		registry.addInterceptor(requestInterceptor);
+		registry.addInterceptor(requestInterceptor)
+				.excludePathPatterns("/video-consultation/resolve", "**/video-consultation/resolve");
 	}
 
 }

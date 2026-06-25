@@ -102,6 +102,7 @@ public class AshaSupervisorLoginService {
 				peer.put("fullName", fullName(pRow[1], pRow[2]));
 				peer.put("role", str(pRow[3]));
 				peer.put("employeeId", str(pRow[4]).isEmpty() ? JSONObject.NULL : str(pRow[4]));
+				peer.put("mobile", str(pRow[5]).isEmpty() ? JSONObject.NULL : str(pRow[5]));
 				peers.put(peer);
 			}
 		}
@@ -193,6 +194,7 @@ public class AshaSupervisorLoginService {
 			asha.put("facilityId", row[4]);
 			asha.put("facilityName", str(row[5]));
 			asha.put("facilityType", str(row[6]));
+			asha.put("mobile", str(row[7]).isEmpty() ? JSONObject.NULL : str(row[7]));
 			list.put(asha);
 		}
 		return list;
