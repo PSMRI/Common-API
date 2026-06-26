@@ -308,7 +308,13 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 			user.setFailedAttempt(currentAttempts + 1);
 			iEMRUserRepositoryCustom.save(user);
 			logger.warn("User Password Wrong");
-			throw new IEMRException("Invalid username or password");
+			int remainingAttempts = failedAttemptThreshold - (currentAttempts + 1);
+			if (remainingAttempts == 1) {
+				throw new IEMRException(
+						"Invalid username or password. Remaining attempts: 1. "
+								+ "If you enter wrong username or password again, your account will be locked.");
+			}
+			throw new IEMRException("Invalid username or password. Remaining attempts: " + remainingAttempts);
 		} else {
 			java.sql.Timestamp lockTime = new java.sql.Timestamp(System.currentTimeMillis());
 			user.setFailedAttempt(currentAttempts + 1);
@@ -317,7 +323,8 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 			iEMRUserRepositoryCustom.save(user);
 			logger.warn("User Account has been locked after reaching the limit of {} failed login attempts.",
 					failedAttemptThreshold);
-			throw new IEMRException(generateLockoutErrorMessage(lockTime));
+			throw new IEMRException(
+					"Your account has been locked due to multiple failed login attempts. Please contact administrator.");
 		}
 	}
 
