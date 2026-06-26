@@ -323,7 +323,8 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 			iEMRUserRepositoryCustom.save(user);
 			logger.warn("User Account has been locked after reaching the limit of {} failed login attempts.",
 					failedAttemptThreshold);
-			throw new IEMRException(generateLockoutErrorMessage(lockTime));
+			throw new IEMRException(
+					"Your account has been locked due to multiple failed login attempts. Please contact administrator.");
 		}
 	}
 
