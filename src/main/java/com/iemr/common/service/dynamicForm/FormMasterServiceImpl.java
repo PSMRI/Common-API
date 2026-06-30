@@ -160,6 +160,9 @@ public class FormMasterServiceImpl implements FormMasterService {
                             } else if ("en".equalsIgnoreCase(lang)) {
                                 translatedLabel = label.getEnglish();
 
+                            }else if ("bn".equalsIgnoreCase(lang)) {
+                                translatedLabel = label.getBengaliTranslation();
+
                             }
                         }
 
@@ -170,6 +173,9 @@ public class FormMasterServiceImpl implements FormMasterService {
                                 translatedPlaceHolder = placeHolder.getAssameseTranslation();
                             } else if ("en".equalsIgnoreCase(lang)) {
                                 translatedPlaceHolder = placeHolder.getEnglish();
+
+                            } else if ("bn".equalsIgnoreCase(lang)) {
+                                translatedPlaceHolder = placeHolder.getBengaliTranslation();
 
                             }
                         }
@@ -203,7 +209,8 @@ public class FormMasterServiceImpl implements FormMasterService {
                                             map.put("value", opt.getValue());
                                             if ("hi".equalsIgnoreCase(lang))      map.put("label", opt.getLabelHi());
                                             else if ("as".equalsIgnoreCase(lang)) map.put("label", opt.getLabelAs());
-                                            else                                   map.put("label", opt.getLabelEn());
+                                            else if("en".equals(lang))            map.put("label", opt.getLabelEn());
+                                            else if("bn".equals(lang))            map.put("label", opt.getLabelBn());
                                             return map;
                                         })
                                         .collect(Collectors.toList());
