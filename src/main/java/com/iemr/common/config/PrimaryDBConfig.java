@@ -60,10 +60,10 @@ public class PrimaryDBConfig {
 	@ConfigurationProperties(prefix = "spring.datasource")
 	public DataSource dataSource() {
 		PoolConfiguration p = new PoolProperties();
-		p.setMaxActive(30);
-		p.setMaxIdle(15);
-		p.setMinIdle(5);
-		p.setInitialSize(5);
+		p.setMaxActive(100);
+		p.setMaxIdle(50);
+		p.setMinIdle(10);
+		p.setInitialSize(10);
 		p.setMaxWait(10000);
 		p.setMinEvictableIdleTimeMillis(15000);
 		p.setRemoveAbandoned(true);
