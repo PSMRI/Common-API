@@ -113,15 +113,6 @@ public class UserServiceRoleMapping
 	@Column(name = "teleConsultation")
 	private String teleConsultation;
 
-	// Stop TB / Nikshay location scope — populated only when serviceName = "Stop TB"
-	@Expose
-	@Column(name = "NikshayTUID")
-	private Integer nikshayTUID;
-
-	@Expose
-	@Column(name = "NikshayFacilityID")
-	private Integer nikshayFacilityID;
-
 
 	// @Expose
 	// @Column(name = "StatusID")
