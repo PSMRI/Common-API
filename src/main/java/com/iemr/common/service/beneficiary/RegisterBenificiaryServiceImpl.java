@@ -195,7 +195,7 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 
 	@Override
 	public String save(BeneficiaryModel beneficiaryModel, HttpServletRequest servletRequest) throws Exception {
-		System.out.println("[TRACE][Common-API] save() incoming beneficiaryModel : " + new Gson().toJson(beneficiaryModel));
+		System.out.println("[TRACE][Common-API] save() incoming beneficiaryModel : " + beneficiaryModel);
 
 		 logger.info("benificiaryDetails: " + beneficiaryModel);
 
