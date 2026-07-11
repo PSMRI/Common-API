@@ -195,6 +195,7 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 
 	@Override
 	public String save(BeneficiaryModel beneficiaryModel, HttpServletRequest servletRequest) throws Exception {
+		System.out.println("[TRACE][Common-API] save() incoming beneficiaryModel : " + new Gson().toJson(beneficiaryModel));
 
 		 logger.info("benificiaryDetails: " + beneficiaryModel);
 
@@ -214,8 +215,10 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 		if (beneficiaryModel.getIs1097() == null)
 			beneficiaryModel.setIs1097(false);
 
+		System.out.println("[TRACE][Common-API] calling Identity-API getIdentityResponse, request body : " + request);
 		String identityResponse = identityBeneficiaryService.getIdentityResponse(request,
 				servletRequest.getHeader("authorization"), beneficiaryModel.getIs1097());
+		System.out.println("[TRACE][Common-API] Identity-API response : " + identityResponse);
 		JSONObject responseObj = new JSONObject(identityResponse);
 		BeneficiaryModel beneficiary = new BeneficiaryModel();
 		if (responseObj.has("response")) {

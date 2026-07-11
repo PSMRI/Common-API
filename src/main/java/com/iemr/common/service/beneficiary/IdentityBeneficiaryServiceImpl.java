@@ -518,8 +518,10 @@ public class IdentityBeneficiaryServiceImpl implements IdentityBeneficiaryServic
 				.replace(IDENTITY_BASE_URL, (is1097 ? identity1097BaseURL : identityBaseURL));
 		logger.info("Calling URL: {}", apiUrl);
 		logger.info("Request Payload: {}", request);
+		System.out.println("[TRACE][Common-API] getIdentityResponse url=" + apiUrl + " body=" + request);
 
 		result = httpUtils.post(apiUrl, request, header);
+		System.out.println("[TRACE][Common-API] getIdentityResponse raw result from Identity-API : " + result);
 
 		if (result == null || result.isEmpty()) {
 			logger.error("Empty response from Identity API");
