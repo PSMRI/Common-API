@@ -529,11 +529,6 @@ public class IEMRAdminController {
 				// roles.put(new JSONObject(m_UserServiceRoleMapping.getM_Role().toString()));
 				JSONObject roleObject = new JSONObject(m_UserServiceRoleMapping.getM_Role().toString());
 				roleObject.put("teleConsultation", m_UserServiceRoleMapping.getTeleConsultation());
-				// Stop TB / Nikshay — additive only, other service lines are unaffected
-				if ("Stop TB".equals(serv)) {
-					roleObject.put("nikshayTUID", m_UserServiceRoleMapping.getNikshayTUID());
-					roleObject.put("nikshayFacilityID", m_UserServiceRoleMapping.getNikshayFacilityID());
-				}
 				roles.put(roleObject);
 			}
 		}
