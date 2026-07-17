@@ -210,6 +210,7 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 		identityDTO
 				.setBenFamilyDTOs(identityMapper.benPhoneMapListToBenFamilyDTOList(beneficiaryModel.getBenPhoneMaps()));
 		String request = new Gson().toJson(identityDTO);
+		System.out.println("[TRACE][Common-API] DOB_DEBUG raw dob=" + identityDTO.getDob() + " serializedRequest=" + request);
 
 
 		if (beneficiaryModel.getIs1097() == null)
