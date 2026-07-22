@@ -107,6 +107,12 @@ public abstract class IdentityBenEditMapperDecorator implements IdentityBenEditM
 			address.setSubDistrict(
 					blockMapper.districtBlockToModelByID(beneficiaryDemographicsModel.getBlockID()).getBlockName());
 		}
+		address.setGpsLatitude(beneficiaryDemographicsModel.getLatitude());
+		address.setGpsLongitude(beneficiaryDemographicsModel.getLongitude());
+		address.setDigipin(beneficiaryDemographicsModel.getDigipin());
+		address.setGpsTimestamp(beneficiaryDemographicsModel.getGpsTimestamp());
+		address.setIsGpsUnavailable(beneficiaryDemographicsModel.getIsGpsUnavailable());
+		address.setGpsUnavailableReason(beneficiaryDemographicsModel.getGpsUnavailableReason());
 
 		return address;
 	}
