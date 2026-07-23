@@ -86,7 +86,7 @@ public class FirebaseNotificationService {
     }
 
     public String updateToken(UserToken userToken) {
-        Optional<UserFcmTokenData> existingTokenData = userTokenRepo.findById(userToken.getUserId());
+        Optional<UserFcmTokenData> existingTokenData = userTokenRepo.findByUserId(userToken.getUserId());
 
         UserFcmTokenData userTokenData;
 

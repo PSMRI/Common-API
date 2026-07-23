@@ -28,7 +28,11 @@ import com.iemr.common.data.userToken.UserFcmTokenData;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 
 public interface UserFcmTokenRepo extends JpaRepository<UserFcmTokenData,Integer> {
+
+    Optional<UserFcmTokenData> findByUserId(Integer userId);
 }
