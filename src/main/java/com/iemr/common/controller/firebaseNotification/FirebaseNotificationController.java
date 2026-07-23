@@ -28,9 +28,12 @@ import com.iemr.common.model.notification.NotificationMessage;
 import com.iemr.common.model.notification.UserToken;
 import com.iemr.common.service.firebaseNotification.FirebaseNotificationService;
 import com.iemr.common.utils.exception.IEMRException;
+import com.iemr.common.utils.response.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -41,17 +44,33 @@ public class FirebaseNotificationController {
     @Autowired
     FirebaseNotificationService firebaseNotificationService;
 
-    @RequestMapping(value = "sendNotification",method = RequestMethod.POST,headers = "Authorization")
+    @PostMapping(value = "/sendNotification")
     public String sendNotificationByToken(@RequestBody NotificationMessage notificationMessage){
         return firebaseNotificationService.sendNotification(notificationMessage);
     }
 
-    @RequestMapping(value = "updateToken",method = RequestMethod.POST,headers = "Authorization")
-    public String  updateToken(@RequestBody UserToken userToken){
-        return firebaseNotificationService.updateToken(userToken);
+    @PostMapping("/updateToken")
+    public ResponseEntity<?> updateToken(@RequestBody UserToken userToken) {
+        try {
+
+            Object result = firebaseNotificationService.updateToken(userToken);
+
+            return ResponseEntity.ok(result);
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity.badRequest().body(e.getMessage());
+
+        } catch (Exception e) {
+
+            logger.error("Error while updating Firebase token", e);
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to update Firebase token.");
+        }
     }
 
-    @RequestMapping(value = "getToken",method = RequestMethod.GET,headers = "Authorization")
+    @PostMapping(value = "getToken")
     public String  getUserToken() throws IEMRException {
 
         return  firebaseNotificationService.getUserToken();
