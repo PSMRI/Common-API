@@ -28,10 +28,10 @@ import com.google.firebase.FirebaseException;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
-import com.iemr.common.data.userToken.UserTokenData;
+import com.iemr.common.data.userToken.UserFcmTokenData;
 import com.iemr.common.model.notification.NotificationMessage;
 import com.iemr.common.model.notification.UserToken;
-import com.iemr.common.repo.userToken.UserTokenRepo;
+import com.iemr.common.repo.userToken.UserFcmTokenRepo;
 import com.iemr.common.utils.CookieUtil;
 import com.iemr.common.utils.JwtUtil;
 import com.iemr.common.utils.exception.IEMRException;
@@ -43,7 +43,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.sql.Timestamp;
 import java.util.Optional;
 
 @Service
@@ -54,7 +53,7 @@ public class FirebaseNotificationService {
     FirebaseMessaging firebaseMessaging;
 
     @Autowired
-    private UserTokenRepo userTokenRepo;
+    private UserFcmTokenRepo userTokenRepo;
 
     @Autowired
     private CookieUtil cookieUtil;
@@ -87,15 +86,15 @@ public class FirebaseNotificationService {
     }
 
     public String updateToken(UserToken userToken) {
-        Optional<UserTokenData> existingTokenData = userTokenRepo.findById(userToken.getUserId());
+        Optional<UserFcmTokenData> existingTokenData = userTokenRepo.findById(userToken.getUserId());
 
-        UserTokenData userTokenData;
+        UserFcmTokenData userTokenData;
 
         if (existingTokenData.isPresent()) {
             userTokenData = existingTokenData.get();
             userTokenData.setToken(userToken.getToken());
         } else {
-            userTokenData = new UserTokenData();
+            userTokenData = new UserFcmTokenData();
             userTokenData.setUserId(userToken.getUserId());
             userTokenData.setToken(userToken.getToken());
         }
@@ -109,7 +108,7 @@ public class FirebaseNotificationService {
                 .getRequest();
         String jwtTokenFromCookie = cookieUtil.getJwtTokenFromCookie(requestHeader);
         return userTokenRepo.findById(Integer.parseInt(jwtUtil.getUserIdFromToken(jwtTokenFromCookie))) // because your userId is Long in DB
-                .map(UserTokenData::getToken)
+                .map(UserFcmTokenData::getToken)
                 .orElse(null); //
     }
 

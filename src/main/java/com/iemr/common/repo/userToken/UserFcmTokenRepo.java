@@ -22,26 +22,13 @@
 /*
 * AMRIT – Accessible Medical Records via Integrated Technology
 */
-package com.iemr.common.data.userToken;
+package com.iemr.common.repo.userToken;
 
-import jakarta.persistence.*;
-import lombok.Data;
+import com.iemr.common.data.userToken.UserFcmTokenData;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-import java.sql.Timestamp;
+@Repository
 
-import static jakarta.persistence.GenerationType.IDENTITY;
-
-@Entity
-@Table(name = "user_fcm_tokens", schema = "db_iemr")
-@Data
-public class UserTokenData {
-    @Id
-    @GeneratedValue(strategy = IDENTITY)
-    private int id;
-    @Column(name = "user_id")
-    private  Integer userId;
-    @Column(name = "token")
-    private String token;
-    @Column(name = "updated_at")
-    private Timestamp updatedAt;
+public interface UserFcmTokenRepo extends JpaRepository<UserFcmTokenData,Integer> {
 }
