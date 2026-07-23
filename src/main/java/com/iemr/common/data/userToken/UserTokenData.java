@@ -24,23 +24,24 @@
 */
 package com.iemr.common.data.userToken;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 
 import java.sql.Timestamp;
 
+import static jakarta.persistence.GenerationType.IDENTITY;
+
 @Entity
-@Table(name = "user_tokens", schema = "db_iemr")
+@Table(name = "user_fcm_tokens", schema = "db_iemr")
 @Data
 public class UserTokenData {
     @Id
+    @GeneratedValue(strategy = IDENTITY)
+    private int id;
     @Column(name = "user_id")
-    Integer userId;
+    private  Integer userId;
     @Column(name = "token")
-    String token;
+    private String token;
     @Column(name = "updated_at")
-    Timestamp updatedAt;
+    private Timestamp updatedAt;
 }
