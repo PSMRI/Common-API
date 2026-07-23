@@ -94,12 +94,10 @@ public class FirebaseNotificationService {
         if (existingTokenData.isPresent()) {
             userTokenData = existingTokenData.get();
             userTokenData.setToken(userToken.getToken());
-            userTokenData.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
         } else {
             userTokenData = new UserTokenData();
             userTokenData.setUserId(userToken.getUserId());
             userTokenData.setToken(userToken.getToken());
-            userTokenData.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
         }
 
         userTokenRepo.save(userTokenData);

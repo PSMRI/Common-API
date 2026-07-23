@@ -26,6 +26,9 @@ package com.iemr.common.repo.userToken;
 
 import com.iemr.common.data.userToken.UserTokenData;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
 
 public interface UserTokenRepo extends JpaRepository<UserTokenData,Integer> {
 }
