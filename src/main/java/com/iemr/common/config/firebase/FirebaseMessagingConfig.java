@@ -45,9 +45,11 @@ public class FirebaseMessagingConfig {
                 return null; // don't throw, app will still start
             }
 
-            GoogleCredentials credentials = GoogleCredentials.fromStream(
-                    new ClassPathResource(firebaseCredentialFile).getInputStream()
-            );
+            GoogleCredentials credentials =
+                    GoogleCredentials.fromStream(
+                            new FileInputStream(firebaseCredentialFile)
+                    );
+
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(credentials)
                     .build();

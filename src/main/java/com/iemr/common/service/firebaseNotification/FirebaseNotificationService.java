@@ -53,9 +53,6 @@ import java.util.Optional;
 public class FirebaseNotificationService {
     final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
-    @Autowired
-    FirebaseMessagingConfig firebaseMessagingConfig;
-
     @Autowired(required = false)
     private FirebaseMessaging firebaseMessaging;
 
