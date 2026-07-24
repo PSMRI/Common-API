@@ -21,10 +21,10 @@ import java.util.Base64;
 public class FirebaseMessagingConfig {
     private Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-    @Value("${firebase.enabled:false}")
+    @Value("${firebase.enabled}")
     private boolean firebaseEnabled;
 
-    @Value("${firebase.credential-file:}")
+    @Value("${firebase.credential-file}")
     private String firebaseCredentialFile;
 
 
