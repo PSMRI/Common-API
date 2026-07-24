@@ -42,6 +42,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -69,8 +70,19 @@ public class FirebaseNotificationService {
 
     private Message message;
 
+    @Value("${firebase.enabled}")
+    private boolean firebaseEnabled;
+
+    @Value("${firebase.credential-file}")
+    private String firebaseCredentialFile;
+
+
 
     public String sendNotification(NotificationMessage notificationMessage) {
+
+        logger.info("===== Initializing Firebase =====");
+        logger.info("firebaseEnabled={}", firebaseEnabled);
+        logger.info("firebaseCredentialFile={}", firebaseCredentialFile);
 
         logger.info("========== FCM Notification Request ==========");
         logger.info("Request : {}", new Gson().toJson(notificationMessage));
