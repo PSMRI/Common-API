@@ -53,7 +53,10 @@ public class FirebaseNotificationService {
     final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
     @Autowired
-    FirebaseMessagingConfig firebaseMessaging;
+    FirebaseMessagingConfig firebaseMessagingConfig;
+
+    @Autowired(required = false)
+    private FirebaseMessaging firebaseMessaging;
 
     @Autowired
     private UserFcmTokenRepo userTokenRepo;
@@ -69,11 +72,12 @@ public class FirebaseNotificationService {
 
     public String sendNotification(NotificationMessage notificationMessage) {
 
-        logger.info("Notification Request : {}", new Gson().toJson(notificationMessage));
+        logger.info("========== FCM Notification Request ==========");
+        logger.info("Request : {}", new Gson().toJson(notificationMessage));
 
         if (firebaseMessaging == null) {
-            logger.error("Firebase is not configured");
-            return "Firebase is not configured";
+            logger.error("FirebaseMessaging bean is not initialized.");
+            return "FirebaseMessaging bean is not initialized.";
         }
 
         try {
@@ -89,24 +93,30 @@ public class FirebaseNotificationService {
                     .putAllData(notificationMessage.getData())
                     .build();
 
-            String response = FirebaseMessaging.getInstance().send(message);
+            logger.info("Sending notification to token: {}", notificationMessage.getToken());
 
-            logger.info("FCM Success : {}", response);
+            String response = firebaseMessaging.send(message);
+
+            logger.info("Notification sent successfully.");
+            logger.info("Firebase Message Id : {}", response);
 
             return response;
 
         } catch (FirebaseMessagingException e) {
 
-            logger.error("FirebaseMessagingException : {}", e.getMessage(), e);
-            return e.getMessage();
+            logger.error("FirebaseMessagingException");
+            logger.error("Error Code      : {}", e.getMessagingErrorCode());
+            logger.error("Error Message   : {}", e.getMessage(), e);
+
+            return "FCM Error : " + e.getMessage();
 
         } catch (Exception e) {
 
-            logger.error("Unexpected Exception : {}", e.getMessage(), e);
-            throw e;
+            logger.error("Unexpected exception while sending notification.", e);
+
+            return "Unexpected Error : " + e.getMessage();
         }
     }
-
     public String updateToken(UserToken userToken) {
         Optional<UserFcmTokenData> existingTokenData = userTokenRepo.findByUserId(userToken.getUserId());
 
