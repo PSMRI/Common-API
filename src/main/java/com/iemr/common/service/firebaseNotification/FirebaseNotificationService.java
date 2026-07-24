@@ -30,6 +30,7 @@ import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import com.google.gson.Gson;
+import com.iemr.common.config.firebase.FirebaseMessagingConfig;
 import com.iemr.common.data.userToken.UserFcmTokenData;
 import com.iemr.common.model.notification.NotificationMessage;
 import com.iemr.common.model.notification.UserToken;
@@ -51,8 +52,8 @@ import java.util.Optional;
 public class FirebaseNotificationService {
     final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
-    @Autowired(required = false)
-    FirebaseMessaging firebaseMessaging;
+    @Autowired
+    FirebaseMessagingConfig firebaseMessaging;
 
     @Autowired
     private UserFcmTokenRepo userTokenRepo;
