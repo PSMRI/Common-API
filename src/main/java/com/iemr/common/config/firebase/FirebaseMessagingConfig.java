@@ -31,6 +31,9 @@ public class FirebaseMessagingConfig {
     @Bean
     @ConditionalOnProperty(name = "firebase.enabled", havingValue = "true")
     public FirebaseMessaging firebaseMessaging() throws IOException {
+        logger.info("===== Initializing Firebase =====");
+        logger.info("firebaseEnabled={}", firebaseEnabled);
+        logger.info("firebaseCredentialFile={}", firebaseCredentialFile);
         if (!firebaseEnabled) {
             logger.error("⚠️ Firebase disabled by config");
             return null;
