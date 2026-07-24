@@ -44,9 +44,36 @@ public class FirebaseNotificationController {
     @Autowired
     FirebaseNotificationService firebaseNotificationService;
 
-    @PostMapping(value = "/sendNotification")
-    public String sendNotificationByToken(@RequestBody NotificationMessage notificationMessage){
-        return firebaseNotificationService.sendNotification(notificationMessage);
+
+    @PostMapping("/sendNotification")
+    public ResponseEntity<String> sendNotificationByToken(@RequestBody NotificationMessage notificationMessage) {
+
+        logger.info("Received notification request. Token={}, Title={}, ReceiverId={}, Type={}",
+                notificationMessage.getToken(),
+                notificationMessage.getTitle(),
+                notificationMessage.getData() != null ? notificationMessage.getData().get("receiver_user_id") : null,
+                notificationMessage.getData() != null ? notificationMessage.getData().get("notification_type") : null);
+
+        logger.debug("Notification payload: {}", notificationMessage);
+
+        try {
+            String response = firebaseNotificationService.sendNotification(notificationMessage);
+
+            logger.info("Notification processed successfully. Response={}", response);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+
+            logger.error("Failed to process notification request. Token={}, ReceiverId={}, Error={}",
+                    notificationMessage.getToken(),
+                    notificationMessage.getData() != null ? notificationMessage.getData().get("receiver_user_id") : null,
+                    e.getMessage(),
+                    e);
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to send notification");
+        }
     }
 
     @PostMapping("/updateToken")

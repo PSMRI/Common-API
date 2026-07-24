@@ -26,8 +26,10 @@ package com.iemr.common.service.firebaseNotification;
 
 import com.google.firebase.FirebaseException;
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
+import com.google.gson.Gson;
 import com.iemr.common.data.userToken.UserFcmTokenData;
 import com.iemr.common.model.notification.NotificationMessage;
 import com.iemr.common.model.notification.UserToken;
@@ -65,23 +67,42 @@ public class FirebaseNotificationService {
 
 
     public String sendNotification(NotificationMessage notificationMessage) {
+
+        logger.info("Notification Request : {}", new Gson().toJson(notificationMessage));
+
         if (firebaseMessaging == null) {
-            logger.error("⚠️ Firebase is not configured, skipping notification");
-            return null;
+            logger.error("Firebase is not configured");
+            return "Firebase is not configured";
         }
 
-        Notification notification = Notification.builder().setTitle(notificationMessage.getTitle()).setBody(notificationMessage.getBody()).build();
-
-        Message message = Message.builder().setToken(notificationMessage.getToken()).setNotification(notification).putAllData(notificationMessage.getData()).build();
-
-
         try {
+
+            Notification notification = Notification.builder()
+                    .setTitle(notificationMessage.getTitle())
+                    .setBody(notificationMessage.getBody())
+                    .build();
+
+            Message message = Message.builder()
+                    .setToken(notificationMessage.getToken())
+                    .setNotification(notification)
+                    .putAllData(notificationMessage.getData())
+                    .build();
+
             String response = FirebaseMessaging.getInstance().send(message);
 
-            return response;
-        } catch (FirebaseException e) {
-            return "Error sending notification";
+            logger.info("FCM Success : {}", response);
 
+            return response;
+
+        } catch (FirebaseMessagingException e) {
+
+            logger.error("FirebaseMessagingException : {}", e.getMessage(), e);
+            return e.getMessage();
+
+        } catch (Exception e) {
+
+            logger.error("Unexpected Exception : {}", e.getMessage(), e);
+            throw e;
         }
     }
 
