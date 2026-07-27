@@ -24,8 +24,15 @@
 */
 package com.iemr.common.repo.userToken;
 
-import com.iemr.common.data.userToken.UserTokenData;
+import com.iemr.common.data.userToken.UserFcmTokenData;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface UserTokenRepo extends JpaRepository<UserTokenData,Integer> {
+import java.util.Optional;
+
+@Repository
+
+public interface UserFcmTokenRepo extends JpaRepository<UserFcmTokenData,Integer> {
+
+    Optional<UserFcmTokenData> findByUserId(Integer userId);
 }

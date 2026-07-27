@@ -21,16 +21,19 @@ import java.util.Base64;
 public class FirebaseMessagingConfig {
     private Logger logger = LoggerFactory.getLogger(this.getClass().getSimpleName());
 
-    @Value("${firebase.enabled:false}")
+    @Value("${firebase.enabled}")
     private boolean firebaseEnabled;
 
-    @Value("${firebase.credential-file:}")
+    @Value("${firebase.credential-file}")
     private String firebaseCredentialFile;
 
 
     @Bean
     @ConditionalOnProperty(name = "firebase.enabled", havingValue = "true")
     public FirebaseMessaging firebaseMessaging() throws IOException {
+        logger.info("===== Initializing Firebase =====");
+        logger.info("firebaseEnabled={}", firebaseEnabled);
+        logger.info("firebaseCredentialFile={}", firebaseCredentialFile);
         if (!firebaseEnabled) {
             logger.error("⚠️ Firebase disabled by config");
             return null;
@@ -42,9 +45,11 @@ public class FirebaseMessagingConfig {
                 return null; // don't throw, app will still start
             }
 
-            GoogleCredentials credentials = GoogleCredentials.fromStream(
-                    new ClassPathResource(firebaseCredentialFile).getInputStream()
-            );
+            GoogleCredentials credentials =
+                    GoogleCredentials.fromStream(
+                            new FileInputStream(firebaseCredentialFile)
+                    );
+
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(credentials)
                     .build();
