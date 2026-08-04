@@ -24,10 +24,13 @@ package com.iemr.common.service.nhm_dashboard;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +67,13 @@ public class NHM_DashboardServiceImpl implements NHM_DashboardService {
 
 	@Value("${cti-server-ip}")
     private String serverURL;
+
+	/**
+	 * Number of days (ending yesterday) the detailed call report pull looks back to
+	 * re-pull days that were missed. 1 = previous day only, i.e. old behaviour.
+	 */
+	@Value("${nhm-detailedcallreport-backfill-days:7}")
+	private int detailedCallReportBackfillDays;
 
 	public String pushAbandonCalls(AbandonCallSummary abandonCallSummary) throws Exception {
 
@@ -134,17 +144,59 @@ public class NHM_DashboardServiceImpl implements NHM_DashboardService {
 			logger.error(e.getLocalizedMessage());
 		}
 
-		try {
-			List<DetailedCallReport> detailedCallReportList = callDetailedCallReportCTI_API();
-			if (detailedCallReportList.size() > 0) {
-				result2 = saveDetailedCallReport(detailedCallReportList);
-
+		StringBuilder detailedCallReportResult = new StringBuilder();
+		// each pending day is pulled separately, so that one failing day does not stop
+		// the remaining days
+		for (LocalDate callDate : getPendingDetailedCallReportDates()) {
+			try {
+				List<DetailedCallReport> detailedCallReportList = callDetailedCallReportCTI_API(callDate);
+				if (detailedCallReportList.size() > 0) {
+					detailedCallReportResult.append(callDate).append(" : ")
+							.append(saveDetailedCallReport(detailedCallReportList)).append("; ");
+				}
+			} catch (Exception e) {
+				logger.error("DetailedCallReport pull failed for " + callDate + " - " + e.getLocalizedMessage());
 			}
-		} catch (Exception e) {
-			logger.error(e.getLocalizedMessage());
 		}
+		result2 = detailedCallReportResult.toString();
 
 		return response.concat(result1).concat(" ").concat(result2);
+	}
+
+	/**
+	 * Days (oldest first) for which detailed call report data still has to be
+	 * pulled from CTI - yesterday plus any earlier day within the backfill window
+	 * that has no data at all. Without this, a day missed because CTI was down or
+	 * throttled ("Please wait for 1 hour") was never requested again and stayed
+	 * permanently missing from the report.
+	 */
+	List<LocalDate> getPendingDetailedCallReportDates() {
+		LocalDate lastDate = LocalDate.now().minusDays(1);
+		int lookBackDays = detailedCallReportBackfillDays > 0 ? detailedCallReportBackfillDays : 1;
+		LocalDate firstDate = lastDate.minusDays(lookBackDays - 1L);
+
+		Set<LocalDate> existingDates = new HashSet<>();
+		try {
+			List<java.sql.Date> dates = detailedCallReportRepo.findExistingCallDates(
+					Timestamp.valueOf(firstDate.atStartOfDay()),
+					Timestamp.valueOf(lastDate.atTime(LocalTime.MAX).withNano(0)));
+			for (java.sql.Date date : dates) {
+				if (date != null)
+					existingDates.add(date.toLocalDate());
+			}
+		} catch (Exception e) {
+			// on any problem in gap detection, fall back to the previous behaviour
+			logger.error("Error while detecting missing detailed call report dates - " + e.getLocalizedMessage());
+			return Arrays.asList(lastDate);
+		}
+
+		List<LocalDate> pendingDates = new ArrayList<>();
+		for (LocalDate date = firstDate; !date.isAfter(lastDate); date = date.plusDays(1)) {
+			if (!existingDates.contains(date))
+				pendingDates.add(date);
+		}
+		logger.info("DetailedCallReport pending dates between " + firstDate + " and " + lastDate + " : " + pendingDates);
+		return pendingDates;
 	}
 
 	public String saveAgentSummaryReport(List<AgentSummaryReport> agentSummaryReportList) throws IEMRException {
@@ -213,8 +265,8 @@ public class NHM_DashboardServiceImpl implements NHM_DashboardService {
 		date = LocalDateTime.now().minusDays(1);
 		String[] dateArr = date.toString().split("T");
 		endDate = dateArr[0].concat(" 23:59:59");
-		fromDate = dateArr[0].concat(" 00:00:01");
-		
+		fromDate = dateArr[0].concat(" 00:00:00");
+
 //		if (job != null && job.toLowerCase().contains("hour")) {
 //			String jobVal = job.split(" ")[0];
 //			LocalDateTime nowTime = LocalDateTime.now();
@@ -248,18 +300,18 @@ public class NHM_DashboardServiceImpl implements NHM_DashboardService {
 	}
 
 	public List<DetailedCallReport> callDetailedCallReportCTI_API() throws IEMRException {
+		return callDetailedCallReportCTI_API(LocalDate.now().minusDays(1));
+	}
+
+	public List<DetailedCallReport> callDetailedCallReportCTI_API(LocalDate callDate) throws IEMRException {
 		List<DetailedCallReport> detailedCallReportList = new ArrayList<DetailedCallReport>();
 //		String job = ConfigProperties.getPropertyByName("get-details-call-report-job");
 
-		String endDate = null;
-		String fromDate = null;
-		
-		LocalDateTime date = null;
-		date = LocalDateTime.now().minusDays(1); 
-		String[] dateArr = date.toString().split("T");
-		endDate = dateArr[0].concat(" 23:59:59");
-		fromDate = dateArr[0].concat(" 00:00:01");
-		
+		// full day window - 00:00:00 and not 00:00:01, else calls placed in the very
+		// first second of the day are dropped
+		String fromDate = callDate.toString().concat(" 00:00:00");
+		String endDate = callDate.toString().concat(" 23:59:59");
+
 //		if (job != null && job.toLowerCase().contains("hour")) {
 //			String jobVal = job.split(" ")[0];
 //			LocalDateTime nowTime = LocalDateTime.now();
