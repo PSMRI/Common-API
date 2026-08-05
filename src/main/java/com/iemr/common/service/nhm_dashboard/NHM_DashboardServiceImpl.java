@@ -75,6 +75,14 @@ public class NHM_DashboardServiceImpl implements NHM_DashboardService {
 	@Value("${nhm-detailedcallreport-backfill-days:7}")
 	private int detailedCallReportBackfillDays;
 
+	@Value("${nhm-detailedcallreport-backfill-start-date:}")
+	private String backfillStartDate;
+
+	@Value("${nhm-detailedcallreport-backfill-end-date:}")
+	private String backfillEndDate;
+
+	private static final int MAX_EXPLICIT_BACKFILL_DAYS = 60;
+
 	public String pushAbandonCalls(AbandonCallSummary abandonCallSummary) throws Exception {
 
 		logger.info("NHM_abandon call push API request : " + abandonCallSummary.toString());
@@ -129,7 +137,6 @@ public class NHM_DashboardServiceImpl implements NHM_DashboardService {
 		return new Gson().toJson(resultSet);
 	}
 
-	// JOB calling C-Zentrix 2 APIs => AgentSummaryReport & DetailedCallReport
 	public String pull_NHM_Data_CTI() throws IEMRException {
 		String response = "";
 		String result1 = "";
@@ -145,14 +152,12 @@ public class NHM_DashboardServiceImpl implements NHM_DashboardService {
 		}
 
 		StringBuilder detailedCallReportResult = new StringBuilder();
-		// each pending day is pulled separately, so that one failing day does not stop
-		// the remaining days
 		for (LocalDate callDate : getPendingDetailedCallReportDates()) {
 			try {
 				List<DetailedCallReport> detailedCallReportList = callDetailedCallReportCTI_API(callDate);
 				if (detailedCallReportList.size() > 0) {
 					detailedCallReportResult.append(callDate).append(" : ")
-							.append(saveDetailedCallReport(detailedCallReportList)).append("; ");
+							.append(saveNewDetailedCallReport(detailedCallReportList, callDate)).append("; ");
 				}
 			} catch (Exception e) {
 				logger.error("DetailedCallReport pull failed for " + callDate + " - " + e.getLocalizedMessage());
@@ -163,23 +168,45 @@ public class NHM_DashboardServiceImpl implements NHM_DashboardService {
 		return response.concat(result1).concat(" ").concat(result2);
 	}
 
-	/**
-	 * Days (oldest first) for which detailed call report data still has to be
-	 * pulled from CTI - yesterday plus any earlier day within the backfill window
-	 * that has no data at all. Without this, a day missed because CTI was down or
-	 * throttled ("Please wait for 1 hour") was never requested again and stayed
-	 * permanently missing from the report.
-	 */
+	
 	List<LocalDate> getPendingDetailedCallReportDates() {
-		LocalDate lastDate = LocalDate.now().minusDays(1);
+		LocalDate yesterday = LocalDate.now().minusDays(1);
+
+		LocalDate explicitStart = parseBackfillDate(backfillStartDate, "start");
+		LocalDate explicitEnd = parseBackfillDate(backfillEndDate, "end");
+		if (explicitStart != null) {
+			LocalDate lastDate = explicitEnd != null ? explicitEnd : yesterday;
+			// today is still in progress, never pull it
+			if (lastDate.isAfter(yesterday))
+				lastDate = yesterday;
+			if (lastDate.isBefore(explicitStart)) {
+				logger.error("Configured detailed call report backfill range is empty - start " + explicitStart
+						+ " is after end " + lastDate + ", falling back to the missing day check");
+			} else {
+				List<LocalDate> explicitDates = new ArrayList<>();
+				for (LocalDate date = explicitStart; !date.isAfter(lastDate); date = date.plusDays(1)) {
+					if (explicitDates.size() >= MAX_EXPLICIT_BACKFILL_DAYS) {
+						logger.warn("Configured detailed call report backfill range exceeds "
+								+ MAX_EXPLICIT_BACKFILL_DAYS + " days - stopping at " + date.minusDays(1)
+								+ ", move the start date forward and run again to continue");
+						break;
+					}
+					explicitDates.add(date);
+				}
+				logger.info("DetailedCallReport configured backfill range " + explicitStart + " to " + lastDate
+						+ " - pulling " + explicitDates.size() + " day(s)");
+				return explicitDates;
+			}
+		}
+
 		int lookBackDays = detailedCallReportBackfillDays > 0 ? detailedCallReportBackfillDays : 1;
-		LocalDate firstDate = lastDate.minusDays(lookBackDays - 1L);
+		LocalDate firstDate = yesterday.minusDays(lookBackDays - 1L);
 
 		Set<LocalDate> existingDates = new HashSet<>();
 		try {
 			List<java.sql.Date> dates = detailedCallReportRepo.findExistingCallDates(
 					Timestamp.valueOf(firstDate.atStartOfDay()),
-					Timestamp.valueOf(lastDate.atTime(LocalTime.MAX).withNano(0)));
+					Timestamp.valueOf(yesterday.atTime(LocalTime.MAX).withNano(0)));
 			for (java.sql.Date date : dates) {
 				if (date != null)
 					existingDates.add(date.toLocalDate());
@@ -187,16 +214,67 @@ public class NHM_DashboardServiceImpl implements NHM_DashboardService {
 		} catch (Exception e) {
 			// on any problem in gap detection, fall back to the previous behaviour
 			logger.error("Error while detecting missing detailed call report dates - " + e.getLocalizedMessage());
-			return Arrays.asList(lastDate);
+			return Arrays.asList(yesterday);
 		}
 
 		List<LocalDate> pendingDates = new ArrayList<>();
-		for (LocalDate date = firstDate; !date.isAfter(lastDate); date = date.plusDays(1)) {
+		for (LocalDate date = firstDate; !date.isAfter(yesterday); date = date.plusDays(1)) {
 			if (!existingDates.contains(date))
 				pendingDates.add(date);
 		}
-		logger.info("DetailedCallReport pending dates between " + firstDate + " and " + lastDate + " : " + pendingDates);
+		logger.info("DetailedCallReport pending dates between " + firstDate + " and " + yesterday + " : " + pendingDates);
 		return pendingDates;
+	}
+
+	private LocalDate parseBackfillDate(String value, String label) {
+		if (value == null || value.trim().isEmpty())
+			return null;
+		try {
+			return LocalDate.parse(value.trim());
+		} catch (Exception e) {
+			logger.error("Ignoring detailed call report backfill " + label + " date '" + value
+					+ "' - expected format yyyy-MM-dd");
+			return null;
+		}
+	}
+
+	String saveNewDetailedCallReport(List<DetailedCallReport> detailedCallReportList, LocalDate callDate)
+			throws IEMRException {
+		parseDetailedCallReportTimestamps(detailedCallReportList);
+
+		Set<String> existingKeys = new HashSet<>();
+		for (DetailedCallReport existing : detailedCallReportRepo.findByCallStartTimeBetween(
+				Timestamp.valueOf(callDate.atStartOfDay()),
+				Timestamp.valueOf(callDate.atTime(LocalTime.MAX).withNano(0)))) {
+			existingKeys.add(getDetailedCallReportKey(existing));
+		}
+
+		List<DetailedCallReport> newRecords = new ArrayList<>();
+		for (DetailedCallReport detailedCallReport : detailedCallReportList) {
+			if (existingKeys.add(getDetailedCallReportKey(detailedCallReport)))
+				newRecords.add(detailedCallReport);
+		}
+
+		int duplicates = detailedCallReportList.size() - newRecords.size();
+		if (newRecords.isEmpty()) {
+			logger.info("DetailedCallReport " + callDate + " - all " + detailedCallReportList.size()
+					+ " record(s) already present, nothing to save");
+			return "0 records saved, " + duplicates + " already present";
+		}
+
+		List<DetailedCallReport> resultSet = (List<DetailedCallReport>) detailedCallReportRepo.saveAll(newRecords);
+		logger.info("DetailedCallReport " + callDate + " - pulled " + detailedCallReportList.size() + ", saved "
+				+ resultSet.size() + ", already present " + duplicates);
+		return resultSet.size() + " records saved, " + duplicates + " already present";
+	}
+
+	/**
+	 * Natural key of a call record. A session can hold more than one leg (transfer,
+	 * redial), so the phone number and start time are part of the key as well.
+	 */
+	private String getDetailedCallReportKey(DetailedCallReport detailedCallReport) {
+		return String.valueOf(detailedCallReport.getSession_ID()) + '|' + detailedCallReport.getPHONE() + '|'
+				+ detailedCallReport.getCallStartTime() + '|' + detailedCallReport.getAgent_ID();
 	}
 
 	public String saveAgentSummaryReport(List<AgentSummaryReport> agentSummaryReportList) throws IEMRException {
@@ -210,7 +288,26 @@ public class NHM_DashboardServiceImpl implements NHM_DashboardService {
 	public String saveDetailedCallReport(List<DetailedCallReport> detailedCallReportList) throws IEMRException {
 
 		if (detailedCallReportList != null && detailedCallReportList.size() > 0) {
-			for (DetailedCallReport detailedCallReport : detailedCallReportList) {
+			parseDetailedCallReportTimestamps(detailedCallReportList);
+
+			List<DetailedCallReport> resultSet = (List<DetailedCallReport>) detailedCallReportRepo
+					.saveAll(detailedCallReportList);
+
+			return resultSet.size() + " detailedCallReport records saved successfully";
+		} else
+			throw new IEMRException("please pass valid DetailedCallReport data in list");
+	}
+
+	/**
+	 * CTI sends the times as strings; they are moved into the timestamp columns
+	 * here. Has to run before the records are compared against what is already
+	 * stored, because the comparison uses the parsed start time.
+	 */
+	private void parseDetailedCallReportTimestamps(List<DetailedCallReport> detailedCallReportList) {
+		if (detailedCallReportList == null)
+			return;
+
+		for (DetailedCallReport detailedCallReport : detailedCallReportList) {
 				try {
 					if (detailedCallReport.getCall_Start_Time() != null
 							&& !detailedCallReport.getCall_Start_Time().equalsIgnoreCase("0000-00-00 00:00:00"))
@@ -244,14 +341,7 @@ public class NHM_DashboardServiceImpl implements NHM_DashboardService {
 				} catch (Exception e) {
 					logger.error("Call_Start_Time" + e.getLocalizedMessage());
 				}
-			}
-
-			List<DetailedCallReport> resultSet = (List<DetailedCallReport>) detailedCallReportRepo
-					.saveAll(detailedCallReportList);
-
-			return resultSet.size() + " detailedCallReport records saved successfully";
-		} else
-			throw new IEMRException("please pass valid DetailedCallReport data in list");
+		}
 	}
 
 	public List<AgentSummaryReport> callAgentSummaryReportCTI_API() throws IEMRException {
