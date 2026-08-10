@@ -243,8 +243,16 @@ public class FormMasterServiceImpl implements FormMasterService {
 
                         return dto;
                     })
-                    .sorted(Comparator.comparing(FieldResponseDTO::getId))
-                    .collect(Collectors.toList());
+                    .sorted(
+                            Comparator.comparing(
+                                    FieldResponseDTO::getSequence,
+                                    Comparator.nullsLast(Comparator.naturalOrder())
+                            ).thenComparing(
+                                    FieldResponseDTO::getId,
+                                    Comparator.nullsLast(Comparator.naturalOrder())
+                            )
+                    )                    .collect(Collectors.toList());
+
 
 
             GroupedFieldResponseDTO singleSection = new GroupedFieldResponseDTO();
