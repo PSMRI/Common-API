@@ -21,10 +21,13 @@
 */
 package com.iemr.common.repository.nhm_dashboard;
 
+import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.List;
 
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.iemr.common.data.nhm_dashboard.DetailedCallReport;
@@ -32,4 +35,13 @@ import com.iemr.common.data.nhm_dashboard.DetailedCallReport;
 @Repository
 public interface DetailedCallReportRepo extends CrudRepository<DetailedCallReport, Long> {
 	List<DetailedCallReport> findByCallStartTimeBetween(Timestamp startDate, Timestamp endDate);
+
+	/**
+	 * Call dates for which data has already been pulled from CTI. Used to detect
+	 * the days that were missed by earlier scheduler runs, so that they can be
+	 * pulled again instead of staying permanently empty.
+	 */
+	@Query(value = "select distinct date(Call_Start_Time) from t_DetailedCallReport "
+			+ "where Call_Start_Time between :startDate and :endDate", nativeQuery = true)
+	List<Date> findExistingCallDates(@Param("startDate") Timestamp startDate, @Param("endDate") Timestamp endDate);
 }
