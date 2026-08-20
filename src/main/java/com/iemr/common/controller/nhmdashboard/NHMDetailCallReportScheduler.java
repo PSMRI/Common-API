@@ -41,23 +41,18 @@ public class NHMDetailCallReportScheduler {
 	@Value("${start-ctidatacheck-scheduler}")
 	private boolean startCtiDataCheckFlag;
 
-	/**
-	 * Number of days (ending yesterday) checked against t_bencall. Kept in sync with
-	 * the detailed call report backfill window, so that days pulled late from CTI are
-	 * also reconciled. The reconciliation itself is idempotent.
-	 */
-	@Value("${nhm-detailedcallreport-backfill-days:7}")
-	private int lookBackDays;
 
 	@Scheduled(cron = "${cron-scheduler-ctidatacheck}")
 	public void detailedCallReport() {
 		if (startCtiDataCheckFlag) {
 			try {
-				int days = lookBackDays > 0 ? lookBackDays : 1;
-				LocalDateTime endDay = LocalDateTime.now().minusDays(1);
-				LocalDateTime startDay = endDay.minusDays(days - 1L);
-				String endDate = endDay.toString().split("T")[0].concat(" 23:59:59");
-				String fromDate = startDay.toString().split("T")[0].concat(" 00:00:00");
+				String endDate = null;
+				String fromDate = null;
+				LocalDateTime date = null;
+				date = LocalDateTime.now().minusDays(1);
+				String[] dateArr = date.toString().split("T");
+				endDate = dateArr[0].concat(" 23:59:59");
+				fromDate = dateArr[0].concat(" 00:00:01");
 
 				Timestamp fromTime = Timestamp.valueOf(fromDate);
 				Timestamp endTime = Timestamp.valueOf(endDate);
