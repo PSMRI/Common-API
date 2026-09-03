@@ -63,7 +63,9 @@ public class CallCentreDataSyncImpl implements CallCentreDataSync {
 	private static HttpUtils httpUtils;
 	@Autowired
 	private CTIService ctiService;
-	private static String ctiLoggerURL = ConfigProperties.getPropertyByName("cti-logger_base_url");
+	// private static String ctiLoggerURL = ConfigProperties.getPropertyByName("cti-logger_base_url");
+	@Value("${cti-logger_base_url}")
+	private String ctiLoggerURL;
 
 	public CallCentreDataSyncImpl() {
 		if (httpUtils == null) {

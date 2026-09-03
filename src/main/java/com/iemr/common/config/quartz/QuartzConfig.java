@@ -24,10 +24,12 @@ package com.iemr.common.config.quartz;
 import java.io.IOException;
 import java.util.Properties;
 
+import org.quartz.JobDetail;
 import org.quartz.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -37,8 +39,6 @@ import org.springframework.scheduling.quartz.CronTriggerFactoryBean;
 import org.springframework.scheduling.quartz.JobDetailFactoryBean;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
-
-import com.iemr.common.utils.config.ConfigProperties;
 
 import jakarta.annotation.PostConstruct;
 
@@ -55,9 +55,78 @@ public class QuartzConfig {
 	@Autowired
 	private ApplicationContext applicationContext;
 
+	/*
+	 * These are read through @Value and not through ConfigProperties on purpose.
+	 * ConfigProperties keeps the Environment in a static field that is populated by
+	 * an @Autowired setter on its own bean, so it can still be null while the @Bean
+	 * methods below run - in that case it falls back to reading application.properties
+	 * straight off the classpath, and any ${ENV_VAR} placeholder in there comes back
+	 * as the literal text. getBoolean() then quietly turns that into false and the job
+	 * is scheduled with quartzJobDefaultSchedule instead, with nothing in the log.
+	 * Injected fields are set before any @Bean method is called and go through the
+	 * normal placeholder resolution, so environment overrides are honoured.
+	 */
+	@Value("${start-unblock-scheduler:false}")
+	private boolean startUnblockJob;
+	@Value("${cron-scheduler-unblock:" + quartzJobDefaultSchedule + "}")
+	private String unblockSchedule;
+
+	@Value("${start-sms-scheduler:false}")
+	private boolean startSmsJob;
+	@Value("${cron-scheduler-sms:" + quartzJobDefaultSchedule + "}")
+	private String smsSchedule;
+
+	@Value("${start-email-scheduler:false}")
+	private boolean startEmailJob;
+	@Value("${cron-scheduler-email:" + quartzJobDefaultSchedule + "}")
+	private String emailSchedule;
+
+	@Value("${start-registration-scheduler:false}")
+	private boolean startRegistrationJob;
+	@Value("${cron-scheduler-registration:" + quartzJobDefaultSchedule + "}")
+	private String registrationSchedule;
+
+	@Value("${start-everwelldatasync-scheduler:false}")
+	private boolean startEverwellDataSyncJob;
+	@Value("${cron-scheduler-everwelldatasync:" + quartzJobDefaultSchedule + "}")
+	private String everwellDataSyncSchedule;
+
+	@Value("${start-ctidatasync-scheduler:false}")
+	private boolean startCtiDataSyncJob;
+	@Value("${cron-scheduler-ctidatasync:" + quartzJobDefaultSchedule + "}")
+	private String ctiDataSyncSchedule;
+
+	@Value("${start-avni-scheduler:false}")
+	private boolean startAvniRegistrationJob;
+	@Value("${cron-avni-registration:" + quartzJobDefaultSchedule + "}")
+	private String avniRegistrationSchedule;
+
+	@Value("${start-nhmdashboard-scheduler:false}")
+	private boolean startNhmDashboardJob;
+	@Value("${cron-scheduler-nhmdashboard:" + quartzJobDefaultSchedule + "}")
+	private String nhmDashboardSchedule;
+
 	@PostConstruct
 	public void init() {
 		log.debug("QuartzConfig initialized.");
+	}
+
+	/**
+	 * Builds the trigger for a job, logging what it resolved to. A job that is
+	 * switched off gets quartzJobDefaultSchedule, which only comes round on the 31st
+	 * of December - so the log line is the only way to tell "off" apart from
+	 * "misconfigured" without waiting until the end of the year.
+	 */
+	private CronTriggerFactoryBean cronTrigger(String jobName, boolean startJob, String schedule,
+			JobDetail jobDetail) {
+		String scheduleConfig = startJob ? schedule : quartzJobDefaultSchedule;
+		log.info("Quartz job {} - enabled: {}, cron: {}", jobName, startJob, scheduleConfig);
+
+		CronTriggerFactoryBean cronTriggerFactoryBean = new CronTriggerFactoryBean();
+		cronTriggerFactoryBean.setJobDetail(jobDetail);
+		cronTriggerFactoryBean.setCronExpression(scheduleConfig);
+		cronTriggerFactoryBean.setGroup(quartzJobGroup);
+		return cronTriggerFactoryBean;
 	}
 
 	@Bean
@@ -114,17 +183,7 @@ public class QuartzConfig {
 
 	@Bean
 	public CronTriggerFactoryBean processMQTriggerForUnblock() {
-		Boolean startJob = ConfigProperties.getBoolean("start-unblock-scheduler");
-		CronTriggerFactoryBean cronTriggerFactoryBean = new CronTriggerFactoryBean();
-		;
-		String scheduleConfig = quartzJobDefaultSchedule;
-		if (startJob) {
-			scheduleConfig = ConfigProperties.getPropertyByName("cron-scheduler-unblock");
-		}
-		cronTriggerFactoryBean.setJobDetail(processMQJobForUnblock().getObject());
-		cronTriggerFactoryBean.setCronExpression(scheduleConfig);
-		cronTriggerFactoryBean.setGroup(quartzJobGroup);
-		return cronTriggerFactoryBean;
+		return cronTrigger("unblock", startUnblockJob, unblockSchedule, processMQJobForUnblock().getObject());
 	}
 
 	// --------------------------------------------------------------------------------------------------------------
@@ -139,17 +198,7 @@ public class QuartzConfig {
 
 	@Bean
 	public CronTriggerFactoryBean processMQTriggerForSMS() {
-		Boolean startJob = ConfigProperties.getBoolean("start-sms-scheduler");
-		CronTriggerFactoryBean cronTriggerFactoryBean = new CronTriggerFactoryBean();
-		;
-		String scheduleConfig = quartzJobDefaultSchedule;
-		if (startJob) {
-			scheduleConfig = ConfigProperties.getPropertyByName("cron-scheduler-sms");
-		}
-		cronTriggerFactoryBean.setJobDetail(processMQJobForSMS().getObject());
-		cronTriggerFactoryBean.setCronExpression(scheduleConfig);
-		cronTriggerFactoryBean.setGroup(quartzJobGroup);
-		return cronTriggerFactoryBean;
+		return cronTrigger("sms", startSmsJob, smsSchedule, processMQJobForSMS().getObject());
 	}
 
 	// --------------------------------------------------------------------------------------------------------------
@@ -164,16 +213,7 @@ public class QuartzConfig {
 
 	@Bean
 	public CronTriggerFactoryBean processMQTriggerForEmail() {
-		Boolean startJob = ConfigProperties.getBoolean("start-email-scheduler");
-		CronTriggerFactoryBean cronTriggerFactoryBean = new CronTriggerFactoryBean();
-		String scheduleConfig = quartzJobDefaultSchedule;
-		if (Boolean.TRUE.equals(startJob)) {
-			scheduleConfig = ConfigProperties.getPropertyByName("cron-scheduler-email");
-		}
-		cronTriggerFactoryBean.setJobDetail(processMQJobForEmail().getObject());
-		cronTriggerFactoryBean.setCronExpression(scheduleConfig);
-		cronTriggerFactoryBean.setGroup(quartzJobGroup);
-		return cronTriggerFactoryBean;
+		return cronTrigger("email", startEmailJob, emailSchedule, processMQJobForEmail().getObject());
 	}
 
 	// --------------------------------------------------------------------------------------------------------------
@@ -188,16 +228,8 @@ public class QuartzConfig {
 
 	@Bean
 	public CronTriggerFactoryBean processMQTriggerForRegistration() {
-		Boolean startJob = ConfigProperties.getBoolean("start-registration-scheduler");
-		CronTriggerFactoryBean cronTriggerFactoryBean = new CronTriggerFactoryBean();
-		String scheduleConfig = quartzJobDefaultSchedule;
-		if (startJob) {
-			scheduleConfig = ConfigProperties.getPropertyByName("cron-scheduler-registration");
-		}
-		cronTriggerFactoryBean.setJobDetail(processMQJobForRegistration().getObject());
-		cronTriggerFactoryBean.setCronExpression(scheduleConfig);
-		cronTriggerFactoryBean.setGroup(quartzJobGroup);
-		return cronTriggerFactoryBean;
+		return cronTrigger("everwell-registration", startRegistrationJob, registrationSchedule,
+				processMQJobForRegistration().getObject());
 	}
 
 	// --------------------------------------------------------------------------------------------------------------
@@ -212,16 +244,8 @@ public class QuartzConfig {
 
 	@Bean
 	public CronTriggerFactoryBean processMQTriggerForEverwellDataSync() {
-		Boolean startJob = ConfigProperties.getBoolean("start-everwelldatasync-scheduler");
-		CronTriggerFactoryBean cronTriggerFactoryBean = new CronTriggerFactoryBean();
-		String scheduleConfig = quartzJobDefaultSchedule;
-		if (startJob) {
-			scheduleConfig = ConfigProperties.getPropertyByName("cron-scheduler-everwelldatasync");
-		}
-		cronTriggerFactoryBean.setJobDetail(processMQJobForEverwellDataSync().getObject());
-		cronTriggerFactoryBean.setCronExpression(scheduleConfig);
-		cronTriggerFactoryBean.setGroup(quartzJobGroup);
-		return cronTriggerFactoryBean;
+		return cronTrigger("everwell-datasync", startEverwellDataSyncJob, everwellDataSyncSchedule,
+				processMQJobForEverwellDataSync().getObject());
 	}
 
 	// --------------------------------------------------------------------------------------------------------------
@@ -236,16 +260,8 @@ public class QuartzConfig {
 
 	@Bean
 	public CronTriggerFactoryBean processMQTriggerForCtiDataSync() {
-		Boolean startJob = ConfigProperties.getBoolean("start-ctidatasync-scheduler");
-		CronTriggerFactoryBean cronTriggerFactoryBean = new CronTriggerFactoryBean();
-		String scheduleConfig = quartzJobDefaultSchedule;
-		if (startJob) {
-			scheduleConfig = ConfigProperties.getPropertyByName("cron-scheduler-ctidatasync");
-		}
-		cronTriggerFactoryBean.setJobDetail(processMQJobForCtiDataSync().getObject());
-		cronTriggerFactoryBean.setCronExpression(scheduleConfig);
-		cronTriggerFactoryBean.setGroup(quartzJobGroup);
-		return cronTriggerFactoryBean;
+		return cronTrigger("cti-datasync", startCtiDataSyncJob, ctiDataSyncSchedule,
+				processMQJobForCtiDataSync().getObject());
 	}
 
 	// --------------------------------------------------------------------------------------------------------------
@@ -260,16 +276,8 @@ public class QuartzConfig {
 
 	@Bean
 	public CronTriggerFactoryBean processMQTriggerForAvniRegistration() {
-		Boolean startJob = ConfigProperties.getBoolean("start-avni-scheduler");
-		CronTriggerFactoryBean cronTriggerFactoryBean = new CronTriggerFactoryBean();
-		String scheduleConfig = quartzJobDefaultSchedule;
-		if (startJob) {
-			scheduleConfig = ConfigProperties.getPropertyByName("cron-avni-registration");
-		}
-		cronTriggerFactoryBean.setJobDetail(processMQJobForAvniRegistration().getObject());
-		cronTriggerFactoryBean.setCronExpression(scheduleConfig);
-		cronTriggerFactoryBean.setGroup(quartzJobGroup);
-		return cronTriggerFactoryBean;
+		return cronTrigger("avni-registration", startAvniRegistrationJob, avniRegistrationSchedule,
+				processMQJobForAvniRegistration().getObject());
 	}
 
 	// --------------------------------------------------------------------------------------------------------------
@@ -284,17 +292,8 @@ public class QuartzConfig {
 
 	@Bean
 	public CronTriggerFactoryBean processMQTriggerForNHMDashboardData() {
-		Boolean startJob = ConfigProperties.getBoolean("start-nhmdashboard-scheduler");
-		CronTriggerFactoryBean cronTriggerFactoryBean = new CronTriggerFactoryBean();
-		String scheduleConfig = quartzJobDefaultSchedule;
-		if (startJob) {
-			scheduleConfig = ConfigProperties.getPropertyByName("cron-scheduler-nhmdashboard");
-		}
-		cronTriggerFactoryBean.setJobDetail(processMQJobForNHMDashboardData().getObject());
-		cronTriggerFactoryBean.setCronExpression(scheduleConfig);
-		cronTriggerFactoryBean.setGroup(quartzJobGroup);
-
-		return cronTriggerFactoryBean;
+		return cronTrigger("nhm-dashboard", startNhmDashboardJob, nhmDashboardSchedule,
+				processMQJobForNHMDashboardData().getObject());
 	}
 
 }

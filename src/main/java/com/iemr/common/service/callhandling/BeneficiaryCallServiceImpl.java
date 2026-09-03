@@ -145,7 +145,11 @@ public class BeneficiaryCallServiceImpl implements BeneficiaryCallService {
 
 	private Logger logger = LoggerFactory.getLogger(BeneficiaryCallServiceImpl.class);
 
-	private static String ctiLoggerURL = ConfigProperties.getPropertyByName("cti-logger_base_url");
+	// private static String ctiLoggerURL = ConfigProperties.getPropertyByName("cti-logger_base_url");
+
+	@Value("${cti-logger_base_url}")
+	private String ctiLoggerURL;
+	
 	@Autowired
 	private IdentityBeneficiaryService identityBeneficiaryService;
 
