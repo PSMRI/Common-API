@@ -116,7 +116,7 @@ public class EmailServiceImplTest {
         when(emailRepository.save(any(EmailNotification.class))).thenReturn(new EmailNotification());
         String result = service.mDSRCDREmail("reqid", "MDSR-CDR Email", "recipient@example.com", "token");
         assertNotNull(result);
-        assertTrue(result.contains("EmailNotification"));
+        assertTrue(result.startsWith("{"), "the saved notification is returned as JSON: " + result);
     }
 
     @Test
@@ -170,7 +170,7 @@ public class EmailServiceImplTest {
         when(emailRepository.save(any(EmailNotification.class))).thenReturn(new EmailNotification());
         String result = service.mDSRCDREmail("reqid", "MDSR-CDR Email", "recipient@example.com", "token");
         assertNotNull(result);
-        assertTrue(result.contains("EmailNotification"));
+        assertTrue(result.startsWith("{"), "the saved notification is returned as JSON: " + result);
     }
 
     @Test
@@ -224,7 +224,7 @@ public class EmailServiceImplTest {
         when(emailRepository.save(any(EmailNotification.class))).thenReturn(new EmailNotification());
         String result = service.mDSRCDREmail("reqid", "MDSR-CDR Email", "recipient@example.com", "token");
         assertNotNull(result);
-        assertTrue(result.contains("EmailNotification"));
+        assertTrue(result.startsWith("{"), "the saved notification is returned as JSON: " + result);
     }
     @InjectMocks
     EmailServiceImpl service;
@@ -279,7 +279,7 @@ public class EmailServiceImplTest {
         when(searchBeneficiary.userExitsCheckWithId(eq(4L), anyString(), eq(false))).thenReturn(Arrays.asList(beneficiary));
         String result = service.SendEmail(json, "token");
         assertNotNull(result);
-        assertTrue(result.contains("EmailNotification"));
+        assertTrue(result.startsWith("{"), "the saved notification is returned as JSON: " + result);
     }
 
     @Test
@@ -398,7 +398,7 @@ public class EmailServiceImplTest {
         when(emailRepository.save(any(EmailNotification.class))).thenReturn(new EmailNotification());
         String result = service.mDSRCDREmail("reqid", "MDSR-CDR Email", "recipient@example.com", "token");
         assertNotNull(result);
-        assertTrue(result.contains("EmailNotification"));
+        assertTrue(result.startsWith("{"), "the saved notification is returned as JSON: " + result);
     }
 
     @Test

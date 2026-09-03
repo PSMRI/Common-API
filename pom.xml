@@ -91,6 +91,13 @@
 					<groupId>org.springframework</groupId>
 					<artifactId>spring-core</artifactId>
 				</exclusion>
+				<!-- android-json ships its own stripped org.json.* classes, which shadow
+				     org.json:json on the test classpath and make the production JSON code
+				     fail with NoSuchMethodError under test only. -->
+				<exclusion>
+					<groupId>com.vaadin.external.google</groupId>
+					<artifactId>android-json</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 
@@ -652,6 +659,15 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<testFailureIgnore>true</testFailureIgnore>
+					<!-- Gson reflects over JDK types held by some report entities (e.g. the
+					     SimpleDateFormat fields on CallReport and BeneficiaryDetailsReport),
+					     which the JDK 17 module system blocks by default. @{argLine} keeps the
+					     JaCoCo agent that jacoco:prepare-agent contributes. -->
+					<argLine>@{argLine} --add-opens=java.base/java.text=ALL-UNNAMED
+						--add-opens=java.base/java.lang=ALL-UNNAMED
+						--add-opens=java.base/java.util=ALL-UNNAMED
+						--add-opens=java.base/java.time=ALL-UNNAMED
+						--add-opens=java.base/java.math=ALL-UNNAMED</argLine>
 				</configuration>
 			</plugin>
 			<plugin>

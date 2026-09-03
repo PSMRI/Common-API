@@ -1271,24 +1271,20 @@ public class FeedbackServiceImplTest {
 
     @Test
     void testGetFilePathWithKMFileManager() {
-        try (MockedStatic<ConfigProperties> configMock = mockStatic(ConfigProperties.class)) {
-            // Arrange
-            configMock.when(() -> ConfigProperties.getPropertyByName("km-base-path")).thenReturn("test-path");
-            configMock.when(() -> ConfigProperties.getPropertyByName("km-base-protocol")).thenReturn("http");
-            configMock.when(() -> ConfigProperties.getPropertyByName("km-guest-user")).thenReturn("guest");
-            configMock.when(() -> ConfigProperties.getPassword("km-guest-user")).thenReturn("password");
+        // The document-store coordinates are injected rather than read from ConfigProperties.
+        org.springframework.test.util.ReflectionTestUtils.setField(feedbackService, "dmsProtocol", "http");
+        org.springframework.test.util.ReflectionTestUtils.setField(feedbackService, "userName", "guest");
+        org.springframework.test.util.ReflectionTestUtils.setField(feedbackService, "userPassword", "password");
+        org.springframework.test.util.ReflectionTestUtils.setField(feedbackService, "dmsPath", "test-path");
 
-            KMFileManager kmFileManager = new KMFileManager();
-            kmFileManager.setFileUID("test-uid");
+        KMFileManager kmFileManager = new KMFileManager();
+        kmFileManager.setFileUID("test-uid");
 
-            // Act - Using reflection to access private method
-            String result = invokeGetFilePath(kmFileManager);
+        // Act - Using reflection to access private method
+        String result = invokeGetFilePath(kmFileManager);
 
-            // Assert
-            assertNotNull(result);
-            assertTrue(result.contains("test-uid"));
-            assertTrue(result.contains("http://guest:password@test-path/Download?uuid=test-uid"));
-        }
+        // Assert
+        assertEquals("http://guest:password@test-path/Download?uuid=test-uid", result);
     }
 
     @Test
