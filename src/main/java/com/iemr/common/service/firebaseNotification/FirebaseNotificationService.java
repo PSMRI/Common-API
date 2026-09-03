@@ -26,12 +26,15 @@ package com.iemr.common.service.firebaseNotification;
 
 import com.google.firebase.FirebaseException;
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
-import com.iemr.common.data.userToken.UserTokenData;
+import com.google.gson.Gson;
+import com.iemr.common.config.firebase.FirebaseMessagingConfig;
+import com.iemr.common.data.userToken.UserFcmTokenData;
 import com.iemr.common.model.notification.NotificationMessage;
 import com.iemr.common.model.notification.UserToken;
-import com.iemr.common.repo.userToken.UserTokenRepo;
+import com.iemr.common.repo.userToken.UserFcmTokenRepo;
 import com.iemr.common.utils.CookieUtil;
 import com.iemr.common.utils.JwtUtil;
 import com.iemr.common.utils.exception.IEMRException;
@@ -39,11 +42,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.sql.Timestamp;
 import java.util.Optional;
 
 @Service
@@ -51,10 +54,10 @@ public class FirebaseNotificationService {
     final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
     @Autowired(required = false)
-    FirebaseMessaging firebaseMessaging;
+    private FirebaseMessaging firebaseMessaging;
 
     @Autowired
-    private UserTokenRepo userTokenRepo;
+    private UserFcmTokenRepo userTokenRepo;
 
     @Autowired
     private CookieUtil cookieUtil;
@@ -64,42 +67,77 @@ public class FirebaseNotificationService {
 
     private Message message;
 
+    @Value("${firebase.enabled}")
+    private boolean firebaseEnabled;
+
+    @Value("${firebase.credential-file}")
+    private String firebaseCredentialFile;
+
+
 
     public String sendNotification(NotificationMessage notificationMessage) {
+
+        logger.info("===== Initializing Firebase =====");
+        logger.info("firebaseEnabled={}", firebaseEnabled);
+        logger.info("firebaseCredentialFile={}", firebaseCredentialFile);
+
+        logger.info("========== FCM Notification Request ==========");
+        logger.info("Request : {}", new Gson().toJson(notificationMessage));
+
         if (firebaseMessaging == null) {
-            logger.error("⚠️ Firebase is not configured, skipping notification");
-            return null;
+            logger.error("FirebaseMessaging bean is not initialized.");
+            return "FirebaseMessaging bean is not initialized.";
         }
-
-        Notification notification = Notification.builder().setTitle(notificationMessage.getTitle()).setBody(notificationMessage.getBody()).build();
-
-        Message message = Message.builder().setTopic(notificationMessage.getToken()).setNotification(notification).putAllData(notificationMessage.getData()).build();
-
 
         try {
-            String response = FirebaseMessaging.getInstance().send(message);
+
+            Notification notification = Notification.builder()
+                    .setTitle(notificationMessage.getTitle())
+                    .setBody(notificationMessage.getBody())
+                    .build();
+
+            Message message = Message.builder()
+                    .setToken(notificationMessage.getToken())
+                    .setNotification(notification)
+                    .putAllData(notificationMessage.getData())
+                    .build();
+
+            logger.info("Sending notification to token: {}", notificationMessage.getToken());
+
+            String response = firebaseMessaging.send(message);
+
+            logger.info("Notification sent successfully.");
+            logger.info("Firebase Message Id : {}", response);
 
             return response;
-        } catch (FirebaseException e) {
-            return "Error sending notification";
 
+        } catch (FirebaseMessagingException e) {
+
+            logger.error("FirebaseMessagingException");
+            logger.error("Error Code      : {}", e.getMessagingErrorCode());
+            logger.error("Error Message   : {}", e.getMessage(), e);
+
+            return "FCM Error : " + e.getMessage();
+
+        } catch (Exception e) {
+
+            logger.error("Unexpected exception while sending notification.", e);
+
+            return "Unexpected Error : " + e.getMessage();
         }
     }
-
     public String updateToken(UserToken userToken) {
-        Optional<UserTokenData> existingTokenData = userTokenRepo.findById(userToken.getUserId());
+        Optional<UserFcmTokenData> existingTokenData = userTokenRepo.findByUserId(userToken.getUserId());
 
-        UserTokenData userTokenData;
+        UserFcmTokenData userTokenData;
 
         if (existingTokenData.isPresent()) {
             userTokenData = existingTokenData.get();
             userTokenData.setToken(userToken.getToken());
-            userTokenData.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
         } else {
-            userTokenData = new UserTokenData();
+            userTokenData = new UserFcmTokenData();
             userTokenData.setUserId(userToken.getUserId());
             userTokenData.setToken(userToken.getToken());
-            userTokenData.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
         }
 
         userTokenRepo.save(userTokenData);
@@ -111,7 +149,7 @@ public class FirebaseNotificationService {
                 .getRequest();
         String jwtTokenFromCookie = cookieUtil.getJwtTokenFromCookie(requestHeader);
         return userTokenRepo.findById(Integer.parseInt(jwtUtil.getUserIdFromToken(jwtTokenFromCookie))) // because your userId is Long in DB
-                .map(UserTokenData::getToken)
+                .map(UserFcmTokenData::getToken)
                 .orElse(null); //
     }
 

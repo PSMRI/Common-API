@@ -174,6 +174,19 @@ public class BeneficiaryDemographicsModel {
 	private String habitation;
 
 	@Expose
+	private Double latitude;
+	@Expose
+	private Double longitude;
+	@Expose
+	private String digipin;
+	@Expose
+	private Long gpsTimestamp;
+	@Expose
+	private Boolean isGpsUnavailable = false;
+	@Expose
+	private String gpsUnavailableReason;
+
+	@Expose
 	private String occupation;
 	@Expose
 	private String incomeStatus;

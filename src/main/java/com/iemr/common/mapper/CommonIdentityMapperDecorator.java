@@ -29,8 +29,11 @@ import com.iemr.common.dto.identity.Contact;
 import com.iemr.common.dto.identity.Identity;
 import com.iemr.common.model.beneficiary.BeneficiaryDemographicsModel;
 import com.iemr.common.model.beneficiary.BeneficiaryModel;
+import com.iemr.common.service.location.NikshayAddressResolver;
 
 public abstract class CommonIdentityMapperDecorator implements CommonIdentityMapper {
+	@Autowired
+	NikshayAddressResolver nikshayAddressResolver;
 	@Autowired
 	StateMapper stateMapper;
 	@Autowired
@@ -69,11 +72,13 @@ public abstract class CommonIdentityMapperDecorator implements CommonIdentityMap
 			return null;
 		}
 		CommonIdentityDTO commonIdentityDTO = new CommonIdentityDTO();
-		commonIdentityDTO
-				.setPermanentAddress(beneficiaryDemographicsModelToAddress(beneficiary.getI_bendemographics()));
-		commonIdentityDTO.setCurrentAddress(beneficiaryDemographicsModelToAddress(beneficiary.getI_bendemographics()));
-		commonIdentityDTO
-				.setEmergencyAddress(beneficiaryDemographicsModelToAddress(beneficiary.getI_bendemographics()));
+		boolean isStopTB = nikshayAddressResolver.isStopTB(beneficiary.getProviderServiceMapID());
+		commonIdentityDTO.setPermanentAddress(
+				beneficiaryDemographicsModelToAddress(beneficiary.getI_bendemographics(), isStopTB));
+		commonIdentityDTO.setCurrentAddress(
+				beneficiaryDemographicsModelToAddress(beneficiary.getI_bendemographics(), isStopTB));
+		commonIdentityDTO.setEmergencyAddress(
+				beneficiaryDemographicsModelToAddress(beneficiary.getI_bendemographics(), isStopTB));
 		commonIdentityDTO.setPlaceOfWork(beneficiary.getPlaceOfWork());
 		commonIdentityDTO.setMarriageDate(beneficiary.getMarriageDate());
 		commonIdentityDTO.setIsHIVPositive(beneficiary.getIsHIVPos());
@@ -210,6 +215,11 @@ public abstract class CommonIdentityMapperDecorator implements CommonIdentityMap
 	}
 
 	protected Address beneficiaryDemographicsModelToAddress(BeneficiaryDemographicsModel beneficiaryDemographicsModel) {
+		return beneficiaryDemographicsModelToAddress(beneficiaryDemographicsModel, false);
+	}
+
+	protected Address beneficiaryDemographicsModelToAddress(BeneficiaryDemographicsModel beneficiaryDemographicsModel,
+			boolean isStopTB) {
 		if (beneficiaryDemographicsModel == null) {
 			return null;
 		}
@@ -222,8 +232,10 @@ public abstract class CommonIdentityMapperDecorator implements CommonIdentityMap
 		address.setStateId(beneficiaryDemographicsModel.getStateID());
 		address.setDistrictId(beneficiaryDemographicsModel.getDistrictID());
 		if (beneficiaryDemographicsModel.getDistrictID() != null) {
-			address.setDistrict(
-					districtMapper.districtToModelByID(beneficiaryDemographicsModel.getDistrictID()).getDistrictName());
+			address.setDistrict(isStopTB
+					? nikshayAddressResolver.resolveDistrictName(beneficiaryDemographicsModel.getDistrictID())
+					: districtMapper.districtToModelByID(beneficiaryDemographicsModel.getDistrictID())
+							.getDistrictName());
 		}
 		address.setServicePointName(beneficiaryDemographicsModel.getServicePointName());
 		address.setCountry(beneficiaryDemographicsModel.getCountryName());
@@ -239,15 +251,24 @@ public abstract class CommonIdentityMapperDecorator implements CommonIdentityMap
 		address.setParkingPlaceID(beneficiaryDemographicsModel.getParkingPlaceID());
 		address.setServicePointID(beneficiaryDemographicsModel.getServicePointID());
 		if (beneficiaryDemographicsModel.getDistrictBranchID() != null) {
-			address.setVillage(branchMapper
-					.districtBranchToModelByID(beneficiaryDemographicsModel.getDistrictBranchID()).getVillageName());
+			address.setVillage(isStopTB
+					? nikshayAddressResolver.resolveVillageName(beneficiaryDemographicsModel.getDistrictBranchID())
+					: branchMapper.districtBranchToModelByID(beneficiaryDemographicsModel.getDistrictBranchID())
+							.getVillageName());
 		}
 		address.setSubDistrictId(beneficiaryDemographicsModel.getBlockID());
 		address.setCountryId(beneficiaryDemographicsModel.getCountryID());
 		if (beneficiaryDemographicsModel.getBlockID() != null) {
-			address.setSubDistrict(
-					blockMapper.districtBlockToModelByID(beneficiaryDemographicsModel.getBlockID()).getBlockName());
+			address.setSubDistrict(isStopTB
+					? nikshayAddressResolver.resolveTUName(beneficiaryDemographicsModel.getBlockID())
+					: blockMapper.districtBlockToModelByID(beneficiaryDemographicsModel.getBlockID()).getBlockName());
 		}
+		address.setGpsLatitude(beneficiaryDemographicsModel.getLatitude());
+		address.setGpsLongitude(beneficiaryDemographicsModel.getLongitude());
+		address.setDigipin(beneficiaryDemographicsModel.getDigipin());
+		address.setGpsTimestamp(beneficiaryDemographicsModel.getGpsTimestamp());
+		address.setIsGpsUnavailable(beneficiaryDemographicsModel.getIsGpsUnavailable());
+		address.setGpsUnavailableReason(beneficiaryDemographicsModel.getGpsUnavailableReason());
 
 		return address;
 	}

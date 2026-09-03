@@ -18,11 +18,8 @@
 *
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see https://www.gnu.org/licenses/.
-*
-/*
-* AMRIT – Accessible Medical Records via Integrated Technology
 */
-package com.iemr.common.data.userToken;
+package com.iemr.common.data.location;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -30,17 +27,18 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 
-import java.sql.Timestamp;
-
+/**
+ * Nikshay's Tuberculosis Unit master (m_nikshay_tu) — Stop TB's equivalent
+ * of a "block", but scoped to Nikshay's own hierarchy, not m_districtblock.
+ */
 @Entity
-@Table(name = "user_tokens", schema = "db_iemr")
+@Table(name = "m_nikshay_tu")
 @Data
-public class UserTokenData {
-    @Id
-    @Column(name = "user_id")
-    Integer userId;
-    @Column(name = "token")
-    String token;
-    @Column(name = "updated_at")
-    Timestamp updatedAt;
+public class NikshayTU {
+	@Id
+	@Column(name = "NikshayTUID")
+	private Integer nikshayTUID;
+
+	@Column(name = "TUName")
+	private String tuName;
 }
