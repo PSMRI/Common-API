@@ -35,8 +35,8 @@ public class CookieUtil {
 	    // Make the cookie HttpOnly to prevent JavaScript access for security
 	    cookie.setHttpOnly(true);
 	 
-	    // Set the Max-Age (expiry time) in seconds (8 hours)
-	    cookie.setMaxAge(60 * 60 * 8); // 8 hours expiration
+	    // Set the Max-Age (expiry time) in seconds (10 hours)
+	    cookie.setMaxAge(60 * 60 * 10); // 10 hours expiration
 	 
 	    // Set the path to "/" so the cookie is available across the entire application
 	    cookie.setPath("/");
