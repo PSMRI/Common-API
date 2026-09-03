@@ -93,10 +93,18 @@ public class CTIServiceImplTest {
     private final String TEST_AGENT_ID = "agent123";
     private final String TEST_SERVER_URL = "http://cti-server.com";
 
+    @Mock
+    private com.iemr.common.utils.encryption.AESUtil aesUtil;
+
     @BeforeEach
     void setUp() {
         // Set up HttpUtils static mock
         ReflectionTestUtils.setField(ctiServiceImpl, "httpUtils", httpUtils);
+        // The CTI URL templates substitute CTI_SERVER with the @Value-injected server
+        // address, and the login-key flow decrypts the agent password, so both
+        // collaborators have to be present for the request builders to run.
+        ReflectionTestUtils.setField(ctiServiceImpl, "serverURL", TEST_SERVER_URL);
+        ReflectionTestUtils.setField(ctiServiceImpl, "aesUtil", aesUtil);
     }
 
     private ObjectMapper getConfiguredObjectMapper() {
@@ -1534,8 +1542,9 @@ public class CTIServiceImplTest {
             OutputResponse result = ctiServiceImpl.getVoiceFileNew(requestJson, TEST_IP);
 
             assertNotNull(result);
-            // The service returns the raw JSON string response
-            assertEquals(response, result.getData());
+            // The gateway response is re-serialised into the envelope, so its escaped
+            // solidus characters come back in their plain form.
+            assertEquals("{\"response\":\"voicefile/path/test.wav\"}", result.getData());
         }
     }
 
