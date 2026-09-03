@@ -52,6 +52,12 @@ public @Data class Address {
 	private String parkingPlaceName;
 	private Integer servicePointID;
 	private String servicePointName;
+	private Double gpsLatitude;
+	private Double gpsLongitude;
+	private String digipin;
+	private Long gpsTimestamp;
+	private Boolean isGpsUnavailable;
+	private String gpsUnavailableReason;
 
 	public static Address bendemographicsAddressMapper(BeneficiaryDemographicsModel i_bendemographics) {
 		Address address = new Address();
@@ -87,6 +93,12 @@ public @Data class Address {
 		address.setSubDistrictId(i_bendemographics.getBlockID());
 		address.setVillageId(i_bendemographics.getDistrictBranchID());
 		address.setPinCode(i_bendemographics.getPinCode());
+		address.setGpsLatitude(i_bendemographics.getLatitude());
+		address.setGpsLongitude(i_bendemographics.getLongitude());
+		address.setDigipin(i_bendemographics.getDigipin());
+		address.setGpsTimestamp(i_bendemographics.getGpsTimestamp());
+		address.setIsGpsUnavailable(i_bendemographics.getIsGpsUnavailable());
+		address.setGpsUnavailableReason(i_bendemographics.getGpsUnavailableReason());
 
 		return address;
 	}

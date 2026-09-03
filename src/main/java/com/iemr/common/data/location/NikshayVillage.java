@@ -18,21 +18,27 @@
 *
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see https://www.gnu.org/licenses/.
-*
-/*
-* AMRIT – Accessible Medical Records via Integrated Technology
 */
-package com.iemr.common.model.notification;
+package com.iemr.common.data.location;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Data;
 
-import java.util.Map;
-
+/**
+ * Nikshay's own village master (m_nikshay_village) — an isolated ID space
+ * from AMRIT's standard m_DistrictBranchMapping, used only for Stop TB.
+ */
+@Entity
+@Table(name = "m_nikshay_village")
 @Data
-public class NotificationMessage {
-    private String appType;
-    private String token;
-    private String title;
-    private String body;
-    private Map<String ,String> data;
+public class NikshayVillage {
+	@Id
+	@Column(name = "NikshayVillageID")
+	private Integer nikshayVillageID;
+
+	@Column(name = "VillageName")
+	private String villageName;
 }

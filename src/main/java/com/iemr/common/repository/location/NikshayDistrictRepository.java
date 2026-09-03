@@ -18,21 +18,14 @@
 *
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see https://www.gnu.org/licenses/.
-*
-/*
-* AMRIT – Accessible Medical Records via Integrated Technology
 */
-package com.iemr.common.model.notification;
+package com.iemr.common.repository.location;
 
-import lombok.Data;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
 
-import java.util.Map;
+import com.iemr.common.data.location.NikshayDistrict;
 
-@Data
-public class NotificationMessage {
-    private String appType;
-    private String token;
-    private String title;
-    private String body;
-    private Map<String ,String> data;
+@Repository
+public interface NikshayDistrictRepository extends CrudRepository<NikshayDistrict, Integer> {
 }
