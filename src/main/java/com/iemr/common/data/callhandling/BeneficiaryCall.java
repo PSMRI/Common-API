@@ -23,12 +23,9 @@ package com.iemr.common.data.callhandling;
 
 import java.sql.Timestamp;
 
-import org.springframework.beans.factory.annotation.Value;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.gson.annotations.Expose;
 import com.iemr.common.data.beneficiary.Beneficiary;
-import com.iemr.common.utils.config.ConfigProperties;
 import com.iemr.common.utils.mapper.OutputMapper;
 
 import jakarta.persistence.Column;
@@ -278,17 +275,6 @@ public class BeneficiaryCall {
 		this.beneficiaryRegID = beneficiaryRegID;
 		this.is1097 = is1097;
 		this.createdBy = createdBy;
-	}
-
-	public BeneficiaryCall(Long benCallID, Timestamp createdDate, String agentID, String callID, String recordingPath,
-			String archivePath) {
-		// String loggerBaseURL = ConfigProperties.getPropertyByName("cti-logger_base_url");
-		this.benCallID = benCallID;
-		this.createdDate = createdDate;
-		this.agentID = agentID;
-		this.callID = callID;
-		this.recordingPath = (recordingPath != null) ? (loggerBaseURL + "/" + recordingPath) : recordingPath;
-		this.archivePath = (archivePath != null) ? (loggerBaseURL + "/" + archivePath) : archivePath;
 	}
 
 	@Transient
