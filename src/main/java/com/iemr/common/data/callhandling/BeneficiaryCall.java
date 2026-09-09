@@ -235,9 +235,6 @@ public class BeneficiaryCall {
 	@Expose
 	@Column(name = "InsName")
 	private String instName;
-
-	@Value("${cti-logger_base_url}")
-	private String loggerBaseURL;
 	
 	@Transient
 	@Expose
