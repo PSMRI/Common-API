@@ -28,7 +28,6 @@ import org.springframework.beans.factory.annotation.Value;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.gson.annotations.Expose;
 import com.iemr.common.data.beneficiary.Beneficiary;
-import com.iemr.common.utils.config.ConfigProperties;
 import com.iemr.common.utils.mapper.OutputMapper;
 
 import jakarta.persistence.Column;
