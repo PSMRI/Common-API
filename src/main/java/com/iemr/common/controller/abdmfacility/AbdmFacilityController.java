@@ -31,13 +31,12 @@ public class AbdmFacilityController {
 		OutputResponse response = new OutputResponse();
 
 		try {
-
 			String resp = abdmFacilityService.getMappedAbdmFacility(workLocationId);
-
+			if (resp != null)
 				response.setResponse(resp);
-
+			else
+				response.setResponse("No ABDM facility mapped for this worklocation");
 		} catch (Exception e) {
-
 			response.setError(5000, e.getMessage());
 			logger.error(e.getMessage());
 		}

@@ -76,7 +76,7 @@ public class CustomerRelationshipSecondaryReports {
 			if (e.getMessage().equalsIgnoreCase("No data found"))
 				return ResponseEntity.status(500).body(e.getMessage());
 			else
-				return ResponseEntity.status(5000).body(e.getMessage());
+				return ResponseEntity.status(500).body(e.getMessage());
 		}
 	}
 
@@ -102,7 +102,7 @@ public class CustomerRelationshipSecondaryReports {
 			if (e.getMessage().equalsIgnoreCase("No data found"))
 				return ResponseEntity.status(500).body(e.getMessage());
 			else
-				return ResponseEntity.status(5000).body(e.getMessage());
+				return ResponseEntity.status(500).body(e.getMessage());
 		}
 	}
 
@@ -130,7 +130,7 @@ public class CustomerRelationshipSecondaryReports {
 			if (e.getMessage().equalsIgnoreCase("No data found"))
 				return ResponseEntity.status(500).body(e.getMessage());
 			else
-				return ResponseEntity.status(5000).body(e.getMessage());
+				return ResponseEntity.status(500).body(e.getMessage());
 		}
 	}
 
@@ -155,7 +155,7 @@ public class CustomerRelationshipSecondaryReports {
 			if (e.getMessage().equalsIgnoreCase("No data found"))
 				return ResponseEntity.status(500).body(e.getMessage());
 			else
-				return ResponseEntity.status(5000).body(e.getMessage());
+				return ResponseEntity.status(500).body(e.getMessage());
 		}
 
 	}
@@ -181,7 +181,7 @@ public class CustomerRelationshipSecondaryReports {
 			if (e.getMessage().equalsIgnoreCase("No data found"))
 				return ResponseEntity.status(500).body(e.getMessage());
 			else
-				return ResponseEntity.status(5000).body(e.getMessage());
+				return ResponseEntity.status(500).body(e.getMessage());
 		}
 	}
 
@@ -205,7 +205,7 @@ public class CustomerRelationshipSecondaryReports {
 			if (e.getMessage().equalsIgnoreCase("No data found"))
 				return ResponseEntity.status(500).body(e.getMessage());
 			else
-				return ResponseEntity.status(5000).body(e.getMessage());
+				return ResponseEntity.status(500).body(e.getMessage());
 		}
 	}
 
@@ -233,7 +233,7 @@ public class CustomerRelationshipSecondaryReports {
 			if (e.getMessage().equalsIgnoreCase("No data found"))
 				return ResponseEntity.status(500).body(e.getMessage());
 			else
-				return ResponseEntity.status(5000).body(e.getMessage());
+				return ResponseEntity.status(500).body(e.getMessage());
 		}
 	}
 
@@ -260,7 +260,7 @@ public class CustomerRelationshipSecondaryReports {
 			if (e.getMessage().equalsIgnoreCase("No data found"))
 				return ResponseEntity.status(500).body(e.getMessage());
 			else
-				return ResponseEntity.status(5000).body(e.getMessage());
+				return ResponseEntity.status(500).body(e.getMessage());
 		}
 	}
 
@@ -285,7 +285,7 @@ public class CustomerRelationshipSecondaryReports {
 			if (e.getMessage().equalsIgnoreCase("No data found"))
 				return ResponseEntity.status(500).body(e.getMessage());
 			else
-				return ResponseEntity.status(5000).body(e.getMessage());
+				return ResponseEntity.status(500).body(e.getMessage());
 		}
 	}
 
@@ -312,7 +312,7 @@ public class CustomerRelationshipSecondaryReports {
 			if (e.getMessage().equalsIgnoreCase("No data found"))
 				return ResponseEntity.status(500).body(e.getMessage());
 			else
-				return ResponseEntity.status(5000).body(e.getMessage());
+				return ResponseEntity.status(500).body(e.getMessage());
 		}
 	}
 
@@ -340,7 +340,7 @@ public class CustomerRelationshipSecondaryReports {
 			if (e.getMessage().equalsIgnoreCase("No data found"))
 				return ResponseEntity.status(500).body(e.getMessage());
 			else
-				return ResponseEntity.status(5000).body(e.getMessage());
+				return ResponseEntity.status(500).body(e.getMessage());
 		}
 	}
 
