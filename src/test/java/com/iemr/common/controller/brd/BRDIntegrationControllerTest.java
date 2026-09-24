@@ -39,6 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class BRDIntegrationControllerTest {
@@ -178,20 +179,19 @@ class BRDIntegrationControllerTest {
     @Test
     void shouldReturnErrorResponse_whenRequestBodyHasNullValues() throws Exception {
         String nullValuesRequestBody = "{\"startDate\":null, \"endDate\":null}";
-        String mockBrdDetails = "{\"data\":[]}";
 
-        OutputResponse expectedResponse = new OutputResponse();
-        expectedResponse.setResponse(mockBrdDetails);
+        OutputResponse expectedErrorResponse = new OutputResponse();
+        expectedErrorResponse.setError(5000, "Unable to get BRD data");
 
-        // JSONObject.getString() converts null to string "null"
-        when(integrationService.getData("null", "null")).thenReturn(mockBrdDetails);
-
+        // A JSON null is not a date string, so the request is rejected before the service.
         mockMvc.perform(post(BRD_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION_HEADER, BEARER_TOKEN)
                 .content(nullValuesRequestBody))
                 .andExpect(status().isOk())
-                .andExpect(content().json(expectedResponse.toStringWithSerializeNulls()));
+                .andExpect(content().json(expectedErrorResponse.toStringWithSerializeNulls()));
+
+        verifyNoInteractions(integrationService);
     }
 
     @Test
@@ -253,40 +253,38 @@ class BRDIntegrationControllerTest {
  @Test
     void shouldReturnErrorResponse_whenRequestBodyHasNumericValues() throws Exception {
         String numericValuesRequestBody = "{\"startDate\":20230101, \"endDate\":20230131}";
-        String mockBrdDetails = "{\"data\":[]}";
 
-        OutputResponse expectedResponse = new OutputResponse();
-        expectedResponse.setResponse(mockBrdDetails);
+        OutputResponse expectedErrorResponse = new OutputResponse();
+        expectedErrorResponse.setError(5000, "Unable to get BRD data");
 
-        // JSONObject.getString() converts numeric values to strings
-        when(integrationService.getData("20230101", "20230131")).thenReturn(mockBrdDetails);
-
+        // A bare number is not a date string, so the request is rejected before the service.
         mockMvc.perform(post(BRD_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION_HEADER, BEARER_TOKEN)
                 .content(numericValuesRequestBody))
                 .andExpect(status().isOk())
-                .andExpect(content().json(expectedResponse.toStringWithSerializeNulls()));
+                .andExpect(content().json(expectedErrorResponse.toStringWithSerializeNulls()));
+
+        verifyNoInteractions(integrationService);
     }
 
 
     @Test
     void shouldReturnErrorResponse_whenRequestBodyHasArrayValues() throws Exception {
         String arrayValuesRequestBody = "{\"startDate\":[\"2023-01-01\"], \"endDate\":[\"2023-01-31\"]}";
-        String mockBrdDetails = "{\"data\":[]}";
 
-        OutputResponse expectedResponse = new OutputResponse();
-        expectedResponse.setResponse(mockBrdDetails);
+        OutputResponse expectedErrorResponse = new OutputResponse();
+        expectedErrorResponse.setError(5000, "Unable to get BRD data");
 
-        // JSONObject.getString() converts array values to their string representation
-        when(integrationService.getData("[\"2023-01-01\"]", "[\"2023-01-31\"]")).thenReturn(mockBrdDetails);
-
+        // An array is not a date string, so the request is rejected before the service.
         mockMvc.perform(post(BRD_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION_HEADER, BEARER_TOKEN)
                 .content(arrayValuesRequestBody))
                 .andExpect(status().isOk())
-                .andExpect(content().json(expectedResponse.toStringWithSerializeNulls()));
+                .andExpect(content().json(expectedErrorResponse.toStringWithSerializeNulls()));
+
+        verifyNoInteractions(integrationService);
     }
 
     @Test
@@ -296,15 +294,16 @@ class BRDIntegrationControllerTest {
         OutputResponse expectedErrorResponse = new OutputResponse();
         expectedErrorResponse.setError(5000, "Unable to get BRD data");
 
-        // Service might throw exception due to special characters
-        when(integrationService.getData("2023-01-01", "2023-01-31\u0000")).thenThrow(new RuntimeException("Invalid characters"));
-
+        // The embedded control character makes the payload unparseable, so the request
+        // never reaches the service.
         mockMvc.perform(post(BRD_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(AUTHORIZATION_HEADER, BEARER_TOKEN)
                 .content(specialCharsRequestBody))
                 .andExpect(status().isOk())
                 .andExpect(content().json(expectedErrorResponse.toStringWithSerializeNulls()));
+
+        verifyNoInteractions(integrationService);
     }
 
     @Test

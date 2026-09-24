@@ -63,11 +63,11 @@ class DirectoryServiceImplTest {
         when(directoryRepository.findAciveDirectories()).thenReturn(mockResult);
 
         List<Directory> result = directoryService.getDirectories();
+        // The repository returns an unordered Set, so only the contents are asserted.
         assertEquals(2, result.size());
-        assertEquals(1, result.get(0).getInstituteDirectoryID());
-        assertEquals("TestDir", result.get(0).getInstituteDirectoryName());
-        assertEquals(2, result.get(1).getInstituteDirectoryID());
-        assertEquals("AnotherDir", result.get(1).getInstituteDirectoryName());
+        assertEquals(java.util.Map.of(1, "TestDir", 2, "AnotherDir"),
+                result.stream().collect(java.util.stream.Collectors.toMap(Directory::getInstituteDirectoryID,
+                        Directory::getInstituteDirectoryName)));
         verify(directoryRepository).findAciveDirectories();
     }
 
