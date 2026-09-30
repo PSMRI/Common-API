@@ -437,10 +437,12 @@ public class NotificationServiceImpl implements NotificationService
 	}
 
 	@Override
-	public String getEmergencyContacts(String request) throws IEMRException
+	public String getEmergencyContacts(String request) throws IEMRException, JsonMappingException, JsonProcessingException
 	{
 		List<EmergencyContacts> emergencyContacts = new ArrayList<EmergencyContacts>();
-		EmergencyContacts emergencyContactRequest = inputMapper.gson().fromJson(request, EmergencyContacts.class);
+		ObjectMapper objectMapper = new ObjectMapper();
+		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+		EmergencyContacts emergencyContactRequest = objectMapper.readValue(request, EmergencyContacts.class);
 		Integer providerServiceMapID = emergencyContactRequest.getProviderServiceMapID();
 		Integer notificationTypeID = emergencyContactRequest.getNotificationTypeID();
 		// emergencyContacts = emergencyContactsRepository.getEmergencyContacts(providerServiceMapID,
