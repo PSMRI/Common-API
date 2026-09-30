@@ -234,9 +234,6 @@ public class BeneficiaryCall {
 	@Expose
 	@Column(name = "InsName")
 	private String instName;
-
-	@Value("${cti-logger_base_url}")
-	private String loggerBaseURL;
 	
 	@Transient
 	@Expose
@@ -280,17 +277,6 @@ public class BeneficiaryCall {
 		this.beneficiaryRegID = beneficiaryRegID;
 		this.is1097 = is1097;
 		this.createdBy = createdBy;
-	}
-
-	public BeneficiaryCall(Long benCallID, Timestamp createdDate, String agentID, String callID, String recordingPath,
-			String archivePath) {
-		// String loggerBaseURL = ConfigProperties.getPropertyByName("cti-logger_base_url");
-		this.benCallID = benCallID;
-		this.createdDate = createdDate;
-		this.agentID = agentID;
-		this.callID = callID;
-		this.recordingPath = (recordingPath != null) ? (loggerBaseURL + "/" + recordingPath) : recordingPath;
-		this.archivePath = (archivePath != null) ? (loggerBaseURL + "/" + archivePath) : archivePath;
 	}
 
 	@Transient
