@@ -47,17 +47,17 @@ public class JwtUtil {
     }
 
     // Mobile login: token without PII in sub
-    public String generateSecureToken(String userId) {
-        return buildSecureToken(userId, "access", ACCESS_EXPIRATION_TIME);
+    public String generateSecureToken(String username,String userId) {
+        return buildSecureToken(username, userId, "access", ACCESS_EXPIRATION_TIME);
     }
 
-    public String generateSecureRefreshToken(String userId) {
-        return buildSecureToken(userId, "refresh", REFRESH_EXPIRATION_TIME);
+    public String generateSecureRefreshToken(String userName,String userId) {
+        return buildSecureToken(userName,userId, "refresh", REFRESH_EXPIRATION_TIME);
     }
 
-    private String buildSecureToken(String userId, String tokenType, long expiration) {
+    private String buildSecureToken(String userName ,String userId, String tokenType, long expiration) {
         return Jwts.builder()
-                .subject(userId)
+                .subject(userName)
                 .claim("userId", userId)
                 .claim("token_type", tokenType)
                 .id(UUID.randomUUID().toString())
