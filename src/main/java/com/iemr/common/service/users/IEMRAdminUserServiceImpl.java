@@ -26,6 +26,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
+import java.util.concurrent.CompletableFuture;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -469,7 +470,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 		int count = 0;
 		try {
 			if (isAdmin != null && isAdmin == true) {
-				updateCTIPasswordForUserV1(user.getUserID(), loginpass);
+				updateCTIPasswordInBackground(user.getUserID(), loginpass);
 				loginpass = securePassword.generateStrongPassword(loginpass);
 				count = iEMRUserRepositoryCustom.updateSetForgetPassword(user.getUserID(), loginpass);
 			} else {
@@ -477,7 +478,7 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 						.getSessionObjectForChangePassword((user.getUserID().toString() + user.getUserName()));
 				if (tokenFromRedis.equalsIgnoreCase(transactionId)) {
 
-					updateCTIPasswordForUserV1(user.getUserID(), loginpass);
+					updateCTIPasswordInBackground(user.getUserID(), loginpass);
 					loginpass = securePassword.generateStrongPassword(loginpass);
 					count = iEMRUserRepositoryCustom.updateSetForgetPassword(user.getUserID(), loginpass);
 					// Deleting transaction Id
@@ -598,6 +599,15 @@ public class IEMRAdminUserServiceImpl implements IEMRAdminUserService {
 		} catch (Exception e) {
 			logger.error("CTI updating user details failed with error " + e.getMessage(), e);
 		}
+	}
+
+	/**
+	 * Sends the new password to the CTI server without making the user wait: called from this class, so the
+	 * {@code @Async} of updateCTIPasswordForUserV1 is not applied (no proxy) and an unreachable CTI server held the
+	 * password screen until the network timeout - before the password was even saved.
+	 */
+	void updateCTIPasswordInBackground(Long userID, String password) {
+		CompletableFuture.runAsync(() -> updateCTIPasswordForUserV1(userID, password));
 	}
 
 	@Async
