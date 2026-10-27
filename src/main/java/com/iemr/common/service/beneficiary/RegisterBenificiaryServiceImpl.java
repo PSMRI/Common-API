@@ -240,12 +240,11 @@ public class RegisterBenificiaryServiceImpl implements RegisterBenificiaryServic
 
 					try {
 						logger.info("[SMS] Attempting to send welcome SMS to: " + phoneNo);
-						String smsResult = welcomeBenificarySmsService.sendWelcomeSMStoBenificiary(
+						welcomeBenificarySmsService.sendWelcomeSMStoBenificiary(
 								phoneNo,
 								beneficiaryName.trim(),
 								beneficiary.getBeneficiaryID()
 						);
-						logger.info("[SMS] Result: " + smsResult);
 					} catch (Exception smsError) {
 						// SMS failed but beneficiary is already created - don't fail the request
 						logger.warn("[SMS] Failed to send SMS: " + smsError.getMessage() +
