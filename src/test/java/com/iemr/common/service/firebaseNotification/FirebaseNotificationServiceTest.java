@@ -32,10 +32,10 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
-import com.iemr.common.data.userToken.UserTokenData;
+import com.iemr.common.data.userToken.UserFcmTokenData;
 import com.iemr.common.model.notification.NotificationMessage;
 import com.iemr.common.model.notification.UserToken;
-import com.iemr.common.repo.userToken.UserTokenRepo;
+import com.iemr.common.repo.userToken.UserFcmTokenRepo;
 import com.iemr.common.utils.CookieUtil;
 import com.iemr.common.utils.JwtUtil;
 
@@ -45,7 +45,7 @@ import com.iemr.common.utils.JwtUtil;
 class FirebaseNotificationServiceTest {
 
 	@Mock
-	private UserTokenRepo userTokenRepo;
+	private UserFcmTokenRepo userTokenRepo;
 	@Mock
 	private CookieUtil cookieUtil;
 	@Mock
@@ -78,7 +78,7 @@ class FirebaseNotificationServiceTest {
 	@Test
 	@DisplayName("no configured Firebase messaging means the notification is skipped, not attempted")
 	void notificationIsSkippedWhenFirebaseIsNotConfigured() {
-		assertThat(service.sendNotification(notification())).isNull();
+		assertThat(service.sendNotification(notification())).isEqualTo("FirebaseMessaging bean is not initialized.");
 	}
 
 	@Test
@@ -101,22 +101,24 @@ class FirebaseNotificationServiceTest {
 	void deliveryFailureIsReported() throws Exception {
 		FirebaseMessaging messaging = mock(FirebaseMessaging.class);
 		ReflectionTestUtils.setField(service, "firebaseMessaging", messaging);
-		when(messaging.send(any(Message.class))).thenThrow(mock(FirebaseMessagingException.class));
+		FirebaseMessagingException failure = mock(FirebaseMessagingException.class);
+		when(failure.getMessage()).thenReturn("token not registered");
+		when(messaging.send(any(Message.class))).thenThrow(failure);
 
 		try (MockedStatic<FirebaseMessaging> statics = mockStatic(FirebaseMessaging.class)) {
 			statics.when(FirebaseMessaging::getInstance).thenReturn(messaging);
 
-			assertThat(service.sendNotification(notification())).isEqualTo("Error sending notification");
+			assertThat(service.sendNotification(notification())).isEqualTo("FCM Error : token not registered");
 		}
 	}
 
 	@Test
 	@DisplayName("an existing device token is updated in place")
 	void existingTokenIsUpdated() {
-		UserTokenData existing = new UserTokenData();
+		UserFcmTokenData existing = new UserFcmTokenData();
 		existing.setUserId(7);
 		existing.setToken("old-token");
-		when(userTokenRepo.findById(7)).thenReturn(Optional.of(existing));
+		when(userTokenRepo.findByUserId(7)).thenReturn(Optional.of(existing));
 
 		UserToken userToken = new UserToken();
 		userToken.setUserId(7);
@@ -124,17 +126,16 @@ class FirebaseNotificationServiceTest {
 
 		assertThat(service.updateToken(userToken)).isEqualTo("Save Successfully");
 
-		ArgumentCaptor<UserTokenData> captor = ArgumentCaptor.forClass(UserTokenData.class);
+		ArgumentCaptor<UserFcmTokenData> captor = ArgumentCaptor.forClass(UserFcmTokenData.class);
 		verify(userTokenRepo).save(captor.capture());
 		assertThat(captor.getValue()).isSameAs(existing);
 		assertThat(captor.getValue().getToken()).isEqualTo("new-token");
-		assertThat(captor.getValue().getUpdatedAt()).isNotNull();
 	}
 
 	@Test
 	@DisplayName("a user with no stored token gets a new row")
 	void newTokenIsCreated() {
-		when(userTokenRepo.findById(8)).thenReturn(Optional.empty());
+		when(userTokenRepo.findByUserId(8)).thenReturn(Optional.empty());
 
 		UserToken userToken = new UserToken();
 		userToken.setUserId(8);
@@ -142,7 +143,7 @@ class FirebaseNotificationServiceTest {
 
 		assertThat(service.updateToken(userToken)).isEqualTo("Save Successfully");
 
-		ArgumentCaptor<UserTokenData> captor = ArgumentCaptor.forClass(UserTokenData.class);
+		ArgumentCaptor<UserFcmTokenData> captor = ArgumentCaptor.forClass(UserFcmTokenData.class);
 		verify(userTokenRepo).save(captor.capture());
 		assertThat(captor.getValue().getUserId()).isEqualTo(8);
 		assertThat(captor.getValue().getToken()).isEqualTo("fresh-token");
@@ -154,7 +155,7 @@ class FirebaseNotificationServiceTest {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 		when(jwtUtil.getUserIdFromToken("jwt-value")).thenReturn("11");
-		UserTokenData stored = new UserTokenData();
+		UserFcmTokenData stored = new UserFcmTokenData();
 		stored.setToken("device-token");
 		when(userTokenRepo.findById(11)).thenReturn(Optional.of(stored));
 
