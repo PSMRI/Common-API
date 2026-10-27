@@ -55,11 +55,11 @@ class SubDirectoryServiceImplTest {
         when(subDirectoryRepository.findAciveSubDirectories(10)).thenReturn(mockResult);
 
         List<SubDirectory> result = subDirectoryService.getSubDirectories(10);
+        // The repository returns an unordered Set, so only the contents are asserted.
         assertEquals(2, result.size());
-        assertEquals(1, result.get(0).getInstituteSubDirectoryID());
-        assertEquals("SubA", result.get(0).getInstituteSubDirectoryName());
-        assertEquals(2, result.get(1).getInstituteSubDirectoryID());
-        assertEquals("SubB", result.get(1).getInstituteSubDirectoryName());
+        assertEquals(java.util.Map.of(1, "SubA", 2, "SubB"),
+                result.stream().collect(java.util.stream.Collectors.toMap(SubDirectory::getInstituteSubDirectoryID,
+                        SubDirectory::getInstituteSubDirectoryName)));
         verify(subDirectoryRepository).findAciveSubDirectories(10);
     }
 

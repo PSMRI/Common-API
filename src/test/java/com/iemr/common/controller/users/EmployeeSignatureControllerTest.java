@@ -77,24 +77,30 @@ class EmployeeSignatureControllerTest {
     void fetchFile_shouldReturnSignature_whenSignatureExists() throws Exception {
         EmployeeSignature mockSignature = createTestSignature();
 
-        when(employeeSignatureServiceImpl.fetchSignature(TEST_USER_ID)).thenReturn(mockSignature);
+        when(employeeSignatureServiceImpl.fetchActiveSignature(TEST_USER_ID)).thenReturn(mockSignature);
 
+        // The signature is served as a download that must not be cached anywhere.
         mockMvc.perform(get(FETCH_SIGNATURE_URL, TEST_USER_ID)
                 .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.CONTENT_TYPE, TEST_FILE_TYPE))
-                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + TEST_FILE_NAME + "\""))
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"=?UTF-8?Q?" + TEST_FILE_NAME + "?=\"; filename*=UTF-8''"
+                                + TEST_FILE_NAME))
+                .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "no-store"))
                 .andExpect(content().bytes(TEST_SIGNATURE_BYTES));
     }
 
     @Test
-    void fetchFile_shouldReturnBadRequest_whenSignatureServiceThrowsException() throws Exception {
-        when(employeeSignatureServiceImpl.fetchSignature(TEST_USER_ID)).thenThrow(new RuntimeException("Service error"));
+    void fetchFile_shouldReturnBadRequest_whenSignatureServiceThrowsException() {
+        when(employeeSignatureServiceImpl.fetchActiveSignature(TEST_USER_ID))
+                .thenThrow(new RuntimeException("Service error"));
 
-        mockMvc.perform(get(FETCH_SIGNATURE_URL, TEST_USER_ID)
-                .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().bytes(new byte[] {})); // Expect empty byte array body
+        // The cause is deliberately hidden from the caller behind a generic message.
+        org.assertj.core.api.Assertions
+                .assertThatThrownBy(() -> mockMvc.perform(get(FETCH_SIGNATURE_URL, TEST_USER_ID)
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)))
+                .hasRootCauseMessage("Error while downloading file. Please contact administrator..");
     }
 
     @Test

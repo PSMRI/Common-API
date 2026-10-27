@@ -68,8 +68,8 @@ class NHM_AgentRealTimeDatacServiceImplTest {
 
     @Test
     void getData_ValidJsonArrayButParsingFails_ReturnsNull() throws IOException {
-        // Simulate a valid JSON array but ObjectMapper.readValue throws exception
-        String mockJsonResponse = "[{\"CampaignZ\":{\"LOGGED_IN\":1}}]";
+        // A JSON array whose campaign entry is not a map of counters cannot be mapped.
+        String mockJsonResponse = "[{\"CampaignZ\":\"not-a-counter-map\"}]";
         ResponseEntity<String> mockResponseEntity = ResponseEntity.ok(mockJsonResponse);
         String expectedJsonRequest = "{\"campaign_name\":\"all\"}";
         try (MockedConstruction<RestTemplate> mockedRestTemplateConstruction = mockConstruction(RestTemplate.class, (mockRestTemplateInstance, context) -> {
@@ -82,12 +82,9 @@ class NHM_AgentRealTimeDatacServiceImplTest {
             });
              MockedConstruction<Gson> mockedGsonConstruction = mockConstruction(Gson.class, (mockGsonInstance, context) -> {
                  doReturn(expectedJsonRequest).when(mockGsonInstance).toJson(any(NHMAgentRequest.class));
-             });
-             MockedConstruction<ObjectMapper> mockedObjectMapper = mockConstruction(ObjectMapper.class, (mockMapper, context) -> {
-                 doThrow(new IOException("parse error")).when(mockMapper).readValue(eq(mockJsonResponse), eq(ArrayList.class));
              })) {
             String result = nhmAgentRealTimeDatacService.getData();
-            assertNull(result, "Expected null when ObjectMapper.readValue throws after valid JSON array");
+            assertNull(result, "Expected null when the campaign payload cannot be read as counters");
             verifyNoInteractions(agentRealTimeDataRepo);
             verifyNoInteractions(log);
         }
@@ -95,7 +92,7 @@ class NHM_AgentRealTimeDatacServiceImplTest {
 
     @Test
     void getData_CampaignWithAllKeys_AllFieldsSet() throws IOException {
-        String mockJsonResponse = "[{\"FullCampaign\":{\"LOGGED_IN\":7,\"FREE\":6,\"IN_CALL\":5,\"AWT\":4,\"HOLD\":3,\"NOT_READY\":2,\"AUX\":1}}]";
+        String mockJsonResponse = "[{\"FullCampaign\":{\"Loggedin\":7,\"Free\":6,\"Incall\":5,\"AWT\":4,\"Hold\":3,\"Not Ready\":2,\"Aux\":1}}]";
         ResponseEntity<String> mockResponseEntity = ResponseEntity.ok(mockJsonResponse);
         String expectedJsonRequest = "{\"campaign_name\":\"all\"}";
         try (MockedConstruction<RestTemplate> mockedRestTemplateConstruction = mockConstruction(RestTemplate.class, (mockRestTemplateInstance, context) -> {
@@ -224,7 +221,7 @@ class NHM_AgentRealTimeDatacServiceImplTest {
 
     @Test
     void getData_CampaignWithExtraKeys_IgnoresExtra() throws IOException {
-        String mockJsonResponse = "[{\"CampaignY\":{\"LOGGED_IN\":1,\"EXTRA\":99}}]";
+        String mockJsonResponse = "[{\"CampaignY\":{\"Loggedin\":1,\"EXTRA\":99}}]";
         ResponseEntity<String> mockResponseEntity = ResponseEntity.ok(mockJsonResponse);
         String expectedJsonRequest = "{\"campaign_name\":\"all\"}";
         try (MockedConstruction<RestTemplate> mockedRestTemplateConstruction = mockConstruction(RestTemplate.class, (mockRestTemplateInstance, context) -> {
@@ -264,7 +261,7 @@ class NHM_AgentRealTimeDatacServiceImplTest {
 
     @Test
     void getData_MultipleCampaigns_AllSaved() throws IOException {
-        String mockJsonResponse = "[{\"Campaign1\":{\"LOGGED_IN\":2}},{\"Campaign2\":{\"FREE\":3}}]";
+        String mockJsonResponse = "[{\"Campaign1\":{\"Loggedin\":2}},{\"Campaign2\":{\"Free\":3}}]";
         ResponseEntity<String> mockResponseEntity = ResponseEntity.ok(mockJsonResponse);
         String expectedJsonRequest = "{\"campaign_name\":\"all\"}";
         try (MockedConstruction<RestTemplate> mockedRestTemplateConstruction = mockConstruction(RestTemplate.class, (mockRestTemplateInstance, context) -> {
@@ -339,7 +336,7 @@ class NHM_AgentRealTimeDatacServiceImplTest {
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Test
     void getData_Success_ValidResponse() throws IOException {
-        String mockJsonResponse = "[{\"Campaign1\":{\"LOGGED_IN\":10,\"FREE\":5,\"IN_CALL\":3,\"AWT\":2,\"HOLD\":0,\"NOT_READY\":0,\"AUX\":0}},{\"Campaign2\":{\"LOGGED_IN\":8,\"FREE\":4,\"IN_CALL\":2,\"AWT\":1,\"HOLD\":0,\"NOT_READY\":0,\"AUX\":0}}]";
+        String mockJsonResponse = "[{\"Campaign1\":{\"Loggedin\":10,\"Free\":5,\"Incall\":3,\"AWT\":2,\"Hold\":0,\"Not Ready\":0,\"Aux\":0}},{\"Campaign2\":{\"Loggedin\":8,\"Free\":4,\"Incall\":2,\"AWT\":1,\"Hold\":0,\"Not Ready\":0,\"Aux\":0}}]";
         ResponseEntity<String> mockResponseEntity = ResponseEntity.ok(mockJsonResponse);
         String expectedJsonRequest = "{\"campaign_name\":\"all\"}";
         try (MockedConstruction<RestTemplate> mockedRestTemplateConstruction = mockConstruction(RestTemplate.class, (mockRestTemplateInstance, context) -> {
@@ -487,9 +484,9 @@ class NHM_AgentRealTimeDatacServiceImplTest {
 
             String result = nhmAgentRealTimeDatacService.getData();
 
-            assertEquals(mockJsonResponse, result);
+            // A payload that is not a JSON array is rejected rather than passed on.
+            assertNull(result);
             verifyNoInteractions(agentRealTimeDataRepo);
-            // removed verification of readValue on ObjectMapper mock
             verifyNoInteractions(log);
         }
     }

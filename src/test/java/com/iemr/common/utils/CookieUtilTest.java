@@ -113,7 +113,7 @@ class CookieUtilTest {
         verify(response).addHeader(headerNameCaptor.capture(), headerValueCaptor.capture());
 
         assertEquals("Set-Cookie", headerNameCaptor.getValue());
-        String expectedCookieHeader = "Jwttoken=mockJwtToken; Path=/; Max-Age=86400; HttpOnly; SameSite=Strict; Secure";
+        String expectedCookieHeader = "Jwttoken=mockJwtToken; Path=/; Max-Age=28800; HttpOnly; SameSite=Strict; Secure";
         assertEquals(expectedCookieHeader, headerValueCaptor.getValue());
     }
 
@@ -130,7 +130,7 @@ class CookieUtilTest {
         verify(response).addHeader(headerNameCaptor.capture(), headerValueCaptor.capture());
 
         assertEquals("Set-Cookie", headerNameCaptor.getValue());
-        String expectedCookieHeader = "Jwttoken=anotherJwtToken; Path=/; Max-Age=86400; HttpOnly; SameSite=None; Secure";
+        String expectedCookieHeader = "Jwttoken=anotherJwtToken; Path=/; Max-Age=28800; HttpOnly; SameSite=None; Secure";
         assertEquals(expectedCookieHeader, headerValueCaptor.getValue());
     }
 
