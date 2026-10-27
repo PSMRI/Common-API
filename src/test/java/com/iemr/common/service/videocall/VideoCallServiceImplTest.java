@@ -107,78 +107,74 @@ public class VideoCallServiceImplTest {
 
     @Test
     public void testUpdateCallStatus_success() throws Exception {
-        when(videoCallMapper.updateRequestToVideoCall(any(UpdateCallRequest.class))).thenReturn(videoCallParameters);
-        when(videoCallParameters.getMeetingLink()).thenReturn("link123");
-        when(videoCallRepository.findByMeetingLink("link123")).thenReturn(videoCallParameters);
-        when(videoCallRepository.updateCallStatusByMeetingLink(eq("link123"), isNull(), isNull(), isNull())).thenReturn(1);
-        when(videoCallMapper.videoCallToResponse(any(VideoCallParameters.class))).thenReturn(new com.iemr.common.model.videocall.UpdateCallResponse());
-        when(videoCallRepository.save(any())).thenReturn(videoCallParameters);
+        VideoCallParameters updated = mock(VideoCallParameters.class);
+        when(updateCallRequest.getMeetingLink()).thenReturn("https://meet.jit.si/m=Ab3xQ9pK");
+        when(updateCallRequest.getCallStatus()).thenReturn("COMPLETED");
+        when(updateCallRequest.getCallDuration()).thenReturn("00:12:30");
+        when(updateCallRequest.getModifiedBy()).thenReturn("agent1");
+        when(updateCallRequest.getIsLinkUsed()).thenReturn(true);
+        when(videoCallRepository.findByMeetingLink("https://meet.jit.si/m=Ab3xQ9pK"))
+                .thenReturn(videoCallParameters, updated);
+        when(videoCallRepository.updateCallStatusAndRecording("https://meet.jit.si/m=Ab3xQ9pK", "COMPLETED",
+                "00:12:30", "agent1", true, "piramal-meeting-Ab3xQ9pK/piramal-meeting-Ab3xQ9pK.mp4")).thenReturn(1);
+        when(videoCallMapper.videoCallToResponse(updated))
+                .thenReturn(new com.iemr.common.model.videocall.UpdateCallResponse());
+
         String result = service.updateCallStatus(updateCallRequest);
+
         assertNotNull(result);
-        verify(videoCallRepository).save(any());
+        // The response reflects the row re-read after the update, not the one read before it.
+        verify(videoCallMapper).videoCallToResponse(updated);
+    }
+
+    @Test
+    public void testUpdateCallStatus_unknownMeetingLink() {
+        when(updateCallRequest.getMeetingLink()).thenReturn("https://meet.jit.si/m=missing");
+        when(videoCallRepository.findByMeetingLink("https://meet.jit.si/m=missing")).thenReturn(null);
+
+        Exception ex = assertThrows(Exception.class, () -> service.updateCallStatus(updateCallRequest));
+        assertEquals("No meeting found for link: https://meet.jit.si/m=missing", ex.getMessage());
     }
 
     @Test
     public void testUpdateCallStatus_failure() {
-        when(videoCallMapper.updateRequestToVideoCall(any(UpdateCallRequest.class))).thenReturn(videoCallParameters);
-        when(videoCallParameters.getMeetingLink()).thenReturn("link123");
-        when(videoCallRepository.findByMeetingLink("link123")).thenReturn(videoCallParameters);
-        when(videoCallRepository.updateCallStatusByMeetingLink(eq("link123"), isNull(), isNull(), isNull())).thenReturn(0);
+        when(updateCallRequest.getMeetingLink()).thenReturn("https://meet.jit.si/m=Ab3xQ9pK");
+        when(videoCallRepository.findByMeetingLink("https://meet.jit.si/m=Ab3xQ9pK")).thenReturn(videoCallParameters);
+        when(videoCallRepository.updateCallStatusAndRecording(anyString(), any(), any(), any(), anyBoolean(), any()))
+                .thenReturn(0);
+
         Exception ex = assertThrows(Exception.class, () -> service.updateCallStatus(updateCallRequest));
-        assertEquals("Failed to update the call status", ex.getMessage());
+        assertEquals("Failed to update the call status — 0 rows affected", ex.getMessage());
     }
 
     @Test
-    public void testSaveRecordingFile_success() throws Exception {
-        try (MockedStatic<ConfigProperties> configMock = mockStatic(ConfigProperties.class);
-             MockedStatic<Files> filesMock = mockStatic(Files.class)) {
-            configMock.when(() -> ConfigProperties.getPropertyByName("jibri.output.path")).thenReturn("/tmp/jibri");
-            configMock.when(() -> ConfigProperties.getPropertyByName("video.recording.path")).thenReturn("/tmp/recordings");
-            try (MockedConstruction<File> fileConstruction = mockConstruction(File.class, (mock, context) -> {
-                if (context.arguments().size() > 0 && "/tmp/jibri".equals(context.arguments().get(0))) {
-                    File matchingFile = mock(File.class);
-            
-                    when(matchingFile.toPath()).thenReturn(Path.of("/tmp/jibri/meeting123.mp4"));
-                    when(mock.exists()).thenReturn(true);
-                    when(mock.isDirectory()).thenReturn(true);
-                    when(mock.listFiles(any(java.io.FilenameFilter.class))).then(invocation -> {
-                        java.io.FilenameFilter filter = invocation.getArgument(0);
-                        if (filter.accept(mock, "meeting123.mp4")) {
-                            return new File[]{matchingFile};
-                        }
-                        return new File[0];
-                    });
-                }
-            })) {
-                filesMock.when(() -> Files.copy(any(Path.class), any(Path.class), any(java.nio.file.CopyOption[].class)))
-                        .thenReturn(Path.of("/tmp/recordings/meeting123.mp4"));
-                ReflectionTestUtils.invokeMethod(service, "saveRecordingFile", "meeting123");
-            }
-        }
+    public void testUpdateCallStatus_omittedLinkUsedDefaultsToUsed() throws Exception {
+        when(updateCallRequest.getMeetingLink()).thenReturn("https://meet.jit.si/m=Ab3xQ9pK");
+        when(updateCallRequest.getIsLinkUsed()).thenReturn(null);
+        when(videoCallRepository.findByMeetingLink("https://meet.jit.si/m=Ab3xQ9pK")).thenReturn(videoCallParameters);
+        when(videoCallRepository.updateCallStatusAndRecording(anyString(), any(), any(), any(), anyBoolean(), any()))
+                .thenReturn(1);
+        when(videoCallMapper.videoCallToResponse(any(VideoCallParameters.class)))
+                .thenReturn(new com.iemr.common.model.videocall.UpdateCallResponse());
+
+        service.updateCallStatus(updateCallRequest);
+
+        verify(videoCallRepository).updateCallStatusAndRecording(anyString(), any(), any(), any(), eq(true), any());
     }
 
     @Test
-    public void testSaveRecordingFile_noMatchingFile() throws Exception {
-        try (MockedStatic<ConfigProperties> configMock = mockStatic(ConfigProperties.class)) {
-            configMock.when(() -> ConfigProperties.getPropertyByName("jibri.output.path")).thenReturn("/tmp/jibri");
-            configMock.when(() -> ConfigProperties.getPropertyByName("video.recording.path")).thenReturn("/tmp/recordings");
-            try (MockedConstruction<File> fileConstruction = mockConstruction(File.class, (mock, context) -> {
-                if (context.arguments().size() > 0 && "/tmp/jibri".equals(context.arguments().get(0))) {
-                    File nonMatchingFile = mock(File.class);
-                    when(mock.exists()).thenReturn(true);
-                    when(mock.isDirectory()).thenReturn(true);
-                    when(mock.listFiles(any(java.io.FilenameFilter.class))).then(invocation -> {
-                        java.io.FilenameFilter filter = invocation.getArgument(0);
-                        if (filter.accept(mock, "otherfile.mp4")) {
-                            return new File[]{nonMatchingFile};
-                        }
-                        return new File[0];
-                    });
-                }
-            })) {
-                ReflectionTestUtils.invokeMethod(service, "saveRecordingFile", "meeting123");
-            }
-        }
+    public void testUpdateCallStatus_meetingLinkWithoutSlugMarkerHasNoRecording() throws Exception {
+        when(updateCallRequest.getMeetingLink()).thenReturn("https://meet.jit.si/plain-room");
+        when(videoCallRepository.findByMeetingLink("https://meet.jit.si/plain-room")).thenReturn(videoCallParameters);
+        when(videoCallRepository.updateCallStatusAndRecording(anyString(), any(), any(), any(), anyBoolean(), any()))
+                .thenReturn(1);
+        when(videoCallMapper.videoCallToResponse(any(VideoCallParameters.class)))
+                .thenReturn(new com.iemr.common.model.videocall.UpdateCallResponse());
+
+        service.updateCallStatus(updateCallRequest);
+
+        verify(videoCallRepository).updateCallStatusAndRecording(anyString(), any(), any(), any(), anyBoolean(),
+                isNull());
     }
 
     @Test
@@ -246,32 +242,4 @@ public class VideoCallServiceImplTest {
                 "piramal-meeting-Ab3xQ9pK", "Guest", "admin@piramalswasthya.org", false);
     }
 
-    @Test
-    public void testSaveRecordingFile_ioException() throws Exception {
-        try (MockedStatic<ConfigProperties> configMock = mockStatic(ConfigProperties.class);
-             MockedStatic<Files> filesMock = mockStatic(Files.class)) {
-            configMock.when(() -> ConfigProperties.getPropertyByName("jibri.output.path")).thenReturn("/tmp/jibri");
-            configMock.when(() -> ConfigProperties.getPropertyByName("video.recording.path")).thenReturn("/tmp/recordings");
-            try (MockedConstruction<File> fileConstruction = mockConstruction(File.class, (mock, context) -> {
-                if (context.arguments().size() > 0 && "/tmp/jibri".equals(context.arguments().get(0))) {
-                    File matchingFile = mock(File.class);
-                   
-                    when(matchingFile.toPath()).thenReturn(Path.of("/tmp/jibri/meeting123.mp4"));
-                    when(mock.exists()).thenReturn(true);
-                    when(mock.isDirectory()).thenReturn(true);
-                    when(mock.listFiles(any(java.io.FilenameFilter.class))).then(invocation -> {
-                        java.io.FilenameFilter filter = invocation.getArgument(0);
-                        if (filter.accept(mock, "meeting123.mp4")) {
-                            return new File[]{matchingFile};
-                        }
-                        return new File[0];
-                    });
-                }
-            })) {
-                filesMock.when(() -> Files.copy(any(Path.class), any(Path.class), any(java.nio.file.CopyOption[].class)))
-                        .thenThrow(new IOException("fail"));
-                ReflectionTestUtils.invokeMethod(service, "saveRecordingFile", "meeting123");
-            }
-        }
-    }
 }

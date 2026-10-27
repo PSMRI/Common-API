@@ -21,38 +21,43 @@
 */
 package com.iemr.common.controller.version;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/** Covers the /version endpoint that reports the build's git metadata. */
 class VersionControllerTest {
 
-    @Test
-    void shouldReturnVersionInformation_whenGitPropertiesExists() throws Exception {
-        // Create a standalone MockMvc instance without Spring Boot context
-        VersionController controller = new VersionController();
-        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
-        
-        mockMvc.perform(get("/version"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType("text/plain;charset=ISO-8859-1"))
-                .andExpect(jsonPath("$.data").exists()) // The git properties content should be in data field
-                .andExpect(jsonPath("$.statusCode").value(200))
-                .andExpect(jsonPath("$.status").value("Success"));
-    }
+	private MockMvc mockMvc;
 
-    @Test
-    void shouldReturnError_whenGitPropertiesDoesNotExist() throws Exception {
-        // Create a standalone MockMvc instance without Spring Boot context
-        VersionController controller = new VersionController();
-        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
-        
-        mockMvc.perform(get("/version"))
-                .andExpect(status().isOk()) // Controller returns 200 OK even on error
-                .andExpect(content().contentType("text/plain;charset=ISO-8859-1"))
-                .andExpect(jsonPath("$.statusCode").exists())
-                .andExpect(jsonPath("$.status").exists());
-    }
+	@BeforeEach
+	void setUp() {
+		mockMvc = MockMvcBuilders.standaloneSetup(new VersionController()).build();
+	}
+
+	@Test
+	@DisplayName("the git metadata on the classpath is reported as JSON")
+	void gitMetadataIsReported() throws Exception {
+		mockMvc.perform(get("/version")).andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.branch").value("main")).andExpect(jsonPath("$.commitHash").exists())
+				.andExpect(jsonPath("$.version").exists()).andExpect(jsonPath("$.buildTimestamp").exists());
+	}
+
+	@Test
+	@DisplayName("metadata the build did not record is reported as unknown rather than omitted")
+	void missingEntriesAreReportedAsUnknown() throws Exception {
+		// The test classpath's git.properties carries no build time or version.
+		mockMvc.perform(get("/version")).andExpect(status().isOk())
+				.andExpect(jsonPath("$.buildTimestamp").value("unknown"))
+				.andExpect(jsonPath("$.version").value("unknown"));
+	}
 }
