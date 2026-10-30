@@ -95,7 +95,7 @@ class JwtUtilTest {
 		@Test
 		@DisplayName("a secure token uses the user id as its subject")
 		void secureTokenSubjectIsTheUserId() {
-			Claims claims = jwtUtil.getAllClaimsFromToken(jwtUtil.generateSecureToken("42"));
+			Claims claims = jwtUtil.getAllClaimsFromToken(jwtUtil.generateSecureToken("","42"));
 
 			assertThat(claims.getSubject()).isEqualTo("42");
 			assertThat(claims.get("token_type", String.class)).isEqualTo("access");
@@ -104,7 +104,7 @@ class JwtUtilTest {
 		@Test
 		@DisplayName("a secure refresh token uses the user id as its subject")
 		void secureRefreshTokenSubjectIsTheUserId() {
-			Claims claims = jwtUtil.getAllClaimsFromToken(jwtUtil.generateSecureRefreshToken("42"));
+			Claims claims = jwtUtil.getAllClaimsFromToken(jwtUtil.generateSecureToken("","42"));
 
 			assertThat(claims.getSubject()).isEqualTo("42");
 			assertThat(claims.get("token_type", String.class)).isEqualTo("refresh");
