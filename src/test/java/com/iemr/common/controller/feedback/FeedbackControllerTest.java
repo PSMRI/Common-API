@@ -96,22 +96,18 @@ class FeedbackControllerTest {
         // Arrange
         String requestJson = "{\"beneficiaryRegID\":123}";
         List<FeedbackDetails> mockFeedbackList = Arrays.asList(new FeedbackDetails(), new FeedbackDetails());
-        
-        // Mock for any scenario since JSON parsing will fail due to module restrictions
-        // Using lenient() because this mock won't be called due to JSON parsing error
-        lenient().when(feedbackService.getFeedbackRequests(any())).thenReturn(mockFeedbackList);
+
+        when(feedbackService.getFeedbackRequests(123L)).thenReturn(mockFeedbackList);
 
         // Act & Assert
-        // Note: This test expects 5000 status code due to Java module system restrictions
-        // with Gson trying to access private fields in SimpleDateFormat
         mockMvc.perform(post("/feedback/beneficiaryRequests")
                 .header("Authorization", "Bearer test-token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestJson))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode").value(5000))
-                .andExpect(jsonPath("$.status").value(containsString("Failed making field")))
-                .andExpect(jsonPath("$.errorMessage").exists());
+                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").value("Success"))
+                .andExpect(jsonPath("$.data").exists());
     }
 
     // Test for POST /feedback/getfeedback/{feedbackID}
@@ -155,22 +151,18 @@ class FeedbackControllerTest {
         // Arrange
         String requestJson = "{\"beneficiaryRegID\":123}";
         List<FeedbackDetails> mockFeedbackList = Arrays.asList(new FeedbackDetails());
-        
-        // Mock for any scenario since JSON parsing will fail due to module restrictions
-        // Using lenient() because this mock won't be called due to JSON parsing error
-        lenient().when(feedbackService.getFeedbackRequests(any())).thenReturn(mockFeedbackList);
+
+        when(feedbackService.getFeedbackRequests(123L)).thenReturn(mockFeedbackList);
 
         // Act & Assert
-        // Note: This test expects 5000 status code due to Java module system restrictions
-        // with Gson trying to access private fields in SimpleDateFormat
         mockMvc.perform(post("/feedback/feedbacksList")
                 .header("Authorization", "Bearer test-token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestJson))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.statusCode").value(5000))
-                .andExpect(jsonPath("$.status").value(containsString("Failed making field")))
-                .andExpect(jsonPath("$.errorMessage").exists());
+                .andExpect(jsonPath("$.statusCode").value(200))
+                .andExpect(jsonPath("$.status").value("Success"))
+                .andExpect(jsonPath("$.data").exists());
     }
 
     // Test for POST /feedback/getFeedback
