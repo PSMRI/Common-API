@@ -33,5 +33,8 @@ public class FormFieldOption {
     @Column(name = "sort_order")
     private Integer sortOrder;
 
+    @Column(name = "owner_module")
+    private String  ownerModule;
+
     // getters/setters
 }
