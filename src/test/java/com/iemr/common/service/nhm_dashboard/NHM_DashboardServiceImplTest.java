@@ -119,6 +119,8 @@ class NHM_DashboardServiceImplTest {
     void setUp() {
         ReflectionTestUtils.setField(NHM_DashboardServiceImpl.class, "httpUtils", httpUtils);
         ReflectionTestUtils.setField(nhmDashboardService, "logger", mockLogger);
+        // The CTI host is injected rather than read from ConfigProperties.
+        ReflectionTestUtils.setField(nhmDashboardService, "serverURL", "192.168.1.100");
     }
 
     @Test

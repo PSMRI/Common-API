@@ -185,47 +185,117 @@ public class KMFileManagerServiceImplTest {
     }
 
     @Test
-    public void testAddKMFileIterable_fullBranchCoverage() throws Exception {
-        // Use Mockito's inline mock maker for static mocking if available
-        KMFileManagerServiceImpl impl = spy(new KMFileManagerServiceImpl());
+    public void testAddKMFileIterable_uploadsAndRecordsTheDocument() throws Exception {
+        java.nio.file.Path tempDir = java.nio.file.Files.createTempDirectory("km-upload");
+        KMFileManagerServiceImpl impl = new KMFileManagerServiceImpl();
         KMFileManagerRepository repo = mock(KMFileManagerRepository.class);
         KMService kmService = mock(KMService.class);
         SubCategoryRepository subRepo = mock(SubCategoryRepository.class);
         impl.setKmFileManagerRepository(repo);
         impl.setKmService(kmService);
         impl.setSubCategoryRepository(subRepo);
+        org.springframework.test.util.ReflectionTestUtils.setField(impl, "tempFilePath", tempDir.toString());
+        org.springframework.test.util.ReflectionTestUtils.setField(impl, "allowedFileExtensions", "txt,pdf");
 
-        // Mock static ConfigProperties.getPropertyByName and DigestUtils.md5DigestAsHex overloads
-        try (var configMock = mockStatic(com.iemr.common.utils.config.ConfigProperties.class);
-             var digestMock = mockStatic(org.springframework.util.DigestUtils.class)) {
-            configMock.when(() -> com.iemr.common.utils.config.ConfigProperties.getPropertyByName(anyString())).thenReturn("/tmp");
-            digestMock.when(() -> org.springframework.util.DigestUtils.md5DigestAsHex(any(byte[].class))).thenReturn("checksum");
-            digestMock.when(() -> org.springframework.util.DigestUtils.md5DigestAsHex(any(java.io.InputStream.class))).thenReturn("checksum");
+        KMFileManager km = new KMFileManager();
+        km.setFileName("test.txt");
+        km.setFileExtension(".txt");
+        km.setProviderServiceMapID(1);
+        km.setFileContent(Base64.getEncoder().encodeToString("abc".getBytes()));
+        km.setCategoryID(2);
+        km.setSubCategoryID(3);
+        km.setVanID(4);
 
-            KMFileManager km = mock(KMFileManager.class);
-            when(km.getFileName()).thenReturn("test.txt");
-            when(km.getProviderServiceMapID()).thenReturn(1);
-            when(km.getFileContent()).thenReturn(Base64.getEncoder().encodeToString("abc".getBytes()));
-            when(km.getCategoryID()).thenReturn(2);
-            when(km.getSubCategoryID()).thenReturn(3);
-            when(km.getVanID()).thenReturn(4);
-            // Do NOT use doNothing for setFileCheckSum, setKmUploadStatus, setVersionNo, setFileUID, or setSubCategoryID, as they may not be void. If needed, stub with when(...).thenReturn(...)
-            // getFileCheckSum, getKmUploadStatus, getVersionNo, getFileUID, getValidFrom, getValidUpto, getDeleted, getModifiedBy, getKmFileManagerID, getFileExtension
-            // getFileName again for documentPath
-            when(km.getFileName()).thenReturn("test.txt");
-            // kmService.createDocument
-            when(kmService.createDocument(anyString(), anyString())).thenReturn("uuid");
-            // repo.save
-            when(repo.save(any())).thenReturn(km);
-            // Do NOT use doNothing for subRepo.updateFilePath, as it may not be void. If needed, stub with when(...).thenReturn(...)
+        when(repo.getKMFileByFileName(1, "test.txt")).thenReturn(new ArrayList<>());
+        when(kmService.createDocument("1/2/3/4/V1/test.txt", tempDir + "/test.txt")).thenReturn("uuid");
+        when(repo.save(km)).thenReturn(km);
 
-            ArrayList<KMFileManager> input = new ArrayList<>();
-            input.add(km);
-            // The method is private, so use reflection
-            java.lang.reflect.Method m = KMFileManagerServiceImpl.class.getDeclaredMethod("addKMFile", Iterable.class);
-            m.setAccessible(true);
-            Object result = m.invoke(impl, input);
-            assertNotNull(result);
-        }
+        java.lang.reflect.Method m = KMFileManagerServiceImpl.class.getDeclaredMethod("addKMFile", Iterable.class);
+        m.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        ArrayList<KMFileManager> result = (ArrayList<KMFileManager>) m.invoke(impl, List.of(km));
+
+        assertEquals(1, result.size());
+        assertEquals("uuid", km.getFileUID());
+        assertEquals("V1", km.getVersionNo());
+        assertNotNull(km.getFileCheckSum());
+        verify(subRepo).updateFilePath(3, "uuid");
+    }
+
+    @Test
+    public void testAddKMFileIterable_rejectsAnExtensionThatIsNotAllowed() throws Exception {
+        java.nio.file.Path tempDir = java.nio.file.Files.createTempDirectory("km-upload");
+        KMFileManagerServiceImpl impl = new KMFileManagerServiceImpl();
+        KMFileManagerRepository repo = mock(KMFileManagerRepository.class);
+        KMService kmService = mock(KMService.class);
+        impl.setKmFileManagerRepository(repo);
+        impl.setKmService(kmService);
+        impl.setSubCategoryRepository(mock(SubCategoryRepository.class));
+        org.springframework.test.util.ReflectionTestUtils.setField(impl, "tempFilePath", tempDir.toString());
+        org.springframework.test.util.ReflectionTestUtils.setField(impl, "allowedFileExtensions", "txt");
+
+        KMFileManager km = new KMFileManager();
+        km.setFileName("payload.exe");
+        km.setFileExtension("exe");
+        km.setProviderServiceMapID(1);
+        km.setFileContent(Base64.getEncoder().encodeToString("abc".getBytes()));
+
+        java.lang.reflect.Method m = KMFileManagerServiceImpl.class.getDeclaredMethod("addKMFile", Iterable.class);
+        m.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        ArrayList<KMFileManager> result = (ArrayList<KMFileManager>) m.invoke(impl, List.of(km));
+
+        assertTrue(result.isEmpty());
+        verifyNoInteractions(kmService);
+    }
+
+    @Test
+    public void testAddKMFileIterable_rejectsAnExtensionThatDoesNotMatchTheFileName() throws Exception {
+        java.nio.file.Path tempDir = java.nio.file.Files.createTempDirectory("km-upload");
+        KMFileManagerServiceImpl impl = new KMFileManagerServiceImpl();
+        KMService kmService = mock(KMService.class);
+        impl.setKmFileManagerRepository(mock(KMFileManagerRepository.class));
+        impl.setKmService(kmService);
+        impl.setSubCategoryRepository(mock(SubCategoryRepository.class));
+        org.springframework.test.util.ReflectionTestUtils.setField(impl, "tempFilePath", tempDir.toString());
+        org.springframework.test.util.ReflectionTestUtils.setField(impl, "allowedFileExtensions", "txt,pdf");
+
+        KMFileManager km = new KMFileManager();
+        km.setFileName("report.pdf");
+        km.setFileExtension("txt");
+        km.setProviderServiceMapID(1);
+        km.setFileContent(Base64.getEncoder().encodeToString("abc".getBytes()));
+
+        java.lang.reflect.Method m = KMFileManagerServiceImpl.class.getDeclaredMethod("addKMFile", Iterable.class);
+        m.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        ArrayList<KMFileManager> result = (ArrayList<KMFileManager>) m.invoke(impl, List.of(km));
+
+        assertTrue(result.isEmpty());
+        verifyNoInteractions(kmService);
+    }
+
+    @Test
+    public void testAddKMFileIterable_withNoAllowedExtensionsConfigured() throws Exception {
+        KMFileManagerServiceImpl impl = new KMFileManagerServiceImpl();
+        KMService kmService = mock(KMService.class);
+        impl.setKmFileManagerRepository(mock(KMFileManagerRepository.class));
+        impl.setKmService(kmService);
+        impl.setSubCategoryRepository(mock(SubCategoryRepository.class));
+
+        KMFileManager km = new KMFileManager();
+        km.setFileName("test.txt");
+        km.setFileExtension("txt");
+        km.setProviderServiceMapID(1);
+        km.setFileContent(Base64.getEncoder().encodeToString("abc".getBytes()));
+
+        java.lang.reflect.Method m = KMFileManagerServiceImpl.class.getDeclaredMethod("addKMFile", Iterable.class);
+        m.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        ArrayList<KMFileManager> result = (ArrayList<KMFileManager>) m.invoke(impl, List.of(km));
+
+        // The misconfiguration is logged and no file is uploaded.
+        assertTrue(result.isEmpty());
+        verifyNoInteractions(kmService);
     }
 }

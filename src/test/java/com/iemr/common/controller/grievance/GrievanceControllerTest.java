@@ -179,9 +179,12 @@ class GrievanceControllerTest {
         when(grievanceHandlingService.getFormattedGrievanceData(anyString()))
                 .thenThrow(serviceException);
 
-        // The controller returns statusCode 500 and errorMessage "Error" for generic exceptions
+        // A failure is reported as a single placeholder row carrying the cause, so the
+        // frontend has something to show rather than an empty worklist.
         String expectedJson = "{"
-                + "\"data\":[],"
+                + "\"data\":[{"
+                + "\"complaint\":\"Error fetching grievance data\","
+                + "\"subjectOfComplaint\":\"Failed to fetch data\"}],"
                 + "\"statusCode\":500,"
                 + "\"errorMessage\":\"Failed to fetch data\","
                 + "\"status\":\"Error\""

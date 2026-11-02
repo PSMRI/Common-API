@@ -53,12 +53,35 @@ class EAusadhaServiceImplTest {
     private ItemStockEntryRepo itemStockEntryRepo;
     @InjectMocks
     private EAusadhaServiceImpl service;
-    @Mock
-    private RestTemplate restTemplate;
+
+    private AutoCloseable mocks;
 
     @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
+    void setUp() throws Exception {
+        mocks = MockitoAnnotations.openMocks(this);
+        setField("authorization", "auth");
+        setField("eAusadhaUrl", "http://eausadha.test/stock");
+    }
+
+    private void setField(String name, Object value) throws Exception {
+        java.lang.reflect.Field field = EAusadhaServiceImpl.class.getDeclaredField(name);
+        field.setAccessible(true);
+        field.set(service, value);
+    }
+
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() throws Exception {
+        mocks.close();
+    }
+
+    /**
+     * The service builds its own {@link RestTemplate}, so the gateway is stubbed by
+     * intercepting that construction rather than by injecting a mock.
+     */
+    private org.mockito.MockedConstruction<RestTemplate> gatewayReturning(ResponseEntity<String> response) {
+        return mockConstruction(RestTemplate.class,
+                (mock, context) -> when(mock.exchange(anyString(), any(), any(), eq(String.class)))
+                        .thenReturn(response));
     }
 
     @Test
@@ -78,22 +101,25 @@ class EAusadhaServiceImplTest {
         arr.put(obj);
 
         ResponseEntity<String> response = new ResponseEntity<>(arr.toString(), HttpStatus.OK);
-        when(restTemplate.exchange(anyString(), any(), any(), eq(String.class))).thenReturn(response);
 
         ItemMaster itemMaster = mock(ItemMaster.class);
         when(itemMaster.getItemID()).thenReturn(100);
         when(itemMasterRepo.findByItemCode("D1")).thenReturn(Collections.singletonList(itemMaster));
         when(itemStockEntryRepo.getItemStocks(100, "B1")).thenReturn(null);
-        ItemStockEntry itemStockEntry = mock(ItemStockEntry.class);
-        when(itemStockEntry.getItemStockEntryID()).thenReturn(200);
-        doNothing().when(itemStockEntryRepo).updateVanSerialNo(anyInt());
-        // Set authorization field to match service usage
-        java.lang.reflect.Field authField = EAusadhaServiceImpl.class.getDeclaredField("authorization");
-        authField.setAccessible(true);
-        authField.set(service, "auth");
+        // JPA assigns the generated id on the instance that was passed in, so the
+        // follow-up van-serial update sees it.
+        when(itemStockEntryRepo.save(any(ItemStockEntry.class))).thenAnswer(invocation -> {
+            ItemStockEntry entry = invocation.getArgument(0);
+            entry.setItemStockEntryID(200);
+            return entry;
+        });
 
-        String result = service.createEAusadha(dto, "auth");
-        assertTrue(result.contains("Stock entered Successfully"));
+        try (org.mockito.MockedConstruction<RestTemplate> gateway = gatewayReturning(response)) {
+            String result = service.createEAusadha(dto, "auth");
+
+            assertTrue(result.contains("Stock entered Successfully"));
+            verify(itemStockEntryRepo).updateVanSerialNo(200);
+        }
     }
 
     @Test
@@ -113,15 +139,13 @@ class EAusadhaServiceImplTest {
         arr.put(obj);
 
         ResponseEntity<String> response = new ResponseEntity<>(arr.toString(), HttpStatus.OK);
-        when(restTemplate.exchange(anyString(), any(), any(), eq(String.class))).thenReturn(response);
 
         when(itemMasterRepo.findByItemCode("D1")).thenReturn(Collections.emptyList());
 
-        java.lang.reflect.Field authField = EAusadhaServiceImpl.class.getDeclaredField("authorization");
-        authField.setAccessible(true);
-        authField.set(service, "auth");
-        Exception ex = assertThrows(Exception.class, () -> service.createEAusadha(dto, "auth"));
-        assertTrue(ex.getMessage().contains("Error while entering the stocks"));
+        try (org.mockito.MockedConstruction<RestTemplate> gateway = gatewayReturning(response)) {
+            Exception ex = assertThrows(Exception.class, () -> service.createEAusadha(dto, "auth"));
+            assertTrue(ex.getMessage().contains("Error while entering the stocks"));
+        }
     }
 
     @Test
@@ -132,13 +156,11 @@ class EAusadhaServiceImplTest {
         when(facilityRepo.fetchInstitutionId(1)).thenReturn("INST1");
 
         ResponseEntity<String> response = new ResponseEntity<>("", HttpStatus.BAD_REQUEST);
-        when(restTemplate.exchange(anyString(), any(), any(), eq(String.class))).thenReturn(response);
 
-        java.lang.reflect.Field authField = EAusadhaServiceImpl.class.getDeclaredField("authorization");
-        authField.setAccessible(true);
-        authField.set(service, "auth");
-        Exception ex = assertThrows(Exception.class, () -> service.createEAusadha(dto, "auth"));
-        assertTrue(ex.getMessage().contains("Error while getting stock response"));
+        try (org.mockito.MockedConstruction<RestTemplate> gateway = gatewayReturning(response)) {
+            Exception ex = assertThrows(Exception.class, () -> service.createEAusadha(dto, "auth"));
+            assertTrue(ex.getMessage().contains("Error while getting stock response"));
+        }
     }
 
     @Test

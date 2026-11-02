@@ -183,17 +183,19 @@ class VideoCallControllerTest {
         request.setMeetingLink("test_meeting_link");
         request.setCallStatus("COMPLETED");
         String errorMessage = "Database error during update";
-        OutputResponse expectedOutputResponse = new OutputResponse();
-        expectedOutputResponse.setError(new RuntimeException(errorMessage));
 
         when(videoCallService.updateCallStatus(any(UpdateCallRequest.class))).thenThrow(new RuntimeException(errorMessage));
 
+        // The error envelope stamps the current time into its message, so the assertion
+        // matches on the parts that do not move.
         mockMvc.perform(post("/video-consultation/update-call-status")
                 .header("Authorization", "Bearer dummy_token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk()) // Controller returns 200 OK even on error, with error in body
-                .andExpect(content().json(expectedOutputResponse.toString()));
+                .andExpect(jsonPath("$.statusCode").value(5000))
+                .andExpect(jsonPath("$.status").value(org.hamcrest.Matchers.containsString(errorMessage)))
+                .andExpect(jsonPath("$.errorMessage").value(org.hamcrest.Matchers.containsString(errorMessage)));
 
         verify(videoCallService, times(1)).updateCallStatus(any(UpdateCallRequest.class));
     }

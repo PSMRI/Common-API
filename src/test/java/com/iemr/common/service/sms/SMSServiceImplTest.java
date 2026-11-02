@@ -205,12 +205,12 @@ public class SMSServiceImplTest {
         request.setSmsParameterMaps(Arrays.asList(new SMSParameterMapModel()));
         
         SMSTemplate template = createSampleSMSTemplate();
-        SMSTemplateResponse response = new SMSTemplateResponse();
-        
+
         when(smsMapper.createRequestToSMSTemplate(request)).thenReturn(template);
         when(smsTemplateRepository.save(template)).thenReturn(template);
-        when(smsTemplateRepository.findBySmsTemplateID(1)).thenReturn(template);
-        when(smsMapper.smsTemplateToResponse(template)).thenReturn(response);
+        when(smsTemplateRepository.findBySmsTemplateID(template.getSmsTemplateID())).thenReturn(template);
+        when(smsMapper.smsTemplateToDTO(template))
+                .thenReturn(new com.iemr.common.dto.sms.SMSTemplateDTO());
         when(smsMapper.smsParameterMapModelToSMSParametersMap(any(SMSParameterMapModel.class))).thenReturn(new SMSParametersMap());
         
         String result = smsService.saveSMSTemplate(request);
@@ -984,9 +984,18 @@ public class SMSServiceImplTest {
         BeneficiaryModel beneficiary = new BeneficiaryModel();
         beneficiary.setFirstName("John");
         beneficiary.setPhoneNo("1234567890");
-        beneficiary.setGenderName("Male");
+        beneficiary.setGenderID(1);
+        com.iemr.common.model.userbeneficiary.GenderModel gender =
+                new com.iemr.common.model.userbeneficiary.GenderModel();
+        gender.setGenderName("Male");
+        // The "gender" case reads the name off the mapped gender entity, gated on genderID.
+        beneficiary.setM_gender(gender);
         beneficiary.setAge(25);
-        beneficiary.setBenPhoneMaps(new ArrayList<>()); // Fix NullPointer
+        com.iemr.common.model.beneficiary.BenPhoneMapModel phoneMap =
+                new com.iemr.common.model.beneficiary.BenPhoneMapModel();
+        phoneMap.setPhoneNo("1234567890");
+        // getBeneficiaryData reads "phoneno" off the phone map list, not the flat field.
+        beneficiary.setBenPhoneMaps(new ArrayList<>(Arrays.asList(phoneMap)));
         
         // Use reflection to test private method
         java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getBeneficiaryData", 
@@ -1009,9 +1018,42 @@ public class SMSServiceImplTest {
         result = (String) method.invoke(smsService, "className", "age", request, beneficiary);
         assertEquals("25", result);
         
-        // Test default case
-        result = (String) method.invoke(smsService, "className", "unknown", request, beneficiary);
-        assertEquals("", result);
+        // Test default case: an unrecognised parameter name is resolved reflectively off the
+        // named data class, so a real class and getter round-trips the value.
+        beneficiary.setBeneficiaryID("BEN-42");
+        result = (String) method.invoke(smsService, "com.iemr.common.model.beneficiary.BeneficiaryModel",
+                "BeneficiaryID", request, beneficiary);
+        assertEquals("BEN-42", result);
+    }
+
+    @Test
+    void testGetBeneficiaryData_UnknownDataClassIsRejected() throws Exception {
+        SMSRequest request = createSampleSMSRequest();
+        BeneficiaryModel beneficiary = new BeneficiaryModel();
+
+        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getBeneficiaryData",
+                String.class, String.class, SMSRequest.class, BeneficiaryModel.class);
+        method.setAccessible(true);
+
+        java.lang.reflect.InvocationTargetException thrown = assertThrows(
+                java.lang.reflect.InvocationTargetException.class,
+                () -> method.invoke(smsService, "not.a.real.Class", "unknown", request, beneficiary));
+        assertInstanceOf(ClassNotFoundException.class, thrown.getCause());
+    }
+
+    @Test
+    void testGetBeneficiaryData_NoBeneficiary() throws Exception {
+        SMSRequest request = createSampleSMSRequest();
+        request.setBenPhoneNo("9876500000");
+
+        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getBeneficiaryData",
+                String.class, String.class, SMSRequest.class, BeneficiaryModel.class);
+        method.setAccessible(true);
+
+        // Without a beneficiary the phone number falls back to the request, and every other
+        // parameter resolves to an empty value rather than failing.
+        assertEquals("9876500000", method.invoke(smsService, "className", "phoneno", request, null));
+        assertEquals("", method.invoke(smsService, "className", "name", request, null));
     }
 
     @Test
@@ -1170,13 +1212,6 @@ public class SMSServiceImplTest {
     @Test
     void testGetCOVIDData() throws Exception {
         when(prescribedDrugRepository.getCOVIDData(any())).thenReturn(Arrays.asList(new com.iemr.common.data.helpline104history.COVIDHistory()));
-        when(prescribedDrugRepository.getDirectoryservice(any())).thenReturn(new com.iemr.common.data.helpline104history.Directoryservice());
-        when(prescribedDrugRepository.getEpidemicOutbreak(any())).thenReturn(new com.iemr.common.data.helpline104history.T_EpidemicOutbreak());
-        when(prescribedDrugRepository.getFoodSafetyCopmlaint(any())).thenReturn(new com.iemr.common.data.helpline104history.T_FoodSafetyCopmlaint());
-        when(prescribedDrugRepository.getOrganDonation(any())).thenReturn(new com.iemr.common.data.helpline104history.T_OrganDonation());
-        when(prescribedDrugRepository.getAcceptorHospitalAddress(any())).thenReturn(new com.iemr.common.data.helpline104history.RequestedInstitution());
-        when(prescribedDrugRepository.findByPrescribedDrugID(any())).thenReturn(new com.iemr.common.data.helpline104history.PrescribedDrug());
-        when(outboundHistoryRepository.getMCTSCallStartDate(any())).thenReturn(new com.iemr.common.data.mctshistory.MctsOutboundCall());
         SMSRequest request = createSampleSMSRequest();
         
         // Use reflection to test private method
@@ -1191,14 +1226,35 @@ public class SMSServiceImplTest {
     @Test
     void testGetUptsuData() throws Exception {
         SMSRequest request = createSampleSMSRequest();
-        
-        // Use reflection to test private method
-        java.lang.reflect.Method method = SMSServiceImpl.class.getDeclaredMethod("getUptsuData", 
-                String.class, String.class, SMSRequest.class);
-        method.setAccessible(true);
-        
-        String result = (String) method.invoke(smsService, "className", "methodName", request);
-        assertNotNull(result);
+        request.setChoName("Asha K");
+        request.setEmployeeCode("EMP9");
+        request.setBeneficiaryName("Latha Devi");
+        request.setBeneficiaryId(4242L);
+        request.setFacilityName("PHC Anekal");
+        request.setHfrId("HFR-1");
+        request.setAppointmentDate("2024-04-01");
+        request.setAppointmentTime("10:30");
+
+        assertEquals("Asha K", smsService.getUptsuData("className", "ChoName", request));
+        assertEquals("EMP9", smsService.getUptsuData("className", "employeeCode", request));
+        assertEquals("Latha Devi", smsService.getUptsuData("className", "beneficiaryName", request));
+        assertEquals("4242", smsService.getUptsuData("className", "beneficiaryId", request));
+        assertEquals("PHC Anekal", smsService.getUptsuData("className", "facilityName", request));
+        assertEquals("HFR-1", smsService.getUptsuData("className", "HFRID", request));
+        assertEquals("2024-04-01", smsService.getUptsuData("className", "Date", request));
+        assertEquals("10:30", smsService.getUptsuData("className", "Time", request));
+        // An unrecognised claim name yields no value.
+        assertNull(smsService.getUptsuData("className", "notAClaim", request));
+    }
+
+    @Test
+    void testGetUptsuData_UnsetClaimsYieldNull() throws Exception {
+        SMSRequest request = createSampleSMSRequest();
+
+        for (String claim : new String[] { "ChoName", "employeeCode", "beneficiaryName", "beneficiaryId",
+                "facilityName", "HFRID", "Date", "Time" }) {
+            assertNull(smsService.getUptsuData("className", claim, request), claim + " should be unset");
+        }
     }
 
     @Test
@@ -1233,8 +1289,10 @@ public class SMSServiceImplTest {
                 String.class, String.class, SMSRequest.class, String.class);
         method.setAccessible(true);
         
-        String result = (String) method.invoke(smsService, "className", "methodName", request, "authToken");
-        assertTrue(result == null || result.isEmpty());
+        when(feedback.getFeedbackID()).thenReturn(1L);
+
+        String result = (String) method.invoke(smsService, "className", "FeedbackID", request, "authToken");
+        assertEquals("1", result);
     }
 
     @Test

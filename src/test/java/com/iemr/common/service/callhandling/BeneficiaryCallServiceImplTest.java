@@ -282,7 +282,7 @@ class BeneficiaryCallServiceImplTest {
         
         // Mock the repository to return 1 - this should be the direct result
         when(beneficiaryCallRepository.closeCall(anyLong(), anyString(), any(Timestamp.class), anyString(), 
-                any(Integer.class), any(Integer.class), any(), any(), any(), any(), any())).thenReturn(1);
+                any(), any(), any(), any(), any(), any(), any())).thenReturn(1);
 
         // Act
         Integer result = service.closeCall(request, "192.168.1.1");
@@ -291,7 +291,7 @@ class BeneficiaryCallServiceImplTest {
         assertNotNull(result);
         assertEquals(Integer.valueOf(1), result);
         verify(beneficiaryCallRepository).closeCall(anyLong(), anyString(), any(Timestamp.class), anyString(), 
-                anyInt(), anyInt(), any(), any(), any(), any(), any());
+                any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -320,7 +320,7 @@ class BeneficiaryCallServiceImplTest {
         String request = "{\"benCallID\":1,\"remarks\":\"Test remarks\",\"callTypeID\":1,\"callClosureType\":\"Normal\",\"fitToBlock\":true,\"isFollowupRequired\":false}";
         
         when(beneficiaryCallRepository.closeCall(anyLong(), anyString(), any(Timestamp.class), anyString(), 
-                any(Integer.class), any(Integer.class), any(), any(), any(), any(), any())).thenReturn(1);
+                any(), any(), any(), any(), any(), any(), any())).thenReturn(1);
         when(beneficiaryCallRepository.findCallDetails(anyLong())).thenReturn(testCall);
         when(phoneBlockRepository.getPhoneBlockStatus(anyInt(), anyString())).thenReturn(new HashSet<>());
         when(providerServiceMapRepository.findByID(anyInt())).thenReturn(testProviderServiceMapping);
@@ -342,7 +342,7 @@ class BeneficiaryCallServiceImplTest {
         when(beneficiaryCallRepository.closeCall(anyLong(), anyString(), any(Timestamp.class), anyString(), 
                 any(), any(), any(), any(), any(), any(), any())).thenReturn(1);
         when(beneficiaryCallRepository.findByBenCallID(anyLong())).thenReturn(testCall);
-        when(beneficiaryCallRepository.updateBeneficiaryCallEndedByUserID(anyInt(), anyString())).thenReturn(1);
+        when(beneficiaryCallRepository.updateBeneficiaryCallEndedByUserID(any(), any())).thenReturn(1);
         
         CallType callType = new CallType();
         callType.setCallType("Valid");
@@ -357,7 +357,7 @@ class BeneficiaryCallServiceImplTest {
 
         // Assert
         assertEquals(1, result);
-        verify(beneficiaryCallRepository).updateBeneficiaryCallEndedByUserID(anyInt(), anyString());
+        verify(beneficiaryCallRepository).updateBeneficiaryCallEndedByUserID(any(), any());
     }
 
     @Test
@@ -366,7 +366,7 @@ class BeneficiaryCallServiceImplTest {
         String request = "{\"benCallID\":1,\"remarks\":\"Test remarks\",\"callTypeID\":1,\"callClosureType\":\"Normal\",\"isFollowupRequired\":false}";
         
         when(beneficiaryCallRepository.closeCall(anyLong(), anyString(), any(Timestamp.class), anyString(), 
-                anyInt(), anyInt(), any(), any(), any(), any(), any())).thenReturn(1);
+                any(), any(), any(), any(), any(), any(), any())).thenReturn(1);
 
         // Act
         Integer result = service.closeCallV1(request, "192.168.1.1");
@@ -374,7 +374,7 @@ class BeneficiaryCallServiceImplTest {
         // Assert
         assertEquals(1, result);
         verify(beneficiaryCallRepository).closeCall(anyLong(), anyString(), any(Timestamp.class), anyString(), 
-                anyInt(), anyInt(), any(), any(), any(), any(), any());
+                any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -450,6 +450,10 @@ class BeneficiaryCallServiceImplTest {
         when(criteriaBuilder.createQuery(BeneficiaryCall.class)).thenReturn(criteriaQuery);
         when(criteriaQuery.from(BeneficiaryCall.class)).thenReturn(root);
         when(entityManager.createQuery(criteriaQuery)).thenReturn(typedQuery);
+        when(criteriaQuery.select(any())).thenReturn(criteriaQuery);
+        when(criteriaQuery.where(any(jakarta.persistence.criteria.Predicate[].class))).thenReturn(criteriaQuery);
+        when(typedQuery.setMaxResults(anyInt())).thenReturn(typedQuery);
+        when(typedQuery.setFirstResult(anyInt())).thenReturn(typedQuery);
         when(typedQuery.getResultList()).thenReturn(calls);
         when(identityBeneficiaryService.getBeneficiaryListByIDs(any(HashSet.class), anyString(), anyBoolean()))
                 .thenReturn(Arrays.asList(testBeneficiariesDTO));
@@ -468,6 +472,7 @@ class BeneficiaryCallServiceImplTest {
         when(criteriaBuilder.like(any(), anyString())).thenReturn(mock(jakarta.persistence.criteria.Predicate.class));
         when(criteriaBuilder.equal(any(), any())).thenReturn(mock(jakarta.persistence.criteria.Predicate.class));
         when(criteriaBuilder.between(any(), any(java.sql.Timestamp.class), any(java.sql.Timestamp.class))).thenReturn(mock(jakarta.persistence.criteria.Predicate.class));
+        when(criteriaBuilder.notEqual(any(), any())).thenReturn(mock(jakarta.persistence.criteria.Predicate.class));
         @SuppressWarnings("unchecked")
         jakarta.persistence.criteria.Expression<Long> countExpression = mock(jakarta.persistence.criteria.Expression.class);
         when(criteriaBuilder.count(any())).thenReturn(countExpression);
@@ -615,14 +620,14 @@ class BeneficiaryCallServiceImplTest {
     @Test
     void testUpdateOutboundCall_Success() throws Exception {
         // Arrange
-        String request = "{\"outboundCallReqID\":1,\"callTypeID\":1}";
+        String request = "{\"outboundCallReqID\":1,\"callTypeID\":1,\"isCompleted\":false}";
         testOutboundCall.setNoOfTrials(1); // Less than max retries
         testOutboundCall.setIsCompleted(false); // Ensure this is set
-        
+
         when(outboundCallRequestRepository.findByOutboundCallReqID(anyLong())).thenReturn(testOutboundCall);
         when(callTypeRepository.getMaxRedialByCallTypeID(anyInt())).thenReturn(3);
         // Ensure the repository update method returns a positive number for success
-        when(outboundCallRequestRepository.updateCompleteStatusInCall(anyLong(), anyBoolean(), anyInt()))
+        when(outboundCallRequestRepository.updateCompleteStatusInCall(anyLong(), any(), any()))
                 .thenReturn(1); // Must return > 0 for success
 
         // Act
@@ -630,7 +635,7 @@ class BeneficiaryCallServiceImplTest {
 
         // Assert
         assertEquals("success", result);
-        verify(outboundCallRequestRepository).updateCompleteStatusInCall(anyLong(), eq(false), anyInt());
+        verify(outboundCallRequestRepository).updateCompleteStatusInCall(anyLong(), eq(false), eq(2));
     }
 
     @Test
@@ -859,7 +864,8 @@ class BeneficiaryCallServiceImplTest {
         lenient().when(benPhoneMapper.benPhoneMapToResponseByID(any())).thenReturn(new ArrayList<>());
         lenient().when(sexualOrientationMapper.sexualOrientationByIDToModel(any(Short.class))).thenReturn(null);
         lenient().when(govtIdentityTypeMapper.govtIdentityTypeModelByIDToModel(any())).thenReturn(null);
-        lenient().when(benCompleteMapper.createBenDemographicsModel(any())).thenReturn(null);
+        lenient().when(benCompleteMapper.createBenDemographicsModel(any()))
+                .thenReturn(new com.iemr.common.model.beneficiary.BeneficiaryDemographicsModel());
 
         // Act
         BeneficiaryCallModel result = service.beneficiaryByCallID(request, "auth_key");
@@ -879,7 +885,8 @@ class BeneficiaryCallServiceImplTest {
         lenient().when(benPhoneMapper.benPhoneMapToResponseByID(any())).thenReturn(new ArrayList<>());
         lenient().when(sexualOrientationMapper.sexualOrientationByIDToModel(any(Short.class))).thenReturn(null);
         lenient().when(govtIdentityTypeMapper.govtIdentityTypeModelByIDToModel(any())).thenReturn(null);
-        lenient().when(benCompleteMapper.createBenDemographicsModel(any())).thenReturn(null);
+        lenient().when(benCompleteMapper.createBenDemographicsModel(any()))
+                .thenReturn(new com.iemr.common.model.beneficiary.BeneficiaryDemographicsModel());
 
         // Act
         List<BeneficiaryModel> result = service.getBeneficiaryListFromMapper(dtoList);

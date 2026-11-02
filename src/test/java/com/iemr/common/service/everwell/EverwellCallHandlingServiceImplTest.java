@@ -427,7 +427,7 @@ void outboundCallList_AgentIdAndLanguage() throws Exception {
         when(everwellCallHandlingRepository.getAllOutboundCalls(eq(1), eq(2), eq("Hindi"))).thenReturn(resultSet);
         Gson mockGson = Mockito.mock(Gson.class);
         mockedOutputMapper.when(com.iemr.common.utils.mapper.OutputMapper::gsonWithoutExposeRestriction).thenReturn(mockGson);
-        doReturn("{\"foo\":true}").when(mockGson).toJson(any());
+        doReturn("{\"foo\":true}").when(mockGson).toJson(any(Object.class));
         String response = everwellCallHandlingService.outboundCallList("{}");
         assertTrue(response.contains("foo"));
     }
@@ -538,7 +538,7 @@ void outboundCallListWithMobileNumber_Success() throws Exception {
         when(everwellCallHandlingRepository.getAllOutboundCallsWithMobileNumber(anyInt(), anyString())).thenReturn(resultSet);
         Gson mockGson = Mockito.mock(Gson.class);
         mockedOutputMapper.when(com.iemr.common.utils.mapper.OutputMapper::gsonWithoutExposeRestriction).thenReturn(mockGson);
-        doReturn("{\"1234567890\":true}").when(mockGson).toJson(any());
+        doReturn("{\"1234567890\":true}").when(mockGson).toJson(any(Object.class));
         String response = everwellCallHandlingService.outboundCallListWithMobileNumber("{}");
         assertNotNull(response);
         assertTrue(response.contains("1234567890") || response.contains("1"));
@@ -553,26 +553,19 @@ void completeOutboundCall_UpdateCallCounter() throws Exception {
     when(everwellCallHandlingRepository.findByEapiId(anyLong())).thenReturn(details);
     // Only stub methods that are actually called by the code under test
     when(details.getCallCounter()).thenReturn(1);
-    when(details.getIsCompleted()).thenReturn(true);
     when(details.getEapiId()).thenReturn(1L);
     when(details.getRetryNeeded()).thenReturn(true);
-    ReflectionTestUtils.setField(everwellCallHandlingService, "callRetryConfiguration", 1);
-    // Removed stubbing for updateCompleteStatusInCall to avoid strict stubbing errors
+    // A retry counter one short of the configured limit takes the counter-bump path.
+    ReflectionTestUtils.setField(everwellCallHandlingService, "callRetryConfiguration", 3);
+    when(everwellCallHandlingRepository.updateCallCounter(anyLong(), eq(2), any(), any())).thenReturn(1);
 
     try (MockedStatic<InputMapper> mockedInputMapper = Mockito.mockStatic(InputMapper.class)) {
         InputMapper mockInputMapper = Mockito.mock(InputMapper.class);
-        Gson mockGson = Mockito.mock(Gson.class);
-        // Mockito strict stubbing: only this line should exist for toJson
-        // Mockito strict stubbing: only this line should exist for toJson
-        doReturn("{\"foo\":true}").when(mockGson).toJson(any());
         mockedInputMapper.when(InputMapper::gson).thenReturn(mockInputMapper);
         when(mockInputMapper.fromJson(anyString(), eq(EverwellDetails[].class))).thenReturn(detailsArr);
-        // Set OutputMapper.gsonWithoutExposeRestriction to return mockGson if used in implementation
-        try (MockedStatic<com.iemr.common.utils.mapper.OutputMapper> mockedOutputMapper = Mockito.mockStatic(com.iemr.common.utils.mapper.OutputMapper.class)) {
-            mockedOutputMapper.when(com.iemr.common.utils.mapper.OutputMapper::gsonWithoutExposeRestriction).thenReturn(mockGson);
-            String response = everwellCallHandlingService.completeOutboundCall("[]");
-            assertEquals("success", response);
-        }
+
+        String response = everwellCallHandlingService.completeOutboundCall("[]");
+        assertEquals("success", response);
     }
 }
 

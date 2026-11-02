@@ -218,7 +218,7 @@ public class IEMRAdminController {
 			if (mUser.size() == 1) {
 				String userIdStr = mUser.get(0).getUserID().toString();
 				jwtToken = isMobile
-						? jwtUtil.generateSecureToken(userIdStr)
+						? jwtUtil.generateSecureToken(m_User.getUserName(),userIdStr)
 						: jwtUtil.generateToken(m_User.getUserName(), userIdStr);
 
 				User user = new User(); // Assuming the Users class exists
@@ -235,7 +235,7 @@ public class IEMRAdminController {
 				);
 
 				if (isMobile) {
-					refreshToken = jwtUtil.generateSecureRefreshToken(user.getUserID().toString());
+					refreshToken = jwtUtil.generateSecureRefreshToken(m_User.getUserName(),user.getUserID().toString());
 					logger.debug("Refresh token generated successfully for user: {}", user.getUserName());
 					String jti = jwtUtil.getJtiFromToken(refreshToken);
 					redisTemplate.opsForValue().set(
@@ -359,20 +359,20 @@ public class IEMRAdminController {
 			String userId = claims.get("userId", String.class);
 			User user = iemrAdminUserServiceImpl.getUserById(Long.parseLong(userId));
 
-			// validate if user account is locked or de-activated
-			if(user.getDeleted()){
-				logger.warn("Your account is locked or de-activated. Please contact administrator");
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Your account is locked or de-activated. Please contact administrator.");
-			}
-			if(user.getStatusID()>2){
-				logger.warn("Your account is not active. Please contact administrator");
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Your account is not active. Please contact administrator.");
-			}
-
-			// Validate that the user still exists and is active
+			// Validate that the user still exists before reading its state
 			if (user == null) {
 				logger.warn("Token validation failed: user not found for userId in token.");
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized.");
+			}
+
+			// validate if user account is locked or de-activated
+			if (Boolean.TRUE.equals(user.getDeleted())) {
+				logger.warn("Your account is locked or de-activated. Please contact administrator");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Your account is locked or de-activated. Please contact administrator.");
+			}
+			if (user.getStatusID() != null && user.getStatusID() > 2) {
+				logger.warn("Your account is not active. Please contact administrator");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Your account is not active. Please contact administrator.");
 			}
 
 			if (user.getM_status() == null || !("Active".equalsIgnoreCase(user.getM_status().getStatus())
@@ -604,7 +604,7 @@ public class IEMRAdminController {
 				);
 
 				if (isMobile) {
-					refreshToken = jwtUtil.generateSecureRefreshToken(user.getUserID().toString());
+					refreshToken = jwtUtil.generateSecureRefreshToken(m_User.getUserName(),user.getUserID().toString());
 					logger.debug("Refresh token generated successfully for user: {}", user.getUserName());
 					String jti = jwtUtil.getJtiFromToken(refreshToken);
 					redisTemplate.opsForValue().set(
