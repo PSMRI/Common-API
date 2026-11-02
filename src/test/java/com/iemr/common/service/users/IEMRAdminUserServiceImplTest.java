@@ -375,6 +375,28 @@ public class IEMRAdminUserServiceImplTest {
     }
 
     @Test
+    void testSetForgetPassword_DoesNotWaitForCtiServer() throws Exception {
+        // Given: the CTI server does not answer until released
+        java.util.concurrent.CountDownLatch ctiReleased = new java.util.concurrent.CountDownLatch(1);
+        when(iEMRUserRepositoryCustom.findUserByUserID(1L)).thenReturn(testUser);
+        when(ctiService.addUpdateUserData(anyString(), anyString())).thenAnswer(invocation -> {
+            ctiReleased.await(10, java.util.concurrent.TimeUnit.SECONDS);
+            return new OutputResponse();
+        });
+        when(securePassword.generateStrongPassword("newpassword")).thenReturn("hashedNewPassword");
+        when(iEMRUserRepositoryCustom.updateSetForgetPassword(1L, "hashedNewPassword")).thenReturn(1);
+
+        // When: the password is saved without waiting for CTI
+        int result = assertTimeoutPreemptively(java.time.Duration.ofSeconds(2),
+                () -> userService.setForgetPassword(testUser, "newpassword", "token123", true));
+
+        // Then: saved, and CTI is still updated in the background
+        assertEquals(1, result);
+        ctiReleased.countDown();
+        verify(ctiService, timeout(2000)).addUpdateUserData(anyString(), eq("127.0.0.1"));
+    }
+
+    @Test
     void testSetForgetPassword_InvalidTransaction() throws Exception {
         // Given
         when(sessionObject.getSessionObjectForChangePassword("1testuser")).thenReturn("differentToken");
