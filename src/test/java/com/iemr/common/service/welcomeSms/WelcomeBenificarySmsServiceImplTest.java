@@ -1,6 +1,7 @@
 package com.iemr.common.service.welcomeSms;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -73,9 +74,7 @@ class WelcomeBenificarySmsServiceImplTest {
 				(mock, context) -> when(mock.postForEntity(anyString(), any(), eq(String.class)))
 						.thenReturn(new ResponseEntity<>("queued", HttpStatus.OK)))) {
 
-			String result = service.sendWelcomeSMStoBenificiary("9999999999", "Latha", "BEN-42");
-
-			assertThat(result).isEqualTo("OTP sent successfully on register mobile number");
+			service.sendWelcomeSMStoBenificiary("9999999999", "Latha", "BEN-42");
 
 			RestTemplate restTemplate = construction.constructed().get(0);
 			@SuppressWarnings("unchecked")
@@ -94,20 +93,23 @@ class WelcomeBenificarySmsServiceImplTest {
 	}
 
 	@Test
-	@DisplayName("a non-200 gateway reply is reported as a failure")
-	void nonOkGatewayReplyIsAFailure() {
+	@DisplayName("a non-200 gateway reply is logged rather than thrown")
+	void nonOkGatewayReplyIsNotThrown() {
 		stubTemplate("Welcome $$BENE_NAME$$");
 
 		try (MockedConstruction<RestTemplate> construction = mockConstruction(RestTemplate.class,
 				(mock, context) -> when(mock.postForEntity(anyString(), any(), eq(String.class)))
 						.thenReturn(new ResponseEntity<>("rejected", HttpStatus.ACCEPTED)))) {
 
-			assertThat(service.sendWelcomeSMStoBenificiary("9999999999", "Latha", "BEN-42")).isEqualTo("Fail");
+			assertThatCode(() -> service.sendWelcomeSMStoBenificiary("9999999999", "Latha", "BEN-42"))
+					.doesNotThrowAnyException();
+			org.mockito.Mockito.verify(construction.constructed().get(0)).postForEntity(anyString(), any(),
+					eq(String.class));
 		}
 	}
 
 	@Test
-	@DisplayName("a gateway error is reported with its message rather than thrown")
+	@DisplayName("a gateway error is logged rather than thrown")
 	void gatewayErrorIsReported() {
 		stubTemplate("Welcome $$BENE_NAME$$");
 
@@ -115,8 +117,8 @@ class WelcomeBenificarySmsServiceImplTest {
 				(mock, context) -> when(mock.postForEntity(anyString(), any(), eq(String.class)))
 						.thenThrow(new RestClientException("gateway unreachable")))) {
 
-			assertThat(service.sendWelcomeSMStoBenificiary("9999999999", "Latha", "BEN-42"))
-					.isEqualTo("Error sending SMS: gateway unreachable");
+			assertThatCode(() -> service.sendWelcomeSMStoBenificiary("9999999999", "Latha", "BEN-42"))
+					.doesNotThrowAnyException();
 		}
 	}
 
@@ -126,7 +128,7 @@ class WelcomeBenificarySmsServiceImplTest {
 		when(smsTemplateRepository.findBySmsTemplateName("welcome_sms")).thenReturn(Optional.empty());
 
 		try (MockedConstruction<RestTemplate> construction = mockConstruction(RestTemplate.class)) {
-			assertThat(service.sendWelcomeSMStoBenificiary("9999999999", "Latha", "BEN-42")).isNull();
+			service.sendWelcomeSMStoBenificiary("9999999999", "Latha", "BEN-42");
 			org.mockito.Mockito.verifyNoInteractions(construction.constructed().get(0));
 		}
 	}

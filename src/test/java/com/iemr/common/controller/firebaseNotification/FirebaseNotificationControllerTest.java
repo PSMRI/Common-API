@@ -32,7 +32,7 @@ class FirebaseNotificationControllerTest {
 		NotificationMessage message = new NotificationMessage();
 		when(firebaseNotificationService.sendNotification(message)).thenReturn("projects/amrit/messages/1");
 
-		assertThat(controller.sendNotificationByToken(message)).isEqualTo("projects/amrit/messages/1");
+		assertThat(controller.sendNotificationByToken(message).getBody()).isEqualTo("projects/amrit/messages/1");
 	}
 
 	@Test
@@ -41,7 +41,7 @@ class FirebaseNotificationControllerTest {
 		UserToken userToken = new UserToken();
 		when(firebaseNotificationService.updateToken(userToken)).thenReturn("Save Successfully");
 
-		assertThat(controller.updateToken(userToken)).isEqualTo("Save Successfully");
+		assertThat(controller.updateToken(userToken).getBody()).isEqualTo("Save Successfully");
 	}
 
 	@Test

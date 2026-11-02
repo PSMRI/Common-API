@@ -50,7 +50,7 @@ public class WelcomeBenificarySmsServiceImpl implements WelcomeBenificarySmsServ
     private String smsTemplate =null;
 
     @Async
-    public String sendWelcomeSMStoBenificiary(String contactNo, String beneficiaryName, String beneficiaryId) {
+    public void sendWelcomeSMStoBenificiary(String contactNo, String beneficiaryName, String beneficiaryId) {
 
         try {
             String sendSMSAPI = SMS_GATEWAY_URL;
@@ -87,18 +87,16 @@ public class WelcomeBenificarySmsServiceImpl implements WelcomeBenificarySmsServ
                 ResponseEntity<String> response = restTemplate.postForEntity(sendSMSAPI, request, String.class);
                 logger.info("sms-response:" + response.getBody());
                 if (response.getStatusCode().value() == 200) {
-                    return "OTP sent successfully on register mobile number";
+                    logger.info("[SMS] Welcome SMS sent to " + contactNo);
                 } else {
-                    return "Fail";
-
+                    logger.warn("[SMS] Welcome SMS failed for " + contactNo + " with status " + response.getStatusCode());
                 }
+            } else {
+                logger.warn("[SMS] Welcome SMS not sent: SMS template '" + smsTemplateName + "' not found");
             }
-
-                }
-            catch (Exception e) {
-            return "Error sending SMS: " + e.getMessage().toString();
+        } catch (Exception e) {
+            logger.error("[SMS] Error sending welcome SMS to " + contactNo + ": " + e.getMessage(), e);
         }
-        return null;
 
     }
 }
