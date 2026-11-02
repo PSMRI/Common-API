@@ -218,7 +218,7 @@ public class IEMRAdminController {
 			if (mUser.size() == 1) {
 				String userIdStr = mUser.get(0).getUserID().toString();
 				jwtToken = isMobile
-						? jwtUtil.generateSecureToken(userIdStr)
+						? jwtUtil.generateSecureToken(m_User.getUserName(),userIdStr)
 						: jwtUtil.generateToken(m_User.getUserName(), userIdStr);
 
 				User user = new User(); // Assuming the Users class exists
@@ -235,7 +235,7 @@ public class IEMRAdminController {
 				);
 
 				if (isMobile) {
-					refreshToken = jwtUtil.generateSecureRefreshToken(user.getUserID().toString());
+					refreshToken = jwtUtil.generateSecureRefreshToken(m_User.getUserName(),user.getUserID().toString());
 					logger.debug("Refresh token generated successfully for user: {}", user.getUserName());
 					String jti = jwtUtil.getJtiFromToken(refreshToken);
 					redisTemplate.opsForValue().set(
@@ -604,7 +604,7 @@ public class IEMRAdminController {
 				);
 
 				if (isMobile) {
-					refreshToken = jwtUtil.generateSecureRefreshToken(user.getUserID().toString());
+					refreshToken = jwtUtil.generateSecureRefreshToken(m_User.getUserName(),user.getUserID().toString());
 					logger.debug("Refresh token generated successfully for user: {}", user.getUserName());
 					String jti = jwtUtil.getJtiFromToken(refreshToken);
 					redisTemplate.opsForValue().set(
