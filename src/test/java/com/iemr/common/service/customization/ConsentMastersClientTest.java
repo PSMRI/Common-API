@@ -73,6 +73,17 @@ class ConsentMastersClientTest {
 	}
 
 	@Test
+	@DisplayName("a trailing slash on the configured URL does not produce a double slash")
+	void trailingSlashIsIgnored() {
+		languages("REGISTRATION", "{\"data\":[]}");
+		languages("REVISIT", "{\"data\":[]}");
+		notice("REGISTRATION", "{\"data\":{\"purposes\":[]}}");
+		notice("REVISIT", "{\"data\":{\"purposes\":[]}}");
+
+		assertThat(new ConsentMastersClient(restTemplate, BASE + "/", "en").load("Bearer t").getLanguages()).isEmpty();
+	}
+
+	@Test
 	@DisplayName("languages and purposes are the union of both contexts; mandatory if either notice says so")
 	void unionOfContexts() {
 		languages("REGISTRATION", "{\"data\":[{\"languageCode\":\"en\",\"languageName\":\"English\",\"hasAudio\":true},"

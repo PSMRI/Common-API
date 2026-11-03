@@ -73,7 +73,8 @@ public class ConsentMastersClient {
 
 	ConsentMastersClient(RestTemplate restTemplate, String baseUrl, String referenceLanguage) {
 		this.restTemplate = restTemplate;
-		this.baseUrl = baseUrl == null ? "" : baseUrl.trim();
+		String trimmed = baseUrl == null ? "" : baseUrl.trim();
+		this.baseUrl = trimmed.endsWith("/") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
 		this.referenceLanguage = referenceLanguage;
 	}
 
