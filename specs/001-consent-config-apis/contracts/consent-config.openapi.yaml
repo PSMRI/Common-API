@@ -1,0 +1,373 @@
+openapi: 3.0.3
+info:
+  title: Common-API — Consent configuration
+  version: 1.0.0
+  description: |
+    Per-project consent configuration (spec 001-consent-config-apis). Matches the front-end
+    document "MMU Consent Management – API Reference" (API 1 and A1–A5), with the
+    guardian age and voice-clip range narrowed to the approved proposal (spec Clarifications).
+
+    Envelope: every body is Common-API's OutputResponse. Only `data` differs per endpoint.
+      - Success: HTTP 200, statusCode 200, status "Success".
+      - Validation / business failure: HTTP 200, statusCode 5000, errorMessage readable.
+      - Consent service unreachable (A1, A4, A5 only): HTTP 200, statusCode 5000,
+        errorMessage "Consent service unavailable, try again".
+      - Stale version (A4, A5 only): HTTP 409, statusCode 409, data.reason STALE_VERSION.
+      - Session expired / missing token: existing JWT filter behaviour (HTTP 401 or
+        statusCode 5002), unchanged.
+    No other HTTP statuses are returned by these endpoints.
+servers:
+  - url: /common-api
+security:
+  - authorization: []
+paths:
+  /customization/consent/fetchConsentConfig:
+    post:
+      summary: API 1 — Load consent configuration for the MMU consent dialog
+      operationId: fetchConsentConfig
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ConsentConfigLoadRequest' }
+            example:
+              serviceLine: MMU
+              serviceLineId: 2
+              stateId: 5
+              districtId: 41
+              blockId: 312
+              serviceProviderId: 1
+              context: REGISTRATION
+      responses:
+        '200':
+          description: |
+            data is the configuration, or null when no project is mapped to the service line and
+            location, the project has never been saved, or more than one project matches.
+            statusCode 5000 when context is missing or invalid.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/OutputResponse'
+                  - type: object
+                    properties:
+                      data:
+                        nullable: true
+                        allOf: [ { $ref: '#/components/schemas/ConsentConfigLoadResponse' } ]
+  /customization/consent/masters:
+    get:
+      summary: A1 — Configuration masters
+      operationId: getConsentConfigMasters
+      parameters:
+        - name: serviceProviderId
+          in: query
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: statusCode 5000 when Consent-API is unavailable or serviceProviderId is missing.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/OutputResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/ConsentConfigMasters' }
+  /customization/consent/fetchAllConfigs:
+    post:
+      summary: A2 — List configured projects of a service provider
+      operationId: fetchAllConsentConfigs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ServiceProviderRef' }
+            example: { serviceProviderId: 1 }
+      responses:
+        '200':
+          description: One entry per configured project (empty array when none).
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/OutputResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/ProjectConsentConfig' }
+  /customization/consent/fetchConfigByProject:
+    post:
+      summary: A3 — One project's configuration (version 0 = never saved)
+      operationId: fetchConsentConfigByProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProjectRef' }
+            example: { projectId: 12, serviceProviderId: 1 }
+      responses:
+        '200':
+          description: statusCode 5000 when the project does not exist for this service provider.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/OutputResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/ProjectConsentConfig' }
+  /customization/consent/saveConfig:
+    post:
+      summary: A4 — Save a project's first configuration
+      operationId: saveConsentConfig
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SaveConfigRequest' }
+      responses:
+        '200':
+          description: |
+            Saved; data is the configuration at version 1. A replay with the same
+            Idempotency-Key returns the original response. statusCode 5000 for validation
+            failures (all problems in one errorMessage), unknown project, Consent-API
+            unavailable, or "Request is already being processed".
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/OutputResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/ProjectConsentConfig' }
+        '409': { $ref: '#/components/responses/StaleVersion' }
+  /customization/consent/updateConfig:
+    post:
+      summary: A5 — Update an existing configuration
+      operationId: updateConsentConfig
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateConfigRequest' }
+      responses:
+        '200':
+          description: |
+            Updated; data is the configuration at baseVersion + 1. statusCode 5000 for
+            validation failures, unknown project, no configuration to update, Consent-API
+            unavailable, or "Request is already being processed".
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/OutputResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/ProjectConsentConfig' }
+        '409': { $ref: '#/components/responses/StaleVersion' }
+components:
+  securitySchemes:
+    authorization:
+      type: apiKey
+      in: header
+      name: Authorization
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: UUID. A repeat with the same key (same user, same endpoint) within 24 h returns the original response.
+      schema: { type: string, format: uuid }
+  responses:
+    StaleVersion:
+      description: Someone else saved first (A5 baseVersion is not current, or A4 for a project that already has a configuration).
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/OutputResponse'
+          example:
+            data: { reason: STALE_VERSION }
+            statusCode: 409
+            errorMessage: Changed by someone else, reload
+            status: Changed by someone else, reload
+  schemas:
+    OutputResponse:
+      type: object
+      properties:
+        data: {}
+        statusCode: { type: integer, example: 200 }
+        errorMessage: { type: string, example: Success }
+        status: { type: string, example: Success }
+    ConsentMode:
+      type: string
+      enum: [SELF_READ, READ_ALOUD, VOICE_CLIP, WITNESSED, SIGNATURE_PHOTO, OTP]
+    ConsentContext:
+      type: string
+      enum: [REGISTRATION, REVISIT]
+    ConsentConfigLoadRequest:
+      type: object
+      required: [context]
+      properties:
+        serviceLine: { type: string, nullable: true }
+        serviceLineId: { type: integer, nullable: true }
+        stateId: { type: integer, nullable: true }
+        districtId: { type: integer, nullable: true }
+        blockId: { type: integer, nullable: true }
+        serviceProviderId: { type: integer, nullable: true }
+        context: { $ref: '#/components/schemas/ConsentContext' }
+    ConsentConfigLoadResponse:
+      type: object
+      properties:
+        projectId: { type: integer }
+        version: { type: integer, minimum: 1 }
+        context: { $ref: '#/components/schemas/ConsentContext' }
+        config: { $ref: '#/components/schemas/ContextConfig' }
+    ConsentConfigMasters:
+      type: object
+      properties:
+        modes:
+          type: array
+          items:
+            type: object
+            properties:
+              mode: { $ref: '#/components/schemas/ConsentMode' }
+              name: { type: string }
+        purposes:
+          type: array
+          items:
+            type: object
+            properties:
+              purposeCode: { type: string }
+              name: { type: string }
+              isMandatory: { type: boolean }
+        languages:
+          type: array
+          items:
+            type: object
+            properties:
+              languageCode: { type: string }
+              languageName: { type: string }
+              hasNotice: { type: boolean }
+        projects:
+          type: array
+          items:
+            type: object
+            properties:
+              projectId: { type: integer }
+              version: { type: integer }
+    ServiceProviderRef:
+      type: object
+      required: [serviceProviderId]
+      properties:
+        serviceProviderId: { type: integer }
+    ProjectRef:
+      type: object
+      required: [projectId, serviceProviderId]
+      properties:
+        projectId: { type: integer }
+        serviceProviderId: { type: integer }
+    SaveConfigRequest:
+      type: object
+      required: [projectId, projectName, serviceProviderId, registration]
+      properties:
+        projectId: { type: integer }
+        projectName: { type: string, maxLength: 100 }
+        serviceProviderId: { type: integer }
+        registration: { $ref: '#/components/schemas/ContextConfig' }
+        revisit:
+          nullable: true
+          description: null = same rules as registration
+          allOf: [ { $ref: '#/components/schemas/ContextConfig' } ]
+        createdBy:
+          type: string
+          description: Accepted but ignored; saved-by is the session user.
+    UpdateConfigRequest:
+      type: object
+      required: [projectId, projectName, serviceProviderId, registration, baseVersion]
+      properties:
+        projectId: { type: integer }
+        projectName: { type: string, maxLength: 100 }
+        serviceProviderId: { type: integer }
+        registration: { $ref: '#/components/schemas/ContextConfig' }
+        revisit:
+          nullable: true
+          allOf: [ { $ref: '#/components/schemas/ContextConfig' } ]
+        baseVersion: { type: integer, minimum: 1 }
+        modifiedBy:
+          type: string
+          description: Accepted but ignored; saved-by is the session user.
+    ProjectConsentConfig:
+      type: object
+      properties:
+        projectId: { type: integer }
+        projectName: { type: string }
+        serviceProviderId: { type: integer }
+        version: { type: integer, description: 0 = never saved }
+        savedBy: { type: string, nullable: true }
+        savedAt: { type: string, format: date-time, nullable: true }
+        registration:
+          nullable: true
+          description: null only when version is 0
+          allOf: [ { $ref: '#/components/schemas/ContextConfig' } ]
+        revisit:
+          nullable: true
+          description: null = same as registration
+          allOf: [ { $ref: '#/components/schemas/ContextConfig' } ]
+    ContextConfig:
+      type: object
+      required: [enabled, mandatory, modes, purposes, languages, guardian]
+      properties:
+        enabled: { type: boolean, description: false shows the old consent pop-up (spec D-DEV-2) }
+        mandatory: { type: boolean }
+        modes:
+          type: array
+          description: Allowed modes only; at least one when enabled; ranks 1..n unique.
+          items: { $ref: '#/components/schemas/ModeEntry' }
+        defaultMode:
+          nullable: true
+          allOf: [ { $ref: '#/components/schemas/ConsentMode' } ]
+        purposes:
+          type: array
+          description: Empty = the central list as it is.
+          items: { $ref: '#/components/schemas/PurposeEntry' }
+        languages:
+          type: array
+          description: Empty = every published language.
+          items: { type: string, example: hi }
+        guardian: { $ref: '#/components/schemas/GuardianRule' }
+    ModeEntry:
+      type: object
+      required: [mode, rank]
+      properties:
+        mode: { $ref: '#/components/schemas/ConsentMode' }
+        rank: { type: integer, minimum: 1 }
+        settings: { $ref: '#/components/schemas/ModeSettings' }
+    ModeSettings:
+      type: object
+      description: Only the key for the entry's mode is kept; missing keys get defaults.
+      properties:
+        voiceMinSeconds: { type: integer, minimum: 30, maximum: 60, default: 30 }
+        otpTarget: { type: string, enum: [PATIENT, GUARDIAN], default: PATIENT }
+        witnessRelationshipRequired: { type: boolean, default: true }
+        photos: { type: string, enum: [BOTH, SIGNED_FORM_ONLY], default: BOTH }
+    PurposeEntry:
+      type: object
+      required: [purposeCode, shown, rank, isMandatory]
+      properties:
+        purposeCode: { type: string, example: P-REG }
+        shown: { type: boolean }
+        rank: { type: integer, minimum: 1 }
+        isMandatory: { type: boolean, description: Can only make a purpose required, never optional. }
+    GuardianRule:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: { type: boolean, description: Must be true while the context is enabled. }
+        ageThreshold: { type: integer, enum: [18], default: 18 }

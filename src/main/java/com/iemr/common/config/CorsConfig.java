@@ -20,7 +20,8 @@ public class CorsConfig implements WebMvcConfigurer {
                                 .toArray(String[]::new))
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("Authorization", "Content-Type", "Accept", "Jwttoken",
-                                "serverAuthorization", "ServerAuthorization", "serverauthorization", "Serverauthorization")
+                                "serverAuthorization", "ServerAuthorization", "serverauthorization", "Serverauthorization",
+                                "Idempotency-Key")
                 .exposedHeaders("Authorization", "Jwttoken")
                 .allowCredentials(true)
                 .maxAge(3600);

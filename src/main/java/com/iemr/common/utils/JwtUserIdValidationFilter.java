@@ -100,7 +100,7 @@ public class JwtUserIdValidationFilter implements Filter {
 			response.setHeader("Access-Control-Allow-Origin", origin); // Never use wildcard
 			response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
 			response.setHeader("Access-Control-Allow-Headers", 
-					"Authorization, Content-Type, Accept, Jwttoken, serverAuthorization, ServerAuthorization, serverauthorization, Serverauthorization");
+					"Authorization, Content-Type, Accept, Jwttoken, serverAuthorization, ServerAuthorization, serverauthorization, Serverauthorization, Idempotency-Key");
 			response.setHeader("Access-Control-Allow-Credentials", "true");
 			response.setHeader("Access-Control-Max-Age", "3600");
 			logger.info("Origin Validated | Origin: {} | Method: {} | URI: {}", origin, method, uri);
@@ -112,7 +112,7 @@ public class JwtUserIdValidationFilter implements Filter {
 			response.setHeader("Access-Control-Allow-Origin", origin);
 			response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
 			response.setHeader("Access-Control-Allow-Headers",
-					"Authorization, Content-Type, Accept, Jwttoken, serverAuthorization, ServerAuthorization, serverauthorization, Serverauthorization");
+					"Authorization, Content-Type, Accept, Jwttoken, serverAuthorization, ServerAuthorization, serverauthorization, Serverauthorization, Idempotency-Key");
 			response.setHeader("Access-Control-Allow-Credentials", "true");
 			response.setStatus(HttpServletResponse.SC_OK);
 			return;

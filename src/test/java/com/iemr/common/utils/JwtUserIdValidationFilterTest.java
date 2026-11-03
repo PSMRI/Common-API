@@ -4,6 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -171,6 +174,18 @@ class JwtUserIdValidationFilterTest {
 			filter.doFilter(request, response, filterChain);
 
 			verify(response).sendError(HttpServletResponse.SC_FORBIDDEN, "Origin not allowed");
+		}
+
+		@Test
+		@DisplayName("a preflight allows the Idempotency-Key header and keeps the existing headers")
+		void allowsIdempotencyKeyHeader() throws Exception {
+			when(request.getHeader("Origin")).thenReturn("https://amrit.example.org");
+
+			filter.doFilter(request, response, filterChain);
+
+			verify(response, atLeastOnce()).setHeader(eq("Access-Control-Allow-Headers"),
+					argThat(v -> v.contains("Idempotency-Key") && v.contains("Authorization")
+							&& v.contains("Jwttoken") && v.contains("ServerAuthorization")));
 		}
 	}
 

@@ -104,4 +104,10 @@ public interface UserRoleMappingRepository extends CrudRepository<UserServiceRol
 			+ "where user.Deleted = false and user.providerServiceMapID = :providerServiceMapID and role.RoleID = :roleID and user.agentID is not null order by user.agentID")
 	List<String> getAgentByRoleID(@Param("providerServiceMapID") Integer providerServiceMapID,
 			@Param("roleID") Integer roleID);
+
+	@Query("select count(map) from UserServiceRoleMapping map join map.m_ProviderServiceMapping psm "
+			+ "where map.UserID = :userId and map.Deleted = false and psm.deleted = false "
+			+ "and psm.serviceProviderID = :serviceProviderId")
+	Long countActiveMappingsForProvider(@Param("userId") Long userId,
+			@Param("serviceProviderId") Short serviceProviderId);
 }
