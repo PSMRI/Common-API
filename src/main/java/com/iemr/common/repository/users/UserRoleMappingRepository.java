@@ -110,4 +110,13 @@ public interface UserRoleMappingRepository extends CrudRepository<UserServiceRol
 			+ "and psm.serviceProviderID = :serviceProviderId")
 	Long countActiveMappingsForProvider(@Param("userId") Long userId,
 			@Param("serviceProviderId") Short serviceProviderId);
+
+	/** Active mappings of the user to the named role under the service provider (feature 006, publisher role). */
+	@Query("select count(map) from UserServiceRoleMapping map join map.m_ProviderServiceMapping psm "
+			+ "join map.m_Role role where map.UserID = :userId and map.Deleted = false "
+			+ "and psm.deleted = false and psm.serviceProviderID = :serviceProviderId "
+			+ "and role.RoleName = :roleName "
+			+ "and (role.Deleted is null or role.Deleted = false)")
+	Long countActiveRoleForProvider(@Param("userId") Long userId,
+			@Param("serviceProviderId") Short serviceProviderId, @Param("roleName") String roleName);
 }

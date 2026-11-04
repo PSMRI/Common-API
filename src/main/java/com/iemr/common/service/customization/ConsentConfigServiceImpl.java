@@ -55,9 +55,7 @@ import com.iemr.common.data.customization.consent.ProjectConsentConfig;
 import com.iemr.common.data.customization.consent.ProjectConsentConfigRequest;
 import com.iemr.common.repo.customization.ProjectConsentConfigHistoryRepo;
 import com.iemr.common.repo.customization.ProjectConsentConfigRepo;
-import com.iemr.common.repo.customization.ProjectCustomizationRepo;
 import com.iemr.common.repo.customization.ServicelineCustomizationRepo;
-import com.iemr.common.repository.users.UserRoleMappingRepository;
 import com.iemr.common.service.customization.ConsentMastersClient.CentralLists;
 import com.iemr.common.utils.InputSanitizer;
 import com.iemr.common.utils.exception.ConsentConfigConflictException;
@@ -65,10 +63,14 @@ import com.iemr.common.utils.exception.ConsentServiceUnavailableException;
 import com.iemr.common.utils.exception.IEMRException;
 import com.iemr.common.utils.mapper.InputMapper;
 
+/**
+ * Per-project consent configuration: API 1 for the MMU consent dialog and A1–A5 for Admin. Stored configurations
+ * are cleaned before they are returned ({@link ConsentConfigCleaner}, feature 005); saves are checked by
+ * {@link ConsentConfigValidator}.
+ */
 @Service
 public class ConsentConfigServiceImpl implements ConsentConfigService {
 
-	static final String NOT_FOUND = "project not found";
 	static final String SAVE = "saveConfig";
 	static final String UPDATE = "updateConfig";
 
@@ -78,27 +80,27 @@ public class ConsentConfigServiceImpl implements ConsentConfigService {
 
 	private final ProjectConsentConfigRepo configRepo;
 	private final ProjectConsentConfigHistoryRepo historyRepo;
-	private final ProjectCustomizationRepo projectCustomizationRepo;
 	private final ServicelineCustomizationRepo servicelineCustomizationRepo;
-	private final UserRoleMappingRepository userRoleMappingRepository;
+	private final ConsentProjectAccess access;
 	private final ConsentMastersClient mastersClient;
 	private final ConsentConfigValidator validator;
 	private final ConsentConfigIdempotency idempotency;
+	private final ConsentConfigCleaner cleaner;
 	private final Clock clock;
 
 	public ConsentConfigServiceImpl(ProjectConsentConfigRepo configRepo, ProjectConsentConfigHistoryRepo historyRepo,
-			ProjectCustomizationRepo projectCustomizationRepo,
-			ServicelineCustomizationRepo servicelineCustomizationRepo,
-			UserRoleMappingRepository userRoleMappingRepository, ConsentMastersClient mastersClient,
-			ConsentConfigValidator validator, ConsentConfigIdempotency idempotency, Clock clock) {
+			ServicelineCustomizationRepo servicelineCustomizationRepo, ConsentProjectAccess access,
+			ConsentMastersClient mastersClient,
+			ConsentConfigValidator validator, ConsentConfigIdempotency idempotency,
+			ConsentConfigCleaner cleaner, Clock clock) {
 		this.configRepo = configRepo;
 		this.historyRepo = historyRepo;
-		this.projectCustomizationRepo = projectCustomizationRepo;
 		this.servicelineCustomizationRepo = servicelineCustomizationRepo;
-		this.userRoleMappingRepository = userRoleMappingRepository;
+		this.access = access;
 		this.mastersClient = mastersClient;
 		this.validator = validator;
 		this.idempotency = idempotency;
+		this.cleaner = cleaner;
 		this.clock = clock;
 	}
 
@@ -107,7 +109,7 @@ public class ConsentConfigServiceImpl implements ConsentConfigService {
 		ConsentConfigLoadRequest load = parse(request, ConsentConfigLoadRequest.class);
 		ConsentContext context = parseContext(load.getContext());
 		if (load.getServiceProviderId() != null) {
-			requireProviderMember(userId, load.getServiceProviderId());
+			access.requireProviderMember(userId, load.getServiceProviderId());
 		}
 		ServicelineCustomization mapping;
 		try {
@@ -134,7 +136,7 @@ public class ConsentConfigServiceImpl implements ConsentConfigService {
 		String json = context == ConsentContext.REVISIT && entity.getRevisitConfig() != null
 				? entity.getRevisitConfig()
 				: entity.getRegistrationConfig();
-		response.setConfig(GSON.fromJson(json, ContextConfig.class));
+		response.setConfig(cleaner.clean(GSON.fromJson(json, ContextConfig.class)));
 		return GSON.toJson(response);
 	}
 
@@ -143,11 +145,11 @@ public class ConsentConfigServiceImpl implements ConsentConfigService {
 		if (serviceProviderId == null) {
 			throw new IEMRException("serviceProviderId is required");
 		}
-		requireProviderMember(userId, serviceProviderId);
+		access.requireProviderMember(userId, serviceProviderId);
 		CentralLists central = loadCentral(authorization);
 		ConsentConfigMasters masters = new ConsentConfigMasters();
-		masters.setModes(Arrays.stream(ConsentMode.values()).map(m -> new ModeMaster(m, m.getDisplayName()))
-				.collect(Collectors.toList()));
+		masters.setModes(Arrays.stream(ConsentMode.values()).filter(ConsentMode::isOffered)
+				.map(m -> new ModeMaster(m, m.getDisplayName())).collect(Collectors.toList()));
 		masters.setPurposes(central.getPurposes());
 		masters.setLanguages(central.getLanguages());
 		masters.setProjects(configRepo.findByServiceProviderIdAndDeletedFalse(serviceProviderId).stream()
@@ -161,7 +163,7 @@ public class ConsentConfigServiceImpl implements ConsentConfigService {
 		if (ref.getServiceProviderId() == null) {
 			throw new IEMRException("serviceProviderId is required");
 		}
-		requireProviderMember(userId, ref.getServiceProviderId());
+		access.requireProviderMember(userId, ref.getServiceProviderId());
 		List<ProjectConsentConfig> configs = configRepo.findByServiceProviderIdAndDeletedFalse(ref.getServiceProviderId())
 				.stream().map(this::toDto).collect(Collectors.toList());
 		return GSON.toJson(configs);
@@ -173,7 +175,7 @@ public class ConsentConfigServiceImpl implements ConsentConfigService {
 		if (ref.getProjectId() == null || ref.getServiceProviderId() == null) {
 			throw new IEMRException("projectId and serviceProviderId are required");
 		}
-		ProjectCustomization project = requireOwnedProject(ref.getProjectId(), ref.getServiceProviderId(), userId);
+		ProjectCustomization project = access.requireOwnedProject(ref.getProjectId(), ref.getServiceProviderId(), userId);
 		ProjectConsentConfig config = configRepo.findByProjectIdAndDeletedFalse(ref.getProjectId()).map(this::toDto)
 				.orElseGet(() -> neverSaved(project));
 		return GSON.toJson(config);
@@ -205,7 +207,7 @@ public class ConsentConfigServiceImpl implements ConsentConfigService {
 		}
 		String response;
 		try {
-			requireOwnedProject(config.getProjectId(), config.getServiceProviderId(), userId);
+			access.requireOwnedProject(config.getProjectId(), config.getServiceProviderId(), userId);
 			validator.validateAndNormalise(config, loadCentral(authorization));
 			response = GSON.toJson(update ? applyUpdate(config, userName) : applyCreate(config, userName));
 		} catch (Exception e) {
@@ -307,30 +309,6 @@ public class ConsentConfigServiceImpl implements ConsentConfigService {
 		});
 	}
 
-	/** The caller must have an active role mapping under the service provider (callers check it is not null). */
-	private void requireProviderMember(Integer userId, Integer serviceProviderId) throws IEMRException {
-		if (userId == null || serviceProviderId > Short.MAX_VALUE
-				|| serviceProviderId < Short.MIN_VALUE) {
-			throw new IEMRException(NOT_FOUND);
-		}
-		Long mappings = userRoleMappingRepository.countActiveMappingsForProvider(userId.longValue(),
-				serviceProviderId.shortValue());
-		if (mappings == null || mappings == 0) {
-			throw new IEMRException(NOT_FOUND);
-		}
-	}
-
-	private ProjectCustomization requireOwnedProject(Integer projectId, Integer serviceProviderId, Integer userId)
-			throws IEMRException {
-		requireProviderMember(userId, serviceProviderId);
-		ProjectCustomization project = projectCustomizationRepo.findById(projectId).orElse(null);
-		if (project == null || Boolean.TRUE.equals(project.getDeleted())
-				|| !serviceProviderId.equals(project.getServiceProviderId())) {
-			throw new IEMRException(NOT_FOUND);
-		}
-		return project;
-	}
-
 	private CentralLists loadCentral(String authorization) throws IEMRException {
 		try {
 			return mastersClient.load(authorization);
@@ -348,8 +326,9 @@ public class ConsentConfigServiceImpl implements ConsentConfigService {
 		dto.setVersion(entity.getVersion());
 		dto.setSavedBy(entity.getModifiedBy() != null ? entity.getModifiedBy() : entity.getCreatedBy());
 		dto.setSavedAt(entity.getLastModDate() == null ? null : entity.getLastModDate().toInstant().toString());
-		dto.setRegistration(GSON.fromJson(entity.getRegistrationConfig(), ContextConfig.class));
-		dto.setRevisit(entity.getRevisitConfig() == null ? null : GSON.fromJson(entity.getRevisitConfig(), ContextConfig.class));
+		dto.setRegistration(cleaner.clean(GSON.fromJson(entity.getRegistrationConfig(), ContextConfig.class)));
+		dto.setRevisit(entity.getRevisitConfig() == null ? null
+				: cleaner.clean(GSON.fromJson(entity.getRevisitConfig(), ContextConfig.class)));
 		return dto;
 	}
 

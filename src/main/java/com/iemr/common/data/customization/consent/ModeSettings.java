@@ -26,17 +26,15 @@ import com.google.gson.annotations.Expose;
 import lombok.Data;
 
 /**
- * Per-mode options; only the key for the entry's mode is kept.
+ * Per-mode options; only the key for the entry's mode is kept. Only OTP and WITNESSED have settings (feature 005):
+ * the old {@code voiceMinSeconds} and {@code photos} keys are no longer fields, so Gson ignores them when they still
+ * arrive in a request or a stored configuration.
  */
 @Data
 public class ModeSettings {
 
 	@Expose
-	private Integer voiceMinSeconds;
-	@Expose
 	private OtpTarget otpTarget;
 	@Expose
 	private Boolean witnessRelationshipRequired;
-	@Expose
-	private PhotoRequirement photos;
 }

@@ -113,9 +113,9 @@ class ConsentConfigServiceImplTest {
 
 	@BeforeEach
 	void setUp() throws IEMRException {
-		service = new ConsentConfigServiceImpl(configRepo, historyRepo, projectCustomizationRepo,
-				servicelineCustomizationRepo, userRoleMappingRepository, mastersClient, new ConsentConfigValidator(),
-				idempotency, Clock.fixed(NOW, ZoneOffset.UTC));
+		service = new ConsentConfigServiceImpl(configRepo, historyRepo, servicelineCustomizationRepo,
+				new ConsentProjectAccess(projectCustomizationRepo, userRoleMappingRepository), mastersClient,
+				new ConsentConfigValidator(), idempotency, new ConsentConfigCleaner(), Clock.fixed(NOW, ZoneOffset.UTC));
 		when(userRoleMappingRepository.countActiveMappingsForProvider((long) USER_ID, (short) PROVIDER_ID))
 				.thenReturn(2L);
 		when(projectCustomizationRepo.findById(PROJECT_ID)).thenReturn(Optional.of(project(PROVIDER_ID, false)));
@@ -266,17 +266,18 @@ class ConsentConfigServiceImplTest {
 	class AdminReads {
 
 		@Test
-		@DisplayName("masters list the six modes, central purposes, languages and configured projects")
+		@DisplayName("feature 005: masters list the five reviewed modes, central purposes, languages and configured projects")
 		void masters() throws Exception {
 			when(configRepo.findByServiceProviderIdAndDeletedFalse(PROVIDER_ID)).thenReturn(List.of(saved(3, null)));
 
 			JsonObject masters = json(service.getMasters(PROVIDER_ID, USER_ID, AUTH));
 
-			assertThat(masters.getAsJsonArray("modes")).hasSize(6);
-			assertThat(masters.getAsJsonArray("modes").get(0).getAsJsonObject().get("mode").getAsString())
-					.isEqualTo("SELF_READ");
-			assertThat(masters.getAsJsonArray("modes").get(0).getAsJsonObject().get("name").getAsString())
-					.isEqualTo("Self-read");
+			List<String> modes = new java.util.ArrayList<>();
+			masters.getAsJsonArray("modes").forEach(m -> modes.add(m.getAsJsonObject().get("mode").getAsString()
+					+ "=" + m.getAsJsonObject().get("name").getAsString()));
+			assertThat(modes).containsExactly("SELF_READ=Patient read it", "READ_ALOUD=Read aloud + recorded agreement",
+					"WITNESSED=Guardian / Representative", "SIGNATURE_PHOTO=Signed consent form (signature / thumb)",
+					"OTP=OTP to patient's phone");
 			assertThat(masters.getAsJsonArray("purposes")).hasSize(2);
 			assertThat(masters.getAsJsonArray("languages")).hasSize(2);
 			assertThat(masters.getAsJsonArray("projects").get(0).getAsJsonObject().get("version").getAsInt())
@@ -480,7 +481,7 @@ class ConsentConfigServiceImplTest {
 			request.getRegistration().setDefaultMode(ConsentMode.VOICE_CLIP);
 
 			assertThatThrownBy(() -> save(GSON.toJson(request))).isInstanceOf(IEMRException.class)
-					.hasMessage("registration.defaultMode must be one of the allowed modes; "
+					.hasMessage("registration.defaultMode VOICE_CLIP is no longer allowed; "
 							+ "registration.guardian.ageThreshold must be 18");
 			verifyNoInteractions(configRepo, historyRepo);
 			verify(idempotency).release(USER_ID, "saveConfig", KEY);
@@ -590,6 +591,21 @@ class ConsentConfigServiceImplTest {
 		}
 
 		@Test
+		@DisplayName("feature 005: an update with a VOICE_CLIP mode is refused, nothing is stored and the key is released")
+		void voiceClipRefused() {
+			ProjectConsentConfigRequest request = validRequest();
+			request.setBaseVersion(3);
+			request.getRegistration().getModes().add(ConsentConfigFixtures.mode(ConsentMode.VOICE_CLIP, 3));
+
+			assertThatThrownBy(() -> update(GSON.toJson(request))).isInstanceOf(IEMRException.class)
+					.hasMessage("registration.modes[2].mode VOICE_CLIP is no longer allowed");
+			verify(configRepo, never()).updateIfVersion(anyInt(), anyInt(), anyString(), any(), anyString(),
+					anyString(), any());
+			verify(historyRepo, never()).save(any());
+			verify(idempotency).release(USER_ID, "updateConfig", KEY);
+		}
+
+		@Test
 		@DisplayName("updating a project that has never been saved is refused")
 		void neverSaved() {
 			when(configRepo.updateIfVersion(anyInt(), anyInt(), anyString(), any(), anyString(), anyString(), any()))
@@ -620,6 +636,90 @@ class ConsentConfigServiceImplTest {
 					.afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK);
 			verify(idempotency).release(USER_ID, "updateConfig", KEY);
 			verify(idempotency, never()).complete(any(), anyString(), anyString(), anyString());
+		}
+	}
+
+	@Nested
+	@DisplayName("feature 005: configurations saved before the reviewed mode list are cleaned on load (US3)")
+	class CleanOnLoad {
+
+		private static final String LEGACY_REGISTRATION = "{\"enabled\":true,\"mandatory\":true,\"modes\":[{\"mode\":\"VOICE_CLIP\",\"rank\":1,\"settings\":{\"voiceMinSeconds\":30}},{\"mode\":\"READ_ALOUD\",\"rank\":2},{\"mode\":\"SIGNATURE_PHOTO\",\"rank\":3,\"settings\":{\"photos\":\"BOTH\"}}],\"defaultMode\":\"VOICE_CLIP\",\"purposes\":[],\"languages\":[],\"guardian\":{\"enabled\":true,\"ageThreshold\":18}}";
+		private static final String LEGACY_REVISIT = "{\"enabled\":true,\"mandatory\":true,\"modes\":[{\"mode\":\"VOICE_CLIP\",\"rank\":1}],\"defaultMode\":\"VOICE_CLIP\",\"purposes\":[],\"languages\":[],\"guardian\":{\"enabled\":true,\"ageThreshold\":18}}";
+
+		private ProjectConsentConfigEntity legacy() {
+			ProjectConsentConfigEntity entity = saved(7, null);
+			entity.setRegistrationConfig(LEGACY_REGISTRATION);
+			entity.setRevisitConfig(LEGACY_REVISIT);
+			return entity;
+		}
+
+		private void assertClean(String body) {
+			assertThat(body).doesNotContain("VOICE_CLIP").doesNotContain("photos").doesNotContain("voiceMinSeconds");
+		}
+
+		private void assertNothingWritten() {
+			verify(configRepo, never()).save(any());
+			verify(configRepo, never()).saveAndFlush(any());
+			verify(configRepo, never()).updateIfVersion(anyInt(), anyInt(), anyString(), any(), anyString(),
+					anyString(), any());
+			verify(historyRepo, never()).save(any());
+		}
+
+		@Test
+		@DisplayName("API 1 returns the cleaned registration and the READ_ALOUD fallback for revisit")
+		void fetchConsentConfig() throws Exception {
+			ServicelineCustomization mapping = new ServicelineCustomization();
+			mapping.setProjectId(PROJECT_ID);
+			when(servicelineCustomizationRepo.checkExistingData(2, "MMU", 5, 41, 312, PROVIDER_ID)).thenReturn(mapping);
+			when(configRepo.findByProjectIdAndDeletedFalse(PROJECT_ID)).thenReturn(Optional.of(legacy()));
+			String request = "{\"serviceLine\":\"MMU\",\"serviceLineId\":2,\"stateId\":5,\"districtId\":41,"
+					+ "\"blockId\":312,\"serviceProviderId\":1,\"context\":\"";
+
+			String registration = service.fetchConsentConfig(request + "REGISTRATION\"}", USER_ID);
+			String revisit = service.fetchConsentConfig(request + "REVISIT\"}", USER_ID);
+
+			assertClean(registration);
+			assertClean(revisit);
+			JsonObject reg = json(registration);
+			assertThat(reg.get("version").getAsInt()).isEqualTo(7);
+			assertThat(reg.getAsJsonObject("config").get("defaultMode").getAsString()).isEqualTo("READ_ALOUD");
+			assertThat(reg.getAsJsonObject("config").getAsJsonArray("modes")).hasSize(2);
+			JsonObject rev = json(revisit).getAsJsonObject("config");
+			assertThat(rev.getAsJsonArray("modes")).hasSize(1);
+			assertThat(rev.getAsJsonArray("modes").get(0).getAsJsonObject().get("mode").getAsString())
+					.isEqualTo("READ_ALOUD");
+			assertThat(rev.getAsJsonArray("modes").get(0).getAsJsonObject().get("rank").getAsInt()).isEqualTo(1);
+			assertThat(rev.get("defaultMode").getAsString()).isEqualTo("READ_ALOUD");
+			assertNothingWritten();
+		}
+
+		@Test
+		@DisplayName("A3 returns cleaned registration and revisit with the stored version")
+		void fetchConfigByProject() throws Exception {
+			when(configRepo.findByProjectIdAndDeletedFalse(PROJECT_ID)).thenReturn(Optional.of(legacy()));
+
+			String body = service.fetchConfigByProject("{\"projectId\":12,\"serviceProviderId\":1}", USER_ID);
+
+			assertClean(body);
+			JsonObject result = json(body);
+			assertThat(result.get("version").getAsInt()).isEqualTo(7);
+			assertThat(result.getAsJsonObject("registration").getAsJsonArray("modes").get(1).getAsJsonObject()
+					.has("settings")).isFalse();
+			assertThat(result.getAsJsonObject("revisit").get("defaultMode").getAsString()).isEqualTo("READ_ALOUD");
+			assertNothingWritten();
+		}
+
+		@Test
+		@DisplayName("A2 returns cleaned items")
+		void fetchAllConfigs() throws Exception {
+			when(configRepo.findByServiceProviderIdAndDeletedFalse(PROVIDER_ID)).thenReturn(List.of(legacy()));
+
+			String body = service.fetchAllConfigs("{\"serviceProviderId\":1}", USER_ID);
+
+			assertClean(body);
+			assertThat(JsonParser.parseString(body).getAsJsonArray().get(0).getAsJsonObject().get("version").getAsInt())
+					.isEqualTo(7);
+			assertNothingWritten();
 		}
 	}
 }

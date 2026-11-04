@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.google.gson.Gson;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -46,9 +47,9 @@ import com.iemr.common.data.customization.consent.ContextConfig;
 import com.iemr.common.data.customization.consent.ModeEntry;
 import com.iemr.common.data.customization.consent.ModeSettings;
 import com.iemr.common.data.customization.consent.OtpTarget;
-import com.iemr.common.data.customization.consent.PhotoRequirement;
 import com.iemr.common.data.customization.consent.ProjectConsentConfigRequest;
 import com.iemr.common.utils.exception.IEMRException;
+import com.iemr.common.utils.mapper.InputMapper;
 
 class ConsentConfigValidatorTest {
 
@@ -206,7 +207,7 @@ class ConsentConfigValidatorTest {
 		void ranksChecked() {
 			ContextConfig config = validContext();
 			config.setModes(new ArrayList<>(List.of(mode(ConsentMode.SELF_READ, 0), mode(ConsentMode.OTP, null),
-					mode(ConsentMode.WITNESSED, 4), mode(ConsentMode.VOICE_CLIP, 4))));
+					mode(ConsentMode.WITNESSED, 4), mode(ConsentMode.SIGNATURE_PHOTO, 4))));
 			assertThat(errorsFor(config)).isEqualTo("registration.modes[0].rank must be 1 or more; "
 					+ "registration.modes[1].rank must be 1 or more; registration.modes: rank 4 is used more than once");
 		}
@@ -226,6 +227,53 @@ class ConsentConfigValidatorTest {
 			config.setDefaultMode(null);
 			assertThat(errorsFor(config)).isEmpty();
 		}
+
+		@Test
+		@DisplayName("feature 005: VOICE_CLIP as an allowed mode is refused, naming the field")
+		void voiceClipModeRefused() {
+			ContextConfig config = validContext();
+			config.getModes().add(mode(ConsentMode.VOICE_CLIP, 3));
+			assertThat(errorsFor(config)).isEqualTo("registration.modes[2].mode VOICE_CLIP is no longer allowed");
+		}
+
+		@Test
+		@DisplayName("feature 005: VOICE_CLIP in the revisit modes is refused with the revisit prefix")
+		void voiceClipRevisitRefused() {
+			ProjectConsentConfigRequest request = validRequest();
+			ContextConfig revisit = validContext();
+			revisit.getModes().add(mode(ConsentMode.VOICE_CLIP, 3));
+			request.setRevisit(revisit);
+			assertThat(errorsFor(request)).isEqualTo("revisit.modes[2].mode VOICE_CLIP is no longer allowed");
+		}
+
+		@Test
+		@DisplayName("feature 005: a VOICE_CLIP default mode is refused instead of 'must be one of the allowed modes'")
+		void voiceClipDefaultRefused() {
+			ContextConfig config = validContext();
+			config.setDefaultMode(ConsentMode.VOICE_CLIP);
+			assertThat(errorsFor(config)).isEqualTo("registration.defaultMode VOICE_CLIP is no longer allowed");
+		}
+
+		@Test
+		@DisplayName("feature 005: VOICE_CLIP as mode and default gives both messages, the mode first")
+		void voiceClipModeAndDefaultRefused() {
+			ContextConfig config = validContext();
+			config.getModes().add(mode(ConsentMode.VOICE_CLIP, 3));
+			config.setDefaultMode(ConsentMode.VOICE_CLIP);
+			assertThat(errorsFor(config)).isEqualTo("registration.modes[2].mode VOICE_CLIP is no longer allowed; "
+					+ "registration.defaultMode VOICE_CLIP is no longer allowed");
+		}
+
+		@Test
+		@DisplayName("feature 005: VOICE_CLIP as the only mode of an enabled context gives all three messages in order")
+		void voiceClipOnlyModeRefused() {
+			ContextConfig config = validContext();
+			config.setModes(new ArrayList<>(List.of(mode(ConsentMode.VOICE_CLIP, 1))));
+			config.setDefaultMode(ConsentMode.VOICE_CLIP);
+			assertThat(errorsFor(config)).isEqualTo("registration.modes[0].mode VOICE_CLIP is no longer allowed; "
+					+ "registration: at least one mode must be allowed when consent is enabled; "
+					+ "registration.defaultMode VOICE_CLIP is no longer allowed");
+		}
 	}
 
 	@Nested
@@ -242,12 +290,11 @@ class ConsentConfigValidatorTest {
 		}
 
 		@Test
-		@DisplayName("missing settings get their defaults")
+		@DisplayName("missing settings get their defaults; modes without settings get none")
 		void defaultsApplied() throws IEMRException {
-			assertThat(settingsAfterValidation(ConsentMode.VOICE_CLIP, null).getVoiceMinSeconds()).isEqualTo(30);
 			assertThat(settingsAfterValidation(ConsentMode.WITNESSED, null).getWitnessRelationshipRequired()).isTrue();
-			assertThat(settingsAfterValidation(ConsentMode.SIGNATURE_PHOTO, null).getPhotos())
-					.isEqualTo(PhotoRequirement.BOTH);
+			assertThat(settingsAfterValidation(ConsentMode.SIGNATURE_PHOTO, null)).isNull();
+			assertThat(settingsAfterValidation(ConsentMode.READ_ALOUD, null)).isNull();
 			ContextConfig config = validContext();
 			validator.validateAndNormalise(withRegistration(config), central());
 			assertThat(config.getModes().get(1).getSettings().getOtpTarget()).isEqualTo(OtpTarget.PATIENT);
@@ -258,50 +305,37 @@ class ConsentConfigValidatorTest {
 		@DisplayName("given settings are kept and keys of other modes are dropped")
 		void givenSettingsKept() throws IEMRException {
 			ModeSettings given = new ModeSettings();
-			given.setVoiceMinSeconds(45);
 			given.setOtpTarget(OtpTarget.GUARDIAN);
 			given.setWitnessRelationshipRequired(false);
-			given.setPhotos(PhotoRequirement.SIGNED_FORM_ONLY);
-			ModeSettings voice = settingsAfterValidation(ConsentMode.VOICE_CLIP, given);
-			assertThat(voice.getVoiceMinSeconds()).isEqualTo(45);
-			assertThat(voice.getOtpTarget()).isNull();
-			assertThat(voice.getWitnessRelationshipRequired()).isNull();
-			assertThat(voice.getPhotos()).isNull();
-			assertThat(settingsAfterValidation(ConsentMode.WITNESSED, given).getWitnessRelationshipRequired()).isFalse();
+			ModeSettings witnessed = settingsAfterValidation(ConsentMode.WITNESSED, given);
+			assertThat(witnessed.getWitnessRelationshipRequired()).isFalse();
+			assertThat(witnessed.getOtpTarget()).isNull();
 			given.setWitnessRelationshipRequired(true);
 			assertThat(settingsAfterValidation(ConsentMode.WITNESSED, given).getWitnessRelationshipRequired()).isTrue();
-			assertThat(settingsAfterValidation(ConsentMode.SIGNATURE_PHOTO, given).getPhotos())
-					.isEqualTo(PhotoRequirement.SIGNED_FORM_ONLY);
+			assertThat(settingsAfterValidation(ConsentMode.SIGNATURE_PHOTO, given)).isNull();
 			assertThat(settingsAfterValidation(ConsentMode.READ_ALOUD, given)).isNull();
 
 			ContextConfig config = validContext();
 			config.getModes().get(1).setSettings(given);
 			validator.validateAndNormalise(withRegistration(config), central());
 			assertThat(config.getModes().get(1).getSettings().getOtpTarget()).isEqualTo(OtpTarget.GUARDIAN);
-			assertThat(config.getModes().get(1).getSettings().getVoiceMinSeconds()).isNull();
+			assertThat(config.getModes().get(1).getSettings().getWitnessRelationshipRequired()).isNull();
 		}
 
-		@ParameterizedTest(name = "{0} s is accepted")
-		@ValueSource(ints = { 30, 60 })
-		@DisplayName("the voice clip minimum may be 30 to 60 s")
-		void voiceBoundsAccepted(int seconds) throws IEMRException {
-			ModeSettings given = new ModeSettings();
-			given.setVoiceMinSeconds(seconds);
-			assertThat(settingsAfterValidation(ConsentMode.VOICE_CLIP, given).getVoiceMinSeconds()).isEqualTo(seconds);
-		}
-
-		@ParameterizedTest(name = "{0} s is refused")
-		@ValueSource(ints = { 10, 29, 61 })
-		@DisplayName("a voice clip minimum outside 30 to 60 s is refused (proposal §3.1 rule 6)")
-		void voiceOutOfRangeRefused(int seconds) {
+		@Test
+		@DisplayName("feature 005: photos and voiceMinSeconds sent in JSON are dropped, and the save is accepted")
+		void retiredSettingsDropped() throws IEMRException {
+			ModeEntry entry = InputMapper.gson().fromJson(
+					"{\"mode\":\"SIGNATURE_PHOTO\",\"rank\":3,\"settings\":{\"photos\":\"BOTH\",\"voiceMinSeconds\":45}}",
+					ModeEntry.class);
 			ContextConfig config = validContext();
-			ModeEntry entry = mode(ConsentMode.VOICE_CLIP, 3);
-			ModeSettings given = new ModeSettings();
-			given.setVoiceMinSeconds(seconds);
-			entry.setSettings(given);
 			config.getModes().add(entry);
-			assertThat(errorsFor(config))
-					.isEqualTo("registration.modes[2].settings.voiceMinSeconds must be between 30 and 60");
+
+			validator.validateAndNormalise(withRegistration(config), central());
+
+			assertThat(entry.getSettings()).isNull();
+			String stored = new Gson().toJson(config);
+			assertThat(stored).doesNotContain("photos").doesNotContain("voiceMinSeconds");
 		}
 	}
 

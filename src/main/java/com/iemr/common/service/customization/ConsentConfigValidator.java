@@ -34,7 +34,6 @@ import com.iemr.common.data.customization.consent.GuardianRule;
 import com.iemr.common.data.customization.consent.ModeEntry;
 import com.iemr.common.data.customization.consent.ModeSettings;
 import com.iemr.common.data.customization.consent.OtpTarget;
-import com.iemr.common.data.customization.consent.PhotoRequirement;
 import com.iemr.common.data.customization.consent.ProjectConsentConfigRequest;
 import com.iemr.common.data.customization.consent.PurposeEntry;
 import com.iemr.common.service.customization.ConsentMastersClient.CentralLists;
@@ -43,16 +42,15 @@ import com.iemr.common.utils.exception.IEMRException;
 /**
  * Checks a consent configuration before it is saved, fills in defaults and drops settings that do not
  * belong to the entry's mode. All problems are reported together in one message.
+ *
+ * <p>Feature 005 (reviewed mode list, 3 Nov 2026): VOICE_CLIP is refused as an allowed or default mode (FR-002);
+ * only OTP and WITNESSED keep settings, so the retired photo and voice settings are dropped (FR-003, FR-004).
  */
 @Component
 public class ConsentConfigValidator {
 
 	/** Proposal §3.1 rule 7 and DPDP Rule 10: patients under 18 get the guardian step. */
 	static final int GUARDIAN_AGE = 18;
-	/** Proposal §3.1 rule 6: a voice clip is a 30–60 s recording. */
-	static final int VOICE_MIN = 30;
-	static final int VOICE_MAX = 60;
-	static final int VOICE_DEFAULT = VOICE_MIN;
 	static final int PROJECT_NAME_MAX = 100;
 
 	/** The fields needed before anything is read: project, provider and (for an update) the base version. */
@@ -101,7 +99,9 @@ public class ConsentConfigValidator {
 		if (enabled && modes.isEmpty()) {
 			errors.add(prefix + ": at least one mode must be allowed when consent is enabled");
 		}
-		if (config.getDefaultMode() != null && !modes.contains(config.getDefaultMode())) {
+		if (config.getDefaultMode() != null && !config.getDefaultMode().isOffered()) {
+			errors.add(prefix + ".defaultMode " + config.getDefaultMode() + " is no longer allowed");
+		} else if (config.getDefaultMode() != null && !modes.contains(config.getDefaultMode())) {
 			errors.add(prefix + ".defaultMode must be one of the allowed modes");
 		}
 		validatePurposes(prefix, config.getPurposes(), central, errors);
@@ -123,37 +123,30 @@ public class ConsentConfigValidator {
 				errors.add(at + ".mode is missing or not a valid mode");
 				continue;
 			}
+			if (!entry.getMode().isOffered()) {
+				errors.add(at + ".mode " + entry.getMode() + " is no longer allowed");
+				continue;
+			}
 			if (!modes.add(entry.getMode())) {
 				errors.add(prefix + ".modes: " + entry.getMode() + " appears more than once");
 			}
 			checkRank(at, prefix + ".modes", entry.getRank(), ranks, errors);
-			entry.setSettings(normaliseSettings(at, entry.getMode(), entry.getSettings(), errors));
+			entry.setSettings(normaliseSettings(entry.getMode(), entry.getSettings()));
 		}
 		return modes;
 	}
 
-	private ModeSettings normaliseSettings(String at, ConsentMode mode, ModeSettings given, List<String> errors) {
+	/** Keeps only the setting of the entry's mode, with its default; only OTP and WITNESSED have one. */
+	private ModeSettings normaliseSettings(ConsentMode mode, ModeSettings given) {
 		ModeSettings in = given == null ? new ModeSettings() : given;
 		ModeSettings out = new ModeSettings();
 		switch (mode) {
-		case VOICE_CLIP:
-			Integer seconds = in.getVoiceMinSeconds();
-			if (seconds == null) {
-				seconds = VOICE_DEFAULT;
-			} else if (seconds < VOICE_MIN || seconds > VOICE_MAX) {
-				errors.add(at + ".settings.voiceMinSeconds must be between " + VOICE_MIN + " and " + VOICE_MAX);
-			}
-			out.setVoiceMinSeconds(seconds);
-			return out;
 		case OTP:
 			out.setOtpTarget(in.getOtpTarget() == null ? OtpTarget.PATIENT : in.getOtpTarget());
 			return out;
 		case WITNESSED:
 			out.setWitnessRelationshipRequired(
 					in.getWitnessRelationshipRequired() == null || in.getWitnessRelationshipRequired());
-			return out;
-		case SIGNATURE_PHOTO:
-			out.setPhotos(in.getPhotos() == null ? PhotoRequirement.BOTH : in.getPhotos());
 			return out;
 		default:
 			return null;
