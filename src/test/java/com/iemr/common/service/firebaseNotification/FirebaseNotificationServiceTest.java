@@ -13,6 +13,8 @@ import java.sql.Timestamp;
 import java.util.Map;
 import java.util.Optional;
 
+import com.iemr.common.data.userToken.UserFcmTokenData;
+import com.iemr.common.repo.userToken.UserFcmTokenRepo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,10 +34,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
-import com.iemr.common.data.userToken.UserTokenData;
 import com.iemr.common.model.notification.NotificationMessage;
 import com.iemr.common.model.notification.UserToken;
-import com.iemr.common.repo.userToken.UserTokenRepo;
 import com.iemr.common.utils.CookieUtil;
 import com.iemr.common.utils.JwtUtil;
 
@@ -45,7 +45,7 @@ import com.iemr.common.utils.JwtUtil;
 class FirebaseNotificationServiceTest {
 
 	@Mock
-	private UserTokenRepo userTokenRepo;
+	private UserFcmTokenRepo userTokenRepo;
 	@Mock
 	private CookieUtil cookieUtil;
 	@Mock
@@ -56,7 +56,6 @@ class FirebaseNotificationServiceTest {
 	@BeforeEach
 	void setUp() {
 		service = new FirebaseNotificationService();
-		ReflectionTestUtils.setField(service, "userTokenRepo", userTokenRepo);
 		ReflectionTestUtils.setField(service, "cookieUtil", cookieUtil);
 		ReflectionTestUtils.setField(service, "jwtUtil", jwtUtil);
 	}
@@ -113,7 +112,7 @@ class FirebaseNotificationServiceTest {
 	@Test
 	@DisplayName("an existing device token is updated in place")
 	void existingTokenIsUpdated() {
-		UserTokenData existing = new UserTokenData();
+        UserFcmTokenData existing = new UserFcmTokenData();
 		existing.setUserId(7);
 		existing.setToken("old-token");
 		when(userTokenRepo.findById(7)).thenReturn(Optional.of(existing));
@@ -124,7 +123,7 @@ class FirebaseNotificationServiceTest {
 
 		assertThat(service.updateToken(userToken)).isEqualTo("Save Successfully");
 
-		ArgumentCaptor<UserTokenData> captor = ArgumentCaptor.forClass(UserTokenData.class);
+		ArgumentCaptor<UserFcmTokenData> captor = ArgumentCaptor.forClass(UserFcmTokenData.class);
 		verify(userTokenRepo).save(captor.capture());
 		assertThat(captor.getValue()).isSameAs(existing);
 		assertThat(captor.getValue().getToken()).isEqualTo("new-token");
@@ -142,7 +141,7 @@ class FirebaseNotificationServiceTest {
 
 		assertThat(service.updateToken(userToken)).isEqualTo("Save Successfully");
 
-		ArgumentCaptor<UserTokenData> captor = ArgumentCaptor.forClass(UserTokenData.class);
+		ArgumentCaptor<UserFcmTokenData> captor = ArgumentCaptor.forClass(UserFcmTokenData.class);
 		verify(userTokenRepo).save(captor.capture());
 		assertThat(captor.getValue().getUserId()).isEqualTo(8);
 		assertThat(captor.getValue().getToken()).isEqualTo("fresh-token");
@@ -154,7 +153,7 @@ class FirebaseNotificationServiceTest {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 		when(jwtUtil.getUserIdFromToken("jwt-value")).thenReturn("11");
-		UserTokenData stored = new UserTokenData();
+        UserFcmTokenData stored = new UserFcmTokenData();
 		stored.setToken("device-token");
 		when(userTokenRepo.findById(11)).thenReturn(Optional.of(stored));
 
