@@ -29,8 +29,8 @@ import com.iemr.common.repository.users.UserRoleMappingRepository;
 import com.iemr.common.utils.exception.IEMRException;
 
 /**
- * Who may manage a project's consent settings: the caller must belong to the project's service provider, and to
- * publish a consent message must also hold the configured publisher role (feature 006, research R2). Shared by the
+ * Who may manage a project's consent settings: the caller must belong to the project's service provider
+ * (feature 006, research R2). Shared by the
  * consent configuration (A1–A5) and consent message (A6–A8) services. Unknown, deleted and other providers'
  * projects all answer "project not found".
  */
@@ -71,13 +71,6 @@ public class ConsentProjectAccess {
 			throw new IEMRException(NOT_FOUND);
 		}
 		return project;
-	}
-
-	/** Whether the caller holds the named role under the service provider (callers check the provider first). */
-	public boolean hasRole(Integer userId, Integer serviceProviderId, String roleName) {
-		Long count = userRoleMappingRepository.countActiveRoleForProvider(userId.longValue(),
-				serviceProviderId.shortValue(), roleName);
-		return count != null && count > 0;
 	}
 
 	private static boolean outOfRange(Integer serviceProviderId) {

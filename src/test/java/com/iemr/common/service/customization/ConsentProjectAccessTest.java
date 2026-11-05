@@ -38,7 +38,7 @@ import com.iemr.common.data.customization.ProjectCustomization;
 import com.iemr.common.repo.customization.ProjectCustomizationRepo;
 import com.iemr.common.repository.users.UserRoleMappingRepository;
 
-/** Feature 006: project ownership and the consent-message publisher role (research R2). */
+/** Feature 006: project ownership (research R2). */
 class ConsentProjectAccessTest {
 
 	private ProjectCustomizationRepo projects;
@@ -86,14 +86,5 @@ class ConsentProjectAccessTest {
 		when(roles.countActiveMappingsForProvider((long) USER_ID, (short) PROVIDER_ID)).thenReturn(0L, (Long) null);
 		assertThatThrownBy(() -> access.requireProviderMember(USER_ID, PROVIDER_ID)).hasMessage("project not found");
 		assertThatThrownBy(() -> access.requireProviderMember(USER_ID, PROVIDER_ID)).hasMessage("project not found");
-	}
-
-	@Test
-	void publisherRoleIsCheckedUnderTheProvider() {
-		when(roles.countActiveRoleForProvider((long) USER_ID, (short) PROVIDER_ID, "ConsentMessagePublisher"))
-				.thenReturn(1L, 0L, null);
-		assertThat(access.hasRole(USER_ID, PROVIDER_ID, "ConsentMessagePublisher")).isTrue();
-		assertThat(access.hasRole(USER_ID, PROVIDER_ID, "ConsentMessagePublisher")).isFalse();
-		assertThat(access.hasRole(USER_ID, PROVIDER_ID, "ConsentMessagePublisher")).isFalse();
 	}
 }

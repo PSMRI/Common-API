@@ -24,7 +24,6 @@ package com.iemr.common.service.customization;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.google.gson.JsonElement;
@@ -36,8 +35,7 @@ import com.iemr.common.utils.exception.IEMRException;
 
 /**
  * Forwards the Admin "Consent message" tab to Consent-API (A6–A8, feature 006, research R1, R2, R11). Here only:
- * the request fields the front end sends, that the project belongs to the caller's service provider, and for
- * publishing the configured publisher role. The actor is never taken from the body ({@code savedBy},
+ * the request fields the front end sends and that the project belongs to the caller's service provider. The actor is never taken from the body ({@code savedBy},
  * {@code publishedBy} are dropped); Consent-API uses the logged-in user.
  */
 @Service
@@ -45,21 +43,13 @@ public class ConsentNoticeServiceImpl implements ConsentNoticeService {
 
 	static final String ENGLISH_ONLY = "Only English can be edited; translations are generated on publish";
 
-	static final String NOT_CONFIGURED = "Consent message publishing is not configured";
-
-	static final String NOT_ALLOWED = "You are not allowed to publish consent messages";
-
 	private final ConsentNoticeClient client;
 
 	private final ConsentProjectAccess access;
 
-	private final String publisherRole;
-
-	public ConsentNoticeServiceImpl(ConsentNoticeClient client, ConsentProjectAccess access,
-			@Value("${consent.notice.publisher-role:}") String publisherRole) {
+	public ConsentNoticeServiceImpl(ConsentNoticeClient client, ConsentProjectAccess access) {
 		this.client = client;
 		this.access = access;
-		this.publisherRole = publisherRole == null ? "" : publisherRole.trim();
 	}
 
 	@Override
@@ -95,12 +85,6 @@ public class ConsentNoticeServiceImpl implements ConsentNoticeService {
 		JsonObject body = parse(request);
 		Target target = target(body, false);
 		access.requireOwnedProject(target.projectId(), target.serviceProviderId(), userId);
-		if (publisherRole.isEmpty()) {
-			throw new IEMRException(NOT_CONFIGURED);
-		}
-		if (!access.hasRole(userId, target.serviceProviderId(), publisherRole)) {
-			throw new IEMRException(NOT_ALLOWED);
-		}
 		JsonObject options = new JsonObject();
 		copy(body, options, "requireReconsent");
 		copy(body, options, "translateTo");

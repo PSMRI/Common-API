@@ -87,7 +87,7 @@ public class ConsentNoticeController {
 		return write(false, request, authorization, idempotencyKey, httpRequest);
 	}
 
-	@Operation(summary = "A8: publish the consent message (consent-message publisher role)")
+	@Operation(summary = "A8: publish the consent message (any user of the project's service provider)")
 	@RequestMapping(value = "/publish", method = RequestMethod.POST, consumes = JSON, produces = JSON,
 			headers = "Authorization")
 	public ResponseEntity<String> publish(@RequestBody String request,

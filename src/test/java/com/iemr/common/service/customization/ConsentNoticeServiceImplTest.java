@@ -41,13 +41,12 @@ import com.iemr.common.utils.exception.ConsentConfigConflictException;
 import com.iemr.common.utils.exception.ConsentServiceUnavailableException;
 import com.iemr.common.utils.exception.IEMRException;
 
-/** Feature 006: A6–A8 in Common-API: fields, ownership, publisher role, forwarding (research R2, R11). */
+/** Feature 006: A6–A8 in Common-API: fields, ownership, forwarding (research R2, R11). */
 class ConsentNoticeServiceImplTest {
 
 	private static final int USER = 501;
 	private static final String AUTH = "Bearer token";
 	private static final String IDEM = "3f2504e0-4f89-11d3-9a0c-0305e82c3301";
-	private static final String ROLE = "ConsentMessagePublisher";
 
 	private ConsentNoticeClient client;
 	private ConsentProjectAccess access;
@@ -57,7 +56,7 @@ class ConsentNoticeServiceImplTest {
 	void setUp() {
 		client = mock(ConsentNoticeClient.class);
 		access = mock(ConsentProjectAccess.class);
-		service = new ConsentNoticeServiceImpl(client, access, " " + ROLE + " ");
+		service = new ConsentNoticeServiceImpl(client, access);
 	}
 
 	@Test
@@ -121,17 +120,13 @@ class ConsentNoticeServiceImplTest {
 	}
 
 	@Test
-	void publishNeedsTheConfiguredRole() throws Exception {
+	void publishChecksOwnershipAndForwardsOnlyTheOptions() throws Exception {
 		String request = "{\"projectId\":3,\"serviceProviderId\":1,\"context\":\"REVISIT\",\"languageCode\":\"en\","
 				+ "\"requireReconsent\":true,\"translateTo\":[\"hi\"],\"publishedBy\":\"x\"}";
-		when(access.hasRole(USER, 1, ROLE)).thenReturn(false, true);
-
-		assertThatThrownBy(() -> service.publish(request, USER, IDEM, AUTH))
-				.hasMessage(ConsentNoticeServiceImpl.NOT_ALLOWED);
-		verifyNoInteractions(client);
-
 		when(client.publish(eq(3), eq("REVISIT"), anyString(), eq(IDEM), eq(AUTH))).thenReturn(null);
+
 		assertThat(service.publish(request, USER, IDEM, AUTH)).isNull();
+		verify(access).requireOwnedProject(3, 1, USER);
 		ArgumentCaptor<String> body = ArgumentCaptor.forClass(String.class);
 		verify(client).publish(eq(3), eq("REVISIT"), body.capture(), eq(IDEM), eq(AUTH));
 		assertThat(JsonParser.parseString(body.getValue()))
@@ -139,16 +134,11 @@ class ConsentNoticeServiceImplTest {
 	}
 
 	@Test
-	void publishWithoutARoleSettingIsRefused() throws Exception {
-		ConsentNoticeServiceImpl unconfigured = new ConsentNoticeServiceImpl(client, access, null);
-		assertThatThrownBy(() -> unconfigured.publish("{\"projectId\":3,\"serviceProviderId\":1,\"context\":\"REVISIT\"}",
-				USER, IDEM, AUTH)).hasMessage(ConsentNoticeServiceImpl.NOT_CONFIGURED);
+	void publishOfAnotherProvidersProjectIsNotForwarded() throws Exception {
+		doThrow(new IEMRException("project not found")).when(access).requireOwnedProject(3, 2, USER);
+		assertThatThrownBy(() -> service.publish("{\"projectId\":3,\"serviceProviderId\":2,\"context\":\"REVISIT\"}",
+				USER, IDEM, AUTH)).hasMessage("project not found");
 		verifyNoInteractions(client);
-		when(access.hasRole(any(), any(), any())).thenReturn(true);
-		when(client.publish(eq(3), eq("REVISIT"), eq("{}"), eq(IDEM), eq(AUTH)))
-				.thenReturn(JsonParser.parseString("{}"));
-		assertThat(service.publish("{\"projectId\":3,\"serviceProviderId\":1,\"context\":\"REVISIT\"}", USER, IDEM,
-				AUTH)).isEqualTo("{}");
 	}
 
 	@Test
