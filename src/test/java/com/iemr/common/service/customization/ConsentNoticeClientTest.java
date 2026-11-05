@@ -113,6 +113,41 @@ class ConsentNoticeClientTest {
 	}
 
 	@Test
+	void legacyCheckAndImportUseTheirPathsAndHeaders() throws Exception {
+		answer(ConsentNoticeClient.LEGACY_BATCHES_PATH, HttpMethod.POST, "{\"data\":{\"batchId\":\"b-1\"}}");
+		answer(ConsentNoticeClient.LEGACY_IMPORT_PATH, HttpMethod.POST, "{\"data\":{\"status\":\"IMPORTED\"}}");
+
+		assertThat(client.checkLegacy("{\"rows\":[]}", IDEM, AUTH).getAsJsonObject().get("batchId").getAsString())
+				.isEqualTo("b-1");
+		assertThat(client.importLegacy("b-1", IDEM, AUTH).getAsJsonObject().get("status").getAsString())
+				.isEqualTo("IMPORTED");
+
+		@SuppressWarnings("unchecked")
+		ArgumentCaptor<HttpEntity<Object>> check = ArgumentCaptor.forClass(HttpEntity.class);
+		verify(restTemplate).exchange(eq(BASE + ConsentNoticeClient.LEGACY_BATCHES_PATH), eq(HttpMethod.POST),
+				check.capture(), eq(String.class), eq(new Object[0]));
+		assertThat(check.getValue().getBody()).isEqualTo("{\"rows\":[]}");
+		assertThat(check.getValue().getHeaders().getFirst(ConsentNoticeClient.SERVICE_KEY_HEADER)).isEqualTo(KEY);
+		assertThat(check.getValue().getHeaders().getFirst("Idempotency-Key")).isEqualTo(IDEM);
+		assertThat(check.getValue().getHeaders().getFirst("Authorization")).isEqualTo(AUTH);
+
+		@SuppressWarnings("unchecked")
+		ArgumentCaptor<HttpEntity<Object>> imported = ArgumentCaptor.forClass(HttpEntity.class);
+		verify(restTemplate).exchange(eq(BASE + ConsentNoticeClient.LEGACY_IMPORT_PATH), eq(HttpMethod.POST),
+				imported.capture(), eq(String.class), eq("b-1"));
+		assertThat(imported.getValue().getBody()).isEqualTo("{}");
+		assertThat(imported.getValue().getHeaders().getFirst("Idempotency-Key")).isEqualTo(IDEM);
+	}
+
+	@Test
+	void batchAlreadyImportedComesBackWithConsentApisMessage() {
+		refuse(error(HttpStatus.CONFLICT,
+				"{\"message\":\"Batch already imported\",\"error\":{\"code\":\"STATE_CONFLICT\"}}"));
+		assertThatThrownBy(() -> client.importLegacy("b-1", IDEM, AUTH)).isInstanceOf(IEMRException.class)
+				.isNotInstanceOf(ConsentConfigConflictException.class).hasMessage("Batch already imported");
+	}
+
+	@Test
 	void anAnswerWithoutDataIsNull() throws Exception {
 		answer(ConsentNoticeClient.LIST_PATH, HttpMethod.GET, "{\"success\":true}");
 		assertThat(client.list(3, AUTH)).isNull();

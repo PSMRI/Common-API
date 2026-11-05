@@ -44,7 +44,8 @@ import com.iemr.common.utils.exception.ConsentServiceUnavailableException;
 import com.iemr.common.utils.exception.IEMRException;
 
 /**
- * Calls Consent-API's admin notice endpoints for the Admin "Consent message" tab (A6–A8, feature 006). Sends the
+ * Calls Consent-API's admin endpoints: the Admin "Consent message" tab (A6–A8, feature 006) and the legacy consent
+ * upload (A9–A10, feature 008). Sends the
  * caller's Authorization (as {@link ConsentMastersClient}), the {@code Idempotency-Key} and the service key that
  * Consent-API requires on {@code /consent/v1/admin/**}. Neither the key nor any body is logged.
  */
@@ -58,6 +59,10 @@ public class ConsentNoticeClient {
 	static final String DRAFT_PATH = LIST_PATH + "/{context}/draft";
 
 	static final String PUBLISH_PATH = LIST_PATH + "/{context}/publish";
+
+	static final String LEGACY_BATCHES_PATH = "/consent/v1/admin/legacy/batches";
+
+	static final String LEGACY_IMPORT_PATH = LEGACY_BATCHES_PATH + "/{batchId}/import";
 
 	private static final String STALE_VERSION = "STALE_VERSION";
 
@@ -103,6 +108,17 @@ public class ConsentNoticeClient {
 	public JsonElement publish(Integer projectId, String context, String body, String idempotencyKey,
 			String authorization) throws IEMRException {
 		return call(HttpMethod.POST, PUBLISH_PATH, body, idempotencyKey, authorization, projectId, context);
+	}
+
+	/** A9: checks the rows of a legacy file and stores the batch. */
+	public JsonElement checkLegacy(String body, String idempotencyKey, String authorization) throws IEMRException {
+		return call(HttpMethod.POST, LEGACY_BATCHES_PATH, body, idempotencyKey, authorization);
+	}
+
+	/** A10: imports the valid rows of a checked batch; "Batch already imported" comes back as an IEMRException. */
+	public JsonElement importLegacy(String batchId, String idempotencyKey, String authorization)
+			throws IEMRException {
+		return call(HttpMethod.POST, LEGACY_IMPORT_PATH, "{}", idempotencyKey, authorization, batchId);
 	}
 
 	/**
